@@ -46,9 +46,16 @@ export type DataUsers = {
 interface DataTableProps {
   data: DataUsers[];
   onEdit?: (user: DataUsers) => void;
+  onInactivar?: (user: DataUsers) => void;
+  onActivar?: (user: DataUsers) => void;
 }
 
-export function DataTable({ data, onEdit }: DataTableProps) {
+export function DataTable({
+  data,
+  onEdit,
+  onInactivar,
+  onActivar,
+}: DataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -158,8 +165,18 @@ export function DataTable({ data, onEdit }: DataTableProps) {
               <DropdownMenuItem onClick={() => onEdit && onEdit(user)}>
                 Editar
               </DropdownMenuItem>
+              {String(user.estado).toLowerCase() === "inactivo" ? (
+                <DropdownMenuItem onClick={() => onActivar && onActivar(user)}>
+                  Activar
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  onClick={() => onInactivar && onInactivar(user)}
+                >
+                  Inactivar
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Inactivar</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         );

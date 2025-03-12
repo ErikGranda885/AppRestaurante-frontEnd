@@ -45,17 +45,6 @@ export function GeneralDialog({
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
         <div className="grid gap-4 py-4">{children}</div>
-        <DialogFooter>
-          <Button
-            type="submit"
-            onClick={onSubmit}
-          >
-            {submitText}
-          </Button>
-          <DialogClose asChild>
-            <Button variant="secondary">Cerrar</Button>
-          </DialogClose>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

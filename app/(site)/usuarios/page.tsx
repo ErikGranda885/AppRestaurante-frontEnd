@@ -2,7 +2,14 @@
 import * as React from "react";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { DataTable, DataUsers } from "@/components/shared/dataTable";
-import { UserCheck, UserCog, Users, UserX, Info } from "lucide-react";
+import {
+  UserCheck,
+  UserCog,
+  Users,
+  UserX,
+  Info,
+  CheckCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   HoverCard,
@@ -21,12 +28,12 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Combobox, Option } from "@/components/shared/combobox";
 import { GeneralDialog } from "@/components/shared/dialogGen";
-import { CheckCircle } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
+import { CreateUserForm } from "@/components/shared/users-comp/createUserForm";
+import { EditUserForm } from "@/components/shared/users-comp/editUserForm";
 
 export default function Page() {
   const [roleOptions, setRoleOptions] = React.useState<Option[]>([]);
-  // Estado para los usuarios que se cargarán de la API
   const [usuarios, setUsuarios] = React.useState<DataUsers[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -37,17 +44,7 @@ export default function Page() {
   // Estados para filtro, edición y creación
   const [selectedState, setSelectedState] = React.useState<string>("");
   const [editUser, setEditUser] = React.useState<DataUsers | null>(null);
-  // Estado para controlar la apertura del diálogo de creación
   const [openCreate, setOpenCreate] = React.useState(false);
-  // Estado para el formulario de creación de usuario
-  const [newUserData, setNewUserData] = React.useState({
-    usuario: "",
-    correo: "",
-    password: "",
-    rol: "",
-  });
-  // Estado para el combobox en el modal de edición (rol)
-  const [rol, setRol] = React.useState("");
 
   // Cargar usuarios desde la API
   React.useEffect(() => {
@@ -67,7 +64,6 @@ export default function Page() {
           rol: item.rol_usu.id_rol.toString(),
           rolNombre: item.rol_usu.nom_rol,
         }));
-
         setUsuarios(transformed);
         setLoading(false);
       })
@@ -76,7 +72,8 @@ export default function Page() {
         setLoading(false);
       });
   }, []);
-  /* Cargar roles desde la api */
+
+  // Cargar roles desde la API
   React.useEffect(() => {
     fetch("http://localhost:5000/roles")
       .then((res) => {
@@ -86,8 +83,6 @@ export default function Page() {
         return res.json();
       })
       .then((data: any) => {
-        // Suponiendo que la API retorna { message, roles: [ ... ] }
-        // y que un rol activo es aquel con est_rol === ""
         const activeRoles = data.roles.filter(
           (role: any) => role.est_rol === "Activo"
         );
@@ -116,7 +111,6 @@ export default function Page() {
     }
   };
 
-  // Clase para las tarjetas de filtro
   const cardClass = (estado: string) =>
     `bg-[hsl(var(--secondary))] flex items-center justify-start pl-6 dark:bg-[hsl(var(--card))] w-64 h-24 rounded-lg cursor-pointer transition-transform duration-300 hover:scale-105 ${
       selectedState.toLowerCase() === estado.toLowerCase()
@@ -132,109 +126,11 @@ export default function Page() {
       </div>
     </HoverCardContent>
   );
-
-  // Función para crear un nuevo usuario (POST)
-  const handleCreateUser = () => {
-    // Verifica que todos los campos tengan datos (puedes agregar más validaciones)
-    if (
-      !newUserData.usuario ||
-      !newUserData.correo ||
-      !newUserData.password ||
-      !newUserData.rol
-    ) {
-      console.error("Faltan datos en el formulario");
-      return;
-    }
-
-    const payload = {
-      nom_usu: newUserData.usuario,
-      email_usu: newUserData.correo,
-      clave_usu: newUserData.password,
-      rol_usu: parseInt(newUserData.rol) || 0, // Asegúrate de que este valor sea correcto
-    };
-
-    console.log("Payload a enviar:", payload);
-
-    fetch("http://localhost:5000/usuarios", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Error: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data: any) => {
-        console.log("Respuesta de la API:", data);
-        const roleOption = roleOptions.find(
-          (option) => option.value === data.usuario.rol_usu.toString()
-        );
-        const createdUser: DataUsers = {
-          id: data.usuario.id_usu,
-          usuario: data.usuario.nom_usu,
-          correo: data.usuario.email_usu,
-          estado: data.usuario.esta_usu,
-          rol: data.usuario.rol_usu.toString(), // Guarda el id del rol
-          rolNombre: roleOption
-            ? roleOption.label
-            : data.usuario.rol_usu.toString(), // Guarda el nombre en un campo aparte
-        };
-
-        setUsuarios((prev) => [...prev, createdUser]);
-        setNewUserData({ usuario: "", correo: "", password: "", rol: "" });
-        setOpenCreate(false);
-        toast.custom(
-          (t) => (
-            <div
-              className={`${
-                t.visible ? "animate-enter" : "animate-leave"
-              } relative flex w-96 items-start gap-3 p-4 bg-[#F0FFF4] border border-[#4ADE80] rounded-lg shadow-lg`}
-              style={{ animationDuration: "3s" }}
-            >
-              {/* Ícono más grande */}
-              <CheckCircle className="w-6 h-6 text-[#166534] mt-1" />
-
-              {/* Contenido de texto */}
-              <div className="flex-1">
-                <p className="text-[#166534] text-sm font-semibold">
-                  Mensaje Informativo
-                </p>
-                <p className="text-sm text-[#166534]/80">
-                  Se ha agregado un nuevo usuario exitosamente.
-                </p>
-              </div>
-
-              {/* Barra de progreso en la parte inferior */}
-              <div className="absolute bottom-0 left-0 w-full h-[3px] bg-[#4ADE80]/20">
-                <div className="progress-bar h-full bg-[#4ADE80]" />
-              </div>
-            </div>
-          ),
-          {
-            duration: 2000,
-            position: "top-right",
-          }
-        );
-      })
-
-      .catch((err) => console.error("Error en fetch:", err));
-  };
-
-  // Función para editar usuario (simulación)
-  const handleSubmitEdit = () => {
-    if (!editUserData) return;
-    const payload = {
-      nom_usu: editUserData.usuario,
-      email_usu: editUserData.correo,
-      rol_usu: parseInt(editUserData.rol) || 0,
-    };
-
-    fetch(`http://localhost:5000/usuarios/${editUserData.id}`, {
+  const handleInactivar = (user: DataUsers) => {
+    fetch(`http://localhost:5000/usuarios/inactivar/${user.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({}),
     })
       .then((res) => {
         if (!res.ok) {
@@ -242,24 +138,10 @@ export default function Page() {
         }
         return res.json();
       })
-      .then((data: any) => {
-        // Inserta aquí el código para transformar el rol
-        const roleOption = roleOptions.find(
-          (option) => option.value === editUserData.rol
-        );
+      .then(() => {
         setUsuarios((prev) =>
-          prev.map((u) =>
-            u.id === editUserData.id
-              ? {
-                  ...editUserData,
-                  rolNombre: roleOption ? roleOption.label : editUserData.rol,
-                }
-              : u
-          )
+          prev.map((u) => (u.id === user.id ? { ...u, estado: "Inactivo" } : u))
         );
-
-        setEditUser(null);
-        setEditUserData(null);
         toast.custom(
           (t) => (
             <div
@@ -268,35 +150,76 @@ export default function Page() {
               } relative flex w-96 items-start gap-3 p-4 bg-[#F0FFF4] border border-[#4ADE80] rounded-lg shadow-lg`}
               style={{ animationDuration: "3s" }}
             >
-              {/* Ícono más grande */}
               <CheckCircle className="w-6 h-6 text-[#166534] mt-1" />
-
-              {/* Contenido de texto */}
               <div className="flex-1">
                 <p className="text-[#166534] text-sm font-semibold">
                   Mensaje Informativo
                 </p>
                 <p className="text-sm text-[#166534]/80">
-                  Se ha actualizado el usuario exitosamente.
+                  Se ha inactivado el usuario exitosamente.
                 </p>
               </div>
-
-              {/* Barra de progreso en la parte inferior */}
               <div className="absolute bottom-0 left-0 w-full h-[3px] bg-[#4ADE80]/20">
                 <div className="progress-bar h-full bg-[#4ADE80]" />
               </div>
             </div>
           ),
-          {
-            duration: 2000,
-            position: "top-right",
-          }
+          { duration: 2000, position: "top-right" }
         );
       })
-      .catch((err) => console.error("Error en PUT:", err));
+      .catch((err) => {
+        toast.error("Error al inactivar el usuario", { duration: 3000 });
+        console.error("Error al inactivar usuario:", err);
+      });
   };
 
-  // Actualizar el estado del rol cuando se abra el modal de edición
+  const handleActivar = (user: DataUsers) => {
+    fetch(`http://localhost:5000/usuarios/activar/${user.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Error: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then(() => {
+        setUsuarios((prev) =>
+          prev.map((u) => (u.id === user.id ? { ...u, estado: "Activo" } : u))
+        );
+        toast.custom(
+          (t) => (
+            <div
+              className={`${
+                t.visible ? "animate-enter" : "animate-leave"
+              } relative flex w-96 items-start gap-3 p-4 bg-[#F0FFF4] border border-[#4ADE80] rounded-lg shadow-lg`}
+              style={{ animationDuration: "3s" }}
+            >
+              <CheckCircle className="w-6 h-6 text-[#166534] mt-1" />
+              <div className="flex-1">
+                <p className="text-[#166534] text-sm font-semibold">
+                  Mensaje Informativo
+                </p>
+                <p className="text-sm text-[#166534]/80">
+                  Se ha activado el usuario exitosamente.
+                </p>
+              </div>
+              <div className="absolute bottom-0 left-0 w-full h-[3px] bg-[#4ADE80]/20">
+                <div className="progress-bar h-full bg-[#4ADE80]" />
+              </div>
+            </div>
+          ),
+          { duration: 2000, position: "top-right" }
+        );
+      })
+      .catch((err) => {
+        toast.error("Error al activar el usuario", { duration: 3000 });
+        console.error("Error al activar usuario:", err);
+      });
+  };
+
   React.useEffect(() => {
     if (editUser) {
       setEditUserData(editUser);
@@ -433,7 +356,6 @@ export default function Page() {
             </HoverCard>
           </div>
 
-          {/* Diálogo para crear nuevo usuario */}
           <div className="flex justify-end px-6 pt-5 pb-9">
             <GeneralDialog
               open={openCreate}
@@ -442,87 +364,27 @@ export default function Page() {
               title="Crear Nuevo Usuario"
               description="Ingresa la información para crear un nuevo usuario."
               submitText="Crear Usuario"
-              onSubmit={handleCreateUser}
             >
-              {/* Contenido del formulario */}
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label
-                  htmlFor="usuario"
-                  className="text-right"
-                >
-                  Nombre
-                </Label>
-                <Input
-                  id="usuario"
-                  value={newUserData.usuario}
-                  onChange={(e) =>
-                    setNewUserData({
-                      ...newUserData,
-                      usuario: e.target.value,
-                    })
-                  }
-                  placeholder="Nombre del usuario"
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label
-                  htmlFor="correo"
-                  className="text-right"
-                >
-                  Correo
-                </Label>
-                <Input
-                  id="correo"
-                  value={newUserData.correo}
-                  onChange={(e) =>
-                    setNewUserData({ ...newUserData, correo: e.target.value })
-                  }
-                  placeholder="usuario@ejemplo.com"
-                  className="col-span-3"
-                />
-              </div>
-              {/* Campo para contraseña */}
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label
-                  htmlFor="password"
-                  className="text-right"
-                >
-                  Contraseña
-                </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={newUserData.password}
-                  onChange={(e) =>
-                    setNewUserData({
-                      ...newUserData,
-                      password: e.target.value,
-                    })
-                  }
-                  placeholder="Contraseña"
-                  className="col-span-3"
-                />
-              </div>
-              {/* Combobox para seleccionar Rol */}
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label
-                  htmlFor="rol"
-                  className="text-right"
-                >
-                  Rol
-                </Label>
-                <div className="col-span-3">
-                  <Combobox
-                    items={roleOptions}
-                    value={newUserData.rol}
-                    onChange={(value) =>
-                      setNewUserData({ ...newUserData, rol: value })
-                    }
-                    placeholder="Selecciona un rol"
-                  />
-                </div>
-              </div>
+              <CreateUserForm
+                roleOptions={roleOptions}
+                onSuccess={(data: any) => {
+                  const roleOption = roleOptions.find(
+                    (option) => option.value === data.usuario.rol_usu.toString()
+                  );
+                  const createdUser: DataUsers = {
+                    id: data.usuario.id_usu.toString(),
+                    usuario: data.usuario.nom_usu,
+                    correo: data.usuario.email_usu,
+                    estado: data.usuario.esta_usu,
+                    rol: data.usuario.rol_usu.toString(),
+                    rolNombre: roleOption
+                      ? roleOption.label
+                      : data.usuario.rol_usu.toString(),
+                  };
+                  setUsuarios((prev) => [...prev, createdUser]);
+                  setOpenCreate(false);
+                }}
+              />
             </GeneralDialog>
           </div>
 
@@ -531,11 +393,12 @@ export default function Page() {
             <DataTable
               data={filteredUsers}
               onEdit={(user) => setEditUser(user)}
+              onInactivar={handleInactivar}
+              onActivar={handleActivar}
             />
           </div>
         </div>
 
-        {/* Modal para editar usuario */}
         {editUser && (
           <Dialog
             open
@@ -550,72 +413,34 @@ export default function Page() {
                   Modifica la información del usuario.
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="edit-usuario"
-                    className="text-right"
-                  >
-                    Nombre
-                  </Label>
-                  <Input
-                    id="edit-usuario"
-                    value={editUserData?.usuario || ""}
-                    onChange={(e) =>
-                      setEditUserData({
-                        ...editUserData!,
-                        usuario: e.target.value,
-                      })
-                    }
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="edit-correo"
-                    className="text-right"
-                  >
-                    Correo
-                  </Label>
-                  <Input
-                    id="edit-correo"
-                    value={editUserData?.correo || ""}
-                    onChange={(e) =>
-                      setEditUserData({
-                        ...editUserData!,
-                        correo: e.target.value,
-                      })
-                    }
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="edit-rol"
-                    className="text-right"
-                  >
-                    Rol
-                  </Label>
-                  <div className="col-span-3">
-                    <Combobox
-                      items={roleOptions}
-                      value={editUserData?.rol || ""}
-                      onChange={(value) =>
-                        setEditUserData({ ...editUserData!, rol: value })
-                      }
-                      placeholder="Selecciona un rol"
-                    />
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  type="submit"
-                  onClick={handleSubmitEdit}
-                >
-                  Guardar cambios
-                </Button>
-              </DialogFooter>
+              <EditUserForm
+                initialData={{
+                  id: editUser.id,
+                  usuario: editUser.usuario,
+                  correo: editUser.correo,
+                  password: "",
+                  rol: parseInt(editUser.rol),
+                }}
+                roleOptions={roleOptions}
+                onSuccess={(data) => {
+                  const updatedUser = {
+                    id: data.usuario.id_usu.toString(),
+                    usuario: data.usuario.nom_usu,
+                    correo: data.usuario.email_usu,
+                    estado: data.usuario.esta_usu,
+                    rol: data.usuario.rol_usu.toString(),
+                    rolNombre:
+                      roleOptions.find(
+                        (option) =>
+                          option.value === data.usuario.rol_usu.toString()
+                      )?.label || data.usuario.rol_usu.toString(),
+                  };
+                  setUsuarios((prev) =>
+                    prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+                  );
+                  setEditUser(null);
+                }}
+              />
             </DialogContent>
           </Dialog>
         )}
