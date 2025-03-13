@@ -141,6 +141,7 @@ export function CreateUserForm({
                 <Input
                   placeholder="Ej. Juan Pérez"
                   {...field}
+                  className="pr-10 dark:border dark:border-default-700 dark:bg-[#09090b]"
                 />
               </FormControl>
               <FormMessage className="text-danger-500" />
@@ -161,6 +162,7 @@ export function CreateUserForm({
                 <Input
                   placeholder="usuario@ejemplo.com"
                   {...field}
+                  className="pr-10 dark:border dark:border-default-700 dark:bg-[#09090b]"
                 />
               </FormControl>
               <FormMessage className="text-danger-500" />
@@ -183,7 +185,7 @@ export function CreateUserForm({
                     type={showPassword ? "text" : "password"}
                     placeholder="********"
                     {...field}
-                    className="pr-10"
+                    className="pr-10 dark:border dark:border-default-700 dark:bg-[#09090b]"
                   />
                   <button
                     type="button"
@@ -217,7 +219,7 @@ export function CreateUserForm({
                     value={field.value ? String(field.value) : ""}
                     onChange={field.onChange}
                     placeholder="Selecciona un rol"
-                    className="w-full text-black dark:text-white "
+                    className="w-full text-black dark:text-white dark:bg-[#09090b] dark:border dark:border-default-700"
                   />
                 </div>
               </FormControl>

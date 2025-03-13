@@ -160,6 +160,7 @@ export function EditUserForm({
                 <Input
                   placeholder="Ej. Juan Pérez"
                   {...field}
+                  className="dark:border dark:border-default-700 dark:bg-[#09090b]"
                 />
               </FormControl>
               <FormMessage className="text-red-500" />
@@ -180,6 +181,7 @@ export function EditUserForm({
                 <Input
                   placeholder="usuario@ejemplo.com"
                   {...field}
+                  className="dark:border dark:border-default-700 dark:bg-[#09090b]"
                 />
               </FormControl>
               <FormMessage className="text-red-500" />
@@ -202,7 +204,7 @@ export function EditUserForm({
                     type={showPassword ? "text" : "password"}
                     placeholder="********"
                     {...field}
-                    className="pr-10"
+                    className="pr-10 dark:border dark:border-default-700 dark:bg-[#09090b]"
                   />
                   <button
                     type="button"
@@ -233,13 +235,13 @@ export function EditUserForm({
             <FormItem>
               <FormLabel className="text-black dark:text-white">Rol</FormLabel>
               <FormControl>
-                <div className="relative">
+                <div className="relative ">
                   <Combobox
                     items={roleOptions}
                     value={field.value ? String(field.value) : ""}
                     onChange={field.onChange}
                     placeholder="Selecciona un rol"
-                    className="w-full"
+                    className="w-full dark:border dark:border-default-700 dark:bg-[#09090b] dark:text-white text-black"
                   />
                 </div>
               </FormControl>

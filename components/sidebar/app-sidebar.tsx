@@ -150,6 +150,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar
       collapsible="icon"
+      className=" dark:bg-[#09090b] border-none"
       {...props}
     >
       <SidebarHeader>

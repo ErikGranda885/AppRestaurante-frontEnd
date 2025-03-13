@@ -37,12 +37,12 @@ export function GeneralDialog({
       <DialogTrigger asChild>
         <Button
           variant={"primary"}
-          className="bg-primary text-white dark:text-white"
+          className="bg-primary-500 text-white dark:text-white "
         >
           {triggerText}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] dark:border dark:border-default-700 dark:bg-[#09090b] dark:text-white">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}

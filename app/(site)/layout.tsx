@@ -10,7 +10,7 @@ export default function SiteLayout({
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>{children}</SidebarInset>
+      <SidebarInset className="dark:bg-[#09090b]">{children}</SidebarInset>
     </SidebarProvider>
   );
 }

@@ -276,41 +276,48 @@ export function BulkUploadDialog({
       open
       onOpenChange={onClose}
     >
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent className="sm:max-w-3xl dark:border dark:border-default-700 dark:bg-[#09090b]">
         <DialogHeader>
           <DialogTitle>Carga Masiva de Usuarios</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           {/* Instrucciones */}
-          <div className="bg-gray-100 p-4 rounded">
-            <h2 className="text-lg font-bold mb-2 dark:text-black">
+          <div className="bg-gray-100 p-4 rounded dark:border-none  dark:bg-[#1E1E1E] dark:text-white">
+            <h2 className="text-lg font-bold mb-2 dark:text-gray-100">
               Pasos para la carga masiva:
             </h2>
-            <ol className="list-decimal list-inside text-sm text-gray-700">
+            <ol className="list-decimal list-inside text-sm text-gray-700 dark:text-white">
               <li>
                 Descarga la plantilla Excel haciendo clic en el botón{" "}
-                <span className="font-semibold">Descargar plantilla</span>.
+                <span className="font-semibold dark:text-primary">
+                  Descargar plantilla
+                </span>
+                .
               </li>
               <li>
-                Llena la plantilla. En la columna <strong>rol_usu</strong> se
+                Llena la plantilla. En la columna{" "}
+                <strong className="dark:text-primary">rol_usu</strong> se
                 mostrará un menú desplegable con los roles disponibles (generado
                 dinámicamente desde la base de datos).
               </li>
               <li>
                 Guarda el archivo y selecciónalo haciendo clic en{" "}
-                <span className="font-semibold">Seleccionar archivo</span>.
+                <span className="font-semibold dark:text-primary">
+                  Seleccionar archivo
+                </span>
+                .
               </li>
               <li>Verifica la vista previa de los datos en la tabla.</li>
               <li>
                 Si todo es correcto, haz clic en{" "}
-                <span className="font-semibold">Cargar</span> para subir la
-                información.
+                <span className="font-semibold dark:text-primary">Cargar</span>{" "}
+                para subir la información.
               </li>
             </ol>
             <Button
-              variant="outline"
+              variant="primary"
+              className="mt-2 bg-default-500"
               onClick={handleDownloadTemplate}
-              className="mt-2"
             >
               Descargar plantilla
             </Button>
@@ -332,7 +339,7 @@ export function BulkUploadDialog({
             )}
           </div>
           {previewData.length > 0 ? (
-            <div className="overflow-auto border mt-4 max-h-96">
+            <div className="overflow-y-auto border mt-4 max-h-[20vh]">
               <table className="min-w-full border-collapse ">
                 <thead className="bg-gray-50 dark:bg-gray-100">
                   <tr>
@@ -391,7 +398,8 @@ export function BulkUploadDialog({
         <DialogFooter>
           <div className="flex justify-end space-x-2">
             <Button
-              variant="outline"
+              variant="primary"
+              className="bg-default-500"
               onClick={onClose}
             >
               Cancelar

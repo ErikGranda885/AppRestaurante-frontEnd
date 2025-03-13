@@ -68,28 +68,6 @@ export function DataTable({
   // Definir las columnas localmente para acceder a onEdit
   const localColumns: ColumnDef<DataUsers>[] = [
     {
-      id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-    {
       accessorKey: "usuario",
       header: "Nombre",
       cell: ({ row }) => (
@@ -132,7 +110,7 @@ export function DataTable({
             "px-3 text-success bg-[#1bc47d]/10 dark:bg-[#66cc8a]/10 border-success-500";
         } else if (estado === "inactivo") {
           estadoStyles =
-            "px-2 text-[#485248] border-[#485248] bg-[#D3D1CB]/20 dark:bg-[#485248]/10";
+            "px-2 text-default border-default bg-[#D3D1CB]/10 dark:bg-[#485248]/10";
         }
 
         return (
@@ -162,7 +140,7 @@ export function DataTable({
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="bg-white dark:bg-black "
+              className="bg-white  dark:border dark:border-default-700 dark:bg-[#09090b] dark:text-white "
             >
               <DropdownMenuLabel>Acciones</DropdownMenuLabel>
               <DropdownMenuItem
@@ -226,20 +204,20 @@ export function DataTable({
           placeholder="Buscar usuarios..."
           value={globalFilter}
           onChange={(event) => setGlobalFilter(event.target.value)}
-          className="max-w-sm border-2 dark:border-neutral-500"
+          className="max-w-sm border-2 dark:border dark:border-default-700 dark:bg-[#09090b]"
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className="ml-auto text-black dark:text-white"
+              className="ml-auto text-black dark:text-white dark:border dark:border-default-700 dark:bg-[#09090b]"
             >
               Columnas <ChevronDown />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="bg-white dark:bg-black"
+            className="bg-white dark:border dark:border-default-700 dark:bg-[#09090b]"
           >
             {table
               .getAllColumns()
@@ -257,13 +235,13 @@ export function DataTable({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="rounded-md border">
-        <Table className="w-full border-collapse">
+      <div className="rounded-md dark:border dark:border-default-700 dark:bg-[#09090b]">
+        <Table className="w-full border-collapse ">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
                 key={headerGroup.id}
-                className="border-b border-gray-200 dark:border-neutral-600"
+                className="border-b border-gray-200 dark:border dark:border-default-700 dark:bg-[#09090b]"
               >
                 {headerGroup.headers.map((header) => (
                   <TableHead
@@ -327,7 +305,7 @@ export function DataTable({
             size="sm"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="text-black dark:text-white"
+            className="text-black dark:text-white dark:border dark:border-default-700 dark:bg-[#09090b]"
           >
             Anterior
           </Button>
@@ -336,7 +314,7 @@ export function DataTable({
             size="sm"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="text-black dark:text-white"
+            className="text-black dark:text-white dark:border dark:border-default-700 dark:bg-[#09090b]"
           >
             Siguiente
           </Button>

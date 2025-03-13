@@ -113,7 +113,7 @@ export default function Page() {
   };
 
   const cardClass = (estado: string) =>
-    `bg-default-100 flex items-center justify-start pl-6 dark:bg-default-800 w-64 h-24 rounded-lg cursor-pointer transition-transform duration-300 hover:scale-105 ${
+    `bg-default-100 flex items-center justify-start pl-6 dark:bg-[#09090b] dark:border-2 dark:border-default-700 w-64 h-24 rounded-lg cursor-pointer transition-transform duration-300 hover:scale-105 ${
       selectedState.toLowerCase() === estado.toLowerCase()
         ? "ring-2 ring-[hsl(var(--secondary))] dark:ring-[hsl(var(--secondary))]"
         : ""
@@ -239,7 +239,7 @@ export default function Page() {
         submenu={false}
         isLoading={false}
       >
-        <div className="bg-[hsl(var(--card))] dark:bg-[hsl(var(--muted))] w-full h-full rounded-lg">
+        <div className="bg-[hsl(var(--card))] dark:bg-[#09090b] w-full h-full rounded-lg">
           {/* Tarjetas de filtro */}
           <div className="flex flex-row gap-3 justify-between px-6 pt-6">
             {/* Tarjeta: Usuarios Totales */}
@@ -383,7 +383,7 @@ export default function Page() {
             <Button
               onClick={() => setOpenBulkUpload(true)}
               variant={"secondary"}
-              className="bg-secondary text-white dark:text-white"
+              className="bg-secondary-500 text-white dark:text-white"
             >
               <Upload className="w-4 h-4 mr-2" />
               Importar
@@ -438,7 +438,7 @@ export default function Page() {
               if (!open) setEditUser(null);
             }}
           >
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px] dark:border dark:border-default-700 dark:bg-[#09090b]">
               <DialogHeader>
                 <DialogTitle>Editar Usuario</DialogTitle>
                 <DialogDescription>

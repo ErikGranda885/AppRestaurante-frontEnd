@@ -69,7 +69,7 @@ export function Combobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={`w-[200px] justify-between ${className}`}
+          className={`w-[200px] justify-between ${className} `}
         >
           {value
             ? items.find((item) => String(item.value) === String(value))?.label
@@ -77,11 +77,11 @@ export function Combobox({
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0 bg-white dark:bg-black">
+      <PopoverContent className="w-[200px] p-0 bg-white dark:border dark:border-default-700 dark:bg-[#09090b] dark:text-white">
         <Command>
           <CommandInput
             placeholder={placeholder}
-            className="h-9"
+            className="h-9 "
             value={query}
             onValueChange={(val) => {
               setQuery(val);
