@@ -1,4 +1,5 @@
 "use client";
+
 import * as React from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,15 +24,10 @@ export interface Option {
 }
 
 interface ComboboxProps {
-  /** Lista de items para mostrar en el combobox */
   items: Option[];
-  /** Valor actual seleccionado */
-  value: string;
-  /** Función que se ejecuta al seleccionar un item */
-  onChange: (value: string) => void;
-  /** Texto placeholder si no hay valor seleccionado */
+  value: string | number;
+  onChange: (value: string | number) => void;
   placeholder?: string;
-  /** Clases adicionales */
   className?: string;
 }
 
@@ -43,11 +39,30 @@ export function Combobox({
   className = "",
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
+  const [query, setQuery] = React.useState("");
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) setQuery("");
+  };
+
+  // Filtra utilizando el label y el value convertidos a string y minúsculas.
+  const filteredItems = query.trim()
+    ? items.filter((item) => {
+        const lowerQuery = query.trim().toLowerCase();
+        const label = String(item.label).toLowerCase();
+        const valueStr = String(item.value).toLowerCase();
+        return label.includes(lowerQuery) || valueStr.includes(lowerQuery);
+      })
+    : items;
+
+  // Depuración: imprime la consulta y los items filtrados.
+  console.log("Query:", query, "Filtered Items:", filteredItems);
 
   return (
     <Popover
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={handleOpenChange}
     >
       <PopoverTrigger asChild>
         <Button
@@ -57,26 +72,36 @@ export function Combobox({
           className={`w-[200px] justify-between ${className}`}
         >
           {value
-            ? items.find((item) => item.value === value)?.label
+            ? items.find((item) => String(item.value) === String(value))?.label
             : placeholder}
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
+      <PopoverContent className="w-[200px] p-0 bg-white dark:bg-black">
         <Command>
           <CommandInput
             placeholder={placeholder}
             className="h-9"
+            value={query}
+            onValueChange={(val) => {
+              setQuery(val);
+              console.log("Query updated:", val);
+            }}
           />
           <CommandList>
             <CommandEmpty>Resultado no encontrado</CommandEmpty>
             <CommandGroup>
-              {items.map((item) => (
+              {filteredItems.map((item) => (
                 <CommandItem
-                  key={item.value}
-                  value={item.value}
-                  onSelect={(currentValue) => {
-                    onChange(currentValue === value ? "" : currentValue);
+                  key={String(item.value)}
+                  value={`${item.value} ${item.label}`} // Incluye id y label para que la búsqueda funcione.
+                  onSelect={(selectedValue) => {
+                    // Extraemos el id suponiendo que es la primera parte del string.
+                    const selectedId = selectedValue.split(" ")[0];
+                    // Si se selecciona el mismo id, se limpia; de lo contrario, se guarda el id.
+                    onChange(
+                      String(selectedId) === String(value) ? "" : selectedId
+                    );
                     setOpen(false);
                   }}
                 >
@@ -84,7 +109,9 @@ export function Combobox({
                   <Check
                     className={cn(
                       "ml-auto",
-                      value === item.value ? "opacity-100" : "opacity-0"
+                      String(value) === String(item.value)
+                        ? "opacity-100"
+                        : "opacity-0"
                     )}
                   />
                 </CommandItem>

@@ -143,7 +143,7 @@ export function CreateUserForm({
                   {...field}
                 />
               </FormControl>
-              <FormMessage className="text-red-500" />
+              <FormMessage className="text-danger-500" />
             </FormItem>
           )}
         />
@@ -163,7 +163,7 @@ export function CreateUserForm({
                   {...field}
                 />
               </FormControl>
-              <FormMessage className="text-red-500" />
+              <FormMessage className="text-danger-500" />
             </FormItem>
           )}
         />
@@ -198,7 +198,7 @@ export function CreateUserForm({
                   </button>
                 </div>
               </FormControl>
-              <FormMessage className="text-red-500" />
+              <FormMessage className="text-danger-500" />
             </FormItem>
           )}
         />
@@ -217,11 +217,11 @@ export function CreateUserForm({
                     value={field.value ? String(field.value) : ""}
                     onChange={field.onChange}
                     placeholder="Selecciona un rol"
-                    className="w-full "
+                    className="w-full text-black dark:text-white "
                   />
                 </div>
               </FormControl>
-              <FormMessage className="text-red-500" />
+              <FormMessage className="text-danger-500" />
             </FormItem>
           )}
         />

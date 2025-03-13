@@ -27,8 +27,6 @@ export function GeneralDialog({
   triggerText,
   title,
   description,
-  submitText = "Submit",
-  onSubmit,
   children,
 }: GeneralDialogProps) {
   return (
@@ -37,7 +35,12 @@ export function GeneralDialog({
       onOpenChange={onOpenChange}
     >
       <DialogTrigger asChild>
-        <Button variant="outline">{triggerText}</Button>
+        <Button
+          variant={"primary"}
+          className="bg-primary text-white dark:text-white"
+        >
+          {triggerText}
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>

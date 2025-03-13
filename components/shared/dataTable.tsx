@@ -129,7 +129,7 @@ export function DataTable({
 
         if (estado === "activo") {
           estadoStyles =
-            "px-3 text-[#66cc8a] bg-[#B2E5C4]/20 dark:bg-[#66cc8a]/10 border-[#66cc8a]";
+            "px-3 text-success bg-[#1bc47d]/10 dark:bg-[#66cc8a]/10 border-success-500";
         } else if (estado === "inactivo") {
           estadoStyles =
             "px-2 text-[#485248] border-[#485248] bg-[#D3D1CB]/20 dark:bg-[#485248]/10";
@@ -160,18 +160,28 @@ export function DataTable({
                 <MoreHorizontal />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent
+              align="end"
+              className="bg-white dark:bg-black "
+            >
               <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => onEdit && onEdit(user)}>
+              <DropdownMenuItem
+                onClick={() => onEdit && onEdit(user)}
+                className="cursor-pointer"
+              >
                 Editar
               </DropdownMenuItem>
               {String(user.estado).toLowerCase() === "inactivo" ? (
-                <DropdownMenuItem onClick={() => onActivar && onActivar(user)}>
+                <DropdownMenuItem
+                  onClick={() => onActivar && onActivar(user)}
+                  className="cursor-pointer"
+                >
                   Activar
                 </DropdownMenuItem>
               ) : (
                 <DropdownMenuItem
                   onClick={() => onInactivar && onInactivar(user)}
+                  className="cursor-pointer"
                 >
                   Inactivar
                 </DropdownMenuItem>
@@ -222,12 +232,15 @@ export function DataTable({
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className="ml-auto"
+              className="ml-auto text-black dark:text-white"
             >
               Columnas <ChevronDown />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent
+            align="end"
+            className="bg-white dark:bg-black"
+          >
             {table
               .getAllColumns()
               .filter((column) => column.getCanHide())
@@ -314,6 +327,7 @@ export function DataTable({
             size="sm"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
+            className="text-black dark:text-white"
           >
             Anterior
           </Button>
@@ -322,6 +336,7 @@ export function DataTable({
             size="sm"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
+            className="text-black dark:text-white"
           >
             Siguiente
           </Button>

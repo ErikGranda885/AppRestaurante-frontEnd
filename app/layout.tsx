@@ -27,7 +27,6 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
-
           <footer className="fixed bottom-4 right-4 z-50">
             <ModeToggle />
           </footer>
