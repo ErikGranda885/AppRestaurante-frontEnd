@@ -12,16 +12,12 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
+import { ArrowUpDown, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -34,28 +30,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-export type DataUsers = {
-  id: string;
-  usuario: string;
-  correo: string;
-  estado?: string;
-  rol: string;
-  rolNombre: string;
-};
-
-interface DataTableProps {
-  data: DataUsers[];
-  onEdit?: (user: DataUsers) => void;
-  onInactivar?: (user: DataUsers) => void;
-  onActivar?: (user: DataUsers) => void;
+export interface DataTableProps<T> {
+  data: T[];
+  columns: ColumnDef<T, any>[];
 }
 
-export function DataTable({
-  data,
-  onEdit,
-  onInactivar,
-  onActivar,
-}: DataTableProps) {
+export function DataTable<T>({ data, columns }: DataTableProps<T>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -65,116 +45,9 @@ export function DataTable({
   const [rowSelection, setRowSelection] = React.useState({});
   const [globalFilter, setGlobalFilter] = React.useState("");
 
-  // Definir las columnas localmente para acceder a onEdit
-  const localColumns: ColumnDef<DataUsers>[] = [
-    {
-      accessorKey: "usuario",
-      header: "Nombre",
-      cell: ({ row }) => (
-        <div className="capitalize">{row.getValue("usuario")}</div>
-      ),
-    },
-    {
-      accessorKey: "correo",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Correo <ArrowUpDown />
-        </Button>
-      ),
-      cell: ({ row }) => (
-        <div className="lowercase">{row.getValue("correo")}</div>
-      ),
-    },
-    {
-      accessorKey: "rolNombre",
-      header: () => <div className="text-right">Rol</div>,
-      cell: ({ row }) => (
-        <div className="text-right font-medium">
-          {row.getValue("rolNombre")}
-        </div>
-      ),
-    },
-
-    {
-      accessorKey: "estado",
-      header: () => <div className="text-right">Estado</div>,
-      cell: ({ row }) => {
-        const estado = String(row.getValue("estado")).toLowerCase();
-        let estadoStyles = "border-gray-100 text-gray-100";
-
-        if (estado === "activo") {
-          estadoStyles =
-            "px-3 text-success bg-[#1bc47d]/10 dark:bg-[#66cc8a]/10 border-success-500";
-        } else if (estado === "inactivo") {
-          estadoStyles =
-            "px-2 text-default border-default bg-[#D3D1CB]/10 dark:bg-[#485248]/10";
-        }
-
-        return (
-          <div className="text-right font-medium">
-            <span className={`border py-1 rounded ${estadoStyles}`}>
-              {row.getValue("estado")}
-            </span>
-          </div>
-        );
-      },
-    },
-    {
-      id: "actions",
-      enableHiding: false,
-      cell: ({ row }) => {
-        const user = row.original;
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="h-8 w-8 p-0"
-              >
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="bg-white  dark:border dark:border-default-700 dark:bg-[#09090b] dark:text-white "
-            >
-              <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() => onEdit && onEdit(user)}
-                className="cursor-pointer"
-              >
-                Editar
-              </DropdownMenuItem>
-              {String(user.estado).toLowerCase() === "inactivo" ? (
-                <DropdownMenuItem
-                  onClick={() => onActivar && onActivar(user)}
-                  className="cursor-pointer"
-                >
-                  Activar
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem
-                  onClick={() => onInactivar && onInactivar(user)}
-                  className="cursor-pointer"
-                >
-                  Inactivar
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
-    },
-  ];
-
   const table = useReactTable({
     data,
-    columns: localColumns,
+    columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -201,10 +74,10 @@ export function DataTable({
     <div className="w-full">
       <div className="flex items-center py-4">
         <Input
-          placeholder="Buscar usuarios..."
+          placeholder="Buscar..."
           value={globalFilter}
           onChange={(event) => setGlobalFilter(event.target.value)}
-          className="max-w-sm border-2 dark:border dark:border-default-700 dark:bg-[#09090b]"
+          className="max-w-sm border-b border-gray-200 dark:border dark:border-default-700 dark:bg-[#09090b]"
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -225,7 +98,6 @@ export function DataTable({
               .map((column) => (
                 <DropdownMenuCheckboxItem
                   key={column.id}
-                  className="capitalize"
                   checked={column.getIsVisible()}
                   onCheckedChange={(value) => column.toggleVisibility(!!value)}
                 >
@@ -235,8 +107,8 @@ export function DataTable({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="rounded-md dark:border dark:border-default-700 dark:bg-[#09090b]">
-        <Table className="w-full border-collapse ">
+      <div className="rounded-md">
+        <Table className="rounded-md dark:border dark:border-default-700 dark:bg-[#09090b]">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
@@ -264,8 +136,7 @@ export function DataTable({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  className="transition-colors duration-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-gray-200 dark:border-neutral-600"
+                  className="border-b border-gray-200 dark:border dark:border-default-700 dark:bg-[#09090b]"
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
@@ -283,7 +154,7 @@ export function DataTable({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={localColumns.length}
+                  colSpan={columns.length}
                   className="h-24 text-center"
                 >
                   No hay datos para mostrar.
@@ -293,7 +164,6 @@ export function DataTable({
           </TableBody>
         </Table>
       </div>
-
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
           {table.getFilteredSelectedRowModel().rows.length} de{" "}

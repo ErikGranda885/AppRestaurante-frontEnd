@@ -46,7 +46,10 @@ export function NavMain({
             >
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
-                  <SidebarMenuButton tooltip={item.title}>
+                  <SidebarMenuButton
+                    tooltip={item.title}
+                    className="hover:bg-[#fee7df] dark:hover:bg-[#4c3033]"
+                  >
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
                     <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -57,7 +60,10 @@ export function NavMain({
                     {item.items.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton asChild>
-                          <Link href={subItem.url}>
+                          <Link
+                            href={subItem.url}
+                            className="hover:bg-[#fee7df] dark:hover:bg-[#4c3033]"
+                          >
                             <span>{subItem.title}</span>
                           </Link>
                         </SidebarMenuSubButton>
@@ -73,7 +79,10 @@ export function NavMain({
                 asChild
                 tooltip={item.title}
               >
-                <Link href={item.url}>
+                <Link
+                  href={item.url}
+                  className="hover:bg-[#fee7df] dark:hover:bg-[#4c3033]"
+                >
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
                 </Link>

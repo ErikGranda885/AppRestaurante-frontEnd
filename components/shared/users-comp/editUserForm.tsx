@@ -163,7 +163,7 @@ export function EditUserForm({
                   className="dark:border dark:border-default-700 dark:bg-[#09090b]"
                 />
               </FormControl>
-              <FormMessage className="text-red-500" />
+              <FormMessage className="text-danger-500" />
             </FormItem>
           )}
         />
@@ -184,7 +184,7 @@ export function EditUserForm({
                   className="dark:border dark:border-default-700 dark:bg-[#09090b]"
                 />
               </FormControl>
-              <FormMessage className="text-red-500" />
+              <FormMessage className="text-danger-500" />
             </FormItem>
           )}
         />
@@ -219,7 +219,7 @@ export function EditUserForm({
                   </button>
                 </div>
               </FormControl>
-              <FormMessage className="text-red-500" />
+              <FormMessage className="text-danger-500" />
               <p className="text-xs text-gray-500 mt-1">
                 Deja el campo en blanco para mantener la contraseña actual.
               </p>
@@ -245,7 +245,7 @@ export function EditUserForm({
                   />
                 </div>
               </FormControl>
-              <FormMessage className="text-red-500" />
+              <FormMessage className="text-danger-500" />
             </FormItem>
           )}
         />

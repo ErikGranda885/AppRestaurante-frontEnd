@@ -57,7 +57,10 @@ export function NavAdmin({
                     {item.items.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton asChild>
-                          <Link href={subItem.url}>
+                          <Link
+                            href={subItem.url}
+                            className="hover:bg-[#fee7df] dark:hover:bg-[#4c3033]"
+                          >
                             <span>{subItem.title}</span>
                           </Link>
                         </SidebarMenuSubButton>
@@ -73,7 +76,10 @@ export function NavAdmin({
                 asChild
                 tooltip={item.title}
               >
-                <Link href={item.url}>
+                <Link
+                  href={item.url}
+                  className="hover:bg-[#fee7df] dark:hover:bg-[#4c3033]"
+                >
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
                 </Link>

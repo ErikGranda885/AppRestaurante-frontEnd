@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
-import { DataTable, DataUsers } from "@/components/shared/dataTable";
+import { DataTable } from "@/components/shared/dataTable";
 import {
   UserCheck,
   UserCog,
@@ -10,8 +10,8 @@ import {
   Info,
   CheckCircle,
   Upload,
+  MoreHorizontal,
 } from "lucide-react";
-
 import {
   HoverCard,
   HoverCardContent,
@@ -31,6 +31,24 @@ import { CreateUserForm } from "@/components/shared/users-comp/createUserForm";
 import { EditUserForm } from "@/components/shared/users-comp/editUserForm";
 import { BulkUploadDialog } from "@/components/shared/users-comp/cargaUsers";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ColumnDef } from "@tanstack/react-table";
+
+export type DataUsers = {
+  id: string;
+  usuario: string;
+  correo: string;
+  estado?: string;
+  rol: string;
+  rolNombre: string;
+};
 
 export default function Page() {
   const [roleOptions, setRoleOptions] = React.useState<Option[]>([]);
@@ -74,59 +92,7 @@ export default function Page() {
       });
   }, []);
 
-  // Cargar roles desde la API
-  React.useEffect(() => {
-    fetch("http://localhost:5000/roles")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Error al cargar roles");
-        }
-        return res.json();
-      })
-      .then((data: any) => {
-        const activeRoles = data.roles.filter(
-          (role: any) => role.est_rol === "Activo"
-        );
-        const options: Option[] = activeRoles.map((role: any) => ({
-          value: role.id_rol.toString(),
-          label: role.nom_rol,
-        }));
-        setRoleOptions(options);
-      })
-      .catch((err) => console.error("Error al cargar roles:", err));
-  }, []);
-
-  // Filtrado de usuarios según estado
-  const filteredUsers =
-    selectedState === ""
-      ? usuarios
-      : usuarios.filter(
-          (user) => user.estado?.toLowerCase() === selectedState.toLowerCase()
-        );
-
-  const handleCardClick = (estado: string) => {
-    if (selectedState.toLowerCase() === estado.toLowerCase()) {
-      setSelectedState("");
-    } else {
-      setSelectedState(estado);
-    }
-  };
-
-  const cardClass = (estado: string) =>
-    `bg-default-100 flex items-center justify-start pl-6 dark:bg-[#09090b] dark:border-2 dark:border-default-700 w-64 h-24 rounded-lg cursor-pointer transition-transform duration-300 hover:scale-105 ${
-      selectedState.toLowerCase() === estado.toLowerCase()
-        ? "ring-2 ring-[hsl(var(--secondary))] dark:ring-[hsl(var(--secondary))]"
-        : ""
-    }`;
-
-  const renderHoverContent = (mensaje: string) => (
-    <HoverCardContent className="w-60 p-3 bg-white dark:bg-black rounded-lg shadow-lg dark:border dark:border-default-700">
-      <div className="flex items-center space-x-2 ">
-        <Info className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-        <p className="text-sm text-gray-700 dark:text-gray-300">{mensaje}</p>
-      </div>
-    </HoverCardContent>
-  );
+  // Definición de las funciones de activar/inactivar
   const handleInactivar = (user: DataUsers) => {
     fetch(`http://localhost:5000/usuarios/inactivar/${user.id}`, {
       method: "PUT",
@@ -221,6 +187,164 @@ export default function Page() {
       });
   };
 
+  /* Definición de las columnas de la tabla */
+  const userColumns: ColumnDef<DataUsers>[] = [
+    {
+      accessorKey: "usuario",
+      header: "Nombre",
+      cell: ({ row }) => (
+        <div className="capitalize">{row.getValue("usuario")}</div>
+      ),
+    },
+    {
+      accessorKey: "correo",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Correo
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <div className="lowercase">{row.getValue("correo")}</div>
+      ),
+    },
+    {
+      accessorKey: "rolNombre",
+      header: () => <div className="text-right">Rol</div>,
+      cell: ({ row }) => (
+        <div className="text-right font-medium">
+          {row.getValue("rolNombre")}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "estado",
+      header: () => <div className="text-right">Estado</div>,
+      cell: ({ row }) => {
+        const estado = String(row.getValue("estado")).toLowerCase();
+        let estadoStyles = "border-gray-100 text-gray-100";
+        if (estado === "activo") {
+          estadoStyles =
+            "px-3 text-success  border-green-500 dark:bg-[#377cfb]/10 ";
+        } else if (estado === "inactivo") {
+          estadoStyles =
+            "px-2 text-default border-default  dark:bg-[#377cfb]/10 dark:text-default-400";
+        }
+        return (
+          <div className="text-right font-medium">
+            <span className={`border py-1 rounded ${estadoStyles}`}>
+              {row.getValue("estado")}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        const user = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="h-8 w-8 p-0"
+              >
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="bg-white dark:border dark:border-default-700 dark:bg-[#09090b] dark:text-white"
+            >
+              <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() => setEditUser(user)}
+                className="cursor-pointer"
+              >
+                Editar
+              </DropdownMenuItem>
+              {String(user.estado).toLowerCase() === "inactivo" ? (
+                <DropdownMenuItem
+                  onClick={() => handleActivar(user)}
+                  className="cursor-pointer"
+                >
+                  Activar
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  onClick={() => handleInactivar(user)}
+                  className="cursor-pointer"
+                >
+                  Inactivar
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
+  // Cargar roles desde la API
+  React.useEffect(() => {
+    fetch("http://localhost:5000/roles")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Error al cargar roles");
+        }
+        return res.json();
+      })
+      .then((data: any) => {
+        const activeRoles = data.roles.filter(
+          (role: any) => role.est_rol === "Activo"
+        );
+        const options: Option[] = activeRoles.map((role: any) => ({
+          value: role.id_rol.toString(),
+          label: role.nom_rol,
+        }));
+        setRoleOptions(options);
+      })
+      .catch((err) => console.error("Error al cargar roles:", err));
+  }, []);
+
+  // Filtrado de usuarios según estado
+  const filteredUsers =
+    selectedState === ""
+      ? usuarios
+      : usuarios.filter(
+          (user) => user.estado?.toLowerCase() === selectedState.toLowerCase()
+        );
+
+  const handleCardClick = (estado: string) => {
+    if (selectedState.toLowerCase() === estado.toLowerCase()) {
+      setSelectedState("");
+    } else {
+      setSelectedState(estado);
+    }
+  };
+
+  const cardClass = (estado: string) =>
+    `bg-default-100 flex items-center justify-start pl-6 dark:bg-[#09090b] dark:border-2 dark:border-default-700 w-64 h-24 rounded-lg cursor-pointer transition-transform duration-300 hover:scale-105 ${
+      selectedState.toLowerCase() === estado.toLowerCase()
+        ? "ring-2 ring-[hsl(var(--secondary))] dark:ring-[hsl(var(--secondary))]"
+        : ""
+    }`;
+
+  const renderHoverContent = (mensaje: string) => (
+    <HoverCardContent className="w-60 p-3 bg-white dark:bg-black rounded-lg shadow-lg dark:border dark:border-default-700">
+      <div className="flex items-center space-x-2 ">
+        <Info className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+        <p className="text-sm text-gray-700 dark:text-gray-300">{mensaje}</p>
+      </div>
+    </HoverCardContent>
+  );
+
   React.useEffect(() => {
     if (editUser) {
       setEditUserData(editUser);
@@ -249,7 +373,7 @@ export default function Page() {
                   className={cardClass("")}
                   onClick={() => handleCardClick("")}
                 >
-                  <div className="border-2 border-primary p-2 rounded-full  dark:bg-[#377cfb]/10 shadow-[0_0_10px_rgba(206,229,253,0.5)] dark:shadow-[0_0_10px_rgba(55,124,251,0.5)]">
+                  <div className="border-2 border-primary p-2 rounded-full dark:bg-[#377cfb]/10 shadow-[0_0_10px_rgba(206,229,253,0.5)] dark:shadow-[0_0_10px_rgba(55,124,251,0.5)]">
                     <Users
                       className="text-primary"
                       strokeWidth={2}
@@ -273,7 +397,7 @@ export default function Page() {
                   className={cardClass("Activo")}
                   onClick={() => handleCardClick("Activo")}
                 >
-                  <div className="border-2 p-2 rounded-full  dark:bg-[#66cc8a]/10 shadow-[0_0_10px_rgba(178,229,196,0.5)] dark:shadow-[0_0_10px_rgba(102,204,138,0.5)] border-success">
+                  <div className="border-2 p-2 rounded-full dark:bg-[#66cc8a]/10 shadow-[0_0_10px_rgba(178,229,196,0.5)] dark:shadow-[0_0_10px_rgba(102,204,138,0.5)] border-success">
                     <UserCheck
                       className="text-success"
                       strokeWidth={2}
@@ -303,7 +427,7 @@ export default function Page() {
                   className={cardClass("Inactivo")}
                   onClick={() => handleCardClick("Inactivo")}
                 >
-                  <div className="border-2 p-2 rounded-full  dark:bg-[#485248]/10 shadow-[0_0_10px_rgba(211,209,203,0.5)] dark:shadow-[0_0_10px_rgba(72,82,72,0.5)] border-default">
+                  <div className="border-2 p-2 rounded-full dark:bg-[#485248]/10 shadow-[0_0_10px_rgba(211,209,203,0.5)] dark:shadow-[0_0_10px_rgba(72,82,72,0.5)] border-default">
                     <UserX
                       className="text-default"
                       strokeWidth={2}
@@ -333,7 +457,7 @@ export default function Page() {
                   className={cardClass("Modificado")}
                   onClick={() => handleCardClick("Modificado")}
                 >
-                  <div className="border-2 p-2 rounded-full  dark:bg-[#ffbe00]/10 shadow-[0_0_10px_rgba(255,244,204,0.5)] dark:shadow-[0_0_10px_rgba(255,190,0,0.5)] border-warning">
+                  <div className="border-2 p-2 rounded-full dark:bg-[#ffbe00]/10 shadow-[0_0_10px_rgba(255,244,204,0.5)] dark:shadow-[0_0_10px_rgba(255,190,0,0.5)] border-warning">
                     <UserCog
                       className="text-warning"
                       strokeWidth={2}
@@ -378,6 +502,7 @@ export default function Page() {
               onClose={() => setOpenBulkUpload(false)}
             />
           )}
+
           {/* Crear Nuevo Usuario */}
           <div className="flex justify-end px-6 pt-5 pb-9 space-x-4">
             <Button
@@ -422,14 +547,13 @@ export default function Page() {
 
           {/* Tabla */}
           <div className="px-6 pb-4">
-            <DataTable
+            <DataTable<DataUsers>
               data={filteredUsers}
-              onEdit={(user) => setEditUser(user)}
-              onInactivar={handleInactivar}
-              onActivar={handleActivar}
+              columns={userColumns}
             />
           </div>
         </div>
+
         {/* Editar Usuario */}
         {editUser && (
           <Dialog
