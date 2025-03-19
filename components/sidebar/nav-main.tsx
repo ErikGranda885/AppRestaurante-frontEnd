@@ -48,7 +48,7 @@ export function NavMain({
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton
                     tooltip={item.title}
-                    className="hover:bg-[#fee7df] dark:hover:bg-[#4c3033]"
+                    className="hover:bg-secondary"
                   >
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
@@ -56,13 +56,13 @@ export function NavMain({
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <SidebarMenuSub>
+                  <SidebarMenuSub className="dark:border-[#27272a]">
                     {item.items.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton asChild>
                           <Link
                             href={subItem.url}
-                            className="hover:bg-[#fee7df] dark:hover:bg-[#4c3033]"
+                            className="hover:bg-secondary"
                           >
                             <span>{subItem.title}</span>
                           </Link>
@@ -75,20 +75,14 @@ export function NavMain({
             </Collapsible>
           ) : (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                asChild
-                tooltip={item.title}
-              >
-                <Link
-                  href={item.url}
-                  className="hover:bg-[#fee7df] dark:hover:bg-[#4c3033]"
-                >
+              <SidebarMenuButton asChild tooltip={item.title}>
+                <Link href={item.url} className="hover:bg-secondary">
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          )
+          ),
         )}
       </SidebarMenu>
     </SidebarGroup>

@@ -139,7 +139,7 @@ export function EditCategoryForm({
         <FormField
           control={form.control}
           name="nombre"
-          render={({ field, fieldState: { error } }) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel className="text-black dark:text-white">
                 Nombre de la Categoría
@@ -148,14 +148,10 @@ export function EditCategoryForm({
                 <Input
                   placeholder="Ej. Electrónica"
                   {...field}
-                  className={`pr-10 dark:bg-[#09090b] ${
-                    error
-                      ? "border-2 border-[var(--error-per)]"
-                      : "dark:border dark:border-default-700"
-                  }`}
+                  className="dark:border dark:border-default-700 dark:bg-[#09090b]"
                 />
               </FormControl>
-              <FormMessage className="error-text" />
+              <FormMessage className="text-danger-500" />
             </FormItem>
           )}
         />
@@ -164,7 +160,7 @@ export function EditCategoryForm({
         <FormField
           control={form.control}
           name="descripcion"
-          render={({ field, fieldState: { error } }) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel className="text-black dark:text-white">
                 Descripción
@@ -173,14 +169,10 @@ export function EditCategoryForm({
                 <Input
                   placeholder="Ingresa una breve descripción..."
                   {...field}
-                  className={`pr-10 dark:bg-[#09090b] ${
-                    error
-                      ? "border-2 border-[var(--error-per)]"
-                      : "dark:border dark:border-default-700"
-                  }`}
+                  className="dark:border dark:border-default-700 dark:bg-[#09090b]"
                 />
               </FormControl>
-              <FormMessage className="error-text" />
+              <FormMessage className="text-danger-500" />
             </FormItem>
           )}
         />

@@ -60,10 +60,7 @@ export function Combobox({
   console.log("Query:", query, "Filtered Items:", filteredItems);
 
   return (
-    <Popover
-      open={open}
-      onOpenChange={handleOpenChange}
-    >
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -77,11 +74,11 @@ export function Combobox({
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0 bg-white dark:border dark:border-default-700 dark:bg-[#09090b] dark:text-white">
+      <PopoverContent className="border-border w-[200px] bg-white p-0 dark:bg-[#09090b] dark:text-white">
         <Command>
           <CommandInput
             placeholder={placeholder}
-            className="h-9 "
+            className="h-9"
             value={query}
             onValueChange={(val) => {
               setQuery(val);
@@ -100,7 +97,7 @@ export function Combobox({
                     const selectedId = selectedValue.split(" ")[0];
                     // Si se selecciona el mismo id, se limpia; de lo contrario, se guarda el id.
                     onChange(
-                      String(selectedId) === String(value) ? "" : selectedId
+                      String(selectedId) === String(value) ? "" : selectedId,
                     );
                     setOpen(false);
                   }}
@@ -111,7 +108,7 @@ export function Combobox({
                       "ml-auto",
                       String(value) === String(item.value)
                         ? "opacity-100"
-                        : "opacity-0"
+                        : "opacity-0",
                     )}
                   />
                 </CommandItem>

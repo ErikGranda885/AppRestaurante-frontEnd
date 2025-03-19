@@ -44,7 +44,7 @@ export function ToastMessage({
     toast.custom(
       ({ id, visible }) => (
         <div
-          className={`p-4 rounded shadow-lg transition-opacity duration-300 ${
+          className={`rounded p-4 shadow-lg transition-opacity duration-300 ${
             visible ? "opacity-100" : "opacity-0"
           } ${getToastStyle()}`}
         >
@@ -68,22 +68,16 @@ export function ToastMessage({
           )}
         </div>
       ),
-      { duration: 5000 }
+      { duration: 5000 },
     );
   };
 
   return (
     <>
-      <Button
-        variant="outline"
-        onClick={showToast}
-      >
+      <Button variant="outline" onClick={showToast}>
         {buttonText}
       </Button>
-      <Toaster
-        position="bottom-right"
-        className="p-4 z-50"
-      />
+      <Toaster position="bottom-right" className="z-50 p-4" />
     </>
   );
 }

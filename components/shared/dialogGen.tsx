@@ -28,19 +28,11 @@ export function GeneralDialog({
   children,
 }: GeneralDialogProps) {
   return (
-    <Dialog
-      open={open}
-      onOpenChange={onOpenChange}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button
-          variant={"primary"}
-          className="bg-primary-500 text-white dark:text-white "
-        >
-          {triggerText}
-        </Button>
+        <Button>{triggerText}</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] dark:border dark:border-default-700 dark:bg-[#09090b] dark:text-white">
+      <DialogContent className="border-border">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}

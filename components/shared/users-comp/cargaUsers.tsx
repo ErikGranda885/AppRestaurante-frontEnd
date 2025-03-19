@@ -54,6 +54,9 @@ export function BulkUploadDialog({
           const headers = results.meta.fields || [];
           if (!validateHeaders(headers)) {
             setPreviewData([]);
+            toast.error(
+              "El archivo CSV contiene columnas incompletas o incorrectas",
+            );
             return;
           }
           setPreviewData(results.data);
@@ -86,7 +89,7 @@ export function BulkUploadDialog({
             return;
           }
           const headers = jsonData[0].map((h: any) =>
-            String(h).toLowerCase().trim()
+            String(h).toLowerCase().trim(),
           );
           if (!validateHeaders(headers)) {
             toast.custom(
@@ -94,25 +97,24 @@ export function BulkUploadDialog({
                 <div
                   className={`${
                     t.visible ? "animate-enter" : "animate-leave"
-                  } relative flex w-96 items-start gap-3 p-4 bg-red-50 border border-red-400 rounded-lg shadow-lg`}
+                  } relative flex w-96 items-start gap-3 rounded-lg border border-red-400 bg-red-50 p-4 shadow-lg`}
                   style={{ animationDuration: "3s" }}
                 >
-                  <CheckCircle className="w-6 h-6 text-red-500 mt-1" />
+                  <CheckCircle className="mt-1 h-6 w-6 text-red-500" />
                   <div className="flex-1">
-                    <p className="text-red-500 text-sm font-semibold">Error</p>
+                    <p className="text-sm font-semibold text-red-500">Error</p>
                     <p className="text-sm text-red-500/80">
                       El archivo XLSX contiene columnas incompletas o con
                       encabezados incorrectos.
                     </p>
                   </div>
-                  <div className="absolute bottom-0 left-0 w-full h-[3px] bg-red-400/20">
+                  <div className="absolute bottom-0 left-0 h-[3px] w-full bg-red-400/20">
                     <div className="progress-bar h-full bg-red-400" />
                   </div>
                 </div>
               ),
-              { duration: 3000, position: "top-right" }
+              { duration: 3000, position: "top-right" },
             );
-
             setPreviewData([]);
             return;
           }
@@ -149,13 +151,24 @@ export function BulkUploadDialog({
     window.open("http://localhost:5000/usuarios/plantilla", "_blank");
   };
 
-  // Actualizar el valor del rol en la fila previewData si se modifica desde el select
-  const handleRoleChange = (rowIndex: number, newRole: string) => {
-    setPreviewData((prev) => {
-      const newData = [...prev];
-      newData[rowIndex] = { ...newData[rowIndex], rol: newRole };
-      return newData;
-    });
+  // Función para manejar el drag & drop
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const droppedFiles = e.dataTransfer.files;
+    if (droppedFiles && droppedFiles.length > 0) {
+      // Simulamos el cambio del input
+      const event = {
+        target: { files: droppedFiles },
+      } as React.ChangeEvent<HTMLInputElement>;
+      handleFileChange(event);
+      e.dataTransfer.clearData();
+    }
   };
 
   const handleUpload = async () => {
@@ -173,7 +186,7 @@ export function BulkUploadDialog({
           if (isNaN(Number(roleValue))) {
             const matching = roleOptions.find(
               (option) =>
-                option.label.toLowerCase() === String(roleValue).toLowerCase()
+                option.label.toLowerCase() === String(roleValue).toLowerCase(),
             );
             if (matching) {
               processedRow["rol_usu"] = Number(matching.value);
@@ -195,8 +208,6 @@ export function BulkUploadDialog({
       const data = await res.json();
 
       if (!res.ok) {
-        // Si la API retorna errores, por ejemplo, en data.message o data.errors
-        // Puedes mostrar un toast con el error.
         const errorMsg =
           data.message ||
           (data.errors &&
@@ -205,7 +216,6 @@ export function BulkUploadDialog({
         throw new Error(errorMsg);
       }
 
-      // Si se procesaron usuarios, mostrar mensaje de éxito
       if (data.usuarios && data.usuarios.length > 0) {
         onSuccess(data.usuarios);
         toast.custom(
@@ -213,28 +223,27 @@ export function BulkUploadDialog({
             <div
               className={`${
                 t.visible ? "animate-enter" : "animate-leave"
-              } relative flex w-96 items-start gap-3 p-4 bg-[#F0FFF4] border border-[#4ADE80] rounded-lg shadow-lg`}
+              } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
               style={{ animationDuration: "3s" }}
             >
-              <CheckCircle className="w-6 h-6 text-[#166534] mt-1" />
+              <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
               <div className="flex-1">
-                <p className="text-[#166534] text-sm font-semibold">
+                <p className="text-sm font-semibold text-[#166534]">
                   Mensaje Informativo
                 </p>
                 <p className="text-sm text-[#166534]/80">
                   Usuarios cargados exitosamente.
                 </p>
               </div>
-              <div className="absolute bottom-0 left-0 w-full h-[3px] bg-[#4ADE80]/20">
+              <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
                 <div className="progress-bar h-full bg-[#4ADE80]" />
               </div>
             </div>
           ),
-          { duration: 2000, position: "top-right" }
+          { duration: 2000, position: "top-right" },
         );
       }
 
-      // Si la API retornó errores, también los mostramos
       if (data.errors && data.errors.length > 0) {
         const errorList = data.errors
           .map((err: any) => err.error || JSON.stringify(err))
@@ -249,22 +258,22 @@ export function BulkUploadDialog({
           <div
             className={`${
               t.visible ? "animate-enter" : "animate-leave"
-            } relative flex w-96 items-start gap-3 p-4 bg-red-50 border border-red-400 rounded-lg shadow-lg`}
+            } relative flex w-96 items-start gap-3 rounded-lg border border-red-400 bg-red-50 p-4 shadow-lg`}
             style={{ animationDuration: "3s" }}
           >
-            <CheckCircle className="w-6 h-6 text-red-500 mt-1" />
+            <CheckCircle className="mt-1 h-6 w-6 text-red-500" />
             <div className="flex-1">
-              <p className="text-red-500 text-sm font-semibold">Error</p>
+              <p className="text-sm font-semibold text-red-500">Error</p>
               <p className="text-sm text-red-500/80">
                 Ha ocurrido un error: {error.message}.
               </p>
             </div>
-            <div className="absolute bottom-0 left-0 w-full h-[3px] bg-red-400/20">
+            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-red-400/20">
               <div className="progress-bar h-full bg-red-400" />
             </div>
           </div>
         ),
-        { duration: 3000, position: "top-right" }
+        { duration: 3000, position: "top-right" },
       );
     } finally {
       setLoading(false);
@@ -272,21 +281,18 @@ export function BulkUploadDialog({
   };
 
   return (
-    <Dialog
-      open
-      onOpenChange={onClose}
-    >
-      <DialogContent className="sm:max-w-3xl dark:border dark:border-default-700 dark:bg-[#09090b]">
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="border-border dark:bg-[#09090b] sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Carga Masiva de Usuarios</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           {/* Instrucciones */}
-          <div className="bg-gray-100 p-4 rounded dark:border-none  dark:bg-[#1E1E1E] dark:text-white">
-            <h2 className="text-lg font-bold mb-2 dark:text-gray-100">
+          <div className="rounded bg-gray-100 p-4 dark:border-none dark:bg-[#1E1E1E] dark:text-white">
+            <h2 className="mb-2 font-mono dark:text-gray-100">
               Pasos para la carga masiva:
             </h2>
-            <ol className="list-decimal list-inside text-sm text-gray-700 dark:text-white">
+            <ol className="list-inside list-decimal text-sm text-gray-700 dark:text-white">
               <li>
                 Descarga la plantilla Excel haciendo clic en el botón{" "}
                 <span className="font-semibold dark:text-primary">
@@ -297,32 +303,24 @@ export function BulkUploadDialog({
               <li>
                 Llena la plantilla. En la columna{" "}
                 <strong className="dark:text-primary">rol_usu</strong> se
-                mostrará un menú desplegable con los roles disponibles (generado
-                dinámicamente desde la base de datos).
+                mostrará un menú desplegable con los roles disponibles.
               </li>
               <li>
-                Guarda el archivo y selecciónalo haciendo clic en{" "}
-                <span className="font-semibold dark:text-primary">
-                  Seleccionar archivo
-                </span>
-                .
+                Guarda el archivo y selecciónalo arrastrándolo a la zona o
+                haciendo click.
               </li>
               <li>Verifica la vista previa de los datos en la tabla.</li>
               <li>
                 Si todo es correcto, haz clic en{" "}
-                <span className="font-semibold dark:text-primary">Cargar</span>{" "}
+                <span className="font-semibold dark:text-primary">Guardar Usuarios</span>{" "}
                 para subir la información.
               </li>
             </ol>
-            <Button
-              variant="primary"
-              className="mt-2 bg-default-500"
-              onClick={handleDownloadTemplate}
-            >
+            <Button className="mt-2" onClick={handleDownloadTemplate}>
               Descargar plantilla
             </Button>
           </div>
-          {/* Selector de archivo */}
+          {/* Zona de arrastre para seleccionar archivo */}
           <div>
             <input
               type="file"
@@ -331,22 +329,33 @@ export function BulkUploadDialog({
               style={{ display: "none" }}
               accept=".csv, .xlsx"
             />
-            <Button onClick={handleUploadClick}>
-              {file ? "Cambiar archivo" : "Seleccionar archivo CSV/XLSX"}
-            </Button>
-            {file && (
-              <p className="mt-2 text-sm">Archivo seleccionado: {file.name}</p>
-            )}
+            <div
+              onClick={handleUploadClick}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-6 hover:border-gray-400 dark:border-default-700 dark:text-white dark:hover:border-gray-500"
+            >
+              <p className="text-gray-500">
+                Arrastra y suelta el archivo CSV/XLSX aquí o haz clic para
+                seleccionarlo.
+              </p>
+              {file && (
+                <p className="mt-2 text-sm text-gray-700 dark:text-white">
+                  Archivo seleccionado: {file.name}
+                </p>
+              )}
+            </div>
           </div>
+          {/* Vista previa de los datos */}
           {previewData.length > 0 ? (
-            <div className="overflow-y-auto border mt-4 max-h-[20vh]">
-              <table className="min-w-full border-collapse ">
+            <div className="mt-4 max-h-[20vh] overflow-y-auto border">
+              <table className="min-w-full border-collapse">
                 <thead className="bg-gray-50 dark:bg-gray-100">
                   <tr>
                     {Object.keys(previewData[0]).map((header, index) => (
                       <th
                         key={index}
-                        className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border border-gray-200 dark:border-white dark:text-black"
+                        className="border border-gray-200 px-4 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:border-white dark:text-black"
                       >
                         {header}
                       </th>
@@ -355,10 +364,7 @@ export function BulkUploadDialog({
                 </thead>
                 <tbody>
                   {previewData.map((row, rowIndex) => (
-                    <tr
-                      key={rowIndex}
-                      className="border border-gray-200"
-                    >
+                    <tr key={rowIndex} className="border border-gray-200">
                       {Object.keys(row).map((header, cellIndex) => {
                         const key = header.toLowerCase();
                         if (key === "rol_usu") {
@@ -366,10 +372,10 @@ export function BulkUploadDialog({
                           return (
                             <td
                               key={cellIndex}
-                              className="px-4 py-2 text-sm text-gray-700 border border-gray-200 dark:text-white"
+                              className="border border-gray-200 px-4 py-2 text-sm text-gray-700 dark:text-white"
                             >
                               {roleOptions.find(
-                                (option) => option.value === String(rolValue)
+                                (option) => option.value === String(rolValue),
                               )?.label || String(rolValue)}
                             </td>
                           );
@@ -377,7 +383,7 @@ export function BulkUploadDialog({
                           return (
                             <td
                               key={cellIndex}
-                              className="px-4 py-2 text-sm text-gray-700 border border-gray-200 dark:text-white"
+                              className="border border-gray-200 px-4 py-2 text-sm text-gray-700 dark:text-white"
                             >
                               {row[header]}
                             </td>
@@ -397,18 +403,14 @@ export function BulkUploadDialog({
         </div>
         <DialogFooter>
           <div className="flex justify-end space-x-2">
-            <Button
-              variant="primary"
-              className="bg-default-500"
-              onClick={onClose}
-            >
+            <Button variant={"secondary"} onClick={onClose}>
               Cancelar
             </Button>
             <Button
               onClick={handleUpload}
               disabled={loading || previewData.length === 0}
             >
-              {loading ? "Cargando..." : "Cargar"}
+              {loading ? "Cargando..." : "Guardar Usuarios"}
             </Button>
           </div>
         </DialogFooter>

@@ -5,18 +5,13 @@ import { DataTable } from "@/components/shared/dataTable";
 import {
   UserCheck,
   UserCog,
-  Users,
   UserX,
-  Info,
   CheckCircle,
   Upload,
   MoreHorizontal,
+  TrendingUpIcon,
 } from "lucide-react";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
+
 import {
   Dialog,
   DialogContent,
@@ -40,6 +35,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ColumnDef } from "@tanstack/react-table";
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export type DataUsers = {
   id: string;
@@ -53,14 +55,7 @@ export type DataUsers = {
 export default function Page() {
   const [roleOptions, setRoleOptions] = React.useState<Option[]>([]);
   const [usuarios, setUsuarios] = React.useState<DataUsers[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
-  const [editUserData, setEditUserData] = React.useState<DataUsers | null>(
-    null
-  );
   const [openBulkUpload, setOpenBulkUpload] = React.useState(false);
-
-  // Estados para filtro, edición y creación
   const [selectedState, setSelectedState] = React.useState<string>("");
   const [editUser, setEditUser] = React.useState<DataUsers | null>(null);
   const [openCreate, setOpenCreate] = React.useState(false);
@@ -84,15 +79,12 @@ export default function Page() {
           rolNombre: item.rol_usu.nom_rol,
         }));
         setUsuarios(transformed);
-        setLoading(false);
       })
       .catch((err) => {
-        setError(err.message);
-        setLoading(false);
+        console.error("Error al cargar usuarios:", err);
       });
   }, []);
 
-  // Definición de las funciones de activar/inactivar
   const handleInactivar = (user: DataUsers) => {
     fetch(`http://localhost:5000/usuarios/inactivar/${user.id}`, {
       method: "PUT",
@@ -107,31 +99,33 @@ export default function Page() {
       })
       .then(() => {
         setUsuarios((prev) =>
-          prev.map((u) => (u.id === user.id ? { ...u, estado: "Inactivo" } : u))
+          prev.map((u) =>
+            u.id === user.id ? { ...u, estado: "Inactivo" } : u,
+          ),
         );
         toast.custom(
           (t) => (
             <div
               className={`${
                 t.visible ? "animate-enter" : "animate-leave"
-              } relative flex w-96 items-start gap-3 p-4 bg-[#F0FFF4] border border-[#4ADE80] rounded-lg shadow-lg`}
+              } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
               style={{ animationDuration: "3s" }}
             >
-              <CheckCircle className="w-6 h-6 text-[#166534] mt-1" />
+              <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
               <div className="flex-1">
-                <p className="text-[#166534] text-sm font-semibold">
+                <p className="text-sm font-semibold text-[#166534]">
                   Mensaje Informativo
                 </p>
                 <p className="text-sm text-[#166534]/80">
                   Se ha inactivado el usuario exitosamente.
                 </p>
               </div>
-              <div className="absolute bottom-0 left-0 w-full h-[3px] bg-[#4ADE80]/20">
+              <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
                 <div className="progress-bar h-full bg-[#4ADE80]" />
               </div>
             </div>
           ),
-          { duration: 2000, position: "top-right" }
+          { duration: 2000, position: "top-right" },
         );
       })
       .catch((err) => {
@@ -139,7 +133,6 @@ export default function Page() {
         console.error("Error al inactivar usuario:", err);
       });
   };
-
   const handleActivar = (user: DataUsers) => {
     fetch(`http://localhost:5000/usuarios/activar/${user.id}`, {
       method: "PUT",
@@ -154,31 +147,31 @@ export default function Page() {
       })
       .then(() => {
         setUsuarios((prev) =>
-          prev.map((u) => (u.id === user.id ? { ...u, estado: "Activo" } : u))
+          prev.map((u) => (u.id === user.id ? { ...u, estado: "Activo" } : u)),
         );
         toast.custom(
           (t) => (
             <div
               className={`${
                 t.visible ? "animate-enter" : "animate-leave"
-              } relative flex w-96 items-start gap-3 p-4 bg-[#F0FFF4] border border-[#4ADE80] rounded-lg shadow-lg`}
+              } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
               style={{ animationDuration: "3s" }}
             >
-              <CheckCircle className="w-6 h-6 text-[#166534] mt-1" />
+              <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
               <div className="flex-1">
-                <p className="text-[#166534] text-sm font-semibold">
+                <p className="text-sm font-semibold text-[#166534]">
                   Mensaje Informativo
                 </p>
                 <p className="text-sm text-[#166534]/80">
                   Se ha activado el usuario exitosamente.
                 </p>
               </div>
-              <div className="absolute bottom-0 left-0 w-full h-[3px] bg-[#4ADE80]/20">
+              <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
                 <div className="progress-bar h-full bg-[#4ADE80]" />
               </div>
             </div>
           ),
-          { duration: 2000, position: "top-right" }
+          { duration: 2000, position: "top-right" },
         );
       })
       .catch((err) => {
@@ -186,7 +179,6 @@ export default function Page() {
         console.error("Error al activar usuario:", err);
       });
   };
-
   /* Definición de las columnas de la tabla */
   const userColumns: ColumnDef<DataUsers>[] = [
     {
@@ -227,14 +219,13 @@ export default function Page() {
         let estadoStyles = "border-gray-100 text-gray-100";
         if (estado === "activo") {
           estadoStyles =
-            "px-3 text-success  border-green-500 dark:bg-[#377cfb]/10 ";
+            "px-3.5 success-text  border-[--success-per] dark:bg-[#377cfb]/10  ";
         } else if (estado === "inactivo") {
-          estadoStyles =
-            "px-2 text-default border-default  dark:bg-[#377cfb]/10 dark:text-default-400";
+          estadoStyles = "px-2 error-text border-[--error-text]  ";
         }
         return (
           <div className="text-right font-medium">
-            <span className={`border py-1 rounded ${estadoStyles}`}>
+            <span className={`rounded border py-1 ${estadoStyles}`}>
               {row.getValue("estado")}
             </span>
           </div>
@@ -249,18 +240,12 @@ export default function Page() {
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="h-8 w-8 p-0"
-              >
+              <Button variant="ghost" className="h-8 w-8 p-0">
                 <span className="sr-only">Open menu</span>
                 <MoreHorizontal />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="bg-white dark:border dark:border-default-700 dark:bg-[#09090b] dark:text-white"
-            >
+            <DropdownMenuContent align="end" className="border-border">
               <DropdownMenuLabel>Acciones</DropdownMenuLabel>
               <DropdownMenuItem
                 onClick={() => setEditUser(user)}
@@ -290,7 +275,6 @@ export default function Page() {
       },
     },
   ];
-
   // Cargar roles desde la API
   React.useEffect(() => {
     fetch("http://localhost:5000/roles")
@@ -302,7 +286,7 @@ export default function Page() {
       })
       .then((data: any) => {
         const activeRoles = data.roles.filter(
-          (role: any) => role.est_rol === "Activo"
+          (role: any) => role.est_rol === "Activo",
         );
         const options: Option[] = activeRoles.map((role: any) => ({
           value: role.id_rol.toString(),
@@ -312,13 +296,12 @@ export default function Page() {
       })
       .catch((err) => console.error("Error al cargar roles:", err));
   }, []);
-
   // Filtrado de usuarios según estado
   const filteredUsers =
     selectedState === ""
       ? usuarios
       : usuarios.filter(
-          (user) => user.estado?.toLowerCase() === selectedState.toLowerCase()
+          (user) => user.estado?.toLowerCase() === selectedState.toLowerCase(),
         );
 
   const handleCardClick = (estado: string) => {
@@ -328,32 +311,6 @@ export default function Page() {
       setSelectedState(estado);
     }
   };
-
-  const cardClass = (estado: string) =>
-    `bg-default-100 flex items-center justify-start pl-6 dark:bg-[#09090b] dark:border-2 dark:border-default-700 w-64 h-24 rounded-lg cursor-pointer transition-transform duration-300 hover:scale-105 ${
-      selectedState.toLowerCase() === estado.toLowerCase()
-        ? "ring-2 ring-[hsl(var(--secondary))] dark:ring-[hsl(var(--secondary))]"
-        : ""
-    }`;
-
-  const renderHoverContent = (mensaje: string) => (
-    <HoverCardContent className="w-60 p-3 bg-white dark:bg-black rounded-lg shadow-lg dark:border dark:border-default-700">
-      <div className="flex items-center space-x-2 ">
-        <Info className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-        <p className="text-sm text-gray-700 dark:text-gray-300">{mensaje}</p>
-      </div>
-    </HoverCardContent>
-  );
-
-  React.useEffect(() => {
-    if (editUser) {
-      setEditUserData(editUser);
-    }
-  }, [editUser]);
-
-  if (loading) return <div className="p-4">Cargando...</div>;
-  if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
-
   return (
     <>
       <Toaster position="top-right" />
@@ -363,122 +320,100 @@ export default function Page() {
         submenu={false}
         isLoading={false}
       >
-        <div className="bg-[hsl(var(--card))] dark:bg-[#09090b] w-full h-full rounded-lg">
-          {/* Tarjetas de filtro */}
-          <div className="flex flex-row gap-3 justify-between px-6 pt-6">
+        <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#09090b]">
+          <div className="grid grid-cols-1 gap-4 px-6 pt-6 md:grid-cols-4">
             {/* Tarjeta: Usuarios Totales */}
-            <HoverCard>
-              <HoverCardTrigger asChild>
-                <div
-                  className={cardClass("")}
-                  onClick={() => handleCardClick("")}
-                >
-                  <div className="border-2 border-primary p-2 rounded-full dark:bg-[#377cfb]/10 shadow-[0_0_10px_rgba(206,229,253,0.5)] dark:shadow-[0_0_10px_rgba(55,124,251,0.5)]">
-                    <Users
-                      className="text-primary"
-                      strokeWidth={2}
-                    />
-                  </div>
-                  <div className="flex flex-col pl-3">
-                    <h1 className="font-bold text-sm text-gray-800 dark:text-gray-200">
-                      Usuarios Totales
-                    </h1>
-                    <h3>{usuarios.length}</h3>
-                  </div>
-                </div>
-              </HoverCardTrigger>
-              {renderHoverContent("Muestra todos los usuarios.")}
-            </HoverCard>
+            <Card
+              onClick={() => handleCardClick("")}
+              className={`dark:border-border cursor-pointer transition-shadow hover:shadow-lg ${
+                selectedState === "" ? "ring-2 ring-secondary" : ""
+              }`}
+            >
+              <CardHeader>
+                <CardTitle className="text-lg">Usuarios Totales</CardTitle>
+                <CardDescription className="text-sm">
+                  {usuarios.length} usuarios
+                </CardDescription>
+              </CardHeader>
+              <CardFooter className="flex justify-end">
+                <TrendingUpIcon className="h-5 w-5" />
+              </CardFooter>
+            </Card>
 
             {/* Tarjeta: Usuarios Activos */}
-            <HoverCard>
-              <HoverCardTrigger asChild>
-                <div
-                  className={cardClass("Activo")}
-                  onClick={() => handleCardClick("Activo")}
-                >
-                  <div className="border-2 p-2 rounded-full dark:bg-[#66cc8a]/10 shadow-[0_0_10px_rgba(178,229,196,0.5)] dark:shadow-[0_0_10px_rgba(102,204,138,0.5)] border-success">
-                    <UserCheck
-                      className="text-success"
-                      strokeWidth={2}
-                    />
-                  </div>
-                  <div className="flex flex-col pl-3">
-                    <h1 className="font-bold text-sm text-gray-800 dark:text-gray-200">
-                      Usuarios Activos
-                    </h1>
-                    <h3>
-                      {
-                        usuarios.filter(
-                          (user) => user.estado?.toLowerCase() === "activo"
-                        ).length
-                      }
-                    </h3>
-                  </div>
-                </div>
-              </HoverCardTrigger>
-              {renderHoverContent("Filtra usuarios activos.")}
-            </HoverCard>
+            <Card
+              onClick={() => handleCardClick("Activo")}
+              className={`dark:border-border cursor-pointer transition-shadow hover:shadow-lg ${
+                selectedState.toLowerCase() === "activo"
+                  ? "ring-2 ring-secondary"
+                  : ""
+              }`}
+            >
+              <CardHeader>
+                <CardTitle className="text-lg">Usuarios Activos</CardTitle>
+                <CardDescription className="text-sm">
+                  {
+                    usuarios.filter(
+                      (user) => user.estado?.toLowerCase() === "activo",
+                    ).length
+                  }{" "}
+                  activos
+                </CardDescription>
+              </CardHeader>
+              <CardFooter className="flex justify-end">
+                <UserCheck className="success-text h-5 w-5" />
+              </CardFooter>
+            </Card>
 
             {/* Tarjeta: Usuarios Inactivos */}
-            <HoverCard>
-              <HoverCardTrigger asChild>
-                <div
-                  className={cardClass("Inactivo")}
-                  onClick={() => handleCardClick("Inactivo")}
-                >
-                  <div className="border-2 p-2 rounded-full dark:bg-[#485248]/10 shadow-[0_0_10px_rgba(211,209,203,0.5)] dark:shadow-[0_0_10px_rgba(72,82,72,0.5)] border-default">
-                    <UserX
-                      className="text-default"
-                      strokeWidth={2}
-                    />
-                  </div>
-                  <div className="flex flex-col pl-3">
-                    <h1 className="font-bold text-sm text-gray-800 dark:text-gray-200">
-                      Usuarios Inactivos
-                    </h1>
-                    <h3>
-                      {
-                        usuarios.filter(
-                          (user) => user.estado?.toLowerCase() === "inactivo"
-                        ).length
-                      }
-                    </h3>
-                  </div>
-                </div>
-              </HoverCardTrigger>
-              {renderHoverContent("Filtra usuarios inactivos.")}
-            </HoverCard>
+            <Card
+              onClick={() => handleCardClick("Inactivo")}
+              className={`dark:border-border cursor-pointer transition-shadow hover:shadow-lg ${
+                selectedState.toLowerCase() === "inactivo"
+                  ? "ring-2 ring-secondary"
+                  : ""
+              }`}
+            >
+              <CardHeader>
+                <CardTitle className="text-lg">Usuarios Inactivos</CardTitle>
+                <CardDescription className="text-sm">
+                  {
+                    usuarios.filter(
+                      (user) => user.estado?.toLowerCase() === "inactivo",
+                    ).length
+                  }{" "}
+                  inactivos
+                </CardDescription>
+              </CardHeader>
+              <CardFooter className="flex justify-end">
+                <UserX className="error-text h-5 w-5" />
+              </CardFooter>
+            </Card>
 
             {/* Tarjeta: Usuarios Modificados */}
-            <HoverCard>
-              <HoverCardTrigger asChild>
-                <div
-                  className={cardClass("Modificado")}
-                  onClick={() => handleCardClick("Modificado")}
-                >
-                  <div className="border-2 p-2 rounded-full dark:bg-[#ffbe00]/10 shadow-[0_0_10px_rgba(255,244,204,0.5)] dark:shadow-[0_0_10px_rgba(255,190,0,0.5)] border-warning">
-                    <UserCog
-                      className="text-warning"
-                      strokeWidth={2}
-                    />
-                  </div>
-                  <div className="flex flex-col pl-3">
-                    <h1 className="font-bold text-sm text-gray-800 dark:text-gray-200">
-                      Usuarios Modificados
-                    </h1>
-                    <h3>
-                      {
-                        usuarios.filter(
-                          (user) => user.estado?.toLowerCase() === "modificado"
-                        ).length
-                      }
-                    </h3>
-                  </div>
-                </div>
-              </HoverCardTrigger>
-              {renderHoverContent("Filtra usuarios modificados.")}
-            </HoverCard>
+            <Card
+              onClick={() => handleCardClick("Modificado")}
+              className={`dark:border-border cursor-pointer transition-shadow hover:shadow-lg ${
+                selectedState.toLowerCase() === "modificado"
+                  ? "ring-2 ring-secondary"
+                  : ""
+              }`}
+            >
+              <CardHeader>
+                <CardTitle className="text-lg">Usuarios Modificados</CardTitle>
+                <CardDescription className="text-sm">
+                  {
+                    usuarios.filter(
+                      (user) => user.estado?.toLowerCase() === "modificado",
+                    ).length
+                  }{" "}
+                  modificados
+                </CardDescription>
+              </CardHeader>
+              <CardFooter className="flex justify-end">
+                <UserCog className="h-5 w-5 text-yellow-500" />
+              </CardFooter>
+            </Card>
           </div>
 
           {/* Diálogo para carga masiva */}
@@ -494,7 +429,7 @@ export default function Page() {
                   rol: u.rol_usu.toString(),
                   rolNombre:
                     roleOptions.find(
-                      (option) => option.value === u.rol_usu.toString()
+                      (option) => option.value === u.rol_usu.toString(),
                     )?.label || u.rol_usu.toString(),
                 }));
                 setUsuarios((prev) => [...prev, ...formattedUsers]);
@@ -504,13 +439,9 @@ export default function Page() {
           )}
 
           {/* Crear Nuevo Usuario */}
-          <div className="flex justify-end px-6 pt-5 pb-9 space-x-4">
-            <Button
-              onClick={() => setOpenBulkUpload(true)}
-              variant={"secondary"}
-              className="bg-secondary-500 text-white dark:text-white"
-            >
-              <Upload className="w-4 h-4 mr-2" />
+          <div className="flex justify-end space-x-4 px-6 pb-4 pt-5">
+            <Button onClick={() => setOpenBulkUpload(true)}>
+              <Upload className="mr-2 h-4 w-4" />
               Importar
             </Button>
 
@@ -526,7 +457,8 @@ export default function Page() {
                 roleOptions={roleOptions}
                 onSuccess={(data: any) => {
                   const roleOption = roleOptions.find(
-                    (option) => option.value === data.usuario.rol_usu.toString()
+                    (option) =>
+                      option.value === data.usuario.rol_usu.toString(),
                   );
                   const createdUser: DataUsers = {
                     id: data.usuario.id_usu.toString(),
@@ -547,10 +479,7 @@ export default function Page() {
 
           {/* Tabla */}
           <div className="px-6 pb-4">
-            <DataTable<DataUsers>
-              data={filteredUsers}
-              columns={userColumns}
-            />
+            <DataTable<DataUsers> data={filteredUsers} columns={userColumns} />
           </div>
         </div>
 
@@ -562,7 +491,7 @@ export default function Page() {
               if (!open) setEditUser(null);
             }}
           >
-            <DialogContent className="sm:max-w-[425px] dark:border dark:border-default-700 dark:bg-[#09090b]">
+            <DialogContent className="border-border">
               <DialogHeader>
                 <DialogTitle>Editar Usuario</DialogTitle>
                 <DialogDescription>
@@ -588,11 +517,13 @@ export default function Page() {
                     rolNombre:
                       roleOptions.find(
                         (option) =>
-                          option.value === data.usuario.rol_usu.toString()
+                          option.value === data.usuario.rol_usu.toString(),
                       )?.label || data.usuario.rol_usu.toString(),
                   };
                   setUsuarios((prev) =>
-                    prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+                    prev.map((u) =>
+                      u.id === updatedUser.id ? updatedUser : u,
+                    ),
                   );
                   setEditUser(null);
                 }}

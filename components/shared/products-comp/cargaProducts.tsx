@@ -19,7 +19,7 @@ interface BulkUploadCategoryDialogProps {
   onClose: () => void;
 }
 
-// Tipo de categoría (opcional)
+// Suponiendo que tu tipo de categoría es algo como:
 export type DataCategories = {
   id?: string;
   nombre: string;
@@ -34,9 +34,8 @@ export function BulkUploadCategoryDialog({
   const [file, setFile] = React.useState<File | null>(null);
   const [previewData, setPreviewData] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(false);
-  const [isDragging, setIsDragging] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  // Se esperan estas dos columnas: nom_cate y desc_cate
+  // Actualizamos las columnas requeridas a solo 2
   const requiredColumns = ["nom_cate", "desc_cate"];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,7 +43,7 @@ export function BulkUploadCategoryDialog({
     if (!selectedFile) return;
     setFile(selectedFile);
 
-    // Validar encabezados
+    // Función para validar encabezados
     const validateHeaders = (headers: string[]): boolean => {
       const lowerHeaders = headers.map((h) => h.toLowerCase().trim());
       return requiredColumns.every((col) => lowerHeaders.includes(col));
@@ -54,6 +53,7 @@ export function BulkUploadCategoryDialog({
       selectedFile.type === "text/csv" ||
       selectedFile.name.toLowerCase().endsWith(".csv")
     ) {
+      // Parsear CSV con Papa Parse
       Papa.parse(selectedFile, {
         header: true,
         skipEmptyLines: true,
@@ -76,6 +76,7 @@ export function BulkUploadCategoryDialog({
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
       selectedFile.name.toLowerCase().endsWith(".xlsx")
     ) {
+      // Parsear XLSX usando SheetJS
       const reader = new FileReader();
       reader.onload = (e) => {
         const data = e.target?.result;
@@ -83,6 +84,7 @@ export function BulkUploadCategoryDialog({
           const workbook = XLSX.read(data, { type: "binary" });
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
+          // Convertir la hoja a un array de arrays, usando defval para celdas vacías
           const jsonData: any[][] = XLSX.utils.sheet_to_json(worksheet, {
             header: 1,
             defval: "",
@@ -149,38 +151,9 @@ export function BulkUploadCategoryDialog({
     fileInputRef.current?.click();
   };
 
+  // Función para descargar la plantilla generada en el backend
   const handleDownloadTemplate = () => {
     window.open("http://localhost:5000/categorias/plantilla", "_blank");
-  };
-
-  // Manejo de drag & drop
-  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    const droppedFiles = e.dataTransfer.files;
-    if (droppedFiles && droppedFiles.length > 0) {
-      const event = {
-        target: { files: droppedFiles },
-      } as React.ChangeEvent<HTMLInputElement>;
-      handleFileChange(event);
-      e.dataTransfer.clearData();
-    }
   };
 
   const handleUpload = async () => {
@@ -190,12 +163,12 @@ export function BulkUploadCategoryDialog({
     }
     setLoading(true);
     try {
-      // Transformamos cada fila para que se ajuste a lo que espera el backend.
+      // Transformar cada fila para que tenga la forma de DataCategories.
       // Se asigna un estado por defecto, por ejemplo "Activo".
       const processedData = previewData.map((row) => ({
         nom_cate: row["nom_cate"],
         desc_cate: row["desc_cate"],
-        est_cate: "Activo",
+        est_cate: "Activo", // si tu backend espera "est_cate" para el estado
       }));
 
       const res = await fetch("http://localhost:5000/categorias/masivo", {
@@ -302,21 +275,28 @@ export function BulkUploadCategoryDialog({
                 .
               </li>
               <li>
-                Guarda el archivo y selecciónalo arrastrándolo a la zona o
-                haciendo clic.
+                Guarda el archivo y selecciónalo haciendo clic en{" "}
+                <span className="font-semibold dark:text-primary">
+                  Seleccionar archivo
+                </span>
+                .
               </li>
               <li>Verifica la vista previa de los datos en la tabla.</li>
               <li>
                 Si todo es correcto, haz clic en{" "}
-                <span className="font-semibold dark:text-primary">Guardar Categorias</span>{" "}
+                <span className="font-semibold dark:text-primary">Cargar</span>{" "}
                 para subir la información.
               </li>
             </ol>
-            <Button className="mt-2" onClick={handleDownloadTemplate}>
+            <Button
+              variant="primary"
+              className="mt-2 bg-default-500"
+              onClick={handleDownloadTemplate}
+            >
               Descargar plantilla
             </Button>
           </div>
-          {/* Zona de arrastre para seleccionar archivo */}
+          {/* Selector de archivo */}
           <div>
             <input
               type="file"
@@ -325,26 +305,13 @@ export function BulkUploadCategoryDialog({
               style={{ display: "none" }}
               accept=".csv, .xlsx"
             />
-            <div
-              onClick={handleUploadClick}
-              onDragEnter={handleDragEnter}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-6 hover:border-gray-400 dark:border-default-700 dark:text-white dark:hover:border-gray-500"
-            >
-              <p className="text-gray-500">
-                Arrastra y suelta el archivo CSV/XLSX aquí o haz clic para
-                seleccionarlo.
-              </p>
-              {file && (
-                <p className="mt-2 text-sm text-gray-700 dark:text-white">
-                  Archivo seleccionado: {file.name}
-                </p>
-              )}
-            </div>
+            <Button onClick={handleUploadClick}>
+              {file ? "Cambiar archivo" : "Seleccionar archivo CSV/XLSX"}
+            </Button>
+            {file && (
+              <p className="mt-2 text-sm">Archivo seleccionado: {file.name}</p>
+            )}
           </div>
-          {/* Vista previa de los datos */}
           {previewData.length > 0 ? (
             <div className="mt-4 max-h-[20vh] overflow-y-auto border">
               <table className="min-w-full border-collapse">
@@ -384,14 +351,18 @@ export function BulkUploadCategoryDialog({
         </div>
         <DialogFooter>
           <div className="flex justify-end space-x-2">
-            <Button variant={"secondary"} onClick={onClose}>
+            <Button
+              variant="primary"
+              className="bg-default-500"
+              onClick={onClose}
+            >
               Cancelar
             </Button>
             <Button
               onClick={handleUpload}
               disabled={loading || previewData.length === 0}
             >
-              {loading ? "Cargando..." : "Guardar Categorias"}
+              {loading ? "Cargando..." : "Cargar"}
             </Button>
           </div>
         </DialogFooter>

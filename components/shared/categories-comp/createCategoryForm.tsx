@@ -34,8 +34,8 @@ const createCategorySchema = z
     try {
       const res = await fetch(
         `http://localhost:5000/categorias/verificar?nombre=${encodeURIComponent(
-          nombre
-        )}`
+          nombre,
+        )}`,
       );
       const data = await res.json();
       // Si data es true, significa que la categoría ya existe
@@ -94,24 +94,24 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
           <div
             className={`${
               t.visible ? "animate-enter" : "animate-leave"
-            } relative flex w-96 items-start gap-3 p-4 bg-[#F0FFF4] border border-[#4ADE80] rounded-lg shadow-lg`}
+            } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
             style={{ animationDuration: "3s" }}
           >
-            <CheckCircle className="w-6 h-6 text-[#166534] mt-1" />
+            <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
             <div className="flex-1">
-              <p className="text-[#166534] text-sm font-semibold">
+              <p className="text-sm font-semibold text-[#166534]">
                 Mensaje Informativo
               </p>
               <p className="text-sm text-[#166534]/80">
                 Categoría creada exitosamente.
               </p>
             </div>
-            <div className="absolute bottom-0 left-0 w-full h-[3px] bg-[#4ADE80]/20">
+            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
               <div className="progress-bar h-full bg-[#4ADE80]" />
             </div>
           </div>
         ),
-        { duration: 2000, position: "top-right" }
+        { duration: 2000, position: "top-right" },
       );
     } catch (err) {
       console.error("Error al crear la categoría:", err);
@@ -126,7 +126,7 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
         <FormField
           control={form.control}
           name="nombre"
-          render={({ field }) => (
+          render={({ field, fieldState: { error } }) => (
             <FormItem>
               <FormLabel className="text-black dark:text-white">
                 Nombre de la Categoría
@@ -135,10 +135,14 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
                 <Input
                   placeholder="Ej. Electrónica"
                   {...field}
-                  className="pr-10 dark:border dark:border-default-700 dark:bg-[#09090b]"
+                  className={`pr-10 dark:bg-[#09090b] ${
+                    error
+                      ? "border-2 border-[var(--error-per)]"
+                      : "dark:border dark:border-default-700"
+                  }`}
                 />
               </FormControl>
-              <FormMessage className="text-danger-500" />
+              <FormMessage className="error-text" />
             </FormItem>
           )}
         />
@@ -147,7 +151,7 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
         <FormField
           control={form.control}
           name="descripcion"
-          render={({ field }) => (
+          render={({ field, fieldState: { error } }) => (
             <FormItem>
               <FormLabel className="text-black dark:text-white">
                 Descripción (opcional)
@@ -156,10 +160,14 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
                 <Input
                   placeholder="Ingresa una breve descripción..."
                   {...field}
-                  className="pr-10 dark:border dark:border-default-700 dark:bg-[#09090b]"
+                  className={`pr-10 dark:bg-[#09090b] ${
+                    error
+                      ? "border-2 border-[var(--error-per)]"
+                      : "dark:border dark:border-default-700"
+                  }`}
                 />
               </FormControl>
-              <FormMessage className="text-danger-500" />
+              <FormMessage className="error-text" />
             </FormItem>
           )}
         />

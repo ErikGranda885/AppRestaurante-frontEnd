@@ -1,5 +1,4 @@
 "use client";
-
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -36,21 +35,25 @@ const createUserSchema = z.object({
       ((email: string) => {
         return fetch(
           `http://localhost:5000/usuarios/verificar/correo?email=${encodeURIComponent(
-            email
-          )}`
+            email,
+          )}`,
         )
           .then((res) => res.json())
           .then((data) => !data.exists);
       }) as (email: string) => Promise<boolean>,
-      { message: "El correo ya se encuentra registrado", async: true } as any
+      { message: "El correo ya se encuentra registrado", async: true } as any,
     ),
   password: z
     .string()
     .min(6, { message: "La contraseña debe tener al menos 6 caracteres." }),
-  rol: z.preprocess((arg) => {
-    if (typeof arg === "string" && arg.trim() !== "") return parseInt(arg, 10);
-    return arg;
-  }, z.number({ required_error: "El rol del usuario es obligatorio" })),
+  rol: z.preprocess(
+    (arg) => {
+      if (typeof arg === "string" && arg.trim() !== "")
+        return parseInt(arg, 10);
+      return arg;
+    },
+    z.number({ message: "Se debe seleccionar un rol" }),
+  ),
 });
 
 type CreateUserFormValues = z.infer<typeof createUserSchema>;
@@ -100,24 +103,24 @@ export function CreateUserForm({
           <div
             className={`${
               t.visible ? "animate-enter" : "animate-leave"
-            } relative flex w-96 items-start gap-3 p-4 bg-[#F0FFF4] border border-[#4ADE80] rounded-lg shadow-lg`}
+            } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
             style={{ animationDuration: "3s" }}
           >
-            <CheckCircle className="w-6 h-6 text-[#166534] mt-1" />
+            <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
             <div className="flex-1">
-              <p className="text-[#166534] text-sm font-semibold">
+              <p className="text-sm font-semibold text-[#166534]">
                 Mensaje Informativo
               </p>
               <p className="text-sm text-[#166534]/80">
                 Usuario creado exitosamente.
               </p>
             </div>
-            <div className="absolute bottom-0 left-0 w-full h-[3px] bg-[#4ADE80]/20">
+            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
               <div className="progress-bar h-full bg-[#4ADE80]" />
             </div>
           </div>
         ),
-        { duration: 2000, position: "top-right" }
+        { duration: 2000, position: "top-right" },
       );
     } catch (err) {
       console.error("Error al crear el usuario:", err);
@@ -132,7 +135,7 @@ export function CreateUserForm({
         <FormField
           control={form.control}
           name="usuario"
-          render={({ field }) => (
+          render={({ field, fieldState: { error } }) => (
             <FormItem>
               <FormLabel className="text-black dark:text-white">
                 Nombre completo
@@ -141,10 +144,14 @@ export function CreateUserForm({
                 <Input
                   placeholder="Ej. Juan Pérez"
                   {...field}
-                  className="pr-10 dark:border dark:border-default-700 dark:bg-[#09090b]"
+                  className={`pr-10 dark:bg-[#09090b] ${
+                    error
+                      ? "border-2 border-[var(--error-per)]"
+                      : "dark:border dark:border-default-700"
+                  }`}
                 />
               </FormControl>
-              <FormMessage className="text-danger-500" />
+              <FormMessage className="error-text" />
             </FormItem>
           )}
         />
@@ -153,7 +160,7 @@ export function CreateUserForm({
         <FormField
           control={form.control}
           name="correo"
-          render={({ field }) => (
+          render={({ field, fieldState: { error } }) => (
             <FormItem>
               <FormLabel className="text-black dark:text-white">
                 Correo
@@ -162,10 +169,14 @@ export function CreateUserForm({
                 <Input
                   placeholder="usuario@ejemplo.com"
                   {...field}
-                  className="pr-10 dark:border dark:border-default-700 dark:bg-[#09090b]"
+                  className={`pr-10 dark:bg-[#09090b] ${
+                    error
+                      ? "border-2 border-[var(--error-per)]"
+                      : "dark:border dark:border-default-700"
+                  }`}
                 />
               </FormControl>
-              <FormMessage className="text-danger-500" />
+              <FormMessage className="error-text" />
             </FormItem>
           )}
         />
@@ -174,7 +185,7 @@ export function CreateUserForm({
         <FormField
           control={form.control}
           name="password"
-          render={({ field }) => (
+          render={({ field, fieldState: { error } }) => (
             <FormItem>
               <FormLabel className="text-black dark:text-white">
                 Contraseña
@@ -185,7 +196,11 @@ export function CreateUserForm({
                     type={showPassword ? "text" : "password"}
                     placeholder="********"
                     {...field}
-                    className="pr-10 dark:border dark:border-default-700 dark:bg-[#09090b]"
+                    className={`pr-10 dark:bg-[#09090b] ${
+                      error
+                        ? "border-2 border-[var(--error-per)]"
+                        : "dark:border dark:border-default-700"
+                    }`}
                   />
                   <button
                     type="button"
@@ -193,14 +208,14 @@ export function CreateUserForm({
                     className="absolute inset-y-0 right-0 flex items-center px-2 focus:outline-none"
                   >
                     {showPassword ? (
-                      <EyeOff className="w-5 h-5 text-gray-500" />
+                      <EyeOff className="h-5 w-5 text-gray-500" />
                     ) : (
-                      <Eye className="w-5 h-5 text-gray-500" />
+                      <Eye className="h-5 w-5 text-gray-500" />
                     )}
                   </button>
                 </div>
               </FormControl>
-              <FormMessage className="text-danger-500" />
+              <FormMessage className="error-text" />
             </FormItem>
           )}
         />
@@ -209,7 +224,7 @@ export function CreateUserForm({
         <FormField
           control={form.control}
           name="rol"
-          render={({ field }) => (
+          render={({ field, fieldState: { error } }) => (
             <FormItem>
               <FormLabel className="text-black dark:text-white">Rol</FormLabel>
               <FormControl>
@@ -219,17 +234,21 @@ export function CreateUserForm({
                     value={field.value ? String(field.value) : ""}
                     onChange={field.onChange}
                     placeholder="Selecciona un rol"
-                    className="w-full text-black dark:text-white dark:bg-[#09090b] dark:border dark:border-default-700"
+                    className={`w-full pr-10 dark:bg-[#09090b] ${
+                      error
+                        ? "border-2 border-[var(--error-per)]"
+                        : "dark:border dark:border-default-700"
+                    }`}
                   />
                 </div>
               </FormControl>
-              <FormMessage className="text-danger-500" />
+              <FormMessage className="error-text" />
             </FormItem>
           )}
         />
 
         {/* Botón de envío: abarca ambas columnas */}
-        <div className="sm:col-span-2 flex justify-end pt-4">
+        <div className="flex justify-end pt-4 sm:col-span-2">
           <Button type="submit">Crear Usuario</Button>
         </div>
       </form>

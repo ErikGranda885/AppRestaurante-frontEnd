@@ -35,7 +35,7 @@ export function NavAdmin({
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Administración</SidebarGroupLabel>
-      <SidebarMenu>
+      <SidebarMenu >
         {items.map((item) =>
           item.submenu && item.items && item.items.length > 0 ? (
             <Collapsible
@@ -59,7 +59,7 @@ export function NavAdmin({
                         <SidebarMenuSubButton asChild>
                           <Link
                             href={subItem.url}
-                            className="hover:bg-[#fee7df] dark:hover:bg-[#4c3033]"
+                            className="hover:bg-secondary"
                           >
                             <span>{subItem.title}</span>
                           </Link>
@@ -72,20 +72,14 @@ export function NavAdmin({
             </Collapsible>
           ) : (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                asChild
-                tooltip={item.title}
-              >
-                <Link
-                  href={item.url}
-                  className="hover:bg-[#fee7df] dark:hover:bg-[#4c3033]"
-                >
+              <SidebarMenuButton asChild tooltip={item.title}>
+                <Link href={item.url} className="hover:bg-secondary">
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          )
+          ),
         )}
       </SidebarMenu>
     </SidebarGroup>

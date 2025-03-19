@@ -38,7 +38,7 @@ export interface DataTableProps<T> {
 export function DataTable<T>({ data, columns }: DataTableProps<T>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
+    [],
   );
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -77,21 +77,15 @@ export function DataTable<T>({ data, columns }: DataTableProps<T>) {
           placeholder="Buscar..."
           value={globalFilter}
           onChange={(event) => setGlobalFilter(event.target.value)}
-          className="max-w-sm border-b border-gray-200 dark:border dark:border-default-700 dark:bg-[#09090b]"
+          className="max-w-sm"
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              className="ml-auto text-black dark:text-white dark:border dark:border-default-700 dark:bg-[#09090b]"
-            >
+            <Button variant="outline" className="ml-auto">
               Columnas <ChevronDown />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="bg-white dark:border dark:border-default-700 dark:bg-[#09090b]"
-          >
+          <DropdownMenuContent align="end" className="border-border">
             {table
               .getAllColumns()
               .filter((column) => column.getCanHide())
@@ -107,24 +101,21 @@ export function DataTable<T>({ data, columns }: DataTableProps<T>) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="rounded-md">
-        <Table className="rounded-md dark:border dark:border-default-700 dark:bg-[#09090b]">
-          <TableHeader>
+      <div>
+        <Table className="border-border overflow-hidden rounded-lg border">
+          <TableHeader className="bg-secondary">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
                 key={headerGroup.id}
-                className="border-b border-gray-200 dark:border dark:border-default-700 dark:bg-[#09090b]"
+                className="border border-secondary"
               >
                 {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className="px-4 py-2"
-                  >
+                  <TableHead key={header.id} className="px-4 py-2">
                     {header.isPlaceholder
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}
@@ -134,18 +125,12 @@ export function DataTable<T>({ data, columns }: DataTableProps<T>) {
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className="border-b border-gray-200 dark:border dark:border-default-700 dark:bg-[#09090b]"
-                >
+                <TableRow key={row.id} className="border border-secondary">
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      className="px-4 py-2"
-                    >
+                    <TableCell key={cell.id} className="px-4 py-2">
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
@@ -165,7 +150,7 @@ export function DataTable<T>({ data, columns }: DataTableProps<T>) {
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex-1 text-sm">
           {table.getFilteredSelectedRowModel().rows.length} de{" "}
           {table.getFilteredRowModel().rows.length} fila(s) seleccionadas.
         </div>
@@ -175,7 +160,7 @@ export function DataTable<T>({ data, columns }: DataTableProps<T>) {
             size="sm"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="text-black dark:text-white dark:border dark:border-default-700 dark:bg-[#09090b]"
+            className="text-black dark:border dark:border-default-700 dark:bg-[#09090b] dark:text-white"
           >
             Anterior
           </Button>
@@ -184,7 +169,7 @@ export function DataTable<T>({ data, columns }: DataTableProps<T>) {
             size="sm"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="text-black dark:text-white dark:border dark:border-default-700 dark:bg-[#09090b]"
+            className="text-black dark:border dark:border-default-700 dark:bg-[#09090b] dark:text-white"
           >
             Siguiente
           </Button>

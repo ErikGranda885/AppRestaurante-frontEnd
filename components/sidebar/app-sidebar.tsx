@@ -150,22 +150,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar
       collapsible="icon"
-      className=" dark:bg-[#09090b] border-none"
+      className="border-none bg-[#fafafa] dark:bg-[#18181b]"
       {...props}
     >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              asChild
-            >
+            <SidebarMenuButton size="lg" asChild>
               <a href="#">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <img
-                    src="/imagenes/logo.png"
-                    alt=""
-                  />
+                  <img src="/imagenes/logo.png" alt="" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">
