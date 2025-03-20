@@ -1,7 +1,7 @@
 "use client";
-
 import * as React from "react";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
+import { Separator } from "@/components/ui/separator";
 import { DataTable } from "@/components/shared/dataTable";
 import {
   CheckCircle,
@@ -9,7 +9,6 @@ import {
   Upload,
   Folder,
   FolderX,
-  FolderCog,
   Folders,
 } from "lucide-react";
 import {
@@ -106,7 +105,6 @@ export default function Page() {
       header: () => <div className="text-right">Estado</div>,
       cell: ({ row }) => {
         const status = String(row.getValue("estado")).toLowerCase();
-        // Ajusta aquí las clases de estilo para estado
         let statusStyles = "border-gray-100 text-gray-100";
         if (status === "activo") {
           statusStyles = "px-3.5 success-text border-[--success-per]";
@@ -230,12 +228,8 @@ export default function Page() {
     }
   };
 
-  if (error) {
-    return <div className="p-4 text-red-500">Error: {error}</div>;
-  }
-  if (loading) {
-    return <div className="p-4">Cargando categorías...</div>;
-  }
+  if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
+  if (loading) return <div className="p-4">Cargando categorías...</div>;
 
   return (
     <>
@@ -247,101 +241,116 @@ export default function Page() {
         isLoading={false}
       >
         <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#09090b]">
-          {/* Tarjetas en formato grid, similar a la página de usuarios */}
-          <div className="grid grid-cols-1 gap-4 px-6 pt-6 md:grid-cols-4">
+          {/* Tarjetas en formato flex, distribuidas equitativamente */}
+          <div className="flex flex-col gap-4 px-6 pt-6 md:flex-row md:justify-between">
             {/* Tarjeta: Categorías Totales */}
             <Card
               onClick={() => handleCardClick("")}
-              className={`dark:border-border cursor-pointer transition-shadow hover:shadow-lg ${
+              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#09090b] ${
                 selectedStatus === "" ? "ring-2 ring-secondary" : ""
-              }`}
+              } group`}
             >
-              <CardHeader>
-                <CardTitle className="text-lg">Categorías Totales</CardTitle>
-                <CardDescription className="text-sm">
-                  {categories.length} categorías
-                </CardDescription>
+              <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
+                <div className="flex-1">
+                  <CardTitle className="text-sm font-light text-secondary-foreground">
+                    Categorías Totales
+                  </CardTitle>
+                  <div className="mt-2 flex items-center gap-5">
+                    <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
+                      {categories.length}
+                    </span>
+                    <span className="inline-block rounded-md bg-secondary px-2 py-1 text-sm font-bold  dark:bg-blue-800/30 ">
+                      +5%
+                    </span>
+                  </div>
+                  <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                    Este mes
+                  </CardDescription>
+                </div>
+                <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
+                  <Folders className="h-7 w-7  transition-transform duration-300 group-hover:scale-110" />
+                </div>
               </CardHeader>
-              <CardFooter className="flex justify-end">
-                <Folders className="h-5 w-5" />
-              </CardFooter>
             </Card>
 
             {/* Tarjeta: Categorías Activas */}
             <Card
               onClick={() => handleCardClick("Activo")}
-              className={`dark:border-border cursor-pointer transition-shadow hover:shadow-lg ${
+              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#09090b] ${
                 selectedStatus.toLowerCase() === "activo"
                   ? "ring-2 ring-secondary"
                   : ""
-              }`}
+              } group`}
             >
-              <CardHeader>
-                <CardTitle className="text-lg">Categorías Activas</CardTitle>
-                <CardDescription className="text-sm">
-                  {
-                    categories.filter(
-                      (cat) => cat.estado?.toLowerCase() === "activo",
-                    ).length
-                  }{" "}
-                  activas
-                </CardDescription>
+              <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
+                <div className="flex-1">
+                  {/* Título de la métrica */}
+                  <CardTitle className="text-sm font-light text-secondary-foreground">
+                    Categorías Activas
+                  </CardTitle>
+                  {/* Valor y badge de porcentaje */}
+                  <div className="mt-2 flex items-center gap-5">
+                    <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
+                      {
+                        categories.filter(
+                          (cat) => cat.estado?.toLowerCase() === "activo",
+                        ).length
+                      }
+                    </span>
+                    <span className="inline-block rounded-md bg-green-100 px-2 py-1 text-sm font-bold text-green-500 dark:bg-green-800/30 dark:text-green-400">
+                      +10%
+                    </span>
+                  </div>
+                  {/* Periodo */}
+                  <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                    Este mes
+                  </CardDescription>
+                </div>
+                {/* Ícono con efecto hover */}
+                <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
+                  <Folder className="h-7 w-7 text-green-500 transition-transform duration-300 group-hover:scale-110" />
+                </div>
               </CardHeader>
-              <CardFooter className="flex justify-end">
-                <Folder className="success-text h-5 w-5" />
-              </CardFooter>
             </Card>
 
             {/* Tarjeta: Categorías Inactivas */}
             <Card
               onClick={() => handleCardClick("Inactivo")}
-              className={`dark:border-border cursor-pointer transition-shadow hover:shadow-lg ${
+              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#09090b] ${
                 selectedStatus.toLowerCase() === "inactivo"
                   ? "ring-2 ring-secondary"
                   : ""
-              }`}
+              } group`}
             >
-              <CardHeader>
-                <CardTitle className="text-lg">Categorías Inactivas</CardTitle>
-                <CardDescription className="text-sm">
-                  {
-                    categories.filter(
-                      (cat) => cat.estado?.toLowerCase() === "inactivo",
-                    ).length
-                  }{" "}
-                  inactivas
-                </CardDescription>
+              <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
+                <div className="flex-1">
+                  {/* Título de la métrica */}
+                  <CardTitle className="text-sm font-light text-secondary-foreground">
+                    Categorías Inactivas
+                  </CardTitle>
+                  {/* Valor y badge de porcentaje */}
+                  <div className="mt-2 flex items-center gap-5">
+                    <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
+                      {
+                        categories.filter(
+                          (cat) => cat.estado?.toLowerCase() === "inactivo",
+                        ).length
+                      }
+                    </span>
+                    <span className="error-text inline-block rounded-md bg-red-100 px-2 py-1 text-sm font-bold dark:bg-red-800/30">
+                      -8%
+                    </span>
+                  </div>
+                  {/* Periodo */}
+                  <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                    Este mes
+                  </CardDescription>
+                </div>
+                {/* Ícono con efecto hover */}
+                <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
+                  <FolderX className="error-text h-7 w-7 transition-transform duration-300 group-hover:scale-110" />
+                </div>
               </CardHeader>
-              <CardFooter className="flex justify-end">
-                <FolderX className="error-text h-5 w-5" />
-              </CardFooter>
-            </Card>
-
-            {/* Tarjeta: Categorías Modificadas */}
-            <Card
-              onClick={() => handleCardClick("Modificado")}
-              className={`dark:border-border cursor-pointer transition-shadow hover:shadow-lg ${
-                selectedStatus.toLowerCase() === "modificado"
-                  ? "ring-2 ring-secondary"
-                  : ""
-              }`}
-            >
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  Categorías Modificadas
-                </CardTitle>
-                <CardDescription className="text-sm">
-                  {
-                    categories.filter(
-                      (cat) => cat.estado?.toLowerCase() === "modificado",
-                    ).length
-                  }{" "}
-                  modificadas
-                </CardDescription>
-              </CardHeader>
-              <CardFooter className="flex justify-end">
-                <FolderCog className="h-5 w-5 text-yellow-500" />
-              </CardFooter>
             </Card>
           </div>
 
@@ -399,44 +408,6 @@ export default function Page() {
             />
           </div>
         </div>
-
-        {/* Editar Categoría */}
-        {editCategory && (
-          <Dialog
-            open
-            onOpenChange={(open) => {
-              if (!open) setEditCategory(null);
-            }}
-          >
-            <DialogContent className="border-border sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Editar Categoría</DialogTitle>
-                <DialogDescription>
-                  Modifica la información de la categoría.
-                </DialogDescription>
-              </DialogHeader>
-              <EditCategoryForm
-                initialData={{
-                  id: editCategory.id,
-                  nombre: editCategory.nombre,
-                  descripcion: editCategory.descripcion || "",
-                }}
-                onSuccess={(data: any) => {
-                  const updated: DataCategories = {
-                    id: data.categoria.id_cate.toString(),
-                    nombre: data.categoria.nom_cate,
-                    descripcion: data.categoria.desc_cate,
-                    estado: data.categoria.est_cate,
-                  };
-                  setCategories((prev) =>
-                    prev.map((cat) => (cat.id === updated.id ? updated : cat)),
-                  );
-                  setEditCategory(null);
-                }}
-              />
-            </DialogContent>
-          </Dialog>
-        )}
       </ModulePageLayout>
     </>
   );

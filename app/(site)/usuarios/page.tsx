@@ -3,15 +3,17 @@ import * as React from "react";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { DataTable } from "@/components/shared/dataTable";
 import {
+  CheckCircle,
+  MoreHorizontal,
+  Upload,
+  Folder,
+  FolderX,
+  Folders,
+  TrendingUpIcon,
   UserCheck,
   UserCog,
   UserX,
-  CheckCircle,
-  Upload,
-  MoreHorizontal,
-  TrendingUpIcon,
 } from "lucide-react";
-
 import {
   Dialog,
   DialogContent,
@@ -22,9 +24,6 @@ import {
 import { Option } from "@/components/shared/combobox";
 import { GeneralDialog } from "@/components/shared/dialogGen";
 import toast, { Toaster } from "react-hot-toast";
-import { CreateUserForm } from "@/components/shared/users-comp/createUserForm";
-import { EditUserForm } from "@/components/shared/users-comp/editUserForm";
-import { BulkUploadDialog } from "@/components/shared/users-comp/cargaUsers";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -35,6 +34,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ColumnDef } from "@tanstack/react-table";
+import { CreateUserForm } from "@/components/shared/users-comp/createUserForm";
+import { EditUserForm } from "@/components/shared/users-comp/editUserForm";
+import { BulkUploadDialog } from "@/components/shared/users-comp/cargaUsers";
 import {
   Card,
   CardDescription,
@@ -133,6 +135,7 @@ export default function Page() {
         console.error("Error al inactivar usuario:", err);
       });
   };
+
   const handleActivar = (user: DataUsers) => {
     fetch(`http://localhost:5000/usuarios/activar/${user.id}`, {
       method: "PUT",
@@ -179,6 +182,7 @@ export default function Page() {
         console.error("Error al activar usuario:", err);
       });
   };
+
   /* Definición de las columnas de la tabla */
   const userColumns: ColumnDef<DataUsers>[] = [
     {
@@ -219,9 +223,9 @@ export default function Page() {
         let estadoStyles = "border-gray-100 text-gray-100";
         if (estado === "activo") {
           estadoStyles =
-            "px-3.5 success-text  border-[--success-per] dark:bg-[#377cfb]/10  ";
+            "px-3.5 success-text border-[--success-per] dark:bg-[#377cfb]/10";
         } else if (estado === "inactivo") {
-          estadoStyles = "px-2 error-text border-[--error-text]  ";
+          estadoStyles = "px-2 error-text border-[--error-per]";
         }
         return (
           <div className="text-right font-medium">
@@ -275,6 +279,7 @@ export default function Page() {
       },
     },
   ];
+
   // Cargar roles desde la API
   React.useEffect(() => {
     fetch("http://localhost:5000/roles")
@@ -296,6 +301,7 @@ export default function Page() {
       })
       .catch((err) => console.error("Error al cargar roles:", err));
   }, []);
+
   // Filtrado de usuarios según estado
   const filteredUsers =
     selectedState === ""
@@ -311,6 +317,7 @@ export default function Page() {
       setSelectedState(estado);
     }
   };
+
   return (
     <>
       <Toaster position="top-right" />
@@ -321,98 +328,120 @@ export default function Page() {
         isLoading={false}
       >
         <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#09090b]">
-          <div className="grid grid-cols-1 gap-4 px-6 pt-6 md:grid-cols-4">
+          {/* Tarjetas distribuidas en flex */}
+          <div className="flex flex-col gap-4 px-6 pt-6 md:flex-row md:justify-between">
             {/* Tarjeta: Usuarios Totales */}
             <Card
               onClick={() => handleCardClick("")}
-              className={`dark:border-border cursor-pointer transition-shadow hover:shadow-lg ${
+              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#09090b] ${
                 selectedState === "" ? "ring-2 ring-secondary" : ""
-              }`}
+              } group`}
             >
-              <CardHeader>
-                <CardTitle className="text-lg">Usuarios Totales</CardTitle>
-                <CardDescription className="text-sm">
-                  {usuarios.length} usuarios
-                </CardDescription>
+              <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
+                <div className="flex-1">
+                  {/* Título */}
+                  <CardTitle className="text-sm font-light text-secondary-foreground">
+                    Usuarios Totales
+                  </CardTitle>
+                  {/* Valor y badge de porcentaje */}
+                  <div className="mt-2 flex items-center gap-5">
+                    <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
+                      {usuarios.length}
+                    </span>
+                    <span className="inline-block rounded-md bg-secondary px-2 py-1 text-sm font-bold dark:bg-green-800/30">
+                      +12%
+                    </span>
+                  </div>
+                  {/* Periodo */}
+                  <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                    Este mes
+                  </CardDescription>
+                </div>
+                {/* Ícono con efecto hover */}
+                <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
+                  <TrendingUpIcon className="h-7 w-7 transition-transform duration-300 group-hover:scale-110" />
+                </div>
               </CardHeader>
-              <CardFooter className="flex justify-end">
-                <TrendingUpIcon className="h-5 w-5" />
-              </CardFooter>
             </Card>
 
             {/* Tarjeta: Usuarios Activos */}
             <Card
               onClick={() => handleCardClick("Activo")}
-              className={`dark:border-border cursor-pointer transition-shadow hover:shadow-lg ${
+              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#09090b] ${
                 selectedState.toLowerCase() === "activo"
                   ? "ring-2 ring-secondary"
                   : ""
-              }`}
+              } group`}
             >
-              <CardHeader>
-                <CardTitle className="text-lg">Usuarios Activos</CardTitle>
-                <CardDescription className="text-sm">
-                  {
-                    usuarios.filter(
-                      (user) => user.estado?.toLowerCase() === "activo",
-                    ).length
-                  }{" "}
-                  activos
-                </CardDescription>
+              <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
+                <div className="flex-1">
+                  {/* Título de la métrica */}
+                  <CardTitle className="text-sm font-light text-secondary-foreground">
+                    Usuarios Activos
+                  </CardTitle>
+                  {/* Valor y badge de porcentaje */}
+                  <div className="mt-2 flex items-center gap-5">
+                    <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
+                      {
+                        usuarios.filter(
+                          (user) => user.estado?.toLowerCase() === "activo",
+                        ).length
+                      }
+                    </span>
+                    <span className="inline-block rounded-md bg-green-100 px-2 py-1 text-sm font-bold text-green-500 dark:bg-green-800/30 dark:text-green-400">
+                      +12%
+                    </span>
+                  </div>
+                  {/* Periodo */}
+                  <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                    Este mes
+                  </CardDescription>
+                </div>
+                {/* Ícono con efecto hover */}
+                <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
+                  <UserCheck className="h-7 w-7 text-green-400 transition-transform duration-300 group-hover:scale-110" />
+                </div>
               </CardHeader>
-              <CardFooter className="flex justify-end">
-                <UserCheck className="success-text h-5 w-5" />
-              </CardFooter>
             </Card>
 
             {/* Tarjeta: Usuarios Inactivos */}
             <Card
               onClick={() => handleCardClick("Inactivo")}
-              className={`dark:border-border cursor-pointer transition-shadow hover:shadow-lg ${
+              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#09090b] ${
                 selectedState.toLowerCase() === "inactivo"
                   ? "ring-2 ring-secondary"
                   : ""
-              }`}
+              } group`}
             >
-              <CardHeader>
-                <CardTitle className="text-lg">Usuarios Inactivos</CardTitle>
-                <CardDescription className="text-sm">
-                  {
-                    usuarios.filter(
-                      (user) => user.estado?.toLowerCase() === "inactivo",
-                    ).length
-                  }{" "}
-                  inactivos
-                </CardDescription>
+              <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
+                <div className="flex-1">
+                  {/* Título de la métrica */}
+                  <CardTitle className="text-sm font-light text-secondary-foreground">
+                    Usuarios Inactivos
+                  </CardTitle>
+                  {/* Valor y badge de porcentaje */}
+                  <div className="mt-2 flex items-center gap-5">
+                    <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
+                      {
+                        usuarios.filter(
+                          (user) => user.estado?.toLowerCase() === "inactivo",
+                        ).length
+                      }
+                    </span>
+                    <span className="inline-block rounded-md bg-red-100 px-2 py-1 text-sm font-bold error-text dark:bg-red-800/30 ">
+                      -8%
+                    </span>
+                  </div>
+                  {/* Periodo */}
+                  <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                    Este mes
+                  </CardDescription>
+                </div>
+                {/* Ícono con efecto hover */}
+                <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
+                  <UserX className="h-7 w-7 error-text transition-transform duration-300 group-hover:scale-110" />
+                </div>
               </CardHeader>
-              <CardFooter className="flex justify-end">
-                <UserX className="error-text h-5 w-5" />
-              </CardFooter>
-            </Card>
-
-            {/* Tarjeta: Usuarios Modificados */}
-            <Card
-              onClick={() => handleCardClick("Modificado")}
-              className={`dark:border-border cursor-pointer transition-shadow hover:shadow-lg ${
-                selectedState.toLowerCase() === "modificado"
-                  ? "ring-2 ring-secondary"
-                  : ""
-              }`}
-            >
-              <CardHeader>
-                <CardTitle className="text-lg">Usuarios Modificados</CardTitle>
-                <CardDescription className="text-sm">
-                  {
-                    usuarios.filter(
-                      (user) => user.estado?.toLowerCase() === "modificado",
-                    ).length
-                  }{" "}
-                  modificados
-                </CardDescription>
-              </CardHeader>
-              <CardFooter className="flex justify-end">
-                <UserCog className="h-5 w-5 text-yellow-500" />
-              </CardFooter>
             </Card>
           </div>
 
@@ -438,7 +467,7 @@ export default function Page() {
             />
           )}
 
-          {/* Crear Nuevo Usuario */}
+          {/* Botones de acciones: Importar y Crear */}
           <div className="flex justify-end space-x-4 px-6 pb-4 pt-5">
             <Button onClick={() => setOpenBulkUpload(true)}>
               <Upload className="mr-2 h-4 w-4" />
@@ -491,7 +520,7 @@ export default function Page() {
               if (!open) setEditUser(null);
             }}
           >
-            <DialogContent className="border-border">
+            <DialogContent className="border-border sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle>Editar Usuario</DialogTitle>
                 <DialogDescription>
