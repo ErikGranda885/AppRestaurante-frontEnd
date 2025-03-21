@@ -12,7 +12,6 @@ import {
 import { TrendingUpIcon, Upload, Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import {
   Command,
   CommandEmpty,
@@ -26,19 +25,26 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
-/* ============================ */
-/*      COMPONENTES BASE        */
-/* ============================ */
+/* Umbral para tarjetas */
+
+const stockCritico = 10;
+const diasCaducidad = 10;
+
+type MetricFilter = "all" | "critical" | "soonExpire";
+
+/* Componente base */
 
 interface MetricCardProps {
   titulo: string;
   valor: string | number;
   porcentaje: string;
-  periodo: string;
+  periodo: React.ReactNode;
   iconColor: string;
   badgeColorClass: string;
+  onClick?: () => void;
 }
 
 function MetricCard({
@@ -48,9 +54,13 @@ function MetricCard({
   periodo,
   iconColor,
   badgeColorClass,
+  onClick,
 }: MetricCardProps) {
   return (
-    <Card className="group flex flex-col justify-between rounded-xl border border-border bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-lg dark:bg-[#09090b]">
+    <Card
+      onClick={onClick}
+      className="group flex cursor-pointer flex-col justify-between rounded-xl border border-border bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-lg dark:bg-[#09090b]"
+    >
       <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
         <div className="flex-1">
           <CardTitle className="text-sm font-light text-secondary-foreground">
@@ -80,10 +90,7 @@ function MetricCard({
   );
 }
 
-/* ============================ */
-/*       HELPERS DE FECHA       */
-/* ============================ */
-
+/* Fechas para caducados formatos */
 const parseDateString = (dateStr: string): Date | null => {
   if (dateStr.includes("/")) {
     const parts = dateStr.split("/");
@@ -117,10 +124,7 @@ const getDaysUntilExpiration = (
   return Math.floor(diffTime / (1000 * 60 * 60 * 24));
 };
 
-/* ============================ */
-/*      INTERFACES DE DATOS     */
-/* ============================ */
-
+/* Interfaces */
 interface Category {
   id_cate: number;
   nom_cate: string;
@@ -144,10 +148,7 @@ interface Option {
   label: string;
 }
 
-/* ============================ */
-/*      COMPONENTE PRODUCTO     */
-/* ============================ */
-
+/* Carta producto */
 function ProductCard({ product }: { product: Product }) {
   const daysLeft = getDaysUntilExpiration(product.fech_ven_prod);
   const expirationText =
@@ -171,7 +172,7 @@ function ProductCard({ product }: { product: Product }) {
   }
 
   return (
-    <Card className="w-full max-w-xs overflow-hidden rounded-xl border border-border bg-white shadow-md transition-transform duration-300 hover:scale-105 hover:shadow-2xl dark:bg-[#1e1e2d]">
+    <Card className="w-full max-w-xs overflow-hidden rounded-xl border border-border bg-white shadow-md transition-transform duration-300 hover:scale-105 hover:shadow-2xl dark:bg-[#09090b]">
       <div className="relative h-32 w-full">
         <Image
           src={product.img_prod}
@@ -221,15 +222,14 @@ function ProductCard({ product }: { product: Product }) {
   );
 }
 
-/* ============================ */
-/*       COMPONENTE PAGINADOR   */
-/* ============================ */
+/* Paginator */
 
 interface PaginatorProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
 }
+
 function Paginator({ currentPage, totalPages, onPageChange }: PaginatorProps) {
   const handlePrevious = () => {
     if (currentPage > 1) onPageChange(currentPage - 1);
@@ -255,10 +255,7 @@ function Paginator({ currentPage, totalPages, onPageChange }: PaginatorProps) {
   );
 }
 
-/* ============================ */
-/*    COMPONENTE COMBOBOX       */
-/* ============================ */
-
+/* Combobox categorias */
 interface CategoryComboboxProps {
   options: Option[];
   value: string;
@@ -271,7 +268,6 @@ function CategoryCombobox({
   onValueChange,
 }: CategoryComboboxProps) {
   const [open, setOpen] = React.useState(false);
-
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -283,11 +279,11 @@ function CategoryCombobox({
         >
           {value
             ? options.find((option) => option.value === value)?.label
-            : "Selecciona Categoría..."}
+            : "Todos"}
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
+      <PopoverContent className="w-[200px] border-border p-0">
         <Command>
           <CommandInput placeholder="Buscar categoría..." className="h-9" />
           <CommandList>
@@ -296,9 +292,12 @@ function CategoryCombobox({
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
-                  value={option.value}
+                  value={option.label}
                   onSelect={(currentValue) => {
-                    onValueChange(currentValue === value ? "" : currentValue);
+                    const selected = options.find(
+                      (o) => o.label === currentValue,
+                    );
+                    onValueChange(selected?.value || "");
                     setOpen(false);
                   }}
                 >
@@ -319,10 +318,32 @@ function CategoryCombobox({
   );
 }
 
-/* ============================ */
-/*    COMPONENTE PRINCIPAL      */
-/* ============================ */
+/* Tabs para estados */
+interface StatusTabsProps {
+  value: string;
+  onValueChange: (value: string) => void;
+}
 
+function StatusTabs({ value, onValueChange }: StatusTabsProps) {
+  return (
+    /*  */
+    <Tabs
+      defaultValue="Activo"
+      value={value}
+      onValueChange={(newValue) => {
+        onValueChange(newValue);
+      }}
+      className="w-[200px]"
+    >
+      <TabsList>
+        <TabsTrigger value="Activo">Activos</TabsTrigger>
+        <TabsTrigger value="Inactivo">Inactivos</TabsTrigger>
+      </TabsList>
+    </Tabs>
+  );
+}
+
+/* Componente principal */
 export default function Page() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
@@ -333,7 +354,16 @@ export default function Page() {
   const [categoryOptions, setCategoryOptions] = useState<Option[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
 
-  // Cargar categorías desde la API
+  // Estado para el filtro de métrica
+  const [metricFilter, setMetricFilter] = useState<MetricFilter>("all");
+
+  // Estado para el filtro de estado (Activos/Inactivos)
+  const [statusFilter, setStatusFilter] = useState<string>("Activo");
+
+  // Estado para el buscador
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // Cargar categorías desde la API e incluir "Todos"
   useEffect(() => {
     fetch("http://localhost:5000/categorias")
       .then((res) => {
@@ -343,10 +373,13 @@ export default function Page() {
         return res.json();
       })
       .then((data: any) => {
-        const options: Option[] = data.categorias.map((cate: Category) => ({
-          value: cate.id_cate.toString(),
-          label: cate.nom_cate,
-        }));
+        const options: Option[] = [
+          { value: "", label: "Todos" },
+          ...data.categorias.map((cate: Category) => ({
+            value: cate.id_cate.toString(),
+            label: cate.nom_cate,
+          })),
+        ];
         setCategoryOptions(options);
       })
       .catch((err) => console.error("Error al cargar categorías:", err));
@@ -371,14 +404,33 @@ export default function Page() {
     fetchProducts();
   }, []);
 
-  // Filtrar productos por la categoría seleccionada
-  const filteredProducts = selectedCategory
-    ? allProducts.filter(
-        (product) => product.cate_prod.id_cate === parseInt(selectedCategory),
-      )
-    : allProducts;
+  let filteredProducts = allProducts;
+  if (selectedCategory) {
+    filteredProducts = filteredProducts.filter(
+      (product) => product.cate_prod.id_cate === parseInt(selectedCategory),
+    );
+  }
+  if (metricFilter === "critical") {
+    filteredProducts = filteredProducts.filter(
+      (product) => product.stock_prod <= stockCritico,
+    );
+  } else if (metricFilter === "soonExpire") {
+    filteredProducts = filteredProducts.filter((product) => {
+      const days = getDaysUntilExpiration(product.fech_ven_prod);
+      return days !== null && days >= 0 && days <= diasCaducidad;
+    });
+  }
+  if (searchQuery) {
+    filteredProducts = filteredProducts.filter((product) =>
+      product.nom_prod.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
+  }
+  // Filtrar por estado
+  filteredProducts = filteredProducts.filter(
+    (product) => product.est_prod === statusFilter,
+  );
 
-  // Paginación sobre los productos filtrados
+  // Paginación sobre productos filtrados
   const indexOfLastProduct = currentPage * itemsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - itemsPerPage;
   const currentProducts = filteredProducts.slice(
@@ -387,9 +439,15 @@ export default function Page() {
   );
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
-  // Actualizar la categoría seleccionada desde el combobox
+  // Actualizar filtro de categoría
   const handleCategorySelect = (value: string) => {
     setSelectedCategory(value);
+    setCurrentPage(1);
+  };
+
+  // Actualizar filtro métrico
+  const handleMetricFilter = (filter: MetricFilter) => {
+    setMetricFilter(filter);
     setCurrentPage(1);
   };
 
@@ -401,75 +459,125 @@ export default function Page() {
       isLoading={false}
     >
       <div className="p-6">
-        {/* Tarjetas de métricas */}
+        {/* Tarjetas de métricas dinámicas */}
         <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <MetricCard
             titulo="Productos Registrados"
-            valor={250}
-            porcentaje="+12%"
-            periodo="Este mes"
+            valor={allProducts.length}
+            porcentaje=""
+            periodo="Total"
             iconColor="text-green-400"
             badgeColorClass="bg-green-100 dark:bg-green-800/30 text-green-500 dark:text-green-400"
+            onClick={() => handleMetricFilter("all")}
           />
           <MetricCard
             titulo="Stock Crítico"
-            valor={5}
-            porcentaje="+5%"
-            periodo="Este mes"
+            valor={
+              allProducts.filter(
+                (product) => product.stock_prod <= stockCritico,
+              ).length
+            }
+            porcentaje=""
+            periodo={
+              <>
+                Productos con stock menor o igual a{" "}
+                <span className="font-bold">{stockCritico}</span>
+              </>
+            }
             iconColor="text-yellow-400"
             badgeColorClass="bg-yellow-100 dark:bg-yellow-800/30 text-yellow-500 dark:text-yellow-400"
+            onClick={() => handleMetricFilter("critical")}
           />
           <MetricCard
             titulo="Próx. a Caducar"
-            valor={8}
-            porcentaje="+2%"
-            periodo="Este mes"
+            valor={
+              allProducts.filter((product) => {
+                const days = getDaysUntilExpiration(product.fech_ven_prod);
+                return days !== null && days >= 0 && days <= diasCaducidad;
+              }).length
+            }
+            porcentaje=""
+            periodo={
+              <>
+                Productos que caducan en{" "}
+                <span className="font-bold">{diasCaducidad}</span> días o menos
+              </>
+            }
             iconColor="text-pink-400"
             badgeColorClass="bg-pink-100 dark:bg-pink-800/30 text-pink-500 dark:text-pink-400"
+            onClick={() => handleMetricFilter("soonExpire")}
           />
         </div>
-
-        {/* Filtros y acciones */}
-        <Separator className="my-4" />
-        <div className="flex flex-row justify-between">
-          <div className="flex items-center gap-4">
-            <Input type="text" placeholder="Buscar" className="w-[300px]" />
-            <CategoryCombobox
-              options={categoryOptions}
-              value={selectedCategory}
-              onValueChange={handleCategorySelect}
-            />
-          </div>
-          <div className="flex">
-            <Button className="mr-4">
-              <Upload className="mr-2 h-4 w-4" />
-              Importar
-            </Button>
-            <Button>Nuevo Producto</Button>
-          </div>
-        </div>
-
-        {/* Sección de productos */}
-        {loadingProducts ? (
-          <div className="mt-4 text-center">Cargando productos...</div>
-        ) : errorProducts ? (
-          <div className="mt-4 text-center text-red-500">
-            Error: {errorProducts}
-          </div>
-        ) : (
-          <>
-            <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
-              {currentProducts.map((product) => (
-                <ProductCard key={product.id_prod} product={product} />
-              ))}
+        <div className="rounded-xl border border-border p-6 shadow-md dark:bg-[#09090b]">
+          {/* Filtros y acciones */}
+          <div className="flex flex-row justify-between pb-1">
+            <div className="flex items-center gap-4">
+              <Input
+                type="text"
+                placeholder="Buscar"
+                className="w-[100px]"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+              {/* Label para el combobox de categoria */}
+              <label className="text-sm text-secondary-foreground">
+                Selecciona una categoría:
+              </label>
+              {/* Combobox de categorías */}
+              <CategoryCombobox
+                options={categoryOptions}
+                value={selectedCategory}
+                onValueChange={handleCategorySelect}
+              />
+              <label className="text-sm text-secondary-foreground">
+                Selecciona un estado:
+              </label>
+              <StatusTabs
+                value={statusFilter}
+                onValueChange={(newValue) => {
+                  setStatusFilter(newValue);
+                  setCurrentPage(1);
+                }}
+              />
             </div>
-            <Paginator
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          </>
-        )}
+            <div className="flex">
+              <Button className="mr-4">
+                <Upload className="mr-2 h-4 w-4" />
+                Importar
+              </Button>
+              <Button>Nuevo Producto</Button>
+            </div>
+          </div>
+
+          {/* Sección de productos */}
+          {loadingProducts ? (
+            <div className="mt-4 text-center">Cargando productos...</div>
+          ) : errorProducts ? (
+            <div className="mt-4 text-center text-red-500">
+              Error: {errorProducts}
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="mt-4 text-center text-gray-500">
+              No se encontraron productos para los criterios seleccionados.
+            </div>
+          ) : (
+            <>
+              <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
+                {currentProducts.map((product) => (
+                  <ProductCard key={product.id_prod} product={product} />
+                ))}
+              </div>
+              <Paginator
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </>
+          )}
+        </div>
       </div>
     </ModulePageLayout>
   );
