@@ -39,7 +39,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { GeneralDialog } from "@/components/shared/dialogGen";
 import { FormProducts } from "@/components/shared/products-comp/createProductForm";
-
+import { BulkUploadProductDialog } from "@/components/shared/products-comp/cargaProducts";
 /* Umbral para tarjetas */
 const stockCritico = 10;
 const diasCaducidad = 10;
@@ -242,7 +242,7 @@ function ProductCard({ product }: { product: Product }) {
           "absolute bottom-2 right-2 rounded-md px-2 py-1 text-xs font-semibold",
           product.est_prod === "Activo"
             ? "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300"
-            : "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300",
+            : "error-text bg-[#fbb8cf] dark:bg-[#49051d]",
         )}
       >
         {product.est_prod}
@@ -384,6 +384,7 @@ export default function Page() {
   const [metricFilter, setMetricFilter] = useState<MetricFilter>("all");
   const [statusFilter, setStatusFilter] = useState<string>("Activo");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [openBulkUpload, setOpenBulkUpload] = React.useState(false);
 
   // Estado para controlar el diálogo de creación de producto
   const [openCreate, setOpenCreate] = useState(false);
@@ -562,8 +563,18 @@ export default function Page() {
                 }}
               />
             </div>
+            {/* Diálogo de carga masiva de productos */}
+            {openBulkUpload && (
+              <BulkUploadProductDialog
+                onSuccess={(newProducts: Product[]) => {
+                  setAllProducts((prev) => [...prev, ...newProducts]);
+                  setOpenBulkUpload(false);
+                }}
+                onClose={() => setOpenBulkUpload(false)}
+              />
+            )}
             <div className="flex">
-              <Button className="mr-4">
+              <Button className="mr-4" onClick={() => setOpenBulkUpload(true)}>
                 <Upload className="mr-2 h-4 w-4" />
                 Importar
               </Button>

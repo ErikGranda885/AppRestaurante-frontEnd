@@ -14,36 +14,62 @@ import {
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
 
-interface BulkUploadCategoryDialogProps {
-  onSuccess: (newCategories: any[]) => void;
+interface BulkUploadProductDialogProps {
+  categoryOptions: { value: string; label: string }[];
+  onSuccess: (newProducts: any[]) => void;
   onClose: () => void;
 }
 
-// Suponiendo que tu tipo de categoría es algo como:
-export type DataCategories = {
-  id?: string;
-  nombre: string;
-  descripcion?: string;
-  estado: string;
+// Puedes ajustar el tipo según tu modelo de producto
+export type DataProducts = {
+  cate_prod: string;
+  nom_prod: string;
+  prec_prod: number;
+  stock_prod: number;
+  fech_ven_prod: string;
 };
 
-export function BulkUploadCategoryDialog({
+export function BulkUploadProductDialog({
+  categoryOptions,
   onSuccess,
   onClose,
-}: BulkUploadCategoryDialogProps) {
+}: BulkUploadProductDialogProps) {
   const [file, setFile] = React.useState<File | null>(null);
   const [previewData, setPreviewData] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  // Actualizamos las columnas requeridas a solo 2
-  const requiredColumns = ["nom_cate", "desc_cate"];
 
+  // Definir las columnas requeridas para productos
+  const requiredColumns = [
+    "cate_prod",
+    "nom_prod",
+    "prec_prod",
+    "stock_prod",
+    "fech_ven_prod",
+  ];
+  // Función para manejar el drag & drop
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const droppedFiles = e.dataTransfer.files;
+    if (droppedFiles && droppedFiles.length > 0) {
+      // Simulamos el cambio del input
+      const event = {
+        target: { files: droppedFiles },
+      } as React.ChangeEvent<HTMLInputElement>;
+      handleFileChange(event);
+      e.dataTransfer.clearData();
+    }
+  };
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
     setFile(selectedFile);
 
-    // Función para validar encabezados
     const validateHeaders = (headers: string[]): boolean => {
       const lowerHeaders = headers.map((h) => h.toLowerCase().trim());
       return requiredColumns.every((col) => lowerHeaders.includes(col));
@@ -53,49 +79,11 @@ export function BulkUploadCategoryDialog({
       selectedFile.type === "text/csv" ||
       selectedFile.name.toLowerCase().endsWith(".csv")
     ) {
-      // Parsear CSV con Papa Parse
       Papa.parse(selectedFile, {
         header: true,
         skipEmptyLines: true,
         complete: (results) => {
           const headers = results.meta.fields || [];
-          if (!validateHeaders(headers)) {
-            setPreviewData([]);
-            toast.error("El archivo CSV contiene encabezados incorrectos.");
-            return;
-          }
-          setPreviewData(results.data);
-        },
-        error: (error) => {
-          console.error("Error al parsear el archivo CSV:", error);
-          toast.error("Error al leer el archivo CSV");
-        },
-      });
-    } else if (
-      selectedFile.type ===
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-      selectedFile.name.toLowerCase().endsWith(".xlsx")
-    ) {
-      // Parsear XLSX usando SheetJS
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const data = e.target?.result;
-        try {
-          const workbook = XLSX.read(data, { type: "binary" });
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          // Convertir la hoja a un array de arrays, usando defval para celdas vacías
-          const jsonData: any[][] = XLSX.utils.sheet_to_json(worksheet, {
-            header: 1,
-            defval: "",
-          });
-          if (jsonData.length === 0) {
-            toast.error("El archivo XLSX está vacío");
-            return;
-          }
-          const headers = jsonData[0].map((h: any) =>
-            String(h).toLowerCase().trim(),
-          );
           if (!validateHeaders(headers)) {
             toast.custom(
               (t) => (
@@ -123,20 +111,126 @@ export function BulkUploadCategoryDialog({
             setPreviewData([]);
             return;
           }
+          setPreviewData(results.data);
+        },
+        error: (error) => {
+          console.error("Error al parsear el archivo CSV:", error);
+          toast.error("Error al leer el archivo CSV");
+        },
+      });
+    } else if (
+      selectedFile.type ===
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      selectedFile.name.toLowerCase().endsWith(".xlsx")
+    ) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = e.target?.result;
+        try {
+          // 1) Habilitar cellDates y dateNF para que XLSX interprete celdas como fechas.
+          const workbook = XLSX.read(data, {
+            type: "binary",
+            cellDates: true, // Fuerza a tratar celdas de fecha como objetos Date
+            dateNF: "dd/mm/yyyy", // Formato deseado al convertir la fecha
+          });
+
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+
+          // 2) sheet_to_json con header:1 para obtener array de arrays
+          const jsonData: any[][] = XLSX.utils.sheet_to_json(worksheet, {
+            header: 1,
+            defval: "",
+          });
+
+          if (jsonData.length === 0) {
+            toast.error("El archivo XLSX está vacío");
+            return;
+          }
+
+          // La primera fila son los encabezados
+          const headers = jsonData[0].map((h: any) =>
+            String(h).toLowerCase().trim(),
+          );
+
+          if (!validateHeaders(headers)) {
+            setPreviewData([]);
+            toast.custom(
+              (t) => (
+                <div
+                  className={`${
+                    t.visible ? "animate-enter" : "animate-leave"
+                  } relative flex w-96 items-start gap-3 rounded-lg border border-red-400 bg-red-50 p-4 shadow-lg`}
+                  style={{ animationDuration: "3s" }}
+                >
+                  <CheckCircle className="mt-1 h-6 w-6 text-red-500" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-red-500">Error</p>
+                    <p className="text-sm text-red-500/80">
+                      El archivo XLSX contiene columnas incompletas o con
+                      encabezados incorrectos.
+                    </p>
+                  </div>
+                  <div className="absolute bottom-0 left-0 h-[3px] w-full bg-red-400/20">
+                    <div className="progress-bar h-full bg-red-400" />
+                  </div>
+                </div>
+              ),
+              { duration: 3000, position: "top-right" },
+            );
+            setPreviewData([]);
+            return;
+          }
+
+          // 3) Convertir filas a objetos, formateando fechas si son Date
           const rows = jsonData.slice(1);
           const formattedData = rows.map((row) => {
             let obj: any = {};
             headers.forEach((header: string, index: number) => {
-              obj[header] = row[index];
+              let value = row[index];
+
+              // Si la celda ya viene como Date (gracias a cellDates: true),
+              // la formateamos para mostrarla como "22/3/2025"
+              if (value instanceof Date) {
+                value = value.toLocaleDateString("es-ES");
+              }
+
+              obj[header] = value;
             });
             return obj;
           });
+
+          // 4) Guardamos el resultado en el estado para previsualizarlo
           setPreviewData(formattedData);
         } catch (err) {
-          console.error("Error al parsear el archivo XLSX:", err);
-          toast.error("Error al leer el archivo XLSX");
+          toast.custom(
+            (t) => (
+              <div
+                className={`${
+                  t.visible ? "animate-enter" : "animate-leave"
+                } relative flex w-96 items-start gap-3 rounded-lg border border-red-400 bg-red-50 p-4 shadow-lg`}
+                style={{ animationDuration: "3s" }}
+              >
+                <CheckCircle className="mt-1 h-6 w-6 text-red-500" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-red-500">Error</p>
+                  <p className="text-sm text-red-500/80">
+                    El archivo XLSX contiene columnas incompletas o con
+                    encabezados incorrectos.
+                  </p>
+                </div>
+                <div className="absolute bottom-0 left-0 h-[3px] w-full bg-red-400/20">
+                  <div className="progress-bar h-full bg-red-400" />
+                </div>
+              </div>
+            ),
+            { duration: 3000, position: "top-right" },
+          );
+          setPreviewData([]);
+          return;
         }
       };
+
       reader.onerror = (error) => {
         console.error("Error reading XLSX file:", error);
         toast.error("Error al leer el archivo XLSX");
@@ -151,9 +245,32 @@ export function BulkUploadCategoryDialog({
     fileInputRef.current?.click();
   };
 
-  // Función para descargar la plantilla generada en el backend
-  const handleDownloadTemplate = () => {
-    window.open("http://localhost:5000/categorias/plantilla", "_blank");
+  // Función para descargar la plantilla de productos desde el backend
+  const handleDownloadTemplate = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/productos/plantilla",
+        {
+          method: "GET",
+        },
+      );
+      if (!response.ok) {
+        toast.error("Error al descargar la plantilla " + response.statusText);
+        return;
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "plantilla-productos.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.error("Error descargando la plantilla:", error);
+      toast.error("Error al descargar la plantilla");
+    }
   };
 
   const handleUpload = async () => {
@@ -163,15 +280,19 @@ export function BulkUploadCategoryDialog({
     }
     setLoading(true);
     try {
-      // Transformar cada fila para que tenga la forma de DataCategories.
-      // Se asigna un estado por defecto, por ejemplo "Activo".
+      const defaultImageUrl =
+        "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/productos%2Fproduct-default.jpg?alt=media&token=a06d2373-fd9a-4fa5-a715-3c9ab7ae546d";
       const processedData = previewData.map((row) => ({
-        nom_cate: row["nom_cate"],
-        desc_cate: row["desc_cate"],
-        est_cate: "Activo", // si tu backend espera "est_cate" para el estado
+        cate_prod: row["cate_prod"],
+        nom_prod: row["nom_prod"],
+        prec_prod: Number(row["prec_prod"]),
+        stock_prod: Number(row["stock_prod"]),
+        fech_ven_prod: row["fech_ven_prod"],
+        est_prod: "Activo",
+        img_prod: defaultImageUrl,
       }));
 
-      const res = await fetch("http://localhost:5000/categorias/masivo", {
+      const res = await fetch("http://localhost:5000/productos/masivo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(processedData),
@@ -185,8 +306,8 @@ export function BulkUploadCategoryDialog({
           "Error en la carga masiva";
         throw new Error(errorMsg);
       }
-      if (data.categorias && data.categorias.length > 0) {
-        onSuccess(data.categorias);
+      if (data.productos && data.productos.length > 0) {
+        onSuccess(data.productos);
         toast.custom(
           (t) => (
             <div
@@ -201,7 +322,7 @@ export function BulkUploadCategoryDialog({
                   Mensaje Informativo
                 </p>
                 <p className="text-sm text-[#166534]/80">
-                  Categorías cargadas exitosamente.
+                  Productos cargados exitosamente.
                 </p>
               </div>
               <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
@@ -249,14 +370,14 @@ export function BulkUploadCategoryDialog({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="dark:border dark:border-default-700 dark:bg-[#09090b] sm:max-w-3xl">
+      <DialogContent className="border-border dark:bg-[#09090b] sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Carga Masiva de Categorías</DialogTitle>
+          <DialogTitle>Carga Masiva de Productos</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           {/* Instrucciones */}
           <div className="rounded bg-gray-100 p-4 dark:border-none dark:bg-[#1E1E1E] dark:text-white">
-            <h2 className="mb-2 text-lg font-bold dark:text-gray-100">
+            <h2 className="mb-2 font-mono dark:text-gray-100">
               Pasos para la carga masiva:
             </h2>
             <ol className="list-inside list-decimal text-sm text-gray-700 dark:text-white">
@@ -270,7 +391,7 @@ export function BulkUploadCategoryDialog({
               <li>
                 Llena la plantilla. Las columnas requeridas son:{" "}
                 <strong className="dark:text-primary">
-                  nom_cate y desc_cate
+                  cate_prod, nom_prod, prec_prod, stock_prod y fech_ven_prod
                 </strong>
                 .
               </li>
@@ -288,15 +409,11 @@ export function BulkUploadCategoryDialog({
                 para subir la información.
               </li>
             </ol>
-            <Button
-              variant="primary"
-              className="mt-2 bg-default-500"
-              onClick={handleDownloadTemplate}
-            >
+            <Button className="mt-2" onClick={handleDownloadTemplate}>
               Descargar plantilla
             </Button>
           </div>
-          {/* Selector de archivo */}
+          {/* Zona de arrastre para seleccionar archivo */}
           <div>
             <input
               type="file"
@@ -305,13 +422,24 @@ export function BulkUploadCategoryDialog({
               style={{ display: "none" }}
               accept=".csv, .xlsx"
             />
-            <Button onClick={handleUploadClick}>
-              {file ? "Cambiar archivo" : "Seleccionar archivo CSV/XLSX"}
-            </Button>
-            {file && (
-              <p className="mt-2 text-sm">Archivo seleccionado: {file.name}</p>
-            )}
+            <div
+              onClick={handleUploadClick}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              className="dark:border-default-700 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-6 hover:border-gray-400 dark:text-white dark:hover:border-gray-500"
+            >
+              <p className="text-gray-500">
+                Arrastra y suelta el archivo CSV/XLSX aquí o haz clic para
+                seleccionarlo.
+              </p>
+              {file && (
+                <p className="mt-2 text-sm text-gray-700 dark:text-white">
+                  Archivo seleccionado: {file.name}
+                </p>
+              )}
+            </div>
           </div>
+          {/* Vista previa de los datos */}
           {previewData.length > 0 ? (
             <div className="mt-4 max-h-[20vh] overflow-y-auto border">
               <table className="min-w-full border-collapse">
@@ -330,14 +458,31 @@ export function BulkUploadCategoryDialog({
                 <tbody>
                   {previewData.map((row, rowIndex) => (
                     <tr key={rowIndex} className="border border-gray-200">
-                      {Object.keys(row).map((header, cellIndex) => (
-                        <td
-                          key={cellIndex}
-                          className="border border-gray-200 px-4 py-2 text-sm text-gray-700 dark:text-white"
-                        >
-                          {row[header]}
-                        </td>
-                      ))}
+                      {Object.keys(row).map((header, cellIndex) => {
+                        const key = header.toLowerCase();
+                        if (key === "rol_usu") {
+                          const rolValue = row[header];
+                          return (
+                            <td
+                              key={cellIndex}
+                              className="border border-gray-200 px-4 py-2 text-sm text-gray-700 dark:text-white"
+                            >
+                              {categoryOptions.find(
+                                (option) => option.value === String(rolValue),
+                              )?.label || String(rolValue)}
+                            </td>
+                          );
+                        } else {
+                          return (
+                            <td
+                              key={cellIndex}
+                              className="border border-gray-200 px-4 py-2 text-sm text-gray-700 dark:text-white"
+                            >
+                              {row[header]}
+                            </td>
+                          );
+                        }
+                      })}
                     </tr>
                   ))}
                 </tbody>
@@ -351,18 +496,14 @@ export function BulkUploadCategoryDialog({
         </div>
         <DialogFooter>
           <div className="flex justify-end space-x-2">
-            <Button
-              variant="primary"
-              className="bg-default-500"
-              onClick={onClose}
-            >
+            <Button variant={"secondary"} onClick={onClose}>
               Cancelar
             </Button>
             <Button
               onClick={handleUpload}
               disabled={loading || previewData.length === 0}
             >
-              {loading ? "Cargando..." : "Cargar"}
+              {loading ? "Cargando..." : "Guardar Productos"}
             </Button>
           </div>
         </DialogFooter>
