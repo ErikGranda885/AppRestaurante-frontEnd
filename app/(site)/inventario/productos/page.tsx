@@ -9,7 +9,17 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { TrendingUpIcon, Upload, Check, ChevronsUpDown } from "lucide-react";
+import {
+  TrendingUpIcon,
+  Upload,
+  Check,
+  ChevronsUpDown,
+  SkipForward,
+  Play,
+  SkipBack,
+  Heart,
+  Edit2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -59,7 +69,7 @@ function MetricCard({
   return (
     <Card
       onClick={onClick}
-      className="group cursor-pointer flex flex-col justify-between rounded-xl border border-border bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-lg dark:bg-[#09090b]"
+      className="group flex cursor-pointer flex-col justify-between rounded-xl border border-border bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-lg dark:bg-[#09090b]"
     >
       <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
         <div className="flex-1">
@@ -70,7 +80,9 @@ function MetricCard({
             <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
               {valor}
             </span>
-            <span className={`inline-block rounded-md px-2 py-1 text-sm font-bold ${badgeColorClass}`}>
+            <span
+              className={`inline-block rounded-md px-2 text-sm font-bold ${badgeColorClass}`}
+            >
               {porcentaje}
             </span>
           </div>
@@ -79,7 +91,9 @@ function MetricCard({
           </CardDescription>
         </div>
         <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
-          <TrendingUpIcon className={`h-7 w-7 transition-transform duration-300 group-hover:scale-110 ${iconColor}`} />
+          <TrendingUpIcon
+            className={`h-7 w-7 transition-transform duration-300 group-hover:scale-110 ${iconColor}`}
+          />
         </div>
       </CardHeader>
     </Card>
@@ -109,7 +123,9 @@ const resetTime = (date: Date): Date => {
   return d;
 };
 
-const getDaysUntilExpiration = (expirationDateString: string): number | null => {
+const getDaysUntilExpiration = (
+  expirationDateString: string,
+): number | null => {
   const expirationDate = parseDateString(expirationDateString);
   if (!expirationDate) return null;
   const today = resetTime(new Date());
@@ -149,60 +165,88 @@ function ProductCard({ product }: { product: Product }) {
     daysLeft === null
       ? "Fecha inválida"
       : daysLeft > 0
-      ? `Quedan ${daysLeft} día${daysLeft === 1 ? "" : "s"}`
-      : daysLeft === 0
-      ? "Vence hoy"
-      : `Caducado hace ${Math.abs(daysLeft)} día${Math.abs(daysLeft) === 1 ? "" : "s"}`;
+        ? `Quedan ${daysLeft} día${daysLeft === 1 ? "" : "s"}`
+        : daysLeft === 0
+          ? "Vence hoy"
+          : `Caducado hace ${Math.abs(daysLeft)} día${Math.abs(daysLeft) === 1 ? "" : "s"}`;
 
-  let badgeColorClass = "";
+  // Colores dinámicos para el texto de caducidad
+  let expirationColorClass = "text-gray-400";
   if (daysLeft === null) {
-    badgeColorClass = "bg-gray-500 text-white";
-  } else if (daysLeft < 0 || daysLeft <= 3) {
-    badgeColorClass = "bg-red-500 text-white";
+    expirationColorClass = "text-gray-500";
+  } else if (daysLeft < 0) {
+    expirationColorClass = "error-text";
+  } else if (daysLeft <= 3) {
+    expirationColorClass = "warning-text";
   } else if (daysLeft <= 10) {
-    badgeColorClass = "bg-yellow-500 text-white";
-  } else {
-    badgeColorClass = "bg-green-500 text-white";
+    expirationColorClass = " ama-text";
+  } else if (daysLeft > 10) {
+    expirationColorClass = " success-text";
   }
 
   return (
-    <Card className="w-full max-w-xs overflow-hidden rounded-xl border border-border bg-white shadow-md transition-transform duration-300 hover:scale-105 hover:shadow-2xl dark:bg-[#09090b]">
-      <div className="relative h-32 w-full">
-        <Image src={product.img_prod} alt={product.nom_prod} fill className="object-cover" />
+    <Card className="group relative flex max-w-lg overflow-hidden rounded-lg border border-border bg-white p-3 shadow-md transition-colors duration-300 dark:bg-[#09090b]">
+      {/* Overlay para el botón de edición */}
+      <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+        <Button className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow hover:bg-blue-100 dark:bg-[#09090b]">
+          <Edit2 className="h-6 w-6 text-black dark:text-white" />
+        </Button>
       </div>
-      <div className="p-3">
-        <div className="mb-1 border-b border-gray-200 pb-1">
-          <CardTitle className="text-lg font-bold text-gray-800 dark:text-gray-100">
-            {product.nom_prod}
+
+      {/* Contenido principal */}
+      <div className="relative z-10 flex w-full">
+        {/* Imagen a la izquierda */}
+        <div className="relative mr-3 h-24 w-24 flex-shrink-0 overflow-hidden rounded-md">
+          <Image
+            src={product.img_prod}
+            alt={product.nom_prod}
+            fill
+            className="object-cover"
+          />
+        </div>
+
+        {/* Información a la derecha */}
+        <div className="flex flex-1 flex-col space-y-0">
+          {/* Fila superior: categoría a la izquierda y stock a la derecha */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold">{product.nom_prod}</h2>
+
+            <CardDescription className="text-xs">
+              Stock: {product.stock_prod}
+            </CardDescription>
+          </div>
+
+          {/* Nombre del producto */}
+          <CardTitle className="text-xs font-semibold">
+            <label className="text-xs text-muted-foreground">Categoría: </label>
+            {product.cate_prod.nom_cate}
           </CardTitle>
-        </div>
-        <div className="mb-2">
-          <CardDescription className="text-xs text-gray-600 dark:text-gray-300">
-            <span className="font-semibold">Categoría:</span> {product.cate_prod.nom_cate}
-          </CardDescription>
-          <CardDescription className="text-xs text-gray-600 dark:text-gray-300">
-            <span className="font-semibold">Stock:</span> {product.stock_prod}
-          </CardDescription>
-        </div>
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-gray-700 dark:text-gray-300">
-            <span className="font-semibold">Precio:</span> ${product.prec_prod.toFixed(2)}
-          </p>
-          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${badgeColorClass}`}>
+          {/* Texto de caducidad */}
+          <div className={`text-xs font-bold ${expirationColorClass}`}>
+            <label className="text-xs text-muted-foreground">Caduca: </label>
             {expirationText}
-          </span>
-        </div>
-        <div className="mt-1">
-          <p className="text-xs text-gray-700 dark:text-gray-300">
-            <span className="font-semibold">Estado:</span>{" "}
-            {product.est_prod === "Activo" ? (
-              <span className="text-green-500 dark:text-green-300">Activo</span>
-            ) : (
-              <span className="text-red-500 dark:text-red-300">Inactivo</span>
-            )}
-          </p>
+          </div>
+          {/* Precio */}
+          <div>
+            <span className="text-sm font-bold">
+              <label className="text-xs text-muted-foreground">Precio: </label>$
+              {product.prec_prod.toFixed(2)}
+            </span>
+          </div>
         </div>
       </div>
+
+      {/* Estado en la esquina inferior derecha */}
+      <span
+        className={cn(
+          "absolute bottom-2 right-2 rounded-md px-2 py-1 text-xs font-semibold",
+          product.est_prod === "Activo"
+            ? "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300"
+            : "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300",
+        )}
+      >
+        {product.est_prod}
+      </span>
     </Card>
   );
 }
@@ -246,13 +290,24 @@ interface CategoryComboboxProps {
   onValueChange: (value: string) => void;
 }
 
-function CategoryCombobox({ options, value, onValueChange }: CategoryComboboxProps) {
+function CategoryCombobox({
+  options,
+  value,
+  onValueChange,
+}: CategoryComboboxProps) {
   const [open, setOpen] = useState(false);
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" role="combobox" aria-expanded={open} className="w-[200px] justify-between">
-          {value ? options.find((option) => option.value === value)?.label : "Todos"}
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-[200px] justify-between"
+        >
+          {value
+            ? options.find((option) => option.value === value)?.label
+            : "Todos"}
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -267,13 +322,20 @@ function CategoryCombobox({ options, value, onValueChange }: CategoryComboboxPro
                   key={option.value}
                   value={option.label}
                   onSelect={(currentValue) => {
-                    const selected = options.find((o) => o.label === currentValue);
+                    const selected = options.find(
+                      (o) => o.label === currentValue,
+                    );
                     onValueChange(selected?.value || "");
                     setOpen(false);
                   }}
                 >
                   {option.label}
-                  <Check className={cn("ml-auto", value === option.value ? "opacity-100" : "opacity-0")} />
+                  <Check
+                    className={cn(
+                      "ml-auto",
+                      value === option.value ? "opacity-100" : "opacity-0",
+                    )}
+                  />
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -370,12 +432,12 @@ export default function Page() {
   let filteredProducts = allProducts;
   if (selectedCategory) {
     filteredProducts = filteredProducts.filter(
-      (product) => product.cate_prod.id_cate === parseInt(selectedCategory)
+      (product) => product.cate_prod.id_cate === parseInt(selectedCategory),
     );
   }
   if (metricFilter === "critical") {
     filteredProducts = filteredProducts.filter(
-      (product) => product.stock_prod <= stockCritico
+      (product) => product.stock_prod <= stockCritico,
     );
   } else if (metricFilter === "soonExpire") {
     filteredProducts = filteredProducts.filter((product) => {
@@ -385,16 +447,19 @@ export default function Page() {
   }
   if (searchQuery) {
     filteredProducts = filteredProducts.filter((product) =>
-      product.nom_prod.toLowerCase().includes(searchQuery.toLowerCase())
+      product.nom_prod.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }
   filteredProducts = filteredProducts.filter(
-    (product) => product.est_prod === statusFilter
+    (product) => product.est_prod === statusFilter,
   );
 
   const indexOfLastProduct = currentPage * itemsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - itemsPerPage;
-  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
+  const currentProducts = filteredProducts.slice(
+    indexOfFirstProduct,
+    indexOfLastProduct,
+  );
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
   const handleCategorySelect = (value: string) => {
@@ -430,7 +495,7 @@ export default function Page() {
             titulo="Stock Crítico"
             valor={
               allProducts.filter(
-                (product) => product.stock_prod <= stockCritico
+                (product) => product.stock_prod <= stockCritico,
               ).length
             }
             porcentaje=""
@@ -466,7 +531,7 @@ export default function Page() {
         </div>
         <div className="rounded-xl border border-border p-6 shadow-md dark:bg-[#09090b]">
           {/* Filtros y acciones */}
-          <div className="flex flex-row justify-between pb-1">
+          <div className="flex flex-row justify-between pb-5">
             <div className="flex items-center gap-4">
               <Input
                 type="text"
@@ -533,7 +598,7 @@ export default function Page() {
             </div>
           ) : (
             <>
-              <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
+              <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
                 {currentProducts.map((product) => (
                   <ProductCard key={product.id_prod} product={product} />
                 ))}

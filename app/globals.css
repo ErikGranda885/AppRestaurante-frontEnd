@@ -33,12 +33,20 @@
     --font-principal: "Geist", sans-serif;
     --error-per: #f31260;
     --success-per: #17c964;
+    --warning-per: #f5a524;
+    --ama-per: #facc15;
   }
   .error-text {
     color: var(--error-per);
   }
   .success-text {
     color: var(--success-per);
+  }
+  .warning-text {
+    color: var(--warning-per);
+  }
+  .ama-text {
+    color: var(--ama-per);
   }
 
   .dark {

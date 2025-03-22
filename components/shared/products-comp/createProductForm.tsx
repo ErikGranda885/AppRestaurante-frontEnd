@@ -186,6 +186,14 @@ export function FormProducts({
       console.log("Subiendo imagen a Firebase...");
       imageUrl = await uploadImage(imageFile);
       console.log("Imagen subida, URL:", imageUrl);
+    } else {
+      // Si no se selecciona imagen, se utiliza una URL por defecto.
+      imageUrl =
+        "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/productos%2Fproduct-default.jpg?alt=media&token=a06d2373-fd9a-4fa5-a715-3c9ab7ae546d";
+      console.log(
+        "No se seleccionó imagen. Usando imagen por defecto:",
+        imageUrl,
+      );
     }
 
     const payload = {
