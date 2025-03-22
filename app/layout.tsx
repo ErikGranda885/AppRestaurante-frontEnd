@@ -3,6 +3,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/shared/theme-provider";
 import { ModeToggle } from "@/components/shared/modeToogle";
+import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {
   title: "Mi App",
@@ -24,6 +25,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <Toaster />
           <footer className="fixed bottom-4 right-4 z-50">
             <ModeToggle />
           </footer>

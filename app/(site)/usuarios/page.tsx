@@ -428,7 +428,7 @@ export default function Page() {
                         ).length
                       }
                     </span>
-                    <span className="inline-block rounded-md bg-red-100 px-2 py-1 text-sm font-bold error-text dark:bg-red-800/30 ">
+                    <span className="error-text inline-block rounded-md bg-red-100 px-2 py-1 text-sm font-bold dark:bg-red-800/30">
                       -8%
                     </span>
                   </div>
@@ -439,7 +439,7 @@ export default function Page() {
                 </div>
                 {/* Ícono con efecto hover */}
                 <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
-                  <UserX className="h-7 w-7 error-text transition-transform duration-300 group-hover:scale-110" />
+                  <UserX className="error-text h-7 w-7 transition-transform duration-300 group-hover:scale-110" />
                 </div>
               </CardHeader>
             </Card>

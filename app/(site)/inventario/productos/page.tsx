@@ -27,16 +27,16 @@ import {
 } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { GeneralDialog } from "@/components/shared/dialogGen";
+import { FormProducts } from "@/components/shared/products-comp/createProductForm";
 
 /* Umbral para tarjetas */
-
 const stockCritico = 10;
 const diasCaducidad = 10;
 
 type MetricFilter = "all" | "critical" | "soonExpire";
 
 /* Componente base */
-
 interface MetricCardProps {
   titulo: string;
   valor: string | number;
@@ -59,7 +59,7 @@ function MetricCard({
   return (
     <Card
       onClick={onClick}
-      className="group flex cursor-pointer flex-col justify-between rounded-xl border border-border bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-lg dark:bg-[#09090b]"
+      className="group cursor-pointer flex flex-col justify-between rounded-xl border border-border bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-lg dark:bg-[#09090b]"
     >
       <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
         <div className="flex-1">
@@ -70,9 +70,7 @@ function MetricCard({
             <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
               {valor}
             </span>
-            <span
-              className={`inline-block rounded-md px-2 py-1 text-sm font-bold ${badgeColorClass}`}
-            >
+            <span className={`inline-block rounded-md px-2 py-1 text-sm font-bold ${badgeColorClass}`}>
               {porcentaje}
             </span>
           </div>
@@ -81,16 +79,14 @@ function MetricCard({
           </CardDescription>
         </div>
         <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
-          <TrendingUpIcon
-            className={`h-7 w-7 transition-transform duration-300 group-hover:scale-110 ${iconColor}`}
-          />
+          <TrendingUpIcon className={`h-7 w-7 transition-transform duration-300 group-hover:scale-110 ${iconColor}`} />
         </div>
       </CardHeader>
     </Card>
   );
 }
 
-/* Fechas para caducados formatos */
+/* Helpers de fechas */
 const parseDateString = (dateStr: string): Date | null => {
   if (dateStr.includes("/")) {
     const parts = dateStr.split("/");
@@ -113,9 +109,7 @@ const resetTime = (date: Date): Date => {
   return d;
 };
 
-const getDaysUntilExpiration = (
-  expirationDateString: string,
-): number | null => {
+const getDaysUntilExpiration = (expirationDateString: string): number | null => {
   const expirationDate = parseDateString(expirationDateString);
   if (!expirationDate) return null;
   const today = resetTime(new Date());
@@ -148,17 +142,17 @@ interface Option {
   label: string;
 }
 
-/* Carta producto */
+/* Carta de producto */
 function ProductCard({ product }: { product: Product }) {
   const daysLeft = getDaysUntilExpiration(product.fech_ven_prod);
   const expirationText =
     daysLeft === null
       ? "Fecha inválida"
       : daysLeft > 0
-        ? `Quedan ${daysLeft} día${daysLeft === 1 ? "" : "s"}`
-        : daysLeft === 0
-          ? "Vence hoy"
-          : `Caducado hace ${Math.abs(daysLeft)} día${Math.abs(daysLeft) === 1 ? "" : "s"}`;
+      ? `Quedan ${daysLeft} día${daysLeft === 1 ? "" : "s"}`
+      : daysLeft === 0
+      ? "Vence hoy"
+      : `Caducado hace ${Math.abs(daysLeft)} día${Math.abs(daysLeft) === 1 ? "" : "s"}`;
 
   let badgeColorClass = "";
   if (daysLeft === null) {
@@ -174,12 +168,7 @@ function ProductCard({ product }: { product: Product }) {
   return (
     <Card className="w-full max-w-xs overflow-hidden rounded-xl border border-border bg-white shadow-md transition-transform duration-300 hover:scale-105 hover:shadow-2xl dark:bg-[#09090b]">
       <div className="relative h-32 w-full">
-        <Image
-          src={product.img_prod}
-          alt={product.nom_prod}
-          fill
-          className="object-cover"
-        />
+        <Image src={product.img_prod} alt={product.nom_prod} fill className="object-cover" />
       </div>
       <div className="p-3">
         <div className="mb-1 border-b border-gray-200 pb-1">
@@ -189,8 +178,7 @@ function ProductCard({ product }: { product: Product }) {
         </div>
         <div className="mb-2">
           <CardDescription className="text-xs text-gray-600 dark:text-gray-300">
-            <span className="font-semibold">Categoría:</span>{" "}
-            {product.cate_prod.nom_cate}
+            <span className="font-semibold">Categoría:</span> {product.cate_prod.nom_cate}
           </CardDescription>
           <CardDescription className="text-xs text-gray-600 dark:text-gray-300">
             <span className="font-semibold">Stock:</span> {product.stock_prod}
@@ -198,12 +186,9 @@ function ProductCard({ product }: { product: Product }) {
         </div>
         <div className="flex items-center justify-between">
           <p className="text-xs text-gray-700 dark:text-gray-300">
-            <span className="font-semibold">Precio:</span> $
-            {product.prec_prod.toFixed(2)}
+            <span className="font-semibold">Precio:</span> ${product.prec_prod.toFixed(2)}
           </p>
-          <span
-            className={`rounded-full px-2 py-0.5 text-xs font-semibold ${badgeColorClass}`}
-          >
+          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${badgeColorClass}`}>
             {expirationText}
           </span>
         </div>
@@ -222,8 +207,7 @@ function ProductCard({ product }: { product: Product }) {
   );
 }
 
-/* Paginator */
-
+/* Paginador */
 interface PaginatorProps {
   currentPage: number;
   totalPages: number;
@@ -255,31 +239,20 @@ function Paginator({ currentPage, totalPages, onPageChange }: PaginatorProps) {
   );
 }
 
-/* Combobox categorias */
+/* Combobox de categorías */
 interface CategoryComboboxProps {
   options: Option[];
   value: string;
   onValueChange: (value: string) => void;
 }
 
-function CategoryCombobox({
-  options,
-  value,
-  onValueChange,
-}: CategoryComboboxProps) {
-  const [open, setOpen] = React.useState(false);
+function CategoryCombobox({ options, value, onValueChange }: CategoryComboboxProps) {
+  const [open, setOpen] = useState(false);
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-[200px] justify-between"
-        >
-          {value
-            ? options.find((option) => option.value === value)?.label
-            : "Todos"}
+        <Button variant="outline" role="combobox" aria-expanded={open} className="w-[200px] justify-between">
+          {value ? options.find((option) => option.value === value)?.label : "Todos"}
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -294,20 +267,13 @@ function CategoryCombobox({
                   key={option.value}
                   value={option.label}
                   onSelect={(currentValue) => {
-                    const selected = options.find(
-                      (o) => o.label === currentValue,
-                    );
+                    const selected = options.find((o) => o.label === currentValue);
                     onValueChange(selected?.value || "");
                     setOpen(false);
                   }}
                 >
                   {option.label}
-                  <Check
-                    className={cn(
-                      "ml-auto",
-                      value === option.value ? "opacity-100" : "opacity-0",
-                    )}
-                  />
+                  <Check className={cn("ml-auto", value === option.value ? "opacity-100" : "opacity-0")} />
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -326,7 +292,6 @@ interface StatusTabsProps {
 
 function StatusTabs({ value, onValueChange }: StatusTabsProps) {
   return (
-    /*  */
     <Tabs
       defaultValue="Activo"
       value={value}
@@ -354,14 +319,12 @@ export default function Page() {
   const [categoryOptions, setCategoryOptions] = useState<Option[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
 
-  // Estado para el filtro de métrica
   const [metricFilter, setMetricFilter] = useState<MetricFilter>("all");
-
-  // Estado para el filtro de estado (Activos/Inactivos)
   const [statusFilter, setStatusFilter] = useState<string>("Activo");
-
-  // Estado para el buscador
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // Estado para controlar el diálogo de creación de producto
+  const [openCreate, setOpenCreate] = useState(false);
 
   // Cargar categorías desde la API e incluir "Todos"
   useEffect(() => {
@@ -407,12 +370,12 @@ export default function Page() {
   let filteredProducts = allProducts;
   if (selectedCategory) {
     filteredProducts = filteredProducts.filter(
-      (product) => product.cate_prod.id_cate === parseInt(selectedCategory),
+      (product) => product.cate_prod.id_cate === parseInt(selectedCategory)
     );
   }
   if (metricFilter === "critical") {
     filteredProducts = filteredProducts.filter(
-      (product) => product.stock_prod <= stockCritico,
+      (product) => product.stock_prod <= stockCritico
     );
   } else if (metricFilter === "soonExpire") {
     filteredProducts = filteredProducts.filter((product) => {
@@ -422,30 +385,23 @@ export default function Page() {
   }
   if (searchQuery) {
     filteredProducts = filteredProducts.filter((product) =>
-      product.nom_prod.toLowerCase().includes(searchQuery.toLowerCase()),
+      product.nom_prod.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }
-  // Filtrar por estado
   filteredProducts = filteredProducts.filter(
-    (product) => product.est_prod === statusFilter,
+    (product) => product.est_prod === statusFilter
   );
 
-  // Paginación sobre productos filtrados
   const indexOfLastProduct = currentPage * itemsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - itemsPerPage;
-  const currentProducts = filteredProducts.slice(
-    indexOfFirstProduct,
-    indexOfLastProduct,
-  );
+  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
-  // Actualizar filtro de categoría
   const handleCategorySelect = (value: string) => {
     setSelectedCategory(value);
     setCurrentPage(1);
   };
 
-  // Actualizar filtro métrico
   const handleMetricFilter = (filter: MetricFilter) => {
     setMetricFilter(filter);
     setCurrentPage(1);
@@ -474,7 +430,7 @@ export default function Page() {
             titulo="Stock Crítico"
             valor={
               allProducts.filter(
-                (product) => product.stock_prod <= stockCritico,
+                (product) => product.stock_prod <= stockCritico
               ).length
             }
             porcentaje=""
@@ -522,11 +478,9 @@ export default function Page() {
                   setCurrentPage(1);
                 }}
               />
-              {/* Label para el combobox de categoria */}
               <label className="text-sm text-secondary-foreground">
                 Selecciona una categoría:
               </label>
-              {/* Combobox de categorías */}
               <CategoryCombobox
                 options={categoryOptions}
                 value={selectedCategory}
@@ -548,7 +502,21 @@ export default function Page() {
                 <Upload className="mr-2 h-4 w-4" />
                 Importar
               </Button>
-              <Button>Nuevo Producto</Button>
+              <GeneralDialog
+                open={openCreate}
+                onOpenChange={setOpenCreate}
+                triggerText={<>Nuevo Producto</>}
+                title="Crear Nuevo Producto"
+                description="Ingresa la información para crear un nuevo producto."
+                submitText="Crear Producto"
+              >
+                <FormProducts
+                  onSuccess={(data: any) => {
+                    setAllProducts((prev) => [...prev, data.producto]);
+                    setOpenCreate(false);
+                  }}
+                />
+              </GeneralDialog>
             </div>
           </div>
 
