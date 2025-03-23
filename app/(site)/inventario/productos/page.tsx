@@ -21,6 +21,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Interfaces y tipos
 type MetricFilter = "all" | "critical" | "soonExpire";
@@ -48,7 +56,7 @@ export type Option = {
   label: string;
 };
 
-// Helper de fechas (puedes moverlos a un archivo util)
+// Helpers de fechas (puedes moverlos a un archivo util)
 const parseDateString = (dateStr: string): Date | null => {
   if (dateStr.includes("/")) {
     const parts = dateStr.split("/");
@@ -85,17 +93,28 @@ const getDaysUntilExpiration = (
 const stockCritico = 10;
 const diasCaducidad = 10;
 
+// Opciones de ordenamiento para el dropdown
+const sortOptions = [
+  { key: "alphabetical", label: "Alfabético (A-Z)" },
+  { key: "stockAsc", label: "Menor stock a mayor stock" },
+  { key: "expirationAsc", label: "Por días hasta vencimiento" },
+  { key: "priceAsc", label: "Precio de menor a mayor" },
+];
+
 export default function Page() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [errorProducts, setErrorProducts] = useState<string | null>(null);
+  // Se muestran 9 productos por página (3 columnas x 3 filas)
+  const itemsPerPage = 9;
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
   const [categoryOptions, setCategoryOptions] = useState<Option[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [metricFilter, setMetricFilter] = useState<MetricFilter>("all");
+  // statusFilter puede ser "Activo", "Inactivo" o "all"
   const [statusFilter, setStatusFilter] = useState<string>("Activo");
+  const [metricFilter, setMetricFilter] = useState<MetricFilter>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [sortCriteria, setSortCriteria] = useState<string>("default");
   const [openBulkUpload, setOpenBulkUpload] = useState(false);
   const [openCreate, setOpenCreate] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
@@ -149,7 +168,7 @@ export default function Page() {
       (product) => product.stock_prod <= stockCritico,
     );
   } else if (metricFilter === "soonExpire") {
-    // Se filtran los productos caducados (días < 0) y los próximos a caducar (0 <= días <= diasCaducidad)
+    // Filtrar productos caducados (días < 0) o próximos a caducar (días <= diasCaducidad)
     filteredProducts = filteredProducts.filter((product) => {
       const days = getDaysUntilExpiration(product.fech_ven_prod);
       return days !== null && days <= diasCaducidad;
@@ -160,9 +179,42 @@ export default function Page() {
       product.nom_prod.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }
-  filteredProducts = filteredProducts.filter(
-    (product) => product.est_prod === statusFilter,
-  );
+  // Filtrar por estado:
+  if (statusFilter !== "all") {
+    filteredProducts = filteredProducts.filter(
+      (product) => product.est_prod === statusFilter,
+    );
+  }
+
+  // Ordenar según el criterio seleccionado
+  if (sortCriteria === "alphabetical") {
+    filteredProducts = [...filteredProducts].sort((a, b) =>
+      a.nom_prod.localeCompare(b.nom_prod),
+    );
+  } else if (sortCriteria === "stockAsc") {
+    filteredProducts = [...filteredProducts].sort(
+      (a, b) => a.stock_prod - b.stock_prod,
+    );
+  } else if (sortCriteria === "expirationAsc") {
+    filteredProducts = [...filteredProducts].sort((a, b) => {
+      const daysA = getDaysUntilExpiration(a.fech_ven_prod) ?? 0;
+      const daysB = getDaysUntilExpiration(b.fech_ven_prod) ?? 0;
+      return daysA - daysB;
+    });
+  } else if (sortCriteria === "priceAsc") {
+    filteredProducts = [...filteredProducts].sort(
+      (a, b) => a.prec_prod - b.prec_prod,
+    );
+  } else {
+    // Orden predeterminada: si statusFilter es "all", se ordena para que activos aparezcan primero
+    if (statusFilter === "all") {
+      filteredProducts = [...filteredProducts].sort((a, b) => {
+        if (a.est_prod === "Activo" && b.est_prod !== "Activo") return -1;
+        if (a.est_prod !== "Activo" && b.est_prod === "Activo") return 1;
+        return 0;
+      });
+    }
+  }
 
   const indexOfLastProduct = currentPage * itemsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - itemsPerPage;
@@ -177,9 +229,13 @@ export default function Page() {
     setCurrentPage(1);
   };
 
+  // Al dar click en "Productos Registrados", se muestran todos (activos e inactivos)
   const handleMetricFilter = (filter: MetricFilter) => {
     setMetricFilter(filter);
     setCurrentPage(1);
+    if (filter === "all") {
+      setStatusFilter("all");
+    }
   };
 
   return (
@@ -200,7 +256,10 @@ export default function Page() {
               periodo="Total"
               iconColor="text-green-400"
               badgeColorClass="bg-green-100 dark:bg-green-800/30 text-green-500 dark:text-green-400"
-              onClick={() => handleMetricFilter("all")}
+              onClick={() => {
+                handleMetricFilter("all");
+                setStatusFilter("all");
+              }}
             />
             <MetricCard
               titulo="Stock Crítico"
@@ -244,7 +303,7 @@ export default function Page() {
           <div className="rounded-xl border border-border p-6 shadow-md dark:bg-[#09090b]">
             {/* Filtros y acciones */}
             <div className="flex flex-row justify-between pb-5">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
                 <Input
                   type="text"
                   placeholder="Buscar"
@@ -256,7 +315,7 @@ export default function Page() {
                   }}
                 />
                 <label className="text-sm text-secondary-foreground">
-                  Selecciona una categoría:
+                  Categoría:
                 </label>
                 <CategoryCombobox
                   options={categoryOptions}
@@ -264,12 +323,21 @@ export default function Page() {
                   onValueChange={handleCategorySelect}
                 />
                 <label className="text-sm text-secondary-foreground">
-                  Selecciona un estado:
+                  Estado:
                 </label>
                 <StatusTabs
                   value={statusFilter}
                   onValueChange={(newValue) => {
                     setStatusFilter(newValue);
+                    setCurrentPage(1);
+                  }}
+                />
+                <label className="text-sm text-secondary-foreground">
+                  Ordenar por:
+                </label>
+                <SortDropdown
+                  onSelect={(key) => {
+                    setSortCriteria(key);
                     setCurrentPage(1);
                   }}
                 />
@@ -330,6 +398,12 @@ export default function Page() {
                       product={product}
                       onEdit={(prod) => setEditProduct(prod)}
                     />
+                  ))}
+                  {/* Placeholders para completar 3 columnas en la última fila */}
+                  {Array.from({
+                    length: (3 - (currentProducts.length % 3)) % 3,
+                  }).map((_, idx) => (
+                    <div key={`placeholder-${idx}`} className="invisible" />
                   ))}
                 </div>
                 <Paginator
@@ -411,5 +485,38 @@ export default function Page() {
       )}
       <Toaster position="top-right" />
     </>
+  );
+}
+
+// Componente para ordenar mediante Dropdown Menu
+function SortDropdown({ onSelect }: { onSelect: (key: string) => void }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" className="flex items-center gap-2">
+          ...
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56">
+        <DropdownMenuLabel>Ordenar por:</DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuItem onSelect={() => onSelect("none")}>
+            Quitar filtro
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onSelect("alphabetical")}>
+            Alfabético (A-Z)
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onSelect("stockAsc")}>
+            Menor stock a mayor stock
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onSelect("expirationAsc")}>
+            Por días hasta vencimiento
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onSelect("priceAsc")}>
+            Precio de menor a mayor
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
