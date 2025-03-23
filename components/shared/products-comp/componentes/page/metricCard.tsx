@@ -15,6 +15,7 @@ export interface MetricCardProps {
   periodo: React.ReactNode;
   iconColor: string;
   badgeColorClass: string;
+  customRightContent?: React.ReactNode;
   onClick?: () => void;
 }
 
@@ -25,6 +26,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   periodo,
   iconColor,
   badgeColorClass,
+  customRightContent,
   onClick,
 }) => {
   return (
@@ -52,9 +54,13 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           </CardDescription>
         </div>
         <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
-          <TrendingUpIcon
-            className={`h-7 w-7 transition-transform duration-300 group-hover:scale-110 ${iconColor}`}
-          />
+          {customRightContent ? (
+            customRightContent
+          ) : (
+            <TrendingUpIcon
+              className={`h-7 w-7 transition-transform duration-300 group-hover:scale-110 ${iconColor}`}
+            />
+          )}
         </div>
       </CardHeader>
     </Card>

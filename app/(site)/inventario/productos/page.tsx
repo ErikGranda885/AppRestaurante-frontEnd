@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 // Interfaces y tipos
-type MetricFilter = "all" | "critical" | "soonExpire";
+type MetricFilter = "all" | "critical" | "soonExpire" | "outOfStock";
 
 interface Category {
   id_cate: number;
@@ -169,23 +169,28 @@ export default function Page() {
       (product) => product.cate_prod.id_cate === parseInt(selectedCategory),
     );
   }
+
   if (metricFilter === "critical") {
     filteredProducts = filteredProducts.filter(
-      (product) => product.stock_prod <= stockCritico,
+      (product) => product.stock_prod <= stockCritico && product.stock_prod > 0,
     );
   } else if (metricFilter === "soonExpire") {
-    // Filtrar productos caducados (días < 0) o próximos a caducar (días <= diasCaducidad)
     filteredProducts = filteredProducts.filter((product) => {
       const days = getDaysUntilExpiration(product.fech_ven_prod);
       return days !== null && days <= diasCaducidad;
     });
+  } else if (metricFilter === "outOfStock") {
+    filteredProducts = filteredProducts.filter(
+      (product) => product.stock_prod === 0,
+    );
   }
+
   if (searchQuery) {
     filteredProducts = filteredProducts.filter((product) =>
       product.nom_prod.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }
-  // Filtrar por estado:
+
   if (statusFilter !== "all") {
     filteredProducts = filteredProducts.filter(
       (product) => product.est_prod === statusFilter,
@@ -392,24 +397,56 @@ export default function Page() {
       >
         <div className="p-6">
           {/* Tarjetas de métricas */}
-          <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {/* Tarjetas de métricas actualizadas con Productos Agotados */}
+          <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-4">
             <MetricCard
               titulo="Productos Registrados"
               valor={allProducts.length}
               porcentaje=""
               periodo="Total"
-              iconColor="text-green-400"
-              badgeColorClass="bg-green-100 dark:bg-green-800/30 text-green-500 dark:text-green-400"
+              iconColor="text-blue-400"
+              badgeColorClass="bg-blue-100 dark:bg-blue-800/30 text-blue-500 dark:text-blue-400"
+              customRightContent={
+                <div className="flex flex-col gap-1 text-right text-xs">
+                  <div className="flex items-center justify-end gap-2">
+                    <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+                    <span>
+                      Activos:{" "}
+                      <strong>
+                        {
+                          allProducts.filter((p) => p.est_prod === "Activo")
+                            .length
+                        }
+                      </strong>
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-end gap-2">
+                    <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
+                    <span>
+                      Inactivos:{" "}
+                      <strong>
+                        {
+                          allProducts.filter((p) => p.est_prod === "Inactivo")
+                            .length
+                        }
+                      </strong>
+                    </span>
+                  </div>
+                </div>
+              }
               onClick={() => {
                 handleMetricFilter("all");
                 setStatusFilter("all");
               }}
             />
+
             <MetricCard
               titulo="Stock Crítico"
               valor={
                 allProducts.filter(
-                  (product) => product.stock_prod <= stockCritico,
+                  (product) =>
+                    product.stock_prod <= stockCritico &&
+                    product.stock_prod > 0,
                 ).length
               }
               porcentaje=""
@@ -421,8 +458,13 @@ export default function Page() {
               }
               iconColor="text-yellow-400"
               badgeColorClass="bg-yellow-100 dark:bg-yellow-800/30 text-yellow-500 dark:text-yellow-400"
-              onClick={() => handleMetricFilter("critical")}
+              onClick={() => {
+                setMetricFilter("critical");
+                setCurrentPage(1);
+                setStatusFilter("Activo");
+              }}
             />
+
             <MetricCard
               titulo="Próx. a Caducar"
               valor={
@@ -443,7 +485,22 @@ export default function Page() {
               badgeColorClass="bg-pink-100 dark:bg-pink-800/30 text-pink-500 dark:text-pink-400"
               onClick={() => handleMetricFilter("soonExpire")}
             />
+
+            <MetricCard
+              titulo="Productos Agotados"
+              valor={allProducts.filter((p) => p.stock_prod === 0).length}
+              porcentaje=""
+              periodo="Sin stock - Reposición inmediata"
+              iconColor="text-red-500"
+              badgeColorClass="bg-red-100 dark:bg-red-800/30 text-red-500 dark:text-red-400"
+              onClick={() => {
+                setMetricFilter("outOfStock");
+                setStatusFilter("Activo");
+                setCurrentPage(1);
+              }}
+            />
           </div>
+
           <div className="rounded-xl border border-border p-6 shadow-md dark:bg-[#09090b]">
             {/* Filtros y acciones */}
             <div className="flex flex-row justify-between pb-5">
