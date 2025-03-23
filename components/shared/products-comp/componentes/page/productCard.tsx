@@ -3,8 +3,14 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Edit2 } from "lucide-react";
+import { Edit2, XCircle, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Funciones helper para fechas
 export const parseDateString = (dateStr: string): Date | null => {
@@ -61,11 +67,15 @@ export interface Product {
 export interface ProductCardProps {
   product: Product;
   onEdit: (product: Product) => void;
+  onDeactivate: (product: Product) => void;
+  onActivate: (product: Product) => void;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
   product,
   onEdit,
+  onDeactivate,
+  onActivate,
 }) => {
   const daysLeft = getDaysUntilExpiration(product.fech_ven_prod);
   const expirationText =
@@ -92,14 +102,59 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <Card className="group relative flex max-w-lg overflow-hidden rounded-lg border border-border bg-white p-3 shadow-md transition-colors duration-300 dark:bg-[#09090b]">
-      {/* Overlay para el botón de edición */}
+      {/* Overlay para botones de acción */}
       <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-        <Button
-          onClick={() => onEdit(product)}
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow hover:bg-blue-100 dark:bg-[#09090b]"
-        >
-          <Edit2 className="h-6 w-6 text-black dark:text-white" />
-        </Button>
+        <div className="flex space-x-4">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => onEdit(product)}
+                  className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow hover:bg-[#b3d4fa] dark:bg-[#002147]"
+                >
+                  <Edit2 className="h-6 w-6 text-[#006fee]" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Editar</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          {product.est_prod === "Activo" ? (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => onDeactivate(product)}
+                    variant="destructive"
+                    className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow hover:bg-[#fbb8cf] dark:bg-[#49051d]"
+                  >
+                    <XCircle className="error-text h-6 w-6" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Inactivar</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => onActivate(product)}
+                    className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow hover:bg-green-100 dark:bg-green-900"
+                  >
+                    <CheckCircle className="h-6 w-6 text-green-600" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Activar</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
       </div>
       <div className="relative z-10 flex w-full">
         {/* Imagen */}

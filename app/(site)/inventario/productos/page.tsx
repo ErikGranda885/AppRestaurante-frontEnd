@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import { GeneralDialog } from "@/components/shared/dialogGen";
 import { FormProducts } from "@/components/shared/products-comp/createProductForm";
 import { BulkUploadProductDialog } from "@/components/shared/products-comp/cargaProducts";
@@ -11,7 +11,7 @@ import { EditProductForm } from "@/components/shared/products-comp/editProductFo
 import { MetricCard } from "@/components/shared/products-comp/componentes/page/metricCard";
 import { CategoryCombobox } from "@/components/shared/products-comp/componentes/page/categoryCombobox";
 import { StatusTabs } from "@/components/shared/products-comp/componentes/page/statusTabs";
-import { Upload } from "lucide-react";
+import { CheckCircle, Upload, XCircle } from "lucide-react";
 import { ProductCard } from "@/components/shared/products-comp/componentes/page/productCard";
 import { Paginator } from "@/components/shared/products-comp/componentes/page/paginator";
 import {
@@ -118,6 +118,12 @@ export default function Page() {
   const [openBulkUpload, setOpenBulkUpload] = useState(false);
   const [openCreate, setOpenCreate] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
+  // Estados para los diálogos de confirmación
+  const [productToDeactivate, setProductToDeactivate] =
+    useState<Product | null>(null);
+  const [productToActivate, setProductToActivate] = useState<Product | null>(
+    null,
+  );
 
   // Cargar categorías
   useEffect(() => {
@@ -235,6 +241,144 @@ export default function Page() {
     setCurrentPage(1);
     if (filter === "all") {
       setStatusFilter("all");
+    }
+  };
+
+  // Función que se ejecuta cuando se confirma la inactivación
+  const confirmDeactivate = async () => {
+    if (!productToDeactivate) return;
+    try {
+      const response = await fetch(
+        `http://localhost:5000/productos/inactivar/${productToDeactivate.id_prod}`,
+        { method: "PUT" },
+      );
+      if (!response.ok) throw new Error("Error al inactivar el producto");
+
+      setAllProducts((prev) =>
+        prev.map((p) =>
+          p.id_prod === productToDeactivate.id_prod
+            ? { ...p, est_prod: "Inactivo" }
+            : p,
+        ),
+      );
+      toast.custom(
+        (t) => (
+          <div
+            className={`${
+              t.visible ? "animate-enter" : "animate-leave"
+            } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
+            style={{ animationDuration: "3s" }}
+          >
+            <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-[#166534]">
+                Mensaje Informativo
+              </p>
+              <p className="text-sm text-[#166534]/80">
+                Producto inactivado exitosamente.
+              </p>
+            </div>
+            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
+              <div className="progress-bar h-full bg-[#4ADE80]" />
+            </div>
+          </div>
+        ),
+        { duration: 2000, position: "top-right" },
+      );
+    } catch (error) {
+      toast.custom(
+        (t) => (
+          <div
+            className={`${
+              t.visible ? "animate-enter" : "animate-leave"
+            } relative flex w-96 items-start gap-3 rounded-lg border border-red-500 bg-red-100 p-4 shadow-lg`}
+            style={{ animationDuration: "3s" }}
+          >
+            <XCircle className="mt-1 h-6 w-6 text-red-600" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-red-600">Error</p>
+              <p className="text-sm text-red-600/80">
+                Hubo un error al realizar la acción.
+              </p>
+            </div>
+            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-red-500/20">
+              <div className="progress-bar h-full bg-red-500" />
+            </div>
+          </div>
+        ),
+        { duration: 2000, position: "top-right" },
+      );
+    } finally {
+      setProductToDeactivate(null);
+    }
+  };
+
+  // Función que se ejecuta cuando se confirma la activación
+  const confirmActivate = async () => {
+    if (!productToActivate) return;
+    try {
+      const response = await fetch(
+        `http://localhost:5000/productos/activar/${productToActivate.id_prod}`,
+        { method: "PUT" },
+      );
+      if (!response.ok) throw new Error("Error al activar el producto");
+
+      setAllProducts((prev) =>
+        prev.map((p) =>
+          p.id_prod === productToActivate.id_prod
+            ? { ...p, est_prod: "Activo" }
+            : p,
+        ),
+      );
+      toast.custom(
+        (t) => (
+          <div
+            className={`${
+              t.visible ? "animate-enter" : "animate-leave"
+            } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
+            style={{ animationDuration: "3s" }}
+          >
+            <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-[#166534]">
+                Mensaje Informativo
+              </p>
+              <p className="text-sm text-[#166534]/80">
+                Producto activado exitosamente.
+              </p>
+            </div>
+            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
+              <div className="progress-bar h-full bg-[#4ADE80]" />
+            </div>
+          </div>
+        ),
+        { duration: 2000, position: "top-right" },
+      );
+    } catch (error) {
+      toast.custom(
+        (t) => (
+          <div
+            className={`${
+              t.visible ? "animate-enter" : "animate-leave"
+            } relative flex w-96 items-start gap-3 rounded-lg border border-red-500 bg-red-100 p-4 shadow-lg`}
+            style={{ animationDuration: "3s" }}
+          >
+            <XCircle className="mt-1 h-6 w-6 text-red-600" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-red-600">Error</p>
+              <p className="text-sm text-red-600/80">
+                Hubo un error al realizar la acción.
+              </p>
+            </div>
+            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-red-500/20">
+              <div className="progress-bar h-full bg-red-500" />
+            </div>
+          </div>
+        ),
+        { duration: 2000, position: "top-right" },
+      );
+    } finally {
+      setProductToActivate(null);
     }
   };
 
@@ -397,6 +541,14 @@ export default function Page() {
                       key={product.id_prod}
                       product={product}
                       onEdit={(prod) => setEditProduct(prod)}
+                      onActivate={(prod) => {
+                        // Abrir diálogo de confirmación para activar
+                        setProductToActivate(prod);
+                      }}
+                      onDeactivate={(prod) => {
+                        // Abrir diálogo de confirmación para inactivar
+                        setProductToDeactivate(prod);
+                      }}
                     />
                   ))}
                   {/* Placeholders para completar 3 columnas en la última fila */}
@@ -425,7 +577,7 @@ export default function Page() {
             if (!open) setEditProduct(null);
           }}
         >
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="border-border sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Editar Producto</DialogTitle>
               <DialogDescription>
@@ -458,7 +610,6 @@ export default function Page() {
               )}
               onSuccess={(data) => {
                 const updatedProduct = data.producto;
-                // Reconstruir la categoría usando las opciones disponibles
                 const categoryObj = categoryOptions.find(
                   (opt) => opt.value === updatedProduct.cate_prod.toString(),
                 );
@@ -483,6 +634,65 @@ export default function Page() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Diálogo de confirmación para inactivar producto */}
+      {productToDeactivate && (
+        <Dialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setProductToDeactivate(null);
+          }}
+        >
+          <DialogContent className="border-border sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Confirmar Inactivación</DialogTitle>
+              <DialogDescription>
+                ¿Está seguro de inactivar el producto "
+                {productToDeactivate.nom_prod}"?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4 flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => setProductToDeactivate(null)}
+              >
+                No
+              </Button>
+              <Button onClick={confirmDeactivate}>Sí</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Diálogo de confirmación para activar producto */}
+      {productToActivate && (
+        <Dialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setProductToActivate(null);
+          }}
+        >
+          <DialogContent className="border-border sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Confirmar Activación</DialogTitle>
+              <DialogDescription>
+                ¿Está seguro de activar el producto "
+                {productToActivate.nom_prod}"?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4 flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => setProductToActivate(null)}
+              >
+                No
+              </Button>
+              <Button onClick={confirmActivate}>Sí</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
       <Toaster position="top-right" />
     </>
   );
