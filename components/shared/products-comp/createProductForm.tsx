@@ -1,48 +1,43 @@
 "use client";
-import * as React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormDescription,
-  FormMessage,
-} from "@/components/ui/form";
-import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon, CheckCircle } from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-} from "@/components/ui/command";
-import { cn } from "@/lib/utils";
+import { Form } from "@/components/ui/form";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import Image from "next/image";
 import toast from "react-hot-toast";
 import { uploadImage } from "@/firebase/subirImage";
+import { CheckCircle } from "lucide-react";
+import { CampoNumero } from "./componentes/forms/campoNumero";
+import {
+  CampoCategoria,
+  CategoryOption,
+} from "./componentes/forms/campoCategoria";
+import { CampoFecha } from "./componentes/forms/campoFecha";
+import { ZonaImagen } from "./componentes/forms/zonaImagen";
+import { CampoTexto } from "./componentes/forms/campoTexto";
 
-// Esquema del formulario
+/* ============================
+   ESQUEMA DEL FORMULARIO
+=============================== */
 const FormSchema = z.object({
   nom_prod: z
     .string()
     .nonempty("El nombre del producto es requerido")
-    .min(2, { message: "El nombre debe tener al menos 2 caracteres." }),
+    .refine(
+      ((nombre: string) => {
+        return fetch(
+          `http://localhost:5000/productos/verificar/producto?nombre=${encodeURIComponent(
+            nombre,
+          )}`,
+        )
+          .then((res) => res.json())
+          .then((data) => !data.exists);
+      }) as (nombre: string) => Promise<boolean>,
+      { message: "El producto ya se encuentra registrado", async: true } as any,
+    ),
   prec_prod: z.coerce
     .number({ required_error: "El precio es requerido" })
     .positive("El precio debe ser mayor a cero"),
@@ -58,71 +53,6 @@ const FormSchema = z.object({
 
 type FormValues = z.infer<typeof FormSchema>;
 
-// Componente combobox para categorías
-export interface CategoryOption {
-  value: string;
-  label: string;
-}
-
-interface CategoryComboboxProps {
-  options: CategoryOption[];
-  value: string;
-  onValueChange: (value: string) => void;
-  className?: string;
-}
-
-function CategoryCombobox({
-  options,
-  value,
-  onValueChange,
-  className,
-}: CategoryComboboxProps) {
-  const [open, setOpen] = useState(false);
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn("w-full justify-between font-normal", className)}
-        >
-          {value
-            ? options.find((option) => option.value === value)?.label
-            : "Selecciona categoría"}
-          <span className="opacity-50">⌄</span>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
-        <Command>
-          <CommandInput placeholder="Buscar categoría..." className="h-9" />
-          <CommandList>
-            <CommandEmpty>No se encontró categoría.</CommandEmpty>
-            <CommandGroup heading="Categorías">
-              {options.map((option) => (
-                <CommandItem
-                  key={option.value}
-                  value={option.label}
-                  onSelect={(currentValue) => {
-                    const selected = options.find(
-                      (o) => o.label === currentValue,
-                    );
-                    onValueChange(selected?.value || "");
-                    setOpen(false);
-                  }}
-                >
-                  {option.label}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-// Formulario para crear un nuevo producto con diseño en dos columnas
 export function FormProducts({
   onSuccess,
 }: {
@@ -157,19 +87,22 @@ export function FormProducts({
       .catch((err) => console.error("Error al cargar categorías:", err));
   }, []);
 
-  // Estado para la imagen y su previsualización
+  // Estados para la imagen y su previsualización
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
+  // Funciones para el manejo de imagen en ZonaImagen
+  const handleImageSelect = () => {
+    imageInputRef.current?.click();
+  };
 
   const handleImageDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
-      console.log("Archivo soltado:", file);
       setImageFile(file);
-      const preview = URL.createObjectURL(file);
-      console.log("URL de previsualización:", preview);
-      setImagePreview(preview);
+      setImagePreview(URL.createObjectURL(file));
       e.dataTransfer.clearData();
     }
   };
@@ -180,20 +113,13 @@ export function FormProducts({
 
   // Función de envío del formulario
   const onSubmit = async (data: FormValues) => {
-    console.log("Valores del formulario:", data);
     let imageUrl = imagePreview || "";
     if (imageFile) {
-      console.log("Subiendo imagen a Firebase...");
       imageUrl = await uploadImage(imageFile);
-      console.log("Imagen subida, URL:", imageUrl);
     } else {
-      // Si no se selecciona imagen, se utiliza una URL por defecto.
+      // Imagen por defecto
       imageUrl =
         "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/productos%2Fproduct-default.jpg?alt=media&token=a06d2373-fd9a-4fa5-a715-3c9ab7ae546d";
-      console.log(
-        "No se seleccionó imagen. Usando imagen por defecto:",
-        imageUrl,
-      );
     }
 
     const payload = {
@@ -206,8 +132,6 @@ export function FormProducts({
       est_prod: "Activo",
     };
 
-    console.log("Payload a enviar:", payload);
-
     try {
       const response = await fetch("http://localhost:5000/productos", {
         method: "POST",
@@ -218,7 +142,6 @@ export function FormProducts({
         throw new Error(`Error al crear el producto: ${response.status}`);
       }
       const resData = await response.json();
-      console.log("Respuesta del servidor:", resData);
       onSuccess(resData);
       form.reset();
       toast.custom(
@@ -257,179 +180,49 @@ export function FormProducts({
         onSubmit={form.handleSubmit(onSubmit)}
         className="mx-auto grid max-w-4xl grid-cols-2 gap-8"
       >
-        {/* Columna 1: Inputs */}
         <div>
-          <FormField
+          <CampoTexto
             control={form.control}
             name="nom_prod"
-            render={({ field, fieldState: { error } }) => (
-              <FormItem>
-                <FormLabel className="text-black dark:text-white">
-                  Nombre del Producto
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Nombre del producto"
-                    {...field}
-                    className={cn(
-                      "pr-10 dark:bg-[#09090b]",
-                      error
-                        ? "border-2 border-red-500"
-                        : "dark:border-default-700 dark:border",
-                    )}
-                  />
-                </FormControl>
-                <FormMessage className="error-text" />
-              </FormItem>
-            )}
+            label="Nombre del Producto"
+            placeholder="Nombre del producto"
           />
-          <FormField
+          <CampoNumero
             control={form.control}
             name="prec_prod"
-            render={({ field, fieldState: { error } }) => (
-              <FormItem>
-                <FormLabel className="text-black dark:text-white">
-                  Precio
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="Precio"
-                    value={field.value === 0 ? "" : field.value}
-                    onChange={(e) => {
-                      const val = parseFloat(e.target.value);
-                      field.onChange(isNaN(val) ? 0 : val);
-                    }}
-                    className={cn(
-                      "pr-10 dark:bg-[#09090b]",
-                      error
-                        ? "border-2 border-red-500"
-                        : "dark:border-default-700 dark:border",
-                    )}
-                  />
-                </FormControl>
-                <FormMessage className="error-text" />
-              </FormItem>
-            )}
+            label="Precio"
+            placeholder="Precio"
+            step="0.01"
+            parseValue={(value: string) => parseFloat(value)}
           />
-          <FormField
+          <CampoNumero
             control={form.control}
             name="stock_prod"
-            render={({ field, fieldState: { error } }) => (
-              <FormItem>
-                <FormLabel className="text-black dark:text-white">
-                  Stock
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="Stock"
-                    value={field.value === 0 ? "" : field.value}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value, 10);
-                      field.onChange(isNaN(val) ? 0 : val);
-                    }}
-                    className={cn(
-                      "pr-10 dark:bg-[#09090b]",
-                      error
-                        ? "border-2 border-red-500"
-                        : "dark:border-default-700 dark:border",
-                    )}
-                  />
-                </FormControl>
-                <FormMessage className="error-text" />
-              </FormItem>
-            )}
+            label="Stock"
+            placeholder="Stock"
           />
-          <FormField
+          <CampoCategoria
             control={form.control}
             name="categoria"
-            render={({ field, fieldState: { error } }) => (
-              <FormItem>
-                <FormLabel className="text-black dark:text-white">
-                  Categoría
-                </FormLabel>
-                <FormControl>
-                  <CategoryCombobox
-                    options={categoryOptions}
-                    value={field.value ? field.value.toString() : ""}
-                    onValueChange={(value) => field.onChange(Number(value))}
-                    className={cn(error ? "border-2 border-red-500" : "")}
-                  />
-                </FormControl>
-                <FormMessage className="error-text" />
-              </FormItem>
-            )}
+            label="Categoría"
+            options={categoryOptions}
           />
-          <FormField
+          <CampoFecha
             control={form.control}
             name="fech_ven_prod"
-            render={({ field, fieldState: { error } }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel className="text-black dark:text-white">
-                  Fecha de Vencimiento
-                </FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground",
-                        )}
-                      >
-                        {field.value
-                          ? format(field.value, "dd 'de' MMMM 'de' yyyy", {
-                              locale: es,
-                            })
-                          : "Selecciona fecha"}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormDescription>
-                  Ingresa la fecha de vencimiento del producto.
-                </FormDescription>
-                <FormMessage className="error-text" />
-              </FormItem>
-            )}
+            label="Fecha de Vencimiento"
           />
         </div>
-        {/* Columna 2: Zona de imagen */}
-        <div className="flex flex-col items-center justify-center space-y-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Imagen del Producto
-          </label>
-          <div
-            onDrop={handleImageDrop}
-            onDragOver={handleDragOver}
-            className="flex h-64 w-full max-w-md cursor-pointer items-center justify-center rounded-md border-2 border-dashed border-gray-300 p-4 text-gray-500"
-          >
-            {imagePreview ? (
-              <Image
-                src={imagePreview}
-                alt="Previsualización"
-                width={200}
-                height={200}
-                className="object-contain"
-              />
-            ) : (
-              <span>Suelta la imagen aquí</span>
-            )}
-          </div>
-        </div>
-        {/* Botón de envío que ocupa ambas columnas */}
+        <ZonaImagen
+          imageFile={imageFile}
+          imagePreview={imagePreview || ""}
+          setImageFile={setImageFile}
+          setImagePreview={setImagePreview}
+          imageInputRef={imageInputRef}
+          handleImageSelect={handleImageSelect}
+          handleImageDrop={handleImageDrop}
+          handleDragOver={handleDragOver}
+        />
         <div className="col-span-2">
           <Button type="submit" className="w-full">
             Crear Producto
