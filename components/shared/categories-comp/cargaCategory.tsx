@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Papa from "papaparse";
-import * as XLSX from "xlsx";
+import * as ExcelJS from "exceljs";
 import toast from "react-hot-toast";
 import {
   Dialog,
@@ -39,16 +39,28 @@ export function BulkUploadCategoryDialog({
   // Se esperan estas dos columnas: nom_cate y desc_cate
   const requiredColumns = ["nom_cate", "desc_cate"];
 
+  // Función para validar que cada fila tenga datos en las columnas requeridas
+  const validateRows = (rows: any[]): boolean => {
+    return rows.every((row) =>
+      requiredColumns.every((col) => {
+        const value = row[col];
+        return (
+          value !== undefined && value !== null && String(value).trim() !== ""
+        );
+      }),
+    );
+  };
+
+  // Validar encabezados
+  const validateHeaders = (headers: string[]): boolean => {
+    const lowerHeaders = headers.map((h) => h.toLowerCase().trim());
+    return requiredColumns.every((col) => lowerHeaders.includes(col));
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
     setFile(selectedFile);
-
-    // Validar encabezados
-    const validateHeaders = (headers: string[]): boolean => {
-      const lowerHeaders = headers.map((h) => h.toLowerCase().trim());
-      return requiredColumns.every((col) => lowerHeaders.includes(col));
-    };
 
     if (
       selectedFile.type === "text/csv" ||
@@ -64,6 +76,13 @@ export function BulkUploadCategoryDialog({
             toast.error("El archivo CSV contiene encabezados incorrectos.");
             return;
           }
+          if (!validateRows(results.data)) {
+            setPreviewData([]);
+            toast.error(
+              "El archivo contiene celdas vacías en campos requeridos.",
+            );
+            return;
+          }
           setPreviewData(results.data);
         },
         error: (error) => {
@@ -77,24 +96,28 @@ export function BulkUploadCategoryDialog({
       selectedFile.name.toLowerCase().endsWith(".xlsx")
     ) {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        const data = e.target?.result;
+      reader.onload = async (e) => {
+        const arrayBuffer = e.target?.result;
         try {
-          const workbook = XLSX.read(data, { type: "binary" });
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          const jsonData: any[][] = XLSX.utils.sheet_to_json(worksheet, {
-            header: 1,
-            defval: "",
-          });
-          if (jsonData.length === 0) {
+          if (!arrayBuffer) {
+            toast.error("No se pudo leer el archivo XLSX");
+            return;
+          }
+          const workbook = new ExcelJS.Workbook();
+          await workbook.xlsx.load(arrayBuffer as ArrayBuffer);
+          const worksheet = workbook.worksheets[0];
+          if (!worksheet) {
             toast.error("El archivo XLSX está vacío");
             return;
           }
-          const headers = jsonData[0].map((h: any) =>
-            String(h).toLowerCase().trim(),
-          );
+          // Obtener encabezados de la primera fila
+          let headers = worksheet.getRow(1).values as any[];
+          if (headers[0] === undefined) {
+            headers = headers.slice(1);
+          }
+          headers = headers.map((h: any) => String(h).toLowerCase().trim());
           if (!validateHeaders(headers)) {
+            setPreviewData([]);
             toast.custom(
               (t) => (
                 <div
@@ -118,17 +141,29 @@ export function BulkUploadCategoryDialog({
               ),
               { duration: 3000, position: "top-right" },
             );
-            setPreviewData([]);
             return;
           }
-          const rows = jsonData.slice(1);
-          const formattedData = rows.map((row) => {
-            let obj: any = {};
+          const formattedData: any[] = [];
+          worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+            if (rowNumber === 1) return; // omitir fila de encabezados
+            const rowValues = row.values as any[];
+            const rowData: any = {};
             headers.forEach((header: string, index: number) => {
-              obj[header] = row[index];
+              let value = rowValues[index + 1]; // ExcelJS usa índice 1-based
+              if (value instanceof Date) {
+                value = value.toLocaleDateString("es-ES");
+              }
+              rowData[header] = value || "";
             });
-            return obj;
+            formattedData.push(rowData);
           });
+          if (!validateRows(formattedData)) {
+            setPreviewData([]);
+            toast.error(
+              "El archivo contiene celdas vacías en campos requeridos.",
+            );
+            return;
+          }
           setPreviewData(formattedData);
         } catch (err) {
           console.error("Error al parsear el archivo XLSX:", err);
@@ -139,7 +174,7 @@ export function BulkUploadCategoryDialog({
         console.error("Error reading XLSX file:", error);
         toast.error("Error al leer el archivo XLSX");
       };
-      reader.readAsBinaryString(selectedFile);
+      reader.readAsArrayBuffer(selectedFile);
     } else {
       toast.error("Solo se admite archivo CSV o XLSX en este ejemplo");
     }
@@ -190,8 +225,7 @@ export function BulkUploadCategoryDialog({
     }
     setLoading(true);
     try {
-      // Transformamos cada fila para que se ajuste a lo que espera el backend.
-      // Se asigna un estado por defecto, por ejemplo "Activo".
+      // Transformamos cada fila para ajustarla a lo que espera el backend.
       const processedData = previewData.map((row) => ({
         nom_cate: row["nom_cate"],
         desc_cate: row["desc_cate"],
@@ -276,7 +310,7 @@ export function BulkUploadCategoryDialog({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="dark:border dark:border-default-700 dark:bg-[#09090b] sm:max-w-3xl">
+      <DialogContent className="dark:border-default-700 dark:border dark:bg-[#09090b] sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Carga Masiva de Categorías</DialogTitle>
         </DialogHeader>
@@ -308,7 +342,9 @@ export function BulkUploadCategoryDialog({
               <li>Verifica la vista previa de los datos en la tabla.</li>
               <li>
                 Si todo es correcto, haz clic en{" "}
-                <span className="font-semibold dark:text-primary">Guardar Categorias</span>{" "}
+                <span className="font-semibold dark:text-primary">
+                  Guardar Categorías
+                </span>{" "}
                 para subir la información.
               </li>
             </ol>
@@ -331,7 +367,7 @@ export function BulkUploadCategoryDialog({
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-6 hover:border-gray-400 dark:border-default-700 dark:text-white dark:hover:border-gray-500"
+              className="dark:border-default-700 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-6 hover:border-gray-400 dark:text-white dark:hover:border-gray-500"
             >
               <p className="text-gray-500">
                 Arrastra y suelta el archivo CSV/XLSX aquí o haz clic para
@@ -391,7 +427,7 @@ export function BulkUploadCategoryDialog({
               onClick={handleUpload}
               disabled={loading || previewData.length === 0}
             >
-              {loading ? "Cargando..." : "Guardar Categorias"}
+              {loading ? "Cargando..." : "Guardar Categorías"}
             </Button>
           </div>
         </DialogFooter>
