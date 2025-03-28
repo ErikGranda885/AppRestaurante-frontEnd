@@ -101,7 +101,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   }
 
   return (
-    <Card className="group relative flex max-w-lg overflow-hidden rounded-lg border border-border bg-white p-3 shadow-md transition-colors duration-300 dark:bg-[#09090b]">
+    <Card className="group relative flex max-w-lg overflow-hidden rounded-lg border border-border bg-white p-3 shadow-md transition-colors duration-300 dark:bg-[#3d4142]">
       {/* Overlay para botones de acción */}
       <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
         <div className="flex space-x-4">

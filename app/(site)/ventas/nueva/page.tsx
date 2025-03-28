@@ -35,6 +35,7 @@ export default function Page() {
       .catch((err) => console.error("Error al cargar productos:", err));
   }, []);
 
+  // Construir las categorías a partir de los productos
   const categories: Category[] = useMemo(() => {
     const categoryMap: Record<number, Category> = {};
     products.forEach((product) => {
@@ -48,6 +49,7 @@ export default function Page() {
     return Object.values(categoryMap);
   }, [products]);
 
+  // Agregar "Todos" como primera categoría
   const displayCategories = useMemo(() => {
     const totalCount = products.length;
     return [
@@ -56,6 +58,7 @@ export default function Page() {
     ];
   }, [products, categories]);
 
+  // Imágenes de ejemplo para categorías
   const categoryImages: string[] = [
     "/imagenes/todos.png",
     "/imagenes/FastFood.png",
@@ -70,42 +73,48 @@ export default function Page() {
       <img
         src={src}
         alt={`Categoría ${index}`}
-        width={24}
-        height={24}
-        className="object-contain"
+        className="h-8 w-8 object-contain"
       />
     );
   };
 
+  // Filtrar productos según la categoría seleccionada
   const filteredProducts = useMemo(() => {
     if (selectedCategoryId === 0) return products;
     return products.filter((p) => p.cate_prod.id_cate === selectedCategoryId);
   }, [products, selectedCategoryId]);
 
-  // Configuración del slider
+  // Configuración de react-slick
   const sliderSettings = {
-    dots: false,
+    dots: true, // Muestra dots debajo del slider
     infinite: false,
     speed: 500,
-    slidesToShow: 4, // Muestra 4 categorías a la vez
-    slidesToScroll: 1,
+    slidesToShow: 5, // Número de tarjetas visibles
+    slidesToScroll: 1, // Cuántas se desplazan al hacer click
     responsive: [
       {
         breakpoint: 1024,
         settings: {
           slidesToShow: 3,
+          slidesToScroll: 1,
+          infinite: true,
+          dots: true,
         },
       },
       {
         breakpoint: 640,
         settings: {
           slidesToShow: 2,
+          slidesToScroll: 1,
+          dots: true,
         },
       },
       {
         breakpoint: 480,
         settings: {
           slidesToShow: 1,
+          slidesToScroll: 1,
+          dots: true,
         },
       },
     ],
@@ -118,87 +127,86 @@ export default function Page() {
       submenu={true}
       isLoading={false}
     >
-      {/* Estilos globales para personalizar el slider */}
+      {/* Estilos globales para modificar colores de los controles del slider en modo claro y dark */}
       <style jsx global>{`
-        /* Para que el slider se justifique al ancho del contenedor */
-        .categories-slider .slick-track {
-          display: flex !important;
-          justify-content: space-between;
-          align-items: flex-start;
+        /* Flechas en modo claro */
+        .slick-prev:before,
+        .slick-next:before {
+          color: #000000;
+          font-size: 1rem;
         }
-        /* Definimos el ancho de cada slide según el número deseado */
-        /* Para desktop: 4 slides */
-        @media (min-width: 1025px) {
-          .categories-slider .slick-slide {
-            width: calc(100% / 4) !important;
-          }
+        /* Flechas en modo dark */
+        .dark .slick-prev:before,
+        .dark .slick-next:before {
+          color: #ffffff;
         }
-        /* Para pantallas medianas: 3 slides */
-        @media (max-width: 1024px) and (min-width: 641px) {
-          .categories-slider .slick-slide {
-            width: calc(100% / 3) !important;
-          }
+        /* Dots en modo claro */
+        .slick-dots li button:before {
+          color: #000000;
+          font-size: 0.4rem;
         }
-        /* Para pantallas pequeñas: 2 slides */
-        @media (max-width: 640px) and (min-width: 481px) {
-          .categories-slider .slick-slide {
-            width: calc(100% / 2) !important;
-          }
+        /* Dots en modo dark */
+        .dark .slick-dots li button:before {
+          color: #ffffff;
         }
-        /* Para móviles: 1 slide */
-        @media (max-width: 480px) {
-          .categories-slider .slick-slide {
-            width: 100% !important;
-          }
+        /* Dot activo en modo claro */
+        .slick-dots li.slick-active button:before {
+          color: #000000;
         }
-        /* Ajuste del espacio entre slides */
-        .categories-slider .slick-slide > div {
-          margin: 0 8px;
-        }
-        .categories-slider .slick-list {
-          margin: 0 -8px;
-          overflow: hidden;
+        /* Dot activo en modo dark */
+        .dark .slick-dots li.slick-active button:before {
+          color: #ffffff;
         }
       `}</style>
-
       <div className="space-y-8 p-6">
-        {/* Sección Categorías */}
+        {/* Sección de Categorías */}
         <section>
           <h2 className="mb-4 text-xl font-bold">Categorías</h2>
-          {/* Contenedor que limita el ancho del slider */}
-          <div className="w-full bg-blue-400 ">
-            <div className="categories-slider max-w-7xl  w-full bg-red-400 p-4">
-              <Slider {...sliderSettings}>
-                {displayCategories.map((cat, index) => (
-                  <div key={cat.id_cate}>
-                    {/* Nota: se eliminó la clase "w-48" para que el ancho sea calculado */}
-                    <div
-                      className={`w-48 cursor-pointer overflow-hidden rounded-lg border border-border  shadow-md transition-transform duration-200 hover:scale-105 ${
-                        selectedCategoryId === cat.id_cate
-                          ? "border-indigo-500 bg-indigo-100"
-                          : ""
-                      }`}
-                      onClick={() => setSelectedCategoryId(cat.id_cate)}
-                    >
-                      {/* Puedes incluir la imagen si lo deseas */}
+          <div className="rounded-lg p-4">
+            <Slider {...sliderSettings}>
+              {displayCategories.map((cat, index) => (
+                <div key={cat.id_cate} className="px-2 py-8">
+                  <button
+                    onClick={() => setSelectedCategoryId(cat.id_cate)}
+                    className={`flex w-full transform items-center overflow-hidden rounded-xl border border-border px-4 py-3 shadow-xl transition duration-300 hover:scale-105 hover:bg-[#ffedf4] hover:dark:bg-[#ffedf4] ${
+                      selectedCategoryId === cat.id_cate
+                        ? "bg-[#f22f46] font-bold text-white"
+                        : "bg-white text-black"
+                    }`}
+                  >
+                    <div className="mr-2 flex items-center justify-center rounded-full bg-gray-200 p-1">
                       {getImageForCategory(index)}
-                      <div className="font-semibold mt-2">{cat.nom_cate}</div>
-                      <span className="text-xs text-muted-foreground">
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <span
+                        className={`text-sm font-medium ${
+                          selectedCategoryId === cat.id_cate
+                            ? "text-white"
+                            : "text-black"
+                        }`}
+                      >
+                        {cat.nom_cate}
+                      </span>
+                      <span
+                        className={`text-xs ${
+                          selectedCategoryId === cat.id_cate
+                            ? "text-white"
+                            : "text-black text-muted-foreground"
+                        }`}
+                      >
                         ({cat.count}) productos
                       </span>
                     </div>
-                  </div>
-                ))}
-              </Slider>
-            </div>
+                  </button>
+                </div>
+              ))}
+            </Slider>
           </div>
         </section>
 
-        {/* Sección Productos */}
+        {/* Sección de Productos */}
         <section>
-          <h2 className="mb-6 text-2xl font-bold text-gray-800">
-            Nuestros Productos
-          </h2>
+        <h2 className="mb-4 text-xl font-bold">Nuestros Productos</h2>
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-4">
             {filteredProducts.map((product) => (
               <div

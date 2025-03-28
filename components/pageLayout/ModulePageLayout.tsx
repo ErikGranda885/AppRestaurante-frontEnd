@@ -52,8 +52,10 @@ export default function ModulePageLayout({
           </Breadcrumb>
         </div>
       </header>
-      <div className="flex flex-1 flex-col gap-4 px-10 py-6 pt-0">
-        {isLoading ? <SkeletonCard /> : children}
+      <div className="py-6 pt-0">
+        <div className="mx-auto w-full max-w-[1400px] px-4">
+          {isLoading ? <SkeletonCard /> : children}
+        </div>
       </div>
     </>
   );

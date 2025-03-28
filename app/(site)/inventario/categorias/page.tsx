@@ -240,13 +240,13 @@ export default function Page() {
         submenu={true}
         isLoading={false}
       >
-        <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#09090b]">
+        <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#111315]">
           {/* Tarjetas en formato flex, distribuidas equitativamente */}
           <div className="flex flex-col gap-4 px-6 pt-6 md:flex-row md:justify-between">
             {/* Tarjeta: Categorías Totales */}
             <Card
               onClick={() => handleCardClick("")}
-              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#09090b] ${
+              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#292c2d] ${
                 selectedStatus === "" ? "ring-2 ring-secondary" : ""
               } group`}
             >
@@ -276,7 +276,7 @@ export default function Page() {
             {/* Tarjeta: Categorías Activas */}
             <Card
               onClick={() => handleCardClick("Activo")}
-              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#09090b] ${
+              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#292c2d] ${
                 selectedStatus.toLowerCase() === "activo"
                   ? "ring-2 ring-secondary"
                   : ""
@@ -316,7 +316,7 @@ export default function Page() {
             {/* Tarjeta: Categorías Inactivas */}
             <Card
               onClick={() => handleCardClick("Inactivo")}
-              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#09090b] ${
+              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#292c2d] ${
                 selectedStatus.toLowerCase() === "inactivo"
                   ? "ring-2 ring-secondary"
                   : ""

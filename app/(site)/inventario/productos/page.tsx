@@ -501,7 +501,7 @@ export default function Page() {
             />
           </div>
 
-          <div className="rounded-xl border border-border p-6 shadow-md dark:bg-[#09090b]">
+          <div className="rounded-xl border border-border p-6 shadow-md dark:bg-[#292c2d]">
             {/* Filtros y acciones */}
             <div className="flex flex-row justify-between pb-5">
               <div className="flex items-center gap-2">
