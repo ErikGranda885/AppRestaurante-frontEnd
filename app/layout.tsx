@@ -26,7 +26,7 @@ export default function RootLayout({
         >
           {children}
           <Toaster />
-          <footer className="fixed bottom-4 right-4 z-50">
+          <footer className="fixed bottom-3 right-2 z-50">
             <ModeToggle />
           </footer>
         </ThemeProvider>

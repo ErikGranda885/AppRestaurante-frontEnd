@@ -1,4 +1,3 @@
-// app/components/ModulePageLayout.tsx
 "use client";
 
 import React from "react";
@@ -32,7 +31,7 @@ export default function ModulePageLayout({
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear">
-        <div className="flex items-center gap-2 px-4">
+        <div className="flex items-center gap-2 px-4 ">
           <SidebarTrigger className="-ml-1" />
           <Separator aria-orientation="vertical" className="mr-2 h-4" />
           <Breadcrumb>
@@ -52,8 +51,8 @@ export default function ModulePageLayout({
           </Breadcrumb>
         </div>
       </header>
-      <div className="py-6 pt-0">
-        <div className="mx-auto w-full max-w-[1400px] px-4">
+      <div className="py-6 pt-0 ">
+        <div className="w-full px-4 ">
           {isLoading ? <SkeletonCard /> : children}
         </div>
       </div>
