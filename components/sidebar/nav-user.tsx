@@ -48,7 +48,13 @@ export function NavUser({
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">EG</AvatarFallback>
+                <AvatarFallback className="rounded-lg">
+                  {user.name
+                    .split(" ")
+                    .filter((n) => n.length > 0)
+                    .map((n) => n[0] + n[n.length - 1].toUpperCase())
+                    .join("")}
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">{user.name}</span>
@@ -58,7 +64,7 @@ export function NavUser({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg border border-border"
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={4}
@@ -67,7 +73,13 @@ export function NavUser({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">
+                    {user.name
+                      .split(" ")
+                      .filter((n) => n.length > 0)
+                      .map((n) => n[0] + n[n.length - 1].toUpperCase())
+                      .join("")}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{user.name}</span>

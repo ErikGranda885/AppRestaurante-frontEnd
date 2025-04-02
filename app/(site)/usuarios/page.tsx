@@ -44,6 +44,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 
 export type DataUsers = {
   id: string;
@@ -61,7 +62,7 @@ export default function Page() {
   const [selectedState, setSelectedState] = React.useState<string>("");
   const [editUser, setEditUser] = React.useState<DataUsers | null>(null);
   const [openCreate, setOpenCreate] = React.useState(false);
-
+  useProtectedRoute();
   // Cargar usuarios desde la API
   React.useEffect(() => {
     fetch("http://localhost:5000/usuarios")
@@ -469,10 +470,7 @@ export default function Page() {
 
           {/* Botones de acciones: Importar y Crear */}
           <div className="flex justify-end space-x-4 px-6 pb-4 pt-5">
-            <Button
-              className=""
-              onClick={() => setOpenBulkUpload(true)}
-            >
+            <Button className="" onClick={() => setOpenBulkUpload(true)}>
               <Upload className="mr-2 h-4 w-4" />
               Importar
             </Button>

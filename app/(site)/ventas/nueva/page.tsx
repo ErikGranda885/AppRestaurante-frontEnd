@@ -3,6 +3,7 @@
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import Image from "next/image";
 import { useState, useMemo, useEffect } from "react";
 
@@ -72,7 +73,7 @@ export default function Page() {
     setTableInfo(tempTable);
     setShowCustomerForm(false);
   };
-
+  useProtectedRoute();
   // ---------------------
   // CARGA DE PRODUCTOS DESDE LA API
   // ---------------------
@@ -104,7 +105,7 @@ export default function Page() {
         console.log("Categorias extraidas:", data);
         // Filtrar solo las categorías activas (comparación insensible a mayúsculas)
         const activeCategories = data.filter(
-          (cat) => cat.est_cate.toLowerCase() === "activo"
+          (cat) => cat.est_cate.toLowerCase() === "activo",
         );
         console.log("Categorias activas:", activeCategories);
         setCategories(activeCategories);
@@ -128,7 +129,7 @@ export default function Page() {
             ? product.cate_prod.nom_cate
             : product.cate_prod;
         return prodCate === category.nom_cate;
-      })
+      }),
     );
     console.log("Categorias disponibles (con productos):", available);
     return available;
@@ -164,7 +165,7 @@ export default function Page() {
     // Filtrar por búsqueda (nombre del producto)
     if (searchQuery.trim() !== "") {
       filtered = filtered.filter((p) =>
-        p.nom_prod.toLowerCase().includes(searchQuery.toLowerCase())
+        p.nom_prod.toLowerCase().includes(searchQuery.toLowerCase()),
       );
     }
 
@@ -195,8 +196,8 @@ export default function Page() {
     });
     setProducts((prev) =>
       prev.map((p) =>
-        p.id_prod === productId ? { ...p, stock_prod: p.stock_prod - 1 } : p
-      )
+        p.id_prod === productId ? { ...p, stock_prod: p.stock_prod - 1 } : p,
+      ),
     );
   };
 
@@ -213,8 +214,8 @@ export default function Page() {
       });
       setProducts((prev) =>
         prev.map((p) =>
-          p.id_prod === productId ? { ...p, stock_prod: p.stock_prod + 1 } : p
-        )
+          p.id_prod === productId ? { ...p, stock_prod: p.stock_prod + 1 } : p,
+        ),
       );
     } else {
       setOrderItems((prev) => prev.filter((_, i) => i !== idx));
@@ -222,26 +223,28 @@ export default function Page() {
         prev.map((p) =>
           p.id_prod === productId
             ? { ...p, stock_prod: p.stock_prod + quantity }
-            : p
-        )
+            : p,
+        ),
       );
     }
   };
 
   // Función para eliminar el producto de la orden
   const handleRemove = (productId: number) => {
-    const itemToRemove = orderItems.find((i) => i.product.id_prod === productId);
+    const itemToRemove = orderItems.find(
+      (i) => i.product.id_prod === productId,
+    );
     if (!itemToRemove) return;
     setOrderItems((prev) =>
-      prev.filter((i) => i.product.id_prod !== productId)
+      prev.filter((i) => i.product.id_prod !== productId),
     );
     // Se devuelve la cantidad eliminada al stock
     setProducts((prev) =>
       prev.map((p) =>
         p.id_prod === productId
           ? { ...p, stock_prod: p.stock_prod + itemToRemove.quantity }
-          : p
-      )
+          : p,
+      ),
     );
   };
 
@@ -251,7 +254,7 @@ export default function Page() {
   const subtotal = useMemo(() => {
     return orderItems.reduce(
       (acc, item) => acc + item.product.prec_prod * item.quantity,
-      0
+      0,
     );
   }, [orderItems]);
 
@@ -280,7 +283,8 @@ export default function Page() {
                   <div className="flex flex-col items-start">
                     <h2 className="text-xl font-bold">Nuestros Productos</h2>
                     <span className="text-sm text-gray-600 dark:text-[#ababab]">
-                      Selecciona los productos que deseas agregar a la orden y luego guarda la orden.
+                      Selecciona los productos que deseas agregar a la orden y
+                      luego guarda la orden.
                     </span>
                   </div>
                   {/* Input para buscar */}
@@ -373,7 +377,9 @@ export default function Page() {
                             onClick={() => handleIncrement(prod.id_prod)}
                             disabled={prod.stock_prod <= 0}
                             className={`h-7 w-7 rounded bg-[#f6b100] text-sm font-bold text-black hover:bg-gray-300 dark:text-white hover:dark:bg-[#333] ${
-                              prod.stock_prod <= 0 ? "cursor-not-allowed opacity-50" : ""
+                              prod.stock_prod <= 0
+                                ? "cursor-not-allowed opacity-50"
+                                : ""
                             }`}
                           >
                             +

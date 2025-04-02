@@ -1,7 +1,7 @@
-// app/components/sidebar/app-sidebar.tsx
 "use client";
 
 import * as React from "react";
+import { useState, useEffect } from "react";
 import {
   AudioWaveform,
   Bot,
@@ -29,15 +29,14 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-
 import { NavAdmin } from "./nav-admin";
 
-// Exporta la data para poder usarla en otros componentes, como el breadcrumb
+// Define la data con valores fijos para el usuario
 export const data = {
   user: {
-    name: "Erik Granda",
-    email: "dicolaic.erikgranda@gmail.com",
-    avatar: "/avatars/shadcn.jpg",
+    name: "",
+    email: "",
+    avatar: "",
   },
   teams: [
     {
@@ -147,6 +146,18 @@ export const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [userData, setUserData] = useState(data.user);
+
+  useEffect(() => {
+    // Se ejecuta únicamente en el cliente
+    if (typeof window !== "undefined") {
+      const name = localStorage.getItem("user_name") || "";
+      const email = localStorage.getItem("user_email") || "";
+      const avatar = localStorage.getItem("user_avatar") || "";
+      setUserData({ name, email, avatar });
+    }
+  }, []);
+
   return (
     <Sidebar
       collapsible="icon"
@@ -159,7 +170,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton size="lg" asChild>
               <a href="#">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <img src="/imagenes/logo.png" alt="" />
+                  <img src="/imagenes/logo.png" alt="Logo" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">
@@ -177,7 +188,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavAdmin items={data.adminModules} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={userData} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

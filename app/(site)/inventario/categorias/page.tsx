@@ -1,23 +1,10 @@
 "use client";
 import * as React from "react";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
-import { Separator } from "@/components/ui/separator";
+
 import { DataTable } from "@/components/shared/dataTable";
-import {
-  CheckCircle,
-  MoreHorizontal,
-  Upload,
-  Folder,
-  FolderX,
-  Folders,
-} from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { MoreHorizontal, Upload, Folder, FolderX, Folders } from "lucide-react";
+
 import { GeneralDialog } from "@/components/shared/dialogGen";
 import toast, { Toaster } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -31,15 +18,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ColumnDef } from "@tanstack/react-table";
 import { CreateCategoryForm } from "@/components/shared/categories-comp/createCategoryForm";
-import { EditCategoryForm } from "@/components/shared/categories-comp/editCategoryForm";
+
 import { BulkUploadCategoryDialog } from "@/components/shared/categories-comp/cargaCategory";
 import {
   Card,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 
 // Definición del tipo Category
 export type DataCategories = {
@@ -60,7 +47,7 @@ export default function Page() {
   const [openBulkUpload, setOpenBulkUpload] = React.useState(false);
   const [selectedStatus, setSelectedStatus] = React.useState<string>("");
   const [openCreate, setOpenCreate] = React.useState(false);
-
+  useProtectedRoute();
   // Cargar categorías desde la API
   React.useEffect(() => {
     fetch("http://localhost:5000/categorias")
@@ -259,7 +246,7 @@ export default function Page() {
                     <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
                       {categories.length}
                     </span>
-                    <span className="inline-block rounded-md bg-secondary px-2 py-1 text-sm font-bold  dark:bg-blue-800/30 ">
+                    <span className="inline-block rounded-md bg-secondary px-2 py-1 text-sm font-bold dark:bg-blue-800/30">
                       +5%
                     </span>
                   </div>
@@ -268,7 +255,7 @@ export default function Page() {
                   </CardDescription>
                 </div>
                 <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
-                  <Folders className="h-7 w-7  transition-transform duration-300 group-hover:scale-110" />
+                  <Folders className="h-7 w-7 transition-transform duration-300 group-hover:scale-110" />
                 </div>
               </CardHeader>
             </Card>

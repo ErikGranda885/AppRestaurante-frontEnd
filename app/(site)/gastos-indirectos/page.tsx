@@ -1,7 +1,9 @@
 // app/(site)/ventas/nueva/page.tsx
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
+import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 
 export default function Page() {
+  useProtectedRoute();
   return (
     <ModulePageLayout
       breadcrumbLinkTitle="Gastos Indirectos"

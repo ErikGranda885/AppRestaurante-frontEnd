@@ -29,6 +29,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 
 // Interfaces y tipos
 type MetricFilter = "all" | "critical" | "soonExpire" | "outOfStock";
@@ -124,7 +125,7 @@ export default function Page() {
   const [productToActivate, setProductToActivate] = useState<Product | null>(
     null,
   );
-
+  useProtectedRoute();
   // Cargar categorías
   useEffect(() => {
     fetch("http://localhost:5000/categorias")
@@ -592,7 +593,7 @@ export default function Page() {
               </div>
             ) : (
               <>
-                <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 h-[246px] overflow-y-auto">
+                <div className="mt-4 grid h-[246px] grid-cols-1 gap-6 overflow-y-auto sm:grid-cols-2 md:grid-cols-3">
                   {currentProducts.map((product) => (
                     <ProductCard
                       key={product.id_prod}
