@@ -333,7 +333,7 @@ export default function Page() {
             {/* Tarjeta: Usuarios Totales */}
             <Card
               onClick={() => handleCardClick("")}
-              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#292c2d] ${
+              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
                 selectedState === "" ? "ring-2 ring-secondary" : ""
               } group`}
             >
@@ -367,7 +367,7 @@ export default function Page() {
             {/* Tarjeta: Usuarios Activos */}
             <Card
               onClick={() => handleCardClick("Activo")}
-              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#292c2d] ${
+              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
                 selectedState.toLowerCase() === "activo"
                   ? "ring-2 ring-secondary"
                   : ""
@@ -407,7 +407,7 @@ export default function Page() {
             {/* Tarjeta: Usuarios Inactivos */}
             <Card
               onClick={() => handleCardClick("Inactivo")}
-              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#292c2d] ${
+              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
                 selectedState.toLowerCase() === "inactivo"
                   ? "ring-2 ring-secondary"
                   : ""
@@ -469,7 +469,10 @@ export default function Page() {
 
           {/* Botones de acciones: Importar y Crear */}
           <div className="flex justify-end space-x-4 px-6 pb-4 pt-5">
-            <Button onClick={() => setOpenBulkUpload(true)}>
+            <Button
+              className=""
+              onClick={() => setOpenBulkUpload(true)}
+            >
               <Upload className="mr-2 h-4 w-4" />
               Importar
             </Button>
@@ -477,7 +480,7 @@ export default function Page() {
             <GeneralDialog
               open={openCreate}
               onOpenChange={setOpenCreate}
-              triggerText={<>Nuevo Usuario</>}
+              triggerText={"Crear Usuario"}
               title="Crear Nuevo Usuario"
               description="Ingresa la información para crear un nuevo usuario."
               submitText="Crear Usuario"

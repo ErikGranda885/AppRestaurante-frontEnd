@@ -249,7 +249,7 @@ export function CreateUserForm({
 
         {/* Botón de envío: abarca ambas columnas */}
         <div className="flex justify-end pt-4 sm:col-span-2">
-          <Button type="submit">Crear Usuario</Button>
+          <Button type="submit" className="bg-[#f6b100] text-black">Crear Usuario</Button>
         </div>
       </form>
     </Form>

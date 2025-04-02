@@ -106,7 +106,7 @@ export default function Page() {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [errorProducts, setErrorProducts] = useState<string | null>(null);
   // Se muestran 9 productos por página (3 columnas x 3 filas)
-  const itemsPerPage = 9;
+  const itemsPerPage = 6;
   const [currentPage, setCurrentPage] = useState(1);
   const [categoryOptions, setCategoryOptions] = useState<Option[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -501,14 +501,14 @@ export default function Page() {
             />
           </div>
 
-          <div className="rounded-xl border border-border p-6 shadow-md dark:bg-[#292c2d]">
+          <div className="rounded-xl border border-border p-6 shadow-md dark:bg-[#1a1a1a]">
             {/* Filtros y acciones */}
             <div className="flex flex-row justify-between pb-5">
               <div className="flex items-center gap-2">
                 <Input
                   type="text"
-                  placeholder="Buscar"
-                  className="w-[100px]"
+                  placeholder="Buscar producto..."
+                  className="w-[160px] border border-white/20 bg-white/10 text-sm"
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -592,7 +592,7 @@ export default function Page() {
               </div>
             ) : (
               <>
-                <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+                <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 h-[246px] overflow-y-auto">
                   {currentProducts.map((product) => (
                     <ProductCard
                       key={product.id_prod}

@@ -32,7 +32,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   return (
     <Card
       onClick={onClick}
-      className="group flex cursor-pointer flex-col justify-between rounded-xl border border-border bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-lg dark:bg-[#292c2d]"
+      className="group flex cursor-pointer flex-col justify-between rounded-xl border border-border bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-lg dark:bg-[#1a1a1a]"
     >
       <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
         <div className="flex-1">

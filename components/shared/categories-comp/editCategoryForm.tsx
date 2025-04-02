@@ -151,7 +151,7 @@ export function EditCategoryForm({
                   className={`pr-10 dark:bg-[#09090b] ${
                     error
                       ? "border-2 border-[var(--error-per)]"
-                      : "dark:border dark:border-default-700"
+                      : "dark:border-default-700 dark:border"
                   }`}
                 />
               </FormControl>
@@ -176,7 +176,7 @@ export function EditCategoryForm({
                   className={`pr-10 dark:bg-[#09090b] ${
                     error
                       ? "border-2 border-[var(--error-per)]"
-                      : "dark:border dark:border-default-700"
+                      : "dark:border-default-700 dark:border"
                   }`}
                 />
               </FormControl>
@@ -186,7 +186,9 @@ export function EditCategoryForm({
         />
 
         <div className="flex justify-end pt-4">
-          <Button type="submit">Guardar cambios</Button>
+          <Button type="submit" className="bg-[#f6b100] text-black">
+            Guardar cambios
+          </Button>
         </div>
       </form>
     </Form>

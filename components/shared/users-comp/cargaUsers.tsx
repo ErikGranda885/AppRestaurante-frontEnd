@@ -525,6 +525,7 @@ export function BulkUploadDialog({
             <Button
               onClick={handleUpload}
               disabled={loading || previewData.length === 0}
+              className="bg-[#f6b100] text-black"
             >
               {loading ? "Cargando..." : "Guardar Usuarios"}
             </Button>

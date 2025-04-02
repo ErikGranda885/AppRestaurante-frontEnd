@@ -246,7 +246,7 @@ export default function Page() {
             {/* Tarjeta: Categorías Totales */}
             <Card
               onClick={() => handleCardClick("")}
-              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#292c2d] ${
+              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
                 selectedStatus === "" ? "ring-2 ring-secondary" : ""
               } group`}
             >
@@ -276,7 +276,7 @@ export default function Page() {
             {/* Tarjeta: Categorías Activas */}
             <Card
               onClick={() => handleCardClick("Activo")}
-              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#292c2d] ${
+              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
                 selectedStatus.toLowerCase() === "activo"
                   ? "ring-2 ring-secondary"
                   : ""
@@ -316,7 +316,7 @@ export default function Page() {
             {/* Tarjeta: Categorías Inactivas */}
             <Card
               onClick={() => handleCardClick("Inactivo")}
-              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#292c2d] ${
+              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
                 selectedStatus.toLowerCase() === "inactivo"
                   ? "ring-2 ring-secondary"
                   : ""

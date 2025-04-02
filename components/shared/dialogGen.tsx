@@ -30,7 +30,7 @@ export function GeneralDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button>{triggerText}</Button>
+        <Button className="bg-[#f6b100] text-black">{triggerText}</Button>
       </DialogTrigger>
       <DialogContent className="border-border">
         <DialogHeader>
