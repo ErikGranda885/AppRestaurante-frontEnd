@@ -224,7 +224,7 @@ export function FormProducts({
           handleDragOver={handleDragOver}
         />
         <div className="col-span-2">
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="bg-[#f6b100] text-black w-full">
             Crear Producto
           </Button>
         </div>

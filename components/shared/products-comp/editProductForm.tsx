@@ -248,7 +248,7 @@ export function EditProductForm({
           handleDragOver={handleDragOver}
         />
         <div className="col-span-2 flex justify-end">
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="bg-[#f6b100] text-black w-full">
             Guardar cambios
           </Button>
         </div>
