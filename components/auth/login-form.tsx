@@ -13,15 +13,19 @@ export function LoginForm({
 }: React.ComponentPropsWithoutRef<"form">) {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [generalError, setGeneralError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setEmailError("");
+    setPasswordError("");
+    setGeneralError("");
 
     try {
       const response = await fetch("http://localhost:5000/auth/login", {
@@ -35,13 +39,21 @@ export function LoginForm({
 
       if (!response.ok) {
         const err = await response.json();
-        setError(err.message || "Error al iniciar sesión");
+        if (err.message?.toLowerCase().includes("correo")) {
+          setEmailError(err.message);
+        } else if (err.message?.toLowerCase().includes("contraseña")) {
+          setPasswordError(err.message);
+        } else {
+          setGeneralError(err.message || "Error al iniciar sesión");
+        }
         setLoading(false);
         return;
       }
 
+      // Si es exitoso
       const data = await response.json();
       console.log("Login exitoso", data);
+
       localStorage.setItem("token", data.token);
       localStorage.setItem("user_name", data.usuario.nom_usu);
       localStorage.setItem("showWelcomeToast", "true");
@@ -49,7 +61,7 @@ export function LoginForm({
       setLoading(false);
       router.push("/dashboard");
     } catch (err) {
-      setError("Error de red");
+      setGeneralError("Error de red");
       setLoading(false);
     }
   };
@@ -68,24 +80,32 @@ export function LoginForm({
           </p>
         </div>
         <div className="grid gap-6">
-          <div className="grid gap-2">
+          {/* Campo de correo */}
+          <div className="grid gap-1">
             <Label htmlFor="email">Correo</Label>
             <Input
               id="email"
-              className="border border-border"
               type="email"
               placeholder="m@example.com"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className={cn(
+                "border border-border",
+                emailError && "border-2 border-[var(--error-per)]",
+              )}
             />
+            {/* Mensaje de error debajo del input de correo */}
+            {emailError && <p className="error-text text-sm">{emailError}</p>}
           </div>
-          <div className="relative grid gap-2">
-            <div className="flex items-center">
+
+          {/* Campo de contraseña */}
+          <div className="grid gap-1">
+            <div className="flex items-center justify-between">
               <Label htmlFor="password">Contraseña</Label>
               <a
                 href="#"
-                className="ml-auto text-sm underline-offset-4 hover:underline"
+                className="text-sm underline-offset-4 hover:underline"
               >
                 Olvidaste tu contraseña?
               </a>
@@ -95,9 +115,12 @@ export function LoginForm({
                 id="password"
                 type={showPassword ? "text" : "password"}
                 required
-                className="border border-border pr-10"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className={cn(
+                  "border border-border pr-10",
+                  passwordError && "border-2 border-[var(--error-per)]",
+                )}
               />
               <button
                 type="button"
@@ -111,16 +134,25 @@ export function LoginForm({
                 )}
               </button>
             </div>
+            {/* Mensaje de error debajo del input de contraseña */}
+            {passwordError && (
+              <p className="error-text text-sm">{passwordError}</p>
+            )}
           </div>
-          {error && <p className="text-sm text-red-500">{error}</p>}
+
+          {/* Error general (ej: Error de red) */}
+          {generalError && <p className="error-text text-sm">{generalError}</p>}
+
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Cargando..." : "Ingresar"}
           </Button>
+
           <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
             <span className="relative z-10 bg-background px-2 text-muted-foreground">
               O continua con
             </span>
           </div>
+
           <Button variant="outline" className="w-full">
             <svg
               xmlns="http://www.w3.org/2000/svg"
