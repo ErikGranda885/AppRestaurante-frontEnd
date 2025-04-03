@@ -143,9 +143,6 @@ export default function Page() {
   // ---------------------
   // FILTROS DE PRODUCTOS
   // ---------------------
-  const specialDiscountProducts = useMemo(() => {
-    return products.filter((p) => p.special);
-  }, [products]);
 
   const filteredProducts = useMemo(() => {
     // Filtrar productos que no sean "special"
@@ -424,7 +421,7 @@ export default function Page() {
                 </div>
               </div>
               <Button
-                className="mt-3 w-full rounded bg-[#f6b100] text-sm font-bold text-black hover:bg-gray-800"
+                className="mt-3 w-full rounded bg-[#f6b100] text-sm font-bold text-black hover:bg-[#f6b100] dark:bg-[#f6b100] dark:text-black dark:hover:bg-[#f6b100]"
                 onClick={handleOpenCustomerForm}
               >
                 Editar Información
@@ -531,12 +528,9 @@ export default function Page() {
                   $ {Math.round(total).toLocaleString("id-ID")}
                 </span>
               </div>
-              <button
-                type="button"
-                className="w-full rounded bg-[#f6b100] py-2 text-sm font-bold text-black"
-              >
+              <Button className="mt-3 w-full rounded bg-[#f6b100] text-sm font-bold text-black hover:bg-[#f6b100] dark:bg-[#f6b100] dark:text-black dark:hover:bg-[#f6b100]">
                 Guardar Orden
-              </button>
+              </Button>
             </div>
           </div>
         </div>

@@ -2,10 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import {
-  ChevronsUpDown,
-  LogOut,
-} from "lucide-react";
+import { ChevronsUpDown, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -53,11 +50,17 @@ export function NavUser({
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user.avatar} alt={user.name} />
                 <AvatarFallback className="rounded-lg">
-                  {user.name
-                    .split(" ")
-                    .filter((n) => n.length > 0)
-                    .map((n) => n[0] + n[n.length - 1].toUpperCase())
-                    .join("")}
+                  {(() => {
+                    const words = user.name
+                      .split(" ")
+                      .filter((n) => n.length > 0);
+                    if (words.length >= 2) {
+                      return (words[0][0] + words[1][0]).toUpperCase();
+                    } else if (words.length === 1) {
+                      return words[0].substring(0, 2).toUpperCase();
+                    }
+                    return "";
+                  })()}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
@@ -78,11 +81,17 @@ export function NavUser({
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
                   <AvatarFallback className="rounded-lg">
-                    {user.name
-                      .split(" ")
-                      .filter((n) => n.length > 0)
-                      .map((n) => n[0] + n[n.length - 1].toUpperCase())
-                      .join("")}
+                    {(() => {
+                      const words = user.name
+                        .split(" ")
+                        .filter((n) => n.length > 0);
+                      if (words.length >= 2) {
+                        return (words[0][0] + words[1][0]).toUpperCase();
+                      } else if (words.length === 1) {
+                        return words[0].substring(0, 2).toUpperCase();
+                      }
+                      return "";
+                    })()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
