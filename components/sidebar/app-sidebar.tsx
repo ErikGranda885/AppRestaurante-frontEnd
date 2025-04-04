@@ -1,5 +1,4 @@
 "use client";
-
 import * as React from "react";
 import { useState, useEffect } from "react";
 import {
@@ -31,7 +30,7 @@ import {
 } from "@/components/ui/sidebar";
 import { NavAdmin } from "./nav-admin";
 
-// Define la data con valores fijos para el usuario
+// Data base para el Sidebar; el usuario se actualizará dinámicamente.
 export const data = {
   user: {
     name: "",
@@ -70,18 +69,9 @@ export const data = {
       submenu: true,
       isActive: true,
       items: [
-        {
-          title: "Nueva venta",
-          url: "/ventas/nueva",
-        },
-        {
-          title: "Historial de ventas",
-          url: "/ventas/historial",
-        },
-        {
-          title: "Reportes",
-          url: "/ventas/reportes",
-        },
+        { title: "Nueva venta", url: "/ventas/nueva" },
+        { title: "Historial de ventas", url: "/ventas/historial" },
+        { title: "Reportes", url: "/ventas/reportes" },
       ],
     },
     {
@@ -90,26 +80,12 @@ export const data = {
       icon: Box,
       submenu: true,
       items: [
-        {
-          title: "Gestion de Categorias",
-          url: "/inventario/categorias",
-        },
-        {
-          title: "Gestion de Productos",
-          url: "/inventario/productos",
-        },
-        {
-          title: "Reportes",
-          url: "/inventario/reportes",
-        },
+        { title: "Gestion de Categorias", url: "/inventario/categorias" },
+        { title: "Gestion de Productos", url: "/inventario/productos" },
+        { title: "Reportes", url: "/inventario/reportes" },
       ],
     },
-    {
-      title: "Compras",
-      url: "/compras",
-      icon: ShoppingCart,
-      submenu: false,
-    },
+    { title: "Compras", url: "/compras", icon: ShoppingCart, submenu: false },
     {
       title: "Cierre Diario",
       url: "/cierre-diario",
@@ -130,12 +106,7 @@ export const data = {
       icon: Bot,
       submenu: false,
     },
-    {
-      title: "Usuarios",
-      url: "/usuarios",
-      icon: User,
-      submenu: false,
-    },
+    { title: "Usuarios", url: "/usuarios", icon: User, submenu: false },
     {
       title: "Configuraciones",
       url: "/configuraciones",
@@ -148,14 +119,24 @@ export const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [userData, setUserData] = useState(data.user);
 
+  // Función para actualizar userData desde localStorage
+  const updateUserData = () => {
+    const name = localStorage.getItem("user_name") || "";
+    const email = localStorage.getItem("user_email") || "";
+    const avatar = localStorage.getItem("user_avatar") || "";
+    setUserData({ name, email, avatar });
+  };
+
   useEffect(() => {
-    // Se ejecuta únicamente en el cliente
-    if (typeof window !== "undefined") {
-      const name = localStorage.getItem("user_name") || "";
-      const email = localStorage.getItem("user_email") || "";
-      const avatar = localStorage.getItem("user_avatar") || "";
-      setUserData({ name, email, avatar });
-    }
+    // Actualiza al montar el componente
+    updateUserData();
+
+    // Escucha el evento personalizado
+    window.addEventListener("userNameUpdated", updateUserData);
+
+    return () => {
+      window.removeEventListener("userNameUpdated", updateUserData);
+    };
   }, []);
 
   return (

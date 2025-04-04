@@ -68,7 +68,7 @@ export const CampoCategoria: React.FC<CampoCategoriaProps> = ({
                   <span className="opacity-50">⌄</span>
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[200px] p-0">
+              <PopoverContent className="w-[200px] p-0 border-border">
                 <Command>
                   <CommandInput
                     placeholder="Buscar categoría..."

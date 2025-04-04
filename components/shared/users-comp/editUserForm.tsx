@@ -93,7 +93,6 @@ export function EditUserForm({
   });
 
   const onSubmit = async (values: EditUserFormValues) => {
-    // Armar payload sin la contraseña si el campo está vacío
     const payload: any = {
       nom_usu: values.usuario,
       email_usu: values.correo,
@@ -142,6 +141,12 @@ export function EditUserForm({
         ),
         { duration: 2000, position: "top-right" },
       );
+      console.log("Usuario actualizado:", data);
+      const storedUser = localStorage.getItem("user_name") || "";
+      if (storedUser === initialData.usuario) {
+        localStorage.setItem("user_name", values.usuario);
+        window.dispatchEvent(new Event("userNameUpdated"));
+      }
     } catch (err) {
       console.error("Error al actualizar el usuario:", err);
       toast.error("Error al actualizar el usuario");
@@ -167,7 +172,7 @@ export function EditUserForm({
                   className={`pr-10 dark:bg-[#09090b] ${
                     error
                       ? "border-2 border-[var(--error-per)]"
-                      : "dark:border dark:border-default-700"
+                      : "dark:border-default-700 dark:border"
                   }`}
                 />
               </FormControl>
@@ -192,7 +197,7 @@ export function EditUserForm({
                   className={`pr-10 dark:bg-[#09090b] ${
                     error
                       ? "border-2 border-[var(--error-per)]"
-                      : "dark:border dark:border-default-700"
+                      : "dark:border-default-700 dark:border"
                   }`}
                 />
               </FormControl>
@@ -219,7 +224,7 @@ export function EditUserForm({
                     className={`pr-10 dark:bg-[#09090b] ${
                       error
                         ? "border-2 border-[var(--error-per)]"
-                        : "dark:border dark:border-default-700"
+                        : "dark:border-default-700 dark:border"
                     }`}
                   />
                   <button
@@ -260,7 +265,7 @@ export function EditUserForm({
                     className={`w-full pr-10 dark:bg-[#09090b] ${
                       error
                         ? "border-2 border-[var(--error-per)]"
-                        : "dark:border dark:border-default-700"
+                        : "dark:border-default-700 dark:border"
                     }`}
                   />
                 </div>
@@ -272,7 +277,9 @@ export function EditUserForm({
 
         {/* Botón de envío: abarca ambas columnas */}
         <div className="flex justify-end pt-4 sm:col-span-2">
-          <Button type="submit" className="bg-[#f6b100] text-black">Guardar cambios</Button>
+          <Button type="submit" className="bg-[#f6b100] text-black">
+            Guardar cambios
+          </Button>
         </div>
       </form>
     </Form>

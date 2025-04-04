@@ -245,91 +245,8 @@ export default function Page() {
 
   // Función para enviar la orden a la API integrando ventas, detalles y actualización de stock
   const handleSaveOrder = async () => {
-    try {
-      // Crear la venta
-      const salePayload = {
-        tot_vent: total,
-        fech_vent: new Date().toISOString(),
-        est_vent: "Sin cerrar",
-        usu_vent: parseInt(localStorage.getItem("user_id") || "0"),
-      };
-      const saleResponse = await fetch("http://localhost:5000/ventas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(salePayload),
-      });
-      if (!saleResponse.ok) {
-        throw new Error("Error al crear la venta: " + saleResponse.statusText);
-      }
-      const saleData = await saleResponse.json();
-      const id_vent = saleData.venta.id_vent; // Ajusta según tu API
-
-      // Crear cada detalle de venta
-      for (const item of orderItems) {
-        const detailPayload = {
-          vent_det: id_vent,
-          prod_det: item.productId,
-          cant_det: item.quantity,
-          pre_uni_det: products.find((p) => p.id_prod === item.productId)
-            ?.prec_prod,
-        };
-        const detailResponse = await fetch(
-          "http://localhost:5000/dets-ventas",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(detailPayload),
-          },
-        );
-        if (!detailResponse.ok) {
-          throw new Error("Error al crear el detalle de venta");
-        }
-      }
-
-      // Actualizar el stock de cada producto:
-      for (const item of orderItems) {
-        const productState = products.find((p) => p.id_prod === item.productId);
-        const updatedStock = productState ? productState.stock_prod : 0;
-        const patchResponse = await fetch(
-          `http://localhost:5000/productos/${item.productId}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ stock_prod: updatedStock }),
-          },
-        );
-        if (!patchResponse.ok) {
-          throw new Error("Error al actualizar el stock del producto");
-        }
-      }
-
-      toast.custom(
-        (t) => (
-          <div
-            className={`${
-              t.visible ? "animate-enter" : "animate-leave"
-            } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
-            style={{ animationDuration: "3s" }}
-          >
-            <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-[#166534]">
-                Mensaje Informativo
-              </p>
-              <p className="text-sm text-[#166534]/80">
-                Se ha realizado la compra exitosamente. Gracias por su compra.
-              </p>
-            </div>
-            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
-              <div className="progress-bar h-full bg-[#4ADE80]" />
-            </div>
-          </div>
-        ),
-        { duration: 2000, position: "top-right" },
-      );
-      setOrderItems([]);
-    } catch (error: any) {
-      console.error(error);
+    /* Verificar si existe algun producto agregado a la orden */
+    if (orderItems.length === 0) {
       toast.custom(
         (t) => (
           <div
@@ -341,7 +258,11 @@ export default function Page() {
             <XCircle className="mt-1 h-6 w-6 text-red-600" />
             <div className="flex-1">
               <p className="text-sm font-semibold text-red-600">Error</p>
-              <p className="text-sm text-red-600/80">{error.message}</p>
+              <p className="text-sm text-red-600/80">
+                {
+                  "Debe seleccionar por lo menos un producto para finalizar la orden."
+                }
+              </p>
             </div>
             <div className="absolute bottom-0 left-0 h-[3px] w-full bg-red-500/20">
               <div className="progress-bar h-full bg-red-500" />
@@ -350,6 +271,118 @@ export default function Page() {
         ),
         { duration: 2000, position: "top-right" },
       );
+      return;
+    } else {
+      try {
+        // Crear la venta
+        const salePayload = {
+          tot_vent: total,
+          fech_vent: new Date().toISOString(),
+          est_vent: "Sin cerrar",
+          usu_vent: parseInt(localStorage.getItem("user_id") || "0"),
+        };
+        const saleResponse = await fetch("http://localhost:5000/ventas", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(salePayload),
+        });
+        if (!saleResponse.ok) {
+          throw new Error(
+            "Error al crear la venta: " + saleResponse.statusText,
+          );
+        }
+        const saleData = await saleResponse.json();
+        const id_vent = saleData.venta.id_vent; // Ajusta según tu API
+
+        // Crear cada detalle de venta
+        for (const item of orderItems) {
+          const detailPayload = {
+            vent_det: id_vent,
+            prod_det: item.productId,
+            cant_det: item.quantity,
+            pre_uni_det: products.find((p) => p.id_prod === item.productId)
+              ?.prec_prod,
+          };
+          const detailResponse = await fetch(
+            "http://localhost:5000/dets-ventas",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(detailPayload),
+            },
+          );
+          if (!detailResponse.ok) {
+            throw new Error("Error al crear el detalle de venta");
+          }
+        }
+
+        // Actualizar el stock de cada producto:
+        for (const item of orderItems) {
+          const productState = products.find(
+            (p) => p.id_prod === item.productId,
+          );
+          const updatedStock = productState ? productState.stock_prod : 0;
+          const patchResponse = await fetch(
+            `http://localhost:5000/productos/${item.productId}`,
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ stock_prod: updatedStock }),
+            },
+          );
+          if (!patchResponse.ok) {
+            throw new Error("Error al actualizar el stock del producto");
+          }
+        }
+
+        toast.custom(
+          (t) => (
+            <div
+              className={`${
+                t.visible ? "animate-enter" : "animate-leave"
+              } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
+              style={{ animationDuration: "3s" }}
+            >
+              <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-[#166534]">
+                  Mensaje Informativo
+                </p>
+                <p className="text-sm text-[#166534]/80">
+                  Se ha realizado la compra exitosamente. Gracias por su compra.
+                </p>
+              </div>
+              <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
+                <div className="progress-bar h-full bg-[#4ADE80]" />
+              </div>
+            </div>
+          ),
+          { duration: 2000, position: "top-right" },
+        );
+        setOrderItems([]);
+      } catch (error: any) {
+        console.error(error);
+        toast.custom(
+          (t) => (
+            <div
+              className={`${
+                t.visible ? "animate-enter" : "animate-leave"
+              } relative flex w-96 items-start gap-3 rounded-lg border border-red-500 bg-red-100 p-4 shadow-lg`}
+              style={{ animationDuration: "3s" }}
+            >
+              <XCircle className="mt-1 h-6 w-6 text-red-600" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-red-600">Error</p>
+                <p className="text-sm text-red-600/80">{error.message}</p>
+              </div>
+              <div className="absolute bottom-0 left-0 h-[3px] w-full bg-red-500/20">
+                <div className="progress-bar h-full bg-red-500" />
+              </div>
+            </div>
+          ),
+          { duration: 2000, position: "top-right" },
+        );
+      }
     }
   };
 

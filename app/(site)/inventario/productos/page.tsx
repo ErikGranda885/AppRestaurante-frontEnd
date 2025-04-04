@@ -126,7 +126,7 @@ export default function Page() {
     null,
   );
   useProtectedRoute();
-  // Cargar categorías
+  // Cargar categorias
   useEffect(() => {
     fetch("http://localhost:5000/categorias")
       .then((res) => {
@@ -134,9 +134,13 @@ export default function Page() {
         return res.json();
       })
       .then((data: any) => {
+        // Filtrar solo las categorías activas
+        const active = data.categorias.filter(
+          (cate: Category) => cate.est_cate.toLowerCase() === "activo",
+        );
         const options: Option[] = [
           { value: "", label: "Todos" },
-          ...data.categorias.map((cate: Category) => ({
+          ...active.map((cate: Category) => ({
             value: cate.id_cate.toString(),
             label: cate.nom_cate,
           })),

@@ -19,6 +19,17 @@ import { CampoFecha } from "./componentes/forms/campoFecha";
 import { ZonaImagen } from "./componentes/forms/zonaImagen";
 import { CampoTexto } from "./componentes/forms/campoTexto";
 
+interface Category {
+  id_cate: number;
+  nom_cate: string;
+  desc_cate: string;
+  est_cate: string;
+}
+export type Option = {
+  value: string;
+  label: string;
+};
+
 /* ============================
    ESQUEMA DEL FORMULARIO
 =============================== */
@@ -78,10 +89,17 @@ export function FormProducts({
         return res.json();
       })
       .then((data: any) => {
-        const options: CategoryOption[] = data.categorias.map((cate: any) => ({
-          value: cate.id_cate.toString(),
-          label: cate.nom_cate,
-        }));
+        // Filtrar solo categorías activas
+        const active = data.categorias.filter(
+          (cate: Category) => cate.est_cate.toLowerCase() === "activo"
+        );
+        const options: Option[] = [
+          { value: "", label: "Todos" },
+          ...active.map((cate: Category) => ({
+            value: cate.id_cate.toString(),
+            label: cate.nom_cate,
+          })),
+        ];
         setCategoryOptions(options);
       })
       .catch((err) => console.error("Error al cargar categorías:", err));
@@ -126,7 +144,7 @@ export function FormProducts({
       nom_prod: data.nom_prod,
       prec_prod: data.prec_prod,
       stock_prod: data.stock_prod,
-      cate_prod: data.categoria, // se envía como número
+      cate_prod: data.categoria,
       fech_ven_prod: format(data.fech_ven_prod, "dd/MM/yyyy", { locale: es }),
       img_prod: imageUrl,
       est_prod: "Activo",
