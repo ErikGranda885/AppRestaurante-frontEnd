@@ -573,6 +573,8 @@ export default function Page() {
                   title="Crear Nuevo Producto"
                   description="Ingresa la información para crear un nuevo producto."
                   submitText="Crear Producto"
+                  contentWidth="700px"
+                  contentHeight="auto"
                 >
                   <FormProducts
                     onSuccess={(data: any) => {
@@ -639,7 +641,7 @@ export default function Page() {
             if (!open) setEditProduct(null);
           }}
         >
-          <DialogContent className="border-border sm:max-w-[425px]">
+          <DialogContent className="border-border">
             <DialogHeader>
               <DialogTitle>Editar Producto</DialogTitle>
               <DialogDescription>

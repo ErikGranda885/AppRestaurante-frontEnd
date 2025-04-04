@@ -3,6 +3,7 @@
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { CheckCircle, XCircle } from "lucide-react";
 import Image from "next/image";
@@ -435,78 +436,81 @@ export default function Page() {
                   )}
                 </div>
               </div>
-              <div className="grid h-[calc(74vh-4rem)] grid-cols-1 gap-4 overflow-auto sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filteredProducts.map((prod) => {
-                  const cartQ = getCartQuantity(prod.id_prod);
-                  return (
-                    <div
-                      key={prod.id_prod}
-                      className="relative flex h-[220px] w-auto flex-col justify-between rounded-lg border border-border bg-white p-3 shadow-sm dark:bg-[#1a1a1a]"
-                    >
-                      <div className="relative mx-auto h-[100px] w-[80px] overflow-hidden rounded-md shadow-sm">
-                        <Image
-                          src={prod.img_prod || "/imagenes/logo.png"}
-                          alt={prod.nom_prod}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="mt-2 px-1">
-                        {prod.stock_prod <= 0 && (
-                          <div className="absolute right-2 rounded-md bg-[#be3e3f] px-2 py-1 text-xs font-bold text-white shadow">
-                            Sin stock
-                          </div>
-                        )}
-                        <h3 className="text-sm font-semibold dark:text-gray-100">
-                          {prod.nom_prod}
-                        </h3>
-                        <p className="text-xs text-gray-600 dark:text-[#ababab]">
-                          Stock: {prod.stock_prod}
-                        </p>
-                        <p className="mt-1 text-sm font-bold text-gray-800 dark:text-gray-100">
-                          ${" "}
-                          {prod.prec_prod.toLocaleString("id-ID", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                          <span className="text-xs font-normal"> /u</span>
-                        </p>
-                      </div>
-                      <div className="mt-2 flex items-center justify-between px-1">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleDecrement(prod.id_prod)}
-                            className="h-7 w-7 rounded bg-gray-200 text-sm font-bold hover:bg-gray-300 dark:bg-[#333] dark:text-white hover:dark:bg-[#333]"
-                          >
-                            -
-                          </button>
-                          <span className="w-5 text-center text-sm dark:text-gray-100">
-                            {cartQ}
-                          </span>
-                          <button
-                            onClick={() => handleIncrement(prod.id_prod)}
-                            disabled={prod.stock_prod <= 0}
-                            className={`h-7 w-7 rounded bg-[#f6b100] text-sm font-bold text-black hover:bg-gray-300 dark:text-white hover:dark:bg-[#333] ${
-                              prod.stock_prod <= 0
-                                ? "cursor-not-allowed opacity-50"
-                                : ""
-                            }`}
-                          >
-                            +
-                          </button>
+
+              <ScrollArea className="h-[calc(74vh-4rem)]">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {filteredProducts.map((prod) => {
+                    const cartQ = getCartQuantity(prod.id_prod);
+                    return (
+                      <div
+                        key={prod.id_prod}
+                        className="relative flex h-[220px] w-auto flex-col justify-between rounded-lg border border-border bg-white p-3 shadow-sm dark:bg-[#1a1a1a]"
+                      >
+                        <div className="relative mx-auto h-[100px] w-[80px] overflow-hidden rounded-md shadow-sm">
+                          <Image
+                            src={prod.img_prod || "/imagenes/logo.png"}
+                            alt={prod.nom_prod}
+                            fill
+                            className="object-cover"
+                          />
                         </div>
-                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                          ${" "}
-                          {(cartQ * prod.prec_prod).toLocaleString("id-ID", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </p>
+                        <div className="mt-2 px-1">
+                          {prod.stock_prod <= 0 && (
+                            <div className="absolute right-2 rounded-md bg-[#be3e3f] px-2 py-1 text-xs font-bold text-white shadow">
+                              Sin stock
+                            </div>
+                          )}
+                          <h3 className="text-sm font-semibold dark:text-gray-100">
+                            {prod.nom_prod}
+                          </h3>
+                          <p className="text-xs text-gray-600 dark:text-[#ababab]">
+                            Stock: {prod.stock_prod}
+                          </p>
+                          <p className="mt-1 text-sm font-bold text-gray-800 dark:text-gray-100">
+                            ${" "}
+                            {prod.prec_prod.toLocaleString("id-ID", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                            <span className="text-xs font-normal"> /u</span>
+                          </p>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between px-1">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleDecrement(prod.id_prod)}
+                              className="h-7 w-7 rounded bg-gray-200 text-sm font-bold hover:bg-gray-300 dark:bg-[#333] dark:text-white hover:dark:bg-[#333]"
+                            >
+                              -
+                            </button>
+                            <span className="w-5 text-center text-sm dark:text-gray-100">
+                              {cartQ}
+                            </span>
+                            <button
+                              onClick={() => handleIncrement(prod.id_prod)}
+                              disabled={prod.stock_prod <= 0}
+                              className={`h-7 w-7 rounded bg-[#f6b100] text-sm font-bold text-black hover:bg-gray-300 dark:text-white hover:dark:bg-[#333] ${
+                                prod.stock_prod <= 0
+                                  ? "cursor-not-allowed opacity-50"
+                                  : ""
+                              }`}
+                            >
+                              +
+                            </button>
+                          </div>
+                          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                            ${" "}
+                            {(cartQ * prod.prec_prod).toLocaleString("id-ID", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
             </div>
           </div>
 

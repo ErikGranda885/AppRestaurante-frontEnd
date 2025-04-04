@@ -17,8 +17,10 @@ export interface GeneralDialogProps {
   submitText?: React.ReactNode;
   onSubmit?: () => void;
   children?: React.ReactNode;
-  // Propiedades para clases personalizadas
-  contentClassName?: string; // Para modificar el ancho y/o alto
+  // Propiedades para modificar el tamaño del DialogContent
+  contentClassName?: string; // Clases personalizadas (opcional)
+  contentWidth?: string; // Ejemplo: "500px" o "90%"
+  contentHeight?: string; // Ejemplo: "auto" o "600px"
 }
 
 export function GeneralDialog({
@@ -29,6 +31,8 @@ export function GeneralDialog({
   description,
   children,
   contentClassName,
+  contentWidth,
+  contentHeight,
 }: GeneralDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -36,7 +40,11 @@ export function GeneralDialog({
         <Button className="bg-[#f6b100] text-black">{triggerText}</Button>
       </DialogTrigger>
       <DialogContent
-        className={`border-border ${contentClassName ? contentClassName : "w-[500px]"} `}
+        className={`border-border ${contentClassName ? contentClassName : "w-[500px] max-w-none"}`}
+        style={{
+          width: contentWidth || undefined,
+          height: contentHeight || undefined,
+        }}
       >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>

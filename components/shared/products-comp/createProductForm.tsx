@@ -18,6 +18,7 @@ import {
 import { CampoFecha } from "./componentes/forms/campoFecha";
 import { ZonaImagen } from "./componentes/forms/zonaImagen";
 import { CampoTexto } from "./componentes/forms/campoTexto";
+import { CampoBoolean } from "./componentes/forms/campoComBool";
 
 interface Category {
   id_cate: number;
@@ -37,29 +38,32 @@ const FormSchema = z.object({
   nom_prod: z
     .string()
     .nonempty("El nombre del producto es requerido")
-    .refine(
-      ((nombre: string) => {
-        return fetch(
-          `http://localhost:5000/productos/verificar/producto?nombre=${encodeURIComponent(
-            nombre,
-          )}`,
-        )
-          .then((res) => res.json())
-          .then((data) => !data.exists);
-      }) as (nombre: string) => Promise<boolean>,
-      { message: "El producto ya se encuentra registrado", async: true } as any,
-    ),
+    .superRefine(async (nombre, ctx) => {
+      const res = await fetch(
+        `http://localhost:5000/productos/verificar/producto?nombre=${encodeURIComponent(nombre)}`,
+      );
+      const data = await res.json();
+      if (data.exists) {
+        ctx.addIssue({
+          code: "custom",
+          message: "El producto ya se encuentra registrado",
+        });
+      }
+    }),
   prec_prod: z.coerce
     .number({ required_error: "El precio es requerido" })
     .positive("El precio debe ser mayor a cero"),
   stock_prod: z.coerce
     .number({ required_error: "El stock es requerido" })
     .positive("El stock debe ser mayor a cero"),
-  // Se espera que la categoría se envíe como número
   categoria: z.coerce.number({ required_error: "La categoría es requerida" }),
   fech_ven_prod: z.date({
     required_error: "La fecha de vencimiento es requerida",
   }),
+  // Preprocesa el valor para que 1 se convierta en true y 0 en false.
+  aplica_iva: z
+    .preprocess((val) => Number(val) === 1, z.boolean())
+    .default(true),
 });
 
 type FormValues = z.infer<typeof FormSchema>;
@@ -77,6 +81,7 @@ export function FormProducts({
       stock_prod: 0,
       categoria: 0,
       fech_ven_prod: new Date(),
+      aplica_iva: true,
     },
   });
 
@@ -91,7 +96,7 @@ export function FormProducts({
       .then((data: any) => {
         // Filtrar solo categorías activas
         const active = data.categorias.filter(
-          (cate: Category) => cate.est_cate.toLowerCase() === "activo"
+          (cate: Category) => cate.est_cate.toLowerCase() === "activo",
         );
         const options: Option[] = [
           { value: "", label: "Todos" },
@@ -148,6 +153,7 @@ export function FormProducts({
       fech_ven_prod: format(data.fech_ven_prod, "dd/MM/yyyy", { locale: es }),
       img_prod: imageUrl,
       est_prod: "Activo",
+      iva_prod: data.aplica_iva,
     };
 
     try {
@@ -196,53 +202,76 @@ export function FormProducts({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="mx-auto grid max-w-4xl grid-cols-2 gap-8"
+        className="grid max-w-4xl grid-cols-5"
       >
-        <div>
-          <CampoTexto
-            control={form.control}
-            name="nom_prod"
-            label="Nombre del Producto"
-            placeholder="Nombre del producto"
-          />
-          <CampoNumero
-            control={form.control}
-            name="prec_prod"
-            label="Precio"
-            placeholder="Precio"
-            step="0.01"
-            parseValue={(value: string) => parseFloat(value)}
-          />
-          <CampoNumero
-            control={form.control}
-            name="stock_prod"
-            label="Stock"
-            placeholder="Stock"
-          />
-          <CampoCategoria
-            control={form.control}
-            name="categoria"
-            label="Categoría"
-            options={categoryOptions}
-          />
-          <CampoFecha
-            control={form.control}
-            name="fech_ven_prod"
-            label="Fecha de Vencimiento"
+        {/* Columna Izquierda: Campos organizados en 2 filas */}
+        <div className="col-span-3 flex flex-col gap-4 pr-3">
+          {/* Primera fila: 5 campos */}
+          <div className="grid grid-cols-2 gap-2 p-2">
+            <CampoTexto
+              control={form.control}
+              name="nom_prod"
+              label="Nombre del Producto"
+              placeholder="Nombre del producto"
+            />
+            <CampoNumero
+              control={form.control}
+              name="prec_prod"
+              label="Precio"
+              placeholder="Precio"
+              step="0.01"
+              parseValue={(value: string) =>
+                parseFloat(value.replace(",", "."))
+              }
+            />
+
+            <CampoNumero
+              control={form.control}
+              name="stock_prod"
+              label="Stock"
+              placeholder="Stock"
+            />
+            <CampoCategoria
+              control={form.control}
+              name="categoria"
+              label="Categoría"
+              options={categoryOptions}
+            />
+            <CampoFecha
+              control={form.control}
+              name="fech_ven_prod"
+              label="Fecha de Vencimiento"
+            />
+            <CampoBoolean
+              control={form.control}
+              name="aplica_iva"
+              label="Aplica IVA"
+              placeholder="Seleccione"
+            />
+          </div>
+        </div>
+        {/* Columna Derecha: Zona de imagen */}
+        <div className="col-span-2 flex h-full items-center justify-center">
+          <ZonaImagen
+            imageFile={imageFile}
+            imagePreview={imagePreview || ""}
+            setImageFile={setImageFile}
+            setImagePreview={setImagePreview}
+            imageInputRef={imageInputRef}
+            handleImageSelect={handleImageSelect}
+            handleImageDrop={handleImageDrop}
+            handleDragOver={handleDragOver}
           />
         </div>
-        <ZonaImagen
-          imageFile={imageFile}
-          imagePreview={imagePreview || ""}
-          setImageFile={setImageFile}
-          setImagePreview={setImagePreview}
-          imageInputRef={imageInputRef}
-          handleImageSelect={handleImageSelect}
-          handleImageDrop={handleImageDrop}
-          handleDragOver={handleDragOver}
-        />
-        <div className="col-span-2">
-          <Button type="submit" className="bg-[#f6b100] text-black w-full">
+        {/* Botón de envío */}
+        <div className="col-span-2 col-start-4 mt-4 flex justify-end gap-4">
+          <Button type="button" onClick={() => form.reset()}>
+            Limpiar
+          </Button>
+          <Button
+            className="bg-[#f6b100] text-black hover:bg-[#f6b100]/80"
+            type="submit"
+          >
             Crear Producto
           </Button>
         </div>

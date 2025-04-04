@@ -22,7 +22,7 @@ export const ZonaImagen: React.FC<ZonaImagenProps> = ({
   handleDragOver,
 }) => (
   <div className="flex flex-col items-center justify-center space-y-6">
-    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+    <label className="block text-sm font-medium ">
       Imagen del Producto
     </label>
     <input
