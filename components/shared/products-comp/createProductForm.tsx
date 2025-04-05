@@ -64,6 +64,9 @@ const FormSchema = z.object({
   aplica_iva: z
     .preprocess((val) => Number(val) === 1, z.boolean())
     .default(true),
+  materia_prima: z
+    .preprocess((val) => Number(val) === 1, z.boolean())
+    .default(false),
 });
 
 type FormValues = z.infer<typeof FormSchema>;
@@ -81,9 +84,13 @@ export function FormProducts({
       stock_prod: 0,
       categoria: 0,
       fech_ven_prod: new Date(),
-      aplica_iva: true,
+      aplica_iva: undefined,
+      materia_prima: undefined,
     },
   });
+
+  // Utilizamos watch para saber el valor de "materia_prima"
+  const isMateriaPrima = form.watch("materia_prima");
 
   // Cargar opciones de categoría desde la API
   const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
@@ -145,12 +152,20 @@ export function FormProducts({
         "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/productos%2Fproduct-default.jpg?alt=media&token=a06d2373-fd9a-4fa5-a715-3c9ab7ae546d";
     }
 
+    // Si es materia prima, forzamos stock 0 y no se requiere fecha de vencimiento.
+    let stock = data.stock_prod;
+    let fechVenc = format(data.fech_ven_prod, "dd/MM/yyyy", { locale: es });
+    if (data.materia_prima) {
+      stock = 0;
+      fechVenc = ""; // Valor para indicar que no aplica fecha
+    }
+
     const payload = {
       nom_prod: data.nom_prod,
       prec_prod: data.prec_prod,
-      stock_prod: data.stock_prod,
+      stock_prod: stock,
       cate_prod: data.categoria,
-      fech_ven_prod: format(data.fech_ven_prod, "dd/MM/yyyy", { locale: es }),
+      fech_ven_prod: fechVenc,
       img_prod: imageUrl,
       est_prod: "Activo",
       iva_prod: data.aplica_iva,
@@ -202,10 +217,10 @@ export function FormProducts({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="grid max-w-4xl grid-cols-5"
+        className="grid max-w-4xl grid-cols-6"
       >
         {/* Columna Izquierda: Campos organizados en 2 filas */}
-        <div className="col-span-3 flex flex-col gap-4 pr-3">
+        <div className="col-span-4 flex flex-col gap-4 pr-3">
           {/* Primera fila: 5 campos */}
           <div className="grid grid-cols-2 gap-2 p-2">
             <CampoTexto
@@ -224,30 +239,41 @@ export function FormProducts({
                 parseFloat(value.replace(",", "."))
               }
             />
-
-            <CampoNumero
-              control={form.control}
-              name="stock_prod"
-              label="Stock"
-              placeholder="Stock"
-            />
             <CampoCategoria
               control={form.control}
               name="categoria"
               label="Categoría"
               options={categoryOptions}
             />
-            <CampoFecha
-              control={form.control}
-              name="fech_ven_prod"
-              label="Fecha de Vencimiento"
-            />
+            {/* Campo para seleccionar si es materia prima, siempre visible */}
             <CampoBoolean
               control={form.control}
-              name="aplica_iva"
-              label="Aplica IVA"
-              placeholder="Seleccione"
+              name="materia_prima"
+              label="Es Materia Prima"
+              placeholder="Seleccione una opción"
             />
+            {/* Mostramos estos campos solo si NO es materia prima */}
+            {!isMateriaPrima && (
+              <>
+                <CampoNumero
+                  control={form.control}
+                  name="stock_prod"
+                  label="Stock"
+                  placeholder="Stock"
+                />
+                <CampoFecha
+                  control={form.control}
+                  name="fech_ven_prod"
+                  label="Fecha de Vencimiento"
+                />
+                <CampoBoolean
+                  control={form.control}
+                  name="aplica_iva"
+                  label="Aplica IVA"
+                  placeholder="Seleccione una opción"
+                />
+              </>
+            )}
           </div>
         </div>
         {/* Columna Derecha: Zona de imagen */}
@@ -264,7 +290,7 @@ export function FormProducts({
           />
         </div>
         {/* Botón de envío */}
-        <div className="col-span-2 col-start-4 mt-4 flex justify-end gap-4">
+        <div className="col-span-2 col-start-5 mt-4 flex justify-end gap-4">
           <Button type="button" onClick={() => form.reset()}>
             Limpiar
           </Button>

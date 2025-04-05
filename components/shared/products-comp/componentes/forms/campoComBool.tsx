@@ -20,10 +20,6 @@ export interface CampoBooleanProps {
   name: string;
   label: string;
   placeholder?: string;
-  /**
-   * Opciones para el select.
-   * Por defecto se usan { value: 1, label: "Sí" } y { value: 0, label: "No" }
-   */
   options?: { value: number; label: string }[];
   className?: string;
 }
@@ -48,14 +44,15 @@ export const CampoBoolean: React.FC<CampoBooleanProps> = ({
       control={control}
       name={name}
       render={({ field }) => {
-        // Convertir el valor numérico a string ("1" o "0")
         const stringValue =
           field.value === undefined || field.value === null
             ? undefined
             : field.value.toString();
         return (
           <FormItem>
-            <FormLabel className="text-black dark:text-white">{label}</FormLabel>
+            <FormLabel className="text-black dark:text-white">
+              {label}
+            </FormLabel>
             <FormControl>
               <Select
                 value={stringValue}
