@@ -13,21 +13,23 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
+import { IProduct, IProductCreate, IProductEdit } from "@/lib/types";
 
 interface BulkUploadProductDialogProps {
   categoryOptions: { value: string; label: string }[];
-  onSuccess: (newProducts: any[]) => void;
+  onSuccess: (newProducts: IProduct[]) => void;
   onClose: () => void;
 }
 
-// Puedes ajustar el tipo según tu modelo de producto
-export type DataProducts = {
-  cate_prod: string;
-  nom_prod: string;
-  prec_prod: number;
-  stock_prod: number;
-  fech_ven_prod: string;
-};
+
+// Se definen las columnas requeridas según lo que se espera en la carga masiva
+const requiredColumns = [
+  "cate_prod",
+  "nom_prod",
+  "prec_prod",
+  "stock_prod",
+  "fech_ven_prod",
+];
 
 export function BulkUploadProductDialog({
   categoryOptions,
@@ -39,15 +41,6 @@ export function BulkUploadProductDialog({
   const [loading, setLoading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Definir las columnas requeridas para productos
-  const requiredColumns = [
-    "cate_prod",
-    "nom_prod",
-    "prec_prod",
-    "stock_prod",
-    "fech_ven_prod",
-  ];
-
   // Función para validar que cada fila tenga datos en las columnas requeridas
   const validateRows = (rows: any[]): boolean => {
     return rows.every((row) =>
@@ -56,15 +49,15 @@ export function BulkUploadProductDialog({
         return (
           value !== undefined && value !== null && String(value).trim() !== ""
         );
-      }),
+      })
     );
   };
 
-  // Función para manejar el drag & drop
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
   };
+
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -109,7 +102,9 @@ export function BulkUploadProductDialog({
                 >
                   <CheckCircle className="mt-1 h-6 w-6 text-red-500" />
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-red-500">Error</p>
+                    <p className="text-sm font-semibold text-red-500">
+                      Error
+                    </p>
                     <p className="text-sm text-red-500/80">
                       El archivo CSV contiene columnas incompletas o con
                       encabezados incorrectos.
@@ -120,14 +115,14 @@ export function BulkUploadProductDialog({
                   </div>
                 </div>
               ),
-              { duration: 3000, position: "top-right" },
+              { duration: 3000, position: "top-right" }
             );
             setPreviewData([]);
             return;
           }
           if (!validateRows(results.data)) {
             toast.error(
-              "El archivo contiene celdas vacías en campos requeridos.",
+              "El archivo contiene celdas vacías en campos requeridos."
             );
             setPreviewData([]);
             return;
@@ -179,7 +174,9 @@ export function BulkUploadProductDialog({
                 >
                   <CheckCircle className="mt-1 h-6 w-6 text-red-500" />
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-red-500">Error</p>
+                    <p className="text-sm font-semibold text-red-500">
+                      Error
+                    </p>
                     <p className="text-sm text-red-500/80">
                       El archivo XLSX contiene columnas incompletas o con
                       encabezados incorrectos.
@@ -190,7 +187,7 @@ export function BulkUploadProductDialog({
                   </div>
                 </div>
               ),
-              { duration: 3000, position: "top-right" },
+              { duration: 3000, position: "top-right" }
             );
             return;
           }
@@ -201,7 +198,7 @@ export function BulkUploadProductDialog({
             const rowValues = row.values as any[];
             const rowData: any = {};
             headers.forEach((header: string, index: number) => {
-              let value = rowValues[index + 1]; // ExcelJS rows son 1-indexed
+              let value = rowValues[index + 1]; // ExcelJS usa índice 1-based
               if (value instanceof Date) {
                 value = value.toLocaleDateString("es-ES");
               }
@@ -212,7 +209,7 @@ export function BulkUploadProductDialog({
 
           if (!validateRows(formattedData)) {
             toast.error(
-              "El archivo contiene celdas vacías en campos requeridos.",
+              "El archivo contiene celdas vacías en campos requeridos."
             );
             setPreviewData([]);
             return;
@@ -231,7 +228,9 @@ export function BulkUploadProductDialog({
               >
                 <CheckCircle className="mt-1 h-6 w-6 text-red-500" />
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-red-500">Error</p>
+                  <p className="text-sm font-semibold text-red-500">
+                    Error
+                  </p>
                   <p className="text-sm text-red-500/80">
                     El archivo XLSX contiene columnas incompletas o con
                     encabezados incorrectos.
@@ -242,7 +241,7 @@ export function BulkUploadProductDialog({
                 </div>
               </div>
             ),
-            { duration: 3000, position: "top-right" },
+            { duration: 3000, position: "top-right" }
           );
           setPreviewData([]);
           return;
@@ -266,12 +265,9 @@ export function BulkUploadProductDialog({
   // Función para descargar la plantilla de productos desde el backend
   const handleDownloadTemplate = async () => {
     try {
-      const response = await fetch(
-        "http://localhost:5000/productos/plantilla",
-        {
-          method: "GET",
-        },
-      );
+      const response = await fetch("http://localhost:5000/productos/plantilla", {
+        method: "GET",
+      });
       if (!response.ok) {
         toast.error("Error al descargar la plantilla " + response.statusText);
         return;
@@ -300,15 +296,18 @@ export function BulkUploadProductDialog({
     try {
       const defaultImageUrl =
         "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/productos%2Fproduct-default.jpg?alt=media&token=a06d2373-fd9a-4fa5-a715-3c9ab7ae546d";
-      const processedData = previewData.map((row) => ({
-        cate_prod: row["cate_prod"],
-        nom_prod: row["nom_prod"],
-        prec_prod: Number(row["prec_prod"]),
-        stock_prod: Number(row["stock_prod"]),
-        fech_ven_prod: row["fech_ven_prod"],
-        est_prod: "Activo",
-        img_prod: defaultImageUrl,
-      }));
+        const processedData: IProductCreate[] = previewData.map((row) => ({
+          cate_prod: Number(row["cate_prod"]),
+          nom_prod: row["nom_prod"],
+          prec_prod: Number(row["prec_prod"]),
+          stock_prod: Number(row["stock_prod"]),
+          fech_ven_prod: row["fech_ven_prod"],
+          est_prod: "Activo",
+          img_prod: defaultImageUrl,
+          iva_prod: true,
+          mat_prod: false,
+        }));
+        
 
       const res = await fetch("http://localhost:5000/productos/masivo", {
         method: "POST",
@@ -348,7 +347,7 @@ export function BulkUploadProductDialog({
               </div>
             </div>
           ),
-          { duration: 2000, position: "top-right" },
+          { duration: 2000, position: "top-right" }
         );
       }
       if (data.errors && data.errors.length > 0) {
@@ -379,7 +378,7 @@ export function BulkUploadProductDialog({
             </div>
           </div>
         ),
-        { duration: 3000, position: "top-right" },
+        { duration: 3000, position: "top-right" }
       );
     } finally {
       setLoading(false);
@@ -486,7 +485,8 @@ export function BulkUploadProductDialog({
                               className="border border-gray-200 px-4 py-2 text-sm text-gray-700 dark:text-white"
                             >
                               {categoryOptions.find(
-                                (option) => option.value === String(rolValue),
+                                (option) =>
+                                  option.value === String(rolValue)
                               )?.label || String(rolValue)}
                             </td>
                           );

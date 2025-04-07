@@ -30,34 +30,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
-
-// Interfaces y tipos
-type MetricFilter = "all" | "critical" | "soonExpire" | "outOfStock";
-
-interface Category {
-  id_cate: number;
-  nom_cate: string;
-  desc_cate: string;
-  est_cate: string;
-}
-
-interface Product {
-  id_prod: number;
-  prec_prod: number;
-  stock_prod: number;
-  cate_prod: Category;
-  nom_prod: string;
-  est_prod: string;
-  fech_ven_prod: string;
-  img_prod: string;
-}
+import { ICategory, IProduct, IProductEdit } from "@/lib/types";
 
 export type Option = {
   value: string;
   label: string;
 };
 
-// Helpers de fechas (puedes moverlos a un archivo util)
+type MetricFilter = "all" | "critical" | "soonExpire" | "outOfStock";
+
+// Helpers de fechas (puedes moverlos a un archivo util, por ejemplo, lib/utils/dates.ts)
 const parseDateString = (dateStr: string): Date | null => {
   if (dateStr.includes("/")) {
     const parts = dateStr.split("/");
@@ -103,30 +85,31 @@ const sortOptions = [
 ];
 
 export default function Page() {
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<IProduct[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [errorProducts, setErrorProducts] = useState<string | null>(null);
-  // Se muestran 9 productos por página (3 columnas x 3 filas)
+  // Se muestran 6 productos por página
   const itemsPerPage = 6;
   const [currentPage, setCurrentPage] = useState(1);
   const [categoryOptions, setCategoryOptions] = useState<Option[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
-  // statusFilter puede ser "Activo", "Inactivo" o "all"
   const [statusFilter, setStatusFilter] = useState<string>("Activo");
   const [metricFilter, setMetricFilter] = useState<MetricFilter>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortCriteria, setSortCriteria] = useState<string>("default");
   const [openBulkUpload, setOpenBulkUpload] = useState(false);
   const [openCreate, setOpenCreate] = useState(false);
-  const [editProduct, setEditProduct] = useState<Product | null>(null);
-  // Estados para los diálogos de confirmación
+  const [editProduct, setEditProduct] = useState<IProductEdit | null>(null);
+
   const [productToDeactivate, setProductToDeactivate] =
-    useState<Product | null>(null);
-  const [productToActivate, setProductToActivate] = useState<Product | null>(
+    useState<IProduct | null>(null);
+  const [productToActivate, setProductToActivate] = useState<IProduct | null>(
     null,
   );
+
   useProtectedRoute();
-  // Cargar categorias
+
+  // Cargar categorías
   useEffect(() => {
     fetch("http://localhost:5000/categorias")
       .then((res) => {
@@ -134,13 +117,12 @@ export default function Page() {
         return res.json();
       })
       .then((data: any) => {
-        // Filtrar solo las categorías activas
         const active = data.categorias.filter(
-          (cate: Category) => cate.est_cate.toLowerCase() === "activo",
+          (cate: ICategory) => cate.est_cate?.toLowerCase() === "activo",
         );
         const options: Option[] = [
           { value: "", label: "Todos" },
-          ...active.map((cate: Category) => ({
+          ...active.map((cate: ICategory) => ({
             value: cate.id_cate.toString(),
             label: cate.nom_cate,
           })),
@@ -202,7 +184,6 @@ export default function Page() {
     );
   }
 
-  // Ordenar según el criterio seleccionado
   if (sortCriteria === "alphabetical") {
     filteredProducts = [...filteredProducts].sort((a, b) =>
       a.nom_prod.localeCompare(b.nom_prod),
@@ -222,7 +203,6 @@ export default function Page() {
       (a, b) => a.prec_prod - b.prec_prod,
     );
   } else {
-    // Orden predeterminada: si statusFilter es "all", se ordena para que activos aparezcan primero
     if (statusFilter === "all") {
       filteredProducts = [...filteredProducts].sort((a, b) => {
         if (a.est_prod === "Activo" && b.est_prod !== "Activo") return -1;
@@ -245,7 +225,6 @@ export default function Page() {
     setCurrentPage(1);
   };
 
-  // Al dar click en "Productos Registrados", se muestran todos (activos e inactivos)
   const handleMetricFilter = (filter: MetricFilter) => {
     setMetricFilter(filter);
     setCurrentPage(1);
@@ -254,7 +233,7 @@ export default function Page() {
     }
   };
 
-  // Función que se ejecuta cuando se confirma la inactivación
+  // Funciones para confirmar inactivación y activación (no se modifican)
   const confirmDeactivate = async () => {
     if (!productToDeactivate) return;
     try {
@@ -323,7 +302,6 @@ export default function Page() {
     }
   };
 
-  // Función que se ejecuta cuando se confirma la activación
   const confirmActivate = async () => {
     if (!productToActivate) return;
     try {
@@ -402,7 +380,6 @@ export default function Page() {
       >
         <div className="p-6">
           {/* Tarjetas de métricas */}
-          {/* Tarjetas de métricas actualizadas con Productos Agotados */}
           <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-4">
             <MetricCard
               titulo="Productos Registrados"
@@ -551,7 +528,7 @@ export default function Page() {
               {/* Diálogo de carga masiva */}
               {openBulkUpload && (
                 <BulkUploadProductDialog
-                  onSuccess={(newProducts: Product[]) => {
+                  onSuccess={(newProducts: IProduct[]) => {
                     setAllProducts((prev) => [...prev, ...newProducts]);
                     setOpenBulkUpload(false);
                   }}
@@ -604,18 +581,25 @@ export default function Page() {
                     <ProductCard
                       key={product.id_prod}
                       product={product}
-                      onEdit={(prod) => setEditProduct(prod)}
+                      onEdit={(prod) => {
+                        // Mapea el producto para que cate_prod sea únicamente el id
+                        const productForEdit = {
+                          ...prod,
+                          cate_prod:
+                            typeof prod.cate_prod === "object"
+                              ? prod.cate_prod.id_cate
+                              : parseInt(prod.cate_prod, 10),
+                        };
+                        setEditProduct(productForEdit);
+                      }}
                       onActivate={(prod) => {
-                        // Abrir diálogo de confirmación para activar
                         setProductToActivate(prod);
                       }}
                       onDeactivate={(prod) => {
-                        // Abrir diálogo de confirmación para inactivar
                         setProductToDeactivate(prod);
                       }}
                     />
                   ))}
-                  {/* Placeholders para completar 3 columnas en la última fila */}
                   {Array.from({
                     length: (3 - (currentProducts.length % 3)) % 3,
                   }).map((_, idx) => (
@@ -654,9 +638,7 @@ export default function Page() {
                 nom_prod: editProduct.nom_prod,
                 prec_prod: editProduct.prec_prod,
                 stock_prod: editProduct.stock_prod,
-                // Se espera que "categoria" sea un número (ID de la categoría)
-                categoria: editProduct.cate_prod.id_cate,
-                // Convertir el string "dd/MM/yyyy" a Date
+                categoria: editProduct.cate_prod,
                 fech_ven_prod: (() => {
                   const parts = editProduct.fech_ven_prod.split("/");
                   if (parts.length === 3) {

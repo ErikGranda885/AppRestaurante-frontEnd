@@ -1,6 +1,4 @@
-"use client";
 import React from "react";
-import { Card } from "@/components/ui/card";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Edit2, XCircle, CheckCircle } from "lucide-react";
@@ -11,64 +9,36 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ICategory, IProduct } from "@/lib/types";
+import { Card } from "@/components/ui/card";
+import { getDaysUntilExpiration } from "@/utils/dates";
 
-// Funciones helper para fechas
-export const parseDateString = (dateStr: string): Date | null => {
-  if (dateStr.includes("/")) {
-    const parts = dateStr.split("/");
-    if (parts.length === 3) {
-      const day = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1;
-      const year = parseInt(parts[2], 10);
-      const date = new Date(year, month, day);
-      if (!isNaN(date.getTime())) return date;
-    }
+// Función de mapeo para adaptar cate_prod a ICategory
+export const mapCategory = (cate: any): ICategory => {
+  if (typeof cate === "object" && cate !== null && "id_cate" in cate) {
+    return cate as ICategory;
   }
-  const date = new Date(dateStr);
-  if (!isNaN(date.getTime())) return date;
-  return null;
+  // Si cate es un string, se crea un objeto con valores predeterminados
+  return {
+    id_cate: 0,
+    nom_cate: cate,
+    desc_cate: "",
+    est_cate: "Activo",
+  };
 };
 
-export const resetTime = (date: Date): Date => {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
+export const mapProduct = (prod: any): IProduct => {
+  return {
+    ...prod,
+    cate_prod: mapCategory(prod.cate_prod),
+  };
 };
-
-export const getDaysUntilExpiration = (
-  expirationDateString: string,
-): number | null => {
-  const expirationDate = parseDateString(expirationDateString);
-  if (!expirationDate) return null;
-  const today = resetTime(new Date());
-  const expDate = resetTime(expirationDate);
-  const diffTime = expDate.getTime() - today.getTime();
-  return Math.floor(diffTime / (1000 * 60 * 60 * 24));
-};
-
-export interface Category {
-  id_cate: number;
-  nom_cate: string;
-  desc_cate: string;
-  est_cate: string;
-}
-
-export interface Product {
-  id_prod: number;
-  prec_prod: number;
-  stock_prod: number;
-  cate_prod: Category;
-  nom_prod: string;
-  est_prod: string;
-  fech_ven_prod: string;
-  img_prod: string;
-}
 
 export interface ProductCardProps {
-  product: Product;
-  onEdit: (product: Product) => void;
-  onDeactivate: (product: Product) => void;
-  onActivate: (product: Product) => void;
+  product: IProduct;
+  onEdit: (product: IProduct) => void;
+  onDeactivate: (product: IProduct) => void;
+  onActivate: (product: IProduct) => void;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
@@ -101,7 +71,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   }
 
   return (
-    <Card className="group relative flex max-w-lg overflow-hidden rounded-lg border h-[110px] border-border bg-white p-3 shadow-md transition-colors duration-300 dark:bg-[#262626]">
+    <Card className="group relative flex h-[110px] max-w-lg overflow-hidden rounded-lg border border-border bg-white p-3 shadow-md transition-colors duration-300 dark:bg-[#262626]">
       {/* Overlay para botones de acción */}
       <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
         <div className="flex space-x-4">
@@ -167,19 +137,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           />
         </div>
         {/* Información */}
-        <div className="flex flex-1 flex-col space-y-0">
+        <div className="flex flex-1 flex-col">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold">{product.nom_prod}</h2>
             <span className="text-xs">Stock: {product.stock_prod}</span>
           </div>
           <div className="text-xs font-semibold">
             <span className="text-xs text-muted-foreground">Categoría: </span>
-            {product.cate_prod.nom_cate}
+            {typeof product.cate_prod === "object"
+              ? product.cate_prod.nom_cate
+              : product.cate_prod}
           </div>
-          <div className={`text-xs font-bold ${expirationColorClass}`}>
-            <span className="text-xs text-muted-foreground">Caduca: </span>
-            {expirationText}
-          </div>
+          {!product.mat_prod && (
+            <div className={`text-xs font-bold ${expirationColorClass}`}>
+              <span className="text-xs text-muted-foreground">Caduca: </span>
+              {expirationText}
+            </div>
+          )}
           <div>
             <span className="text-sm font-bold">
               <span className="text-xs text-muted-foreground">Precio: </span>$

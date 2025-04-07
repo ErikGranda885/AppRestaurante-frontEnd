@@ -1,5 +1,4 @@
 "use client";
-
 import * as React from "react";
 import Papa from "papaparse";
 import * as ExcelJS from "exceljs";
@@ -13,19 +12,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
-
+import { ICategory } from "@/lib/types";
 interface BulkUploadCategoryDialogProps {
-  onSuccess: (newCategories: any[]) => void;
+  onSuccess: (newCategories: ICategory[]) => void;
   onClose: () => void;
 }
 
-// Tipo de categoría (opcional)
-export type DataCategories = {
-  id?: string;
-  nombre: string;
-  descripcion?: string;
-  estado: string;
-};
+const requiredColumns = ["nom_cate", "desc_cate"];
 
 export function BulkUploadCategoryDialog({
   onSuccess,
@@ -36,10 +29,8 @@ export function BulkUploadCategoryDialog({
   const [loading, setLoading] = React.useState(false);
   const [isDragging, setIsDragging] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  // Se esperan estas dos columnas: nom_cate y desc_cate
-  const requiredColumns = ["nom_cate", "desc_cate"];
 
-  // Función para validar que cada fila tenga datos en las columnas requeridas
+  // Valida que cada fila tenga datos en las columnas requeridas
   const validateRows = (rows: any[]): boolean => {
     return rows.every((row) =>
       requiredColumns.every((col) => {
@@ -51,7 +42,7 @@ export function BulkUploadCategoryDialog({
     );
   };
 
-  // Validar encabezados
+  // Valida los encabezados
   const validateHeaders = (headers: string[]): boolean => {
     const lowerHeaders = headers.map((h) => h.toLowerCase().trim());
     return requiredColumns.every((col) => lowerHeaders.includes(col));
@@ -226,6 +217,7 @@ export function BulkUploadCategoryDialog({
     setLoading(true);
     try {
       // Transformamos cada fila para ajustarla a lo que espera el backend.
+      // Se crea un objeto con las propiedades de ICategory (excepto id_cate, que se genera en el backend).
       const processedData = previewData.map((row) => ({
         nom_cate: row["nom_cate"],
         desc_cate: row["desc_cate"],
@@ -247,6 +239,8 @@ export function BulkUploadCategoryDialog({
         throw new Error(errorMsg);
       }
       if (data.categorias && data.categorias.length > 0) {
+        // Se espera que la API retorne categorías en la forma de ICategory,
+        // donde id_cate es de tipo number.
         onSuccess(data.categorias);
         toast.custom(
           (t) => (

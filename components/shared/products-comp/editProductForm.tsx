@@ -9,8 +9,6 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import toast from "react-hot-toast";
 import { uploadImage } from "@/firebase/subirImage";
-
-// Importamos los componentes generales desde sus archivos
 import { CheckCircle, XCircle } from "lucide-react";
 import { CampoTexto } from "./componentes/forms/campoTexto";
 import { CampoNumero } from "./componentes/forms/campoNumero";
@@ -128,7 +126,7 @@ export function EditProductForm({
       nom_prod: values.nom_prod,
       prec_prod: values.prec_prod,
       stock_prod: values.stock_prod,
-      cate_prod: values.categoria, // se envía como número
+      cate_prod: values.categoria, 
       fech_ven_prod: format(values.fech_ven_prod, "dd/MM/yyyy", { locale: es }),
       img_prod: imageUrl,
     };

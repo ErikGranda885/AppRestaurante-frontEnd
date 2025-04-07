@@ -1,10 +1,8 @@
 "use client";
-
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -21,20 +19,20 @@ import { CheckCircle } from "lucide-react";
 // Definición del esquema para crear categorías
 const createCategorySchema = z
   .object({
-    nombre: z
+    nom_cate: z
       .string()
       .min(2, { message: "El nombre debe tener al menos 2 caracteres." })
       .regex(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/, {
         message: "El nombre solo puede contener letras y espacios",
       }),
-    descripcion: z.string().optional(),
+    desc_cate: z.string().optional(),
   })
   .superRefine(async (values, ctx) => {
-    const { nombre } = values;
+    const { nom_cate } = values;
     try {
       const res = await fetch(
         `http://localhost:5000/categorias/verificar?nombre=${encodeURIComponent(
-          nombre,
+          nom_cate,
         )}`,
       );
       const data = await res.json();
@@ -65,16 +63,16 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
   const form = useForm<CreateCategoryFormValues>({
     resolver: zodResolver(createCategorySchema),
     defaultValues: {
-      nombre: "",
-      descripcion: "",
+      nom_cate: "",
+      desc_cate: "",
     },
   });
 
   const onSubmit = async (values: CreateCategoryFormValues) => {
     // Actualiza las propiedades para que coincidan con lo que espera el backend.
     const payload = {
-      nom_cate: values.nombre,
-      desc_cate: values.descripcion,
+      nom_cate: values.nom_cate,
+      desc_cate: values.desc_cate,
     };
 
     try {
@@ -122,10 +120,10 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        {/* Campo: Nombre de la Categoría */}
+        {/* Campo: nom_cate de la Categoría */}
         <FormField
           control={form.control}
-          name="nombre"
+          name="nom_cate"
           render={({ field, fieldState: { error } }) => (
             <FormItem>
               <FormLabel className="text-black dark:text-white">
@@ -138,7 +136,7 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
                   className={`pr-10 dark:bg-[#09090b] ${
                     error
                       ? "border-2 border-[var(--error-per)]"
-                      : "dark:border dark:border-default-700"
+                      : "dark:border-default-700 dark:border"
                   }`}
                 />
               </FormControl>
@@ -150,7 +148,7 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
         {/* Campo: Descripción (opcional) */}
         <FormField
           control={form.control}
-          name="descripcion"
+          name="desc_cate"
           render={({ field, fieldState: { error } }) => (
             <FormItem>
               <FormLabel className="text-black dark:text-white">
@@ -163,7 +161,7 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
                   className={`pr-10 dark:bg-[#09090b] ${
                     error
                       ? "border-2 border-[var(--error-per)]"
-                      : "dark:border dark:border-default-700"
+                      : "dark:border-default-700 dark:border"
                   }`}
                 />
               </FormControl>
@@ -174,7 +172,9 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
 
         {/* Botón de envío */}
         <div className="flex justify-end pt-4">
-          <Button type="submit" className="bg-[#f6b100] text-black">Crear Categoría</Button>
+          <Button type="submit" className="bg-[#f6b100] text-black">
+            Crear Categoría
+          </Button>
         </div>
       </form>
     </Form>

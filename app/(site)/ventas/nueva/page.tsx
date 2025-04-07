@@ -1,28 +1,16 @@
 "use client";
-
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
+import { ICategory, IProduct } from "@/lib/types";
 import { CheckCircle, XCircle } from "lucide-react";
 import Image from "next/image";
 import { useState, useMemo, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 
-// ---------------------
-// INTERFACES
-// ---------------------
-interface Product {
-  id_prod: number;
-  nom_prod: string;
-  prec_prod: number;
-  iva_prod: boolean;
-  stock_prod: number;
-  img_prod: string;
-  description?: string;
-  discount?: number;
-  cate_prod: { nom_cate: string } | string;
+interface IExtendedProduct extends IProduct {
   special?: boolean;
 }
 
@@ -31,14 +19,6 @@ interface OrderItem {
   productId: number;
   quantity: number;
 }
-
-interface Category {
-  id_cate: number;
-  nom_cate: string;
-  desc_cate?: string;
-  est_cate: string;
-}
-
 // ---------------------
 // COMPONENTE PRINCIPAL
 // ---------------------
@@ -46,11 +26,11 @@ export default function Page() {
   useProtectedRoute();
 
   // Estados para productos, orden y filtros
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<IExtendedProduct[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [searchQuery, setSearchQuery] = useState("");
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<ICategory[]>([]);
 
   // Estados para información del cliente
   const [customerName, setCustomerName] = useState("Erik Granda");
@@ -93,9 +73,9 @@ export default function Page() {
       try {
         const response = await fetch("http://localhost:5000/categorias");
         const result = await response.json();
-        const data: Category[] = result.categorias || [];
+        const data: ICategory[] = result.categorias || [];
         const activeCategories = data.filter(
-          (cat) => cat.est_cate.toLowerCase() === "activo",
+          (cat) => cat.est_cate === "Activo",
         );
         setCategories(activeCategories);
       } catch (error) {
@@ -109,13 +89,9 @@ export default function Page() {
   const filteredProducts = useMemo(() => {
     let filtered = products.filter((p) => !p.special);
     if (selectedCategory !== "Todos") {
-      filtered = filtered.filter((p) => {
-        const prodCate =
-          typeof p.cate_prod === "object" && p.cate_prod !== null
-            ? p.cate_prod.nom_cate
-            : p.cate_prod;
-        return prodCate === selectedCategory;
-      });
+      filtered = filtered.filter(
+        (p) => p.cate_prod.nom_cate === selectedCategory,
+      );
     }
     if (searchQuery.trim() !== "") {
       filtered = filtered.filter((p) =>

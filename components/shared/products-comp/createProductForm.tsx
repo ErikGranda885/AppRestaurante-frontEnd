@@ -19,13 +19,8 @@ import { CampoFecha } from "./componentes/forms/campoFecha";
 import { ZonaImagen } from "./componentes/forms/zonaImagen";
 import { CampoTexto } from "./componentes/forms/campoTexto";
 import { CampoBoolean } from "./componentes/forms/campoComBool";
+import { ICategory } from "@/lib/types";
 
-interface Category {
-  id_cate: number;
-  nom_cate: string;
-  desc_cate: string;
-  est_cate: string;
-}
 export type Option = {
   value: string;
   label: string;
@@ -34,40 +29,56 @@ export type Option = {
 /* ============================
    ESQUEMA DEL FORMULARIO
 =============================== */
-const FormSchema = z.object({
-  nom_prod: z
-    .string()
-    .nonempty("El nombre del producto es requerido")
-    .superRefine(async (nombre, ctx) => {
-      const res = await fetch(
-        `http://localhost:5000/productos/verificar/producto?nombre=${encodeURIComponent(nombre)}`,
-      );
-      const data = await res.json();
-      if (data.exists) {
-        ctx.addIssue({
-          code: "custom",
-          message: "El producto ya se encuentra registrado",
-        });
-      }
-    }),
-  prec_prod: z.coerce
-    .number({ required_error: "El precio es requerido" })
-    .positive("El precio debe ser mayor a cero"),
-  stock_prod: z.coerce
-    .number({ required_error: "El stock es requerido" })
-    .positive("El stock debe ser mayor a cero"),
-  categoria: z.coerce.number({ required_error: "La categoría es requerida" }),
-  fech_ven_prod: z.date({
-    required_error: "La fecha de vencimiento es requerida",
-  }),
-  // Preprocesa el valor para que 1 se convierta en true y 0 en false.
-  aplica_iva: z
-    .preprocess((val) => Number(val) === 1, z.boolean())
-    .default(true),
-  materia_prima: z
-    .preprocess((val) => Number(val) === 1, z.boolean())
-    .default(false),
-});
+const FormSchema = z
+  .object({
+    nom_prod: z
+      .string()
+      .nonempty("El nombre del producto es requerido")
+      .superRefine(async (nombre, ctx) => {
+        const res = await fetch(
+          `http://localhost:5000/productos/verificar/producto?nombre=${encodeURIComponent(
+            nombre,
+          )}`,
+        );
+        const data = await res.json();
+        if (data.exists) {
+          ctx.addIssue({
+            code: "custom",
+            message: "El producto ya se encuentra registrado",
+          });
+        }
+      }),
+    prec_prod: z.coerce
+      .number({ required_error: "El precio es requerido" })
+      .positive("El precio debe ser mayor a cero"),
+    stock_prod: z.coerce.number({ required_error: "El stock es requerido" }),
+    categoria: z.coerce.number({ required_error: "La categoría es requerida" }),
+    // La fecha de vencimiento es opcional para productos que sean materia prima
+    fech_ven_prod: z.date().optional(),
+    aplica_iva: z
+      .preprocess((val) => Number(val) === 1, z.boolean())
+      .default(true),
+    // Usamos "materia_prima" para alinear con el backend
+    materia_prima: z
+      .preprocess((val) => Number(val) === 1, z.boolean())
+      .default(false),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.materia_prima && !data.fech_ven_prod) {
+      ctx.addIssue({
+        code: "custom",
+        message: "La fecha de vencimiento es requerida",
+        path: ["fech_ven_prod"],
+      });
+    }
+    if (!data.materia_prima && data.stock_prod <= 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: "El stock debe ser mayor a cero",
+        path: ["stock_prod"],
+      });
+    }
+  });
 
 type FormValues = z.infer<typeof FormSchema>;
 
@@ -89,7 +100,7 @@ export function FormProducts({
     },
   });
 
-  // Utilizamos watch para saber el valor de "materia_prima"
+  // Se utiliza watch para saber el valor de "materia_prima"
   const isMateriaPrima = form.watch("materia_prima");
 
   // Cargar opciones de categoría desde la API
@@ -101,13 +112,13 @@ export function FormProducts({
         return res.json();
       })
       .then((data: any) => {
-        // Filtrar solo categorías activas
+        // Filtrar solo categorías activas (usando la interfaz ICategory)
         const active = data.categorias.filter(
-          (cate: Category) => cate.est_cate.toLowerCase() === "activo",
+          (cate: ICategory) => cate.est_cate?.toLowerCase() === "activo",
         );
         const options: Option[] = [
           { value: "", label: "Todos" },
-          ...active.map((cate: Category) => ({
+          ...active.map((cate: ICategory) => ({
             value: cate.id_cate.toString(),
             label: cate.nom_cate,
           })),
@@ -152,13 +163,14 @@ export function FormProducts({
         "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/productos%2Fproduct-default.jpg?alt=media&token=a06d2373-fd9a-4fa5-a715-3c9ab7ae546d";
     }
 
-    // Si es materia prima, forzamos stock 0 y no se requiere fecha de vencimiento.
-    let stock = data.stock_prod;
-    let fechVenc = format(data.fech_ven_prod, "dd/MM/yyyy", { locale: es });
-    if (data.materia_prima) {
-      stock = 0;
-      fechVenc = ""; // Valor para indicar que no aplica fecha
-    }
+    // Si es materia prima, forzamos stock a 0 y la fecha de vencimiento queda vacía.
+    const stock = data.materia_prima ? 0 : data.stock_prod;
+    const fechVenc = data.materia_prima
+      ? ""
+      : data.fech_ven_prod
+        ? format(data.fech_ven_prod, "dd/MM/yyyy", { locale: es })
+        : "";
+    const iva = data.materia_prima ? false : data.aplica_iva;
 
     const payload = {
       nom_prod: data.nom_prod,
@@ -168,7 +180,8 @@ export function FormProducts({
       fech_ven_prod: fechVenc,
       img_prod: imageUrl,
       est_prod: "Activo",
-      iva_prod: data.aplica_iva,
+      iva_prod: iva,
+      mat_prod: data.materia_prima,
     };
 
     try {
@@ -221,7 +234,6 @@ export function FormProducts({
       >
         {/* Columna Izquierda: Campos organizados en 2 filas */}
         <div className="col-span-4 flex flex-col gap-4 pr-3">
-          {/* Primera fila: 5 campos */}
           <div className="grid grid-cols-2 gap-2 p-2">
             <CampoTexto
               control={form.control}
@@ -252,7 +264,7 @@ export function FormProducts({
               label="Es Materia Prima"
               placeholder="Seleccione una opción"
             />
-            {/* Mostramos estos campos solo si NO es materia prima */}
+            {/* Mostrar estos campos solo si NO es materia prima */}
             {!isMateriaPrima && (
               <>
                 <CampoNumero

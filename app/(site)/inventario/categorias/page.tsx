@@ -1,7 +1,6 @@
 "use client";
 import * as React from "react";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
-
 import { DataTable } from "@/components/shared/dataTable";
 import {
   MoreHorizontal,
@@ -11,7 +10,6 @@ import {
   Folders,
   CheckCircle,
 } from "lucide-react";
-
 import { GeneralDialog } from "@/components/shared/dialogGen";
 import toast, { Toaster } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -25,7 +23,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ColumnDef } from "@tanstack/react-table";
 import { CreateCategoryForm } from "@/components/shared/categories-comp/createCategoryForm";
-
 import { BulkUploadCategoryDialog } from "@/components/shared/categories-comp/cargaCategory";
 import {
   Card,
@@ -35,28 +32,25 @@ import {
 } from "@/components/ui/card";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { EditCategoryForm } from "@/components/shared/categories-comp/editCategoryForm";
+import { ICategory } from "@/lib/types";
 
-// Definición del tipo Category
-export type DataCategories = {
-  id: string;
-  nombre: string;
-  descripcion?: string;
-  estado?: string;
-};
 
+// Ahora, en lugar de definir un tipo local, usamos ICategory directamente
 export default function Page() {
-  const [categories, setCategories] = React.useState<DataCategories[]>([]);
+  const [categories, setCategories] = React.useState<ICategory[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  const [editCategory, setEditCategory] = React.useState<DataCategories | null>(
+  const [editCategory, setEditCategory] = React.useState<ICategory | null>(
     null,
   );
   const [openBulkUpload, setOpenBulkUpload] = React.useState(false);
   const [selectedStatus, setSelectedStatus] = React.useState<string>("");
   const [openCreate, setOpenCreate] = React.useState(false);
+
   useProtectedRoute();
-  // Cargar categorías desde la API
+
+  // Cargar categorías desde la API y asignarlas directamente a ICategory
   React.useEffect(() => {
     fetch("http://localhost:5000/categorias")
       .then((res) => {
@@ -66,13 +60,8 @@ export default function Page() {
         return res.json();
       })
       .then((data: any) => {
-        const transformed = data.categorias.map((item: any) => ({
-          id: item.id_cate.toString(),
-          nombre: item.nom_cate,
-          descripcion: item.desc_cate,
-          estado: item.est_cate,
-        }));
-        setCategories(transformed);
+        // Suponemos que data.categorias ya tiene la forma de ICategory[]
+        setCategories(data.categorias);
         setLoading(false);
       })
       .catch((err) => {
@@ -81,25 +70,25 @@ export default function Page() {
       });
   }, []);
 
-  /* Definición de las columnas de la tabla para categorías */
-  const categoryColumns: ColumnDef<DataCategories>[] = [
+  /* Definición de las columnas de la tabla para categorías usando ICategory */
+  const categoryColumns: ColumnDef<ICategory>[] = [
     {
-      accessorKey: "nombre",
+      accessorKey: "nom_cate",
       header: "Nombre",
       cell: ({ row }) => (
-        <div className="capitalize">{row.getValue("nombre")}</div>
+        <div className="capitalize">{row.getValue("nom_cate")}</div>
       ),
     },
     {
-      accessorKey: "descripcion",
+      accessorKey: "desc_cate",
       header: "Descripción",
-      cell: ({ row }) => <div>{row.getValue("descripcion")}</div>,
+      cell: ({ row }) => <div>{row.getValue("desc_cate")}</div>,
     },
     {
-      accessorKey: "estado",
+      accessorKey: "est_cate",
       header: () => <div className="text-right">Estado</div>,
       cell: ({ row }) => {
-        const status = String(row.getValue("estado")).toLowerCase();
+        const status = String(row.getValue("est_cate")).toLowerCase();
         let statusStyles = "border-gray-100 text-gray-100";
         if (status === "activo") {
           statusStyles = "px-3.5 success-text border-[--success-per]";
@@ -109,7 +98,7 @@ export default function Page() {
         return (
           <div className="text-right font-medium">
             <span className={`rounded border py-1 ${statusStyles}`}>
-              {row.getValue("estado")}
+              {row.getValue("est_cate")}
             </span>
           </div>
         );
@@ -136,7 +125,7 @@ export default function Page() {
               >
                 Editar
               </DropdownMenuItem>
-              {String(category.estado).toLowerCase() === "inactivo" ? (
+              {String(category.est_cate).toLowerCase() === "inactivo" ? (
                 <DropdownMenuItem
                   onClick={() => handleActivate(category)}
                   className="cursor-pointer"
@@ -159,8 +148,8 @@ export default function Page() {
     },
   ];
 
-  const handleDeactivate = (category: DataCategories) => {
-    fetch(`http://localhost:5000/categorias/inactivar/${category.id}`, {
+  const handleDeactivate = (category: ICategory) => {
+    fetch(`http://localhost:5000/categorias/inactivar/${category.id_cate}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}),
@@ -172,7 +161,9 @@ export default function Page() {
       .then(() => {
         setCategories((prev) =>
           prev.map((cat) =>
-            cat.id === category.id ? { ...cat, estado: "Inactivo" } : cat,
+            cat.id_cate === category.id_cate
+              ? { ...cat, est_cate: "Inactivo" }
+              : cat,
           ),
         );
         toast.custom(
@@ -189,7 +180,8 @@ export default function Page() {
                   Mensaje Informativo
                 </p>
                 <p className="text-sm text-[#166534]/80">
-                  La categoría "{category.nombre}" ha sido inactivada con éxito.
+                  La categoría "{category.nom_cate}" ha sido inactivada con
+                  éxito.
                 </p>
               </div>
               <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
@@ -206,8 +198,8 @@ export default function Page() {
       });
   };
 
-  const handleActivate = (category: DataCategories) => {
-    fetch(`http://localhost:5000/categorias/activar/${category.id}`, {
+  const handleActivate = (category: ICategory) => {
+    fetch(`http://localhost:5000/categorias/activar/${category.id_cate}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}),
@@ -219,7 +211,9 @@ export default function Page() {
       .then(() => {
         setCategories((prev) =>
           prev.map((cat) =>
-            cat.id === category.id ? { ...cat, estado: "Activo" } : cat,
+            cat.id_cate === category.id_cate
+              ? { ...cat, est_cate: "Activo" }
+              : cat,
           ),
         );
         toast.custom(
@@ -236,7 +230,7 @@ export default function Page() {
                   Mensaje Informativo
                 </p>
                 <p className="text-sm text-[#166534]/80">
-                  La categoría "{category.nombre}" ha sido activada con éxito.
+                  La categoría "{category.nom_cate}" ha sido activada con éxito.
                 </p>
               </div>
               <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
@@ -253,12 +247,12 @@ export default function Page() {
       });
   };
 
-  // Filtrado de categorías según estado
+  // Filtrar categorías según el estado (usando est_cate de ICategory)
   const filteredCategories =
     selectedStatus === ""
       ? categories
       : categories.filter(
-          (cat) => cat.estado?.toLowerCase() === selectedStatus.toLowerCase(),
+          (cat) => cat.est_cate?.toLowerCase() === selectedStatus.toLowerCase(),
         );
 
   const handleCardClick = (status: string) => {
@@ -282,9 +276,8 @@ export default function Page() {
         isLoading={false}
       >
         <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#111315]">
-          {/* Tarjetas en formato flex, distribuidas equitativamente */}
+          {/* Tarjetas resumen */}
           <div className="flex flex-col gap-4 px-6 pt-6 md:flex-row md:justify-between">
-            {/* Tarjeta: Categorías Totales */}
             <Card
               onClick={() => handleCardClick("")}
               className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
@@ -314,7 +307,6 @@ export default function Page() {
               </CardHeader>
             </Card>
 
-            {/* Tarjeta: Categorías Activas */}
             <Card
               onClick={() => handleCardClick("Activo")}
               className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
@@ -325,16 +317,14 @@ export default function Page() {
             >
               <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
                 <div className="flex-1">
-                  {/* Título de la métrica */}
                   <CardTitle className="text-sm font-light text-secondary-foreground">
                     Categorías Activas
                   </CardTitle>
-                  {/* Valor y badge de porcentaje */}
                   <div className="mt-2 flex items-center gap-5">
                     <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
                       {
                         categories.filter(
-                          (cat) => cat.estado?.toLowerCase() === "activo",
+                          (cat) => cat.est_cate?.toLowerCase() === "activo",
                         ).length
                       }
                     </span>
@@ -342,19 +332,16 @@ export default function Page() {
                       +10%
                     </span>
                   </div>
-                  {/* Periodo */}
                   <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
                     Este mes
                   </CardDescription>
                 </div>
-                {/* Ícono con efecto hover */}
                 <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
                   <Folder className="h-7 w-7 text-green-500 transition-transform duration-300 group-hover:scale-110" />
                 </div>
               </CardHeader>
             </Card>
 
-            {/* Tarjeta: Categorías Inactivas */}
             <Card
               onClick={() => handleCardClick("Inactivo")}
               className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
@@ -365,16 +352,14 @@ export default function Page() {
             >
               <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
                 <div className="flex-1">
-                  {/* Título de la métrica */}
                   <CardTitle className="text-sm font-light text-secondary-foreground">
                     Categorías Inactivas
                   </CardTitle>
-                  {/* Valor y badge de porcentaje */}
                   <div className="mt-2 flex items-center gap-5">
                     <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
                       {
                         categories.filter(
-                          (cat) => cat.estado?.toLowerCase() === "inactivo",
+                          (cat) => cat.est_cate?.toLowerCase() === "inactivo",
                         ).length
                       }
                     </span>
@@ -382,12 +367,10 @@ export default function Page() {
                       -8%
                     </span>
                   </div>
-                  {/* Periodo */}
                   <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
                     Este mes
                   </CardDescription>
                 </div>
-                {/* Ícono con efecto hover */}
                 <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
                   <FolderX className="error-text h-7 w-7 transition-transform duration-300 group-hover:scale-110" />
                 </div>
@@ -398,14 +381,8 @@ export default function Page() {
           {/* Diálogo para carga masiva */}
           {openBulkUpload && (
             <BulkUploadCategoryDialog
-              onSuccess={(newCategories: any[]) => {
-                const formatted = newCategories.map((u: any) => ({
-                  id: u.id_cate.toString(),
-                  nombre: u.nom_cate,
-                  descripcion: u.desc_cate,
-                  estado: u.est_cate,
-                }));
-                setCategories((prev) => [...prev, ...formatted]);
+              onSuccess={(newCategories: ICategory[]) => {
+                setCategories((prev) => [...prev, ...newCategories]);
               }}
               onClose={() => setOpenBulkUpload(false)}
             />
@@ -424,17 +401,10 @@ export default function Page() {
               <EditCategoryForm
                 initialData={editCategory}
                 onSuccess={(data: any) => {
-                  // Actualiza la lista de categorías en el componente padre
-                  // y cierra el diálogo
                   setCategories((prev) =>
                     prev.map((cat) =>
-                      cat.id === data.categoria.id_cate.toString()
-                        ? {
-                            id: data.categoria.id_cate.toString(),
-                            nombre: data.categoria.nom_cate,
-                            descripcion: data.categoria.desc_cate,
-                            estado: data.categoria.est_cate,
-                          }
+                      cat.id_cate === data.categoria.id_cate
+                        ? data.categoria
                         : cat,
                     ),
                   );
@@ -444,7 +414,7 @@ export default function Page() {
             </GeneralDialog>
           )}
 
-          {/* Botones de acciones: Importar y Crear */}
+          {/* Botones para acciones: Importar y Crear */}
           <div className="flex justify-end space-x-4 px-6 pb-4 pt-5">
             <Button onClick={() => setOpenBulkUpload(true)}>
               <Upload className="mr-2 h-4 w-4" />
@@ -461,13 +431,7 @@ export default function Page() {
             >
               <CreateCategoryForm
                 onSuccess={(data: any) => {
-                  const created: DataCategories = {
-                    id: data.categoria.id_cate.toString(),
-                    nombre: data.categoria.nom_cate,
-                    descripcion: data.categoria.desc_cate,
-                    estado: data.categoria.est_cate,
-                  };
-                  setCategories((prev) => [...prev, created]);
+                  setCategories((prev) => [...prev, data.categoria]);
                   setOpenCreate(false);
                 }}
               />
@@ -476,7 +440,7 @@ export default function Page() {
 
           {/* Tabla de categorías */}
           <div className="px-6 pb-4">
-            <DataTable<DataCategories>
+            <DataTable<ICategory>
               data={filteredCategories}
               columns={categoryColumns}
             />
