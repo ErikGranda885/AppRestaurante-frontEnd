@@ -43,6 +43,13 @@ export interface ICompraInsumo {
   estado_comp: string;
 }
 
+export interface IRol {
+  id_rol: number;
+  nom_rol: string;
+  desc_rol?: string;
+  est_rol?: string;
+}
+
 export type IProductEdit = Omit<IProduct, "cate_prod"> & {
   cate_prod: number;
   id_prod?: number;

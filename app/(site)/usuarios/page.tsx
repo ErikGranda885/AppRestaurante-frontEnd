@@ -3,7 +3,6 @@ import * as React from "react";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { DataTable } from "@/components/shared/dataTable";
 import {
-  CheckCircle,
   MoreHorizontal,
   Upload,
   TrendingUpIcon,
@@ -17,9 +16,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Option } from "@/components/shared/combobox";
 import { GeneralDialog } from "@/components/shared/dialogGen";
-import toast, { Toaster } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -42,6 +40,7 @@ import {
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { ToastError } from "@/components/shared/toast/toastError";
+import { IRol } from "@/lib/types";
 
 export type DataUsers = {
   id: string;
@@ -53,7 +52,7 @@ export type DataUsers = {
 };
 
 export default function Page() {
-  const [roleOptions, setRoleOptions] = React.useState<Option[]>([]);
+  const [roleOptions, setRoleOptions] = React.useState<IRol[]>([]);
   const [usuarios, setUsuarios] = React.useState<DataUsers[]>([]);
   const [openBulkUpload, setOpenBulkUpload] = React.useState(false);
   const [selectedState, setSelectedState] = React.useState<string>("");
@@ -267,15 +266,18 @@ export default function Page() {
         return res.json();
       })
       .then((data: any) => {
-        const activeRoles = data.roles.filter(
+        // Se asume que la respuesta es un arreglo o que viene en data.roles.
+        const rolesData = Array.isArray(data) ? data : data.roles;
+        if (!rolesData || !Array.isArray(rolesData)) {
+          throw new Error("La respuesta de roles no contiene un arreglo");
+        }
+        // Filtrar solo los roles activos y asignar directamente al estado.
+        const activeRoles: IRol[] = rolesData.filter(
           (role: any) => role.est_rol === "Activo",
         );
-        const options: Option[] = activeRoles.map((role: any) => ({
-          value: role.id_rol.toString(),
-          label: role.nom_rol,
-        }));
-        setRoleOptions(options);
+        setRoleOptions(activeRoles);
       })
+
       .catch((err) => console.error("Error al cargar roles:", err));
   }, []);
 
@@ -426,18 +428,31 @@ export default function Page() {
           {openBulkUpload && (
             <BulkUploadDialog
               roleOptions={roleOptions}
-              onSuccess={(newUsers: any[]) => {
-                const formattedUsers = newUsers.map((u: any) => ({
-                  id: u.id_usu.toString(),
-                  usuario: u.nom_usu,
-                  correo: u.email_usu,
-                  estado: u.esta_usu,
-                  rol: u.rol_usu.toString(),
-                  rolNombre:
-                    roleOptions.find(
-                      (option) => option.value === u.rol_usu.toString(),
-                    )?.label || u.rol_usu.toString(),
-                }));
+              onSuccess={(usuariosNuevos: any[]) => {
+                const formattedUsers = usuariosNuevos.map((u: any) => {
+                  let rolId = "";
+                  let rolNombre = "";
+                  if (typeof u.rol_usu === "object") {
+                    // Ej.: { id_rol: 2, nom_rol: "Cocinero" }
+                    rolId = u.rol_usu.id_rol.toString();
+                    rolNombre = u.rol_usu.nom_rol;
+                  } else {
+                    // Casos en que `rol_usu` ya venga como string o número
+                    rolId = u.rol_usu.toString();
+                    rolNombre = u.rol_usu.toString();
+                  }
+
+                  return {
+                    id: u.id_usu.toString(),
+                    usuario: u.nom_usu,
+                    correo: u.email_usu,
+                    estado: u.esta_usu,
+                    rol: rolId,
+                    rolNombre, // Asignamos "Cocinero" en el ejemplo
+                  };
+                });
+
+                // 2. Agregamos esos usuarios al estado local
                 setUsuarios((prev) => [...prev, ...formattedUsers]);
               }}
               onClose={() => setOpenBulkUpload(false)}
@@ -462,22 +477,26 @@ export default function Page() {
               <CreateUserForm
                 roleOptions={roleOptions}
                 onSuccess={(data: any) => {
-                  const roleOption = roleOptions.find(
-                    (option) =>
-                      option.value === data.usuario.rol_usu.toString(),
-                  );
+                  const rolData = data.usuario.rol_usu;
+                  const roleId = rolData.id_rol;
+                  const roleName = rolData.nom_rol;
+
                   const createdUser: DataUsers = {
                     id: data.usuario.id_usu.toString(),
                     usuario: data.usuario.nom_usu,
                     correo: data.usuario.email_usu,
                     estado: data.usuario.esta_usu,
-                    rol: data.usuario.rol_usu.toString(),
-                    rolNombre: roleOption
-                      ? roleOption.label
-                      : data.usuario.rol_usu.toString(),
+                    rol: roleId?.toString(),
+                    rolNombre: roleName,
                   };
+
+                  // Actualiza tu estado con createdUser
                   setUsuarios((prev) => [...prev, createdUser]);
                   setOpenCreate(false);
+                }}
+                onRoleCreated={(newRole: IRol) => {
+                  console.log("Nuevo rol recibido en padre:", newRole);
+                  setRoleOptions((prev) => [...prev, newRole]);
                 }}
               />
             </GeneralDialog>
@@ -512,7 +531,10 @@ export default function Page() {
                   password: "",
                   rol: parseInt(editUser.rol),
                 }}
-                roleOptions={roleOptions}
+                roleOptions={roleOptions.map((role: IRol) => ({
+                  value: role.id_rol.toString(),
+                  label: role.nom_rol,
+                }))}
                 onSuccess={(data) => {
                   const updatedUser = {
                     id: data.usuario.id_usu.toString(),
@@ -523,8 +545,9 @@ export default function Page() {
                     rolNombre:
                       roleOptions.find(
                         (option) =>
-                          option.value === data.usuario.rol_usu.toString(),
-                      )?.label || data.usuario.rol_usu.toString(),
+                          option.id_rol.toString() ===
+                          data.usuario.rol_usu.toString(),
+                      )?.nom_rol || data.usuario.rol_usu.toString(),
                   };
                   setUsuarios((prev) =>
                     prev.map((u) =>

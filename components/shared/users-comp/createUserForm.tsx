@@ -13,14 +13,22 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Combobox, Option } from "@/components/shared/combobox";
+import { RoleCombobox } from "./componentes/form/comboboxRol";
 import { Eye, EyeOff } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { ToastError } from "../toast/toastError";
 import { ToastSuccess } from "../toast/toastSuccess";
+import { IRol } from "@/lib/types";
 
-// Expresión regular: solo letras (incluyendo acentos y ñ) y opcionalmente un único espacio entre dos grupos.
+// Esquema para el formulario principal de crear usuario
 const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ]+( [A-Za-zÁÉÍÓÚáéíóúÑñ]+)?$/;
-
 const createUserSchema = z.object({
   usuario: z
     .string()
@@ -34,9 +42,7 @@ const createUserSchema = z.object({
     .refine(
       ((email: string) => {
         return fetch(
-          `http://localhost:5000/usuarios/verificar/correo?email=${encodeURIComponent(
-            email,
-          )}`,
+          `http://localhost:5000/usuarios/verificar/correo?email=${encodeURIComponent(email)}`,
         )
           .then((res) => res.json())
           .then((data) => !data.exists);
@@ -46,36 +52,57 @@ const createUserSchema = z.object({
   password: z
     .string()
     .min(6, { message: "La contraseña debe tener al menos 6 caracteres." }),
-  rol: z.preprocess(
-    (arg) => {
-      if (typeof arg === "string" && arg.trim() !== "")
-        return parseInt(arg, 10);
-      return arg;
-    },
-    z.number({ message: "Se debe seleccionar un rol" }),
-  ),
+  rol: z.string().nonempty("Selecciona un rol"),
 });
-
 type CreateUserFormValues = z.infer<typeof createUserSchema>;
 
-interface CreateUserFormProps {
-  roleOptions: Option[];
+// Esquema para el formulario del modal de creación de rol
+const roleSchema = z.object({
+  nom_rol: z
+    .string()
+    .min(2, "El nombre del rol debe tener al menos 2 caracteres."),
+  desc_rol: z
+    .string()
+    .min(2, "La descripción del rol debe tener al menos 2 caracteres."),
+});
+type RoleFormValues = z.infer<typeof roleSchema>;
+
+export interface CreateUserFormProps {
+  roleOptions: IRol[];
   onSuccess: (data: any) => void;
+  onRoleCreated?: (newRole: IRol) => void;
 }
 
 export function CreateUserForm({
   roleOptions,
   onSuccess,
+  onRoleCreated,
 }: CreateUserFormProps) {
   const [showPassword, setShowPassword] = React.useState(false);
+  // Estado para controlar el modal de creación de rol
+  const [showRoleModal, setShowRoleModal] = React.useState(false);
+
+  // Formulario principal de usuario
   const form = useForm<CreateUserFormValues>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
       usuario: "",
       correo: "",
       password: "",
-      rol: 0,
+      rol: "",
     },
+  });
+
+  // Formulario para el modal de rol
+  const {
+    register: registerRole,
+    handleSubmit: handleSubmitRole,
+    formState: { errors: roleErrors },
+    reset: resetRoleForm,
+    control: roleControl,
+  } = useForm<RoleFormValues>({
+    resolver: zodResolver(roleSchema),
+    defaultValues: { nom_rol: "", desc_rol: "" },
   });
 
   const onSubmit = async (values: CreateUserFormValues) => {
@@ -83,7 +110,7 @@ export function CreateUserForm({
       nom_usu: values.usuario,
       email_usu: values.correo,
       clave_usu: values.password,
-      rol_usu: values.rol,
+      rol_usu: parseInt(values.rol, 10), // Convierto el string a número
     };
 
     try {
@@ -99,15 +126,47 @@ export function CreateUserForm({
       const data = await res.json();
       onSuccess(data);
       form.reset();
-      ToastSuccess({
-        message: "Usuario creado correctamente",
-      });
+      ToastSuccess({ message: "Usuario creado correctamente" });
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Error inesperado";
-      ToastError({
-        message: "Error al crear el usuario: " + errorMessage,
+      ToastError({ message: "Error al crear el usuario: " + errorMessage });
+    }
+  };
+
+  // Función para confirmar la creación del rol del modal
+  const handleConfirmCreateRole = async (values: RoleFormValues) => {
+    try {
+      const res = await fetch("http://localhost:5000/roles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nom_rol: values.nom_rol,
+          desc_rol: values.desc_rol,
+        }),
       });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || `Error: ${res.status}`);
+      }
+      const response = await res.json();
+      // Suponemos que la respuesta tiene { message: string, rol: { id_rol, nom_rol, ... } }
+      const createdRole = response.rol; // Asegúrate de que la propiedad se llame 'rol'
+      console.log("Nuevo rol creado:", createdRole);
+
+      // Actualiza el campo "rol" en el formulario principal
+      form.setValue("rol", String(createdRole.id_rol));
+      // Notifica al padre (si se pasa onRoleCreated)
+      if (onRoleCreated) {
+        onRoleCreated(createdRole);
+      }
+      ToastSuccess({ message: "Rol creado correctamente" });
+      resetRoleForm();
+      setShowRoleModal(false);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Error inesperado";
+      ToastError({ message: "Error al crear el rol: " + errorMessage });
     }
   };
 
@@ -164,7 +223,7 @@ export function CreateUserForm({
           )}
         />
 
-        {/* Campo 3: Contraseña con botón para mostrar/ocultar */}
+        {/* Campo 3: Contraseña */}
         <FormField
           control={form.control}
           name="password"
@@ -203,7 +262,7 @@ export function CreateUserForm({
           )}
         />
 
-        {/* Campo 4: Rol */}
+        {/* Campo 4: Rol mediante RoleCombobox */}
         <FormField
           control={form.control}
           name="rol"
@@ -211,32 +270,115 @@ export function CreateUserForm({
             <FormItem>
               <FormLabel className="text-black dark:text-white">Rol</FormLabel>
               <FormControl>
-                <div className="relative">
-                  <Combobox
-                    items={roleOptions}
-                    value={field.value ? String(field.value) : ""}
-                    onChange={field.onChange}
-                    placeholder="Selecciona un rol"
-                    className={`w-full pr-10 dark:bg-[#09090b] ${
-                      error
-                        ? "border-2 border-[var(--error-per)]"
-                        : "dark:border-default-700 dark:border"
-                    }`}
-                  />
-                </div>
+                <RoleCombobox
+                  items={roleOptions} // roleOptions es un IRol[]
+                  value={field.value ? String(field.value) : ""}
+                  onChange={(value: string) => field.onChange(value)}
+                  onCreateRole={() => setShowRoleModal(true)}
+                  placeholder="Selecciona un rol"
+                  className={`w-full pr-10 dark:bg-[#09090b] ${
+                    error
+                      ? "border-2 border-[var(--error-per)]"
+                      : "dark:border-default-700 dark:border"
+                  }`}
+                />
               </FormControl>
               <FormMessage className="error-text" />
             </FormItem>
           )}
         />
 
-        {/* Botón de envío: abarca ambas columnas */}
-        <div className="flex justify-end pt-4 sm:col-span-2">
+        {/* Botón de envío */}
+        <div className="flex justify-end gap-2 pt-4 sm:col-span-2">
           <Button type="submit" className="bg-[#f6b100] text-black">
             Crear Usuario
           </Button>
         </div>
       </form>
+
+      {/* Modal para crear rol */}
+      {showRoleModal && (
+        <Dialog
+          open={showRoleModal}
+          onOpenChange={(open) => {
+            if (!open) setShowRoleModal(false);
+          }}
+        >
+          <DialogContent className="border-border sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Crear Nuevo Rol</DialogTitle>
+              <DialogDescription>
+                Ingresa los datos del nuevo rol:
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSubmitRole(handleConfirmCreateRole)}>
+              <FormField
+                control={roleControl}
+                name="nom_rol"
+                render={({ field, fieldState: { error } }) => (
+                  <FormItem>
+                    <FormLabel className="text-black dark:text-white">
+                      Nombre del rol
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Nombre del rol"
+                        {...field}
+                        className={`w-full pr-10 dark:bg-[#09090b] ${
+                          error
+                            ? "border-2 border-[var(--error-per)]"
+                            : "dark:border-default-700 dark:border"
+                        }`}
+                      />
+                    </FormControl>
+                    <FormMessage className="error-text">
+                      {error?.message}
+                    </FormMessage>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={roleControl}
+                name="desc_rol"
+                render={({ field, fieldState: { error } }) => (
+                  <FormItem>
+                    <FormLabel className="text-black dark:text-white">
+                      Descripción del rol
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Descripción del rol"
+                        {...field}
+                        className={`w-full pr-10 dark:bg-[#09090b] ${
+                          error
+                            ? "border-2 border-[var(--error-per)]"
+                            : "dark:border-default-700 dark:border"
+                        }`}
+                      />
+                    </FormControl>
+                    <FormMessage className="error-text">
+                      {error?.message}
+                    </FormMessage>
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowRoleModal(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type="submit" className="bg-[#f6b100] text-black">
+                    Crear
+                  </Button>
+                </div>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
     </Form>
   );
 }
