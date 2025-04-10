@@ -80,8 +80,9 @@ export const data = {
       icon: Box,
       submenu: true,
       items: [
-        { title: "Gestion de Categorias", url: "/inventario/categorias" },
-        { title: "Gestion de Productos", url: "/inventario/productos" },
+        { title: "Gestión de Categorias", url: "/inventario/categorias" },
+        { title: "Gestión de Insumos", url: "/inventario/insumos" },
+        { title: "Gestión de Productos", url: "/inventario/productos" },
         { title: "Reportes", url: "/inventario/reportes" },
       ],
     },

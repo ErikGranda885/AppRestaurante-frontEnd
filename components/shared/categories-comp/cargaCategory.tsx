@@ -13,6 +13,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
 import { ICategory } from "@/lib/types";
+import { ToastError } from "../toast/toastError";
+import { ToastSuccess } from "../toast/toastSuccess";
 interface BulkUploadCategoryDialogProps {
   onSuccess: (newCategories: ICategory[]) => void;
   onClose: () => void;
@@ -64,21 +66,25 @@ export function BulkUploadCategoryDialog({
           const headers = results.meta.fields || [];
           if (!validateHeaders(headers)) {
             setPreviewData([]);
-            toast.error("El archivo CSV contiene encabezados incorrectos.");
+            ToastError({
+              message: "El archivo CSV contiene encabezados incorrectos.",
+            });
             return;
           }
           if (!validateRows(results.data)) {
             setPreviewData([]);
-            toast.error(
-              "El archivo contiene celdas vacías en campos requeridos.",
-            );
+            ToastError({
+              message:
+                "El archivo contiene celdas vacías en campos requeridos.",
+            });
             return;
           }
           setPreviewData(results.data);
         },
         error: (error) => {
-          console.error("Error al parsear el archivo CSV:", error);
-          toast.error("Error al leer el archivo CSV");
+          ToastError({
+            message: "Error al leer el archivo CSV",
+          });
         },
       });
     } else if (
@@ -91,14 +97,18 @@ export function BulkUploadCategoryDialog({
         const arrayBuffer = e.target?.result;
         try {
           if (!arrayBuffer) {
-            toast.error("No se pudo leer el archivo XLSX");
+            ToastError({
+              message: "El archivo XLSX no se pudo leer.",
+            });
             return;
           }
           const workbook = new ExcelJS.Workbook();
           await workbook.xlsx.load(arrayBuffer as ArrayBuffer);
           const worksheet = workbook.worksheets[0];
           if (!worksheet) {
-            toast.error("El archivo XLSX está vacío");
+            ToastError({
+              message: "El archivo XLSX no contiene hojas de cálculo.",
+            });
             return;
           }
           // Obtener encabezados de la primera fila
@@ -109,29 +119,9 @@ export function BulkUploadCategoryDialog({
           headers = headers.map((h: any) => String(h).toLowerCase().trim());
           if (!validateHeaders(headers)) {
             setPreviewData([]);
-            toast.custom(
-              (t) => (
-                <div
-                  className={`${
-                    t.visible ? "animate-enter" : "animate-leave"
-                  } relative flex w-96 items-start gap-3 rounded-lg border border-red-400 bg-red-50 p-4 shadow-lg`}
-                  style={{ animationDuration: "3s" }}
-                >
-                  <CheckCircle className="mt-1 h-6 w-6 text-red-500" />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-red-500">Error</p>
-                    <p className="text-sm text-red-500/80">
-                      El archivo XLSX contiene columnas incompletas o con
-                      encabezados incorrectos.
-                    </p>
-                  </div>
-                  <div className="absolute bottom-0 left-0 h-[3px] w-full bg-red-400/20">
-                    <div className="progress-bar h-full bg-red-400" />
-                  </div>
-                </div>
-              ),
-              { duration: 3000, position: "top-right" },
-            );
+            ToastError({
+              message: "El archivo XLSX contiene encabezados incorrectos.",
+            });
             return;
           }
           const formattedData: any[] = [];
@@ -150,24 +140,32 @@ export function BulkUploadCategoryDialog({
           });
           if (!validateRows(formattedData)) {
             setPreviewData([]);
-            toast.error(
-              "El archivo contiene celdas vacías en campos requeridos.",
-            );
+            ToastError({
+              message:
+                "El archivo contiene celdas vacías en campos requeridos.",
+            });
             return;
           }
           setPreviewData(formattedData);
         } catch (err) {
           console.error("Error al parsear el archivo XLSX:", err);
-          toast.error("Error al leer el archivo XLSX");
+          ToastError({
+            message: "Error al leer el archivo XLSX",
+          });
         }
       };
       reader.onerror = (error) => {
         console.error("Error reading XLSX file:", error);
-        toast.error("Error al leer el archivo XLSX");
+        ToastError({
+          message: "Error al leer el archivo XLSX",
+        });
       };
       reader.readAsArrayBuffer(selectedFile);
     } else {
-      toast.error("Solo se admite archivo CSV o XLSX en este ejemplo");
+      setPreviewData([]);
+      ToastError({
+        message: "Formato de archivo no soportado. Seleccione un CSV o XLSX.",
+      });
     }
   };
 
@@ -211,7 +209,9 @@ export function BulkUploadCategoryDialog({
 
   const handleUpload = async () => {
     if (previewData.length === 0) {
-      toast.error("No hay datos para cargar");
+      ToastError({
+        message: "No hay datos para cargar. Seleccione un archivo primero.",
+      });
       return;
     }
     setLoading(true);
@@ -242,61 +242,25 @@ export function BulkUploadCategoryDialog({
         // Se espera que la API retorne categorías en la forma de ICategory,
         // donde id_cate es de tipo number.
         onSuccess(data.categorias);
-        toast.custom(
-          (t) => (
-            <div
-              className={`${
-                t.visible ? "animate-enter" : "animate-leave"
-              } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
-              style={{ animationDuration: "3s" }}
-            >
-              <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-[#166534]">
-                  Mensaje Informativo
-                </p>
-                <p className="text-sm text-[#166534]/80">
-                  Categorías cargadas exitosamente.
-                </p>
-              </div>
-              <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
-                <div className="progress-bar h-full bg-[#4ADE80]" />
-              </div>
-            </div>
-          ),
-          { duration: 2000, position: "top-right" },
-        );
+        ToastSuccess({
+          message: `Se cargaron ${data.categorias.length} categorías`,
+        });
       }
       if (data.errors && data.errors.length > 0) {
         const errorList = data.errors
           .map((err: any) => err.error || JSON.stringify(err))
           .join(", ");
-        toast.error("Algunos registros no se cargaron: " + errorList);
+        ToastError({
+          message: `Se encontraron errores en la carga: ${errorList}`,
+        });
       }
       onClose();
     } catch (error: any) {
-      toast.custom(
-        (t) => (
-          <div
-            className={`${
-              t.visible ? "animate-enter" : "animate-leave"
-            } relative flex w-96 items-start gap-3 rounded-lg border border-red-400 bg-red-50 p-4 shadow-lg`}
-            style={{ animationDuration: "3s" }}
-          >
-            <CheckCircle className="mt-1 h-6 w-6 text-red-500" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-red-500">Error</p>
-              <p className="text-sm text-red-500/80">
-                Ha ocurrido un error: {error.message}.
-              </p>
-            </div>
-            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-red-400/20">
-              <div className="progress-bar h-full bg-red-400" />
-            </div>
-          </div>
-        ),
-        { duration: 3000, position: "top-right" },
-      );
+      ToastError({
+        message:
+          error.message ||
+          "Ocurrió un error inesperado al cargar las categorías.",
+      });
     } finally {
       setLoading(false);
     }

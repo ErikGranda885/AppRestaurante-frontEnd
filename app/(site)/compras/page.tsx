@@ -11,10 +11,16 @@ export default function Page() {
       submenu={false}
       isLoading={false} //
     >
-      {/* Aquí va el contenido específico de la página */}
-      <div>
-        <h1>Nueva Venta</h1>
-        {/* Resto de la información y componentes */}
+      <div className="flex h-full w-full flex-col">
+        <div className="flex h-full w-full flex-col p-4">
+          <h1 className="text-xl font-bold">Compras</h1>
+          <div className="p-6">
+            <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-4">
+              
+              {/* Metriccards */}
+            </div>
+          </div>
+        </div>
       </div>
     </ModulePageLayout>
   );

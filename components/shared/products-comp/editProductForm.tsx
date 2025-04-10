@@ -5,16 +5,17 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import toast from "react-hot-toast";
 import { uploadImage } from "@/firebase/subirImage";
 import { CheckCircle, XCircle } from "lucide-react";
-import { CampoTexto } from "./componentes/forms/campoTexto";
-import { CampoNumero } from "./componentes/forms/campoNumero";
+import { CampoTexto } from "../form/campoTexto";
+import { CampoNumero } from "../form/campoNumero";
 import { CampoCategoria } from "./componentes/forms/campoCategoria";
-import { CampoFecha } from "./componentes/forms/campoFecha";
+import { CampoFecha } from "../form/campoFecha";
 import { ZonaImagen } from "./componentes/forms/zonaImagen";
+import { CampoBoolean } from "./componentes/forms/campoComBool";
+import { ToastSuccess } from "../toast/toastSuccess";
+import { ToastError } from "../toast/toastError";
 
 /* ------------------------------
    ESQUEMA BASE CON VALIDACIÓN ASÍNCRONA
@@ -27,26 +28,42 @@ const EditProductSchemaBase = z
     prec_prod: z.coerce
       .number({ required_error: "El precio es requerido" })
       .positive("El precio debe ser mayor a cero"),
-    stock_prod: z.coerce
-      .number({ required_error: "El stock es requerido" })
-      .positive("El stock debe ser mayor a cero"),
-    // Se espera que la categoría se envíe como número
+    stock_prod: z.coerce.number({ required_error: "El stock es requerido" }),
     categoria: z.coerce.number({ required_error: "La categoría es requerida" }),
-    fech_ven_prod: z.date({
-      required_error: "La fecha de vencimiento es requerida",
-    }),
+    fech_ven_prod: z.date().optional(),
+    aplica_iva: z.boolean().default(true),
+    materia_prima: z.boolean().default(false),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.materia_prima && !data.fech_ven_prod) {
+      ctx.addIssue({
+        code: "custom",
+        message: "La fecha de vencimiento es requerida",
+        path: ["fech_ven_prod"],
+      });
+    }
+    if (!data.materia_prima && data.stock_prod <= 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: "El stock debe ser mayor a cero",
+        path: ["stock_prod"],
+      });
+    }
   })
   .superRefine(async (values, ctx) => {
-    const nuevoNombre = values.nom_prod.trim();
-    const nombreInicial = values.initial_nom_prod.trim();
-    // Si el nombre no se modificó (ignorando mayúsculas y espacios) no se valida
-    if (nuevoNombre.toLowerCase() === nombreInicial.toLowerCase()) return;
+    const nuevoNombre = values.nom_prod.trim().toLowerCase();
+    const nombreInicial = values.initial_nom_prod.trim().toLowerCase();
+    // Si el nombre no ha sido modificado, se omite la verificación
+    if (nuevoNombre === nombreInicial) return;
+
     try {
-      const res = await fetch(
-        `http://localhost:5000/productos/verificar/producto?nombre=${encodeURIComponent(
-          nuevoNombre,
-        )}`,
-      );
+      const res = await fetch("http://localhost:5000/productos/verificar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ nombre: nuevoNombre }),
+      });
       const data = await res.json();
       if (data.exists) {
         ctx.addIssue({
@@ -114,8 +131,12 @@ export function EditProductForm({
       ...initialData,
       initial_nom_prod: initialData.nom_prod.trim(),
       nom_prod: initialData.nom_prod.trim(),
+      aplica_iva: initialData.aplica_iva,
+      materia_prima: initialData.materia_prima,
     },
   });
+  // Se utiliza watch para saber el valor de "materia_prima"
+  const isMateriaPrima = form.watch("materia_prima");
 
   const onSubmit = async (values: EditProductFormValues) => {
     let imageUrl = imagePreview;
@@ -126,8 +147,8 @@ export function EditProductForm({
       nom_prod: values.nom_prod,
       prec_prod: values.prec_prod,
       stock_prod: values.stock_prod,
-      cate_prod: values.categoria, 
-      fech_ven_prod: format(values.fech_ven_prod, "dd/MM/yyyy", { locale: es }),
+      cate_prod: values.categoria,
+      fech_ven_prod: values.fech_ven_prod,
       img_prod: imageUrl,
     };
 
@@ -145,54 +166,13 @@ export function EditProductForm({
       }
       const data = await res.json();
       onSuccess(data);
-      toast.custom(
-        (t) => (
-          <div
-            className={`${
-              t.visible ? "animate-enter" : "animate-leave"
-            } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
-            style={{ animationDuration: "3s" }}
-          >
-            <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-[#166534]">
-                Mensaje Informativo
-              </p>
-              <p className="text-sm text-[#166534]/80">
-                Producto actualizado exitosamente.
-              </p>
-            </div>
-            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
-              <div className="progress-bar h-full bg-[#4ADE80]" />
-            </div>
-          </div>
-        ),
-        { duration: 2000, position: "top-right" },
-      );
+      ToastSuccess({
+        message: "Producto actualizado correctamente",
+      });
     } catch (err) {
-      toast.custom(
-        (t) => (
-          <div
-            className={`${
-              t.visible ? "animate-enter" : "animate-leave"
-            } relative flex w-96 items-start gap-3 rounded-lg border border-red-400 bg-red-50 p-4 shadow-lg`}
-            style={{ animationDuration: "3s" }}
-          >
-            <XCircle className="mt-1 h-6 w-6 text-red-500" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-red-500">Error</p>
-              <p className="text-sm text-red-500/80">
-                Ocurrió un error al actualizar el producto.{" "}
-                <span className="block">Por favor, intenta de nuevo.</span>
-              </p>
-            </div>
-            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-red-400/20">
-              <div className="progress-bar h-full bg-red-400" />
-            </div>
-          </div>
-        ),
-        { duration: 3000, position: "top-right" },
-      );
+      ToastError({
+        message: "Error al actualizar el producto",
+      });
     }
   };
 
@@ -200,54 +180,94 @@ export function EditProductForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="mx-auto grid max-w-4xl grid-cols-2 gap-8"
+        className={`grid max-w-4xl ${
+          isMateriaPrima ? "grid-cols-1" : "grid-cols-6"
+        }`}
       >
-        <div>
-          <CampoTexto
-            control={form.control}
-            name="nom_prod"
-            label="Nombre del Producto"
-            placeholder="Nombre del producto"
-          />
-          <CampoNumero
-            control={form.control}
-            name="prec_prod"
-            label="Precio"
-            placeholder="Precio"
-            step="0.01"
-            parseValue={(value: string) => parseFloat(value)}
-          />
-          <CampoNumero
-            control={form.control}
-            name="stock_prod"
-            label="Stock"
-            placeholder="Stock"
-          />
-          <CampoCategoria
-            control={form.control}
-            name="categoria"
-            label="Categoría"
-            options={categoryOptions}
-          />
-          <CampoFecha
-            control={form.control}
-            name="fech_ven_prod"
-            label="Fecha de Vencimiento"
+        {/* Sección de inputs */}
+        <div className="col-span-4 flex flex-col gap-4 pr-3">
+          <div
+            className={`grid p-2 ${
+              isMateriaPrima ? "grid-cols-1" : "grid-cols-2 gap-2"
+            }`}
+          >
+            {/* Siempre se muestran estos tres campos */}
+            <CampoTexto
+              control={form.control}
+              name="nom_prod"
+              label="Nombre del Producto"
+              placeholder="Nombre del producto"
+            />
+            <CampoNumero
+              control={form.control}
+              name="prec_prod"
+              label="Precio"
+              placeholder="Precio"
+              step="0.01"
+              parseValue={(value: string) =>
+                parseFloat(value.replace(",", "."))
+              }
+            />
+            <CampoCategoria
+              control={form.control}
+              name="categoria"
+              label="Categoría"
+              options={categoryOptions}
+            />
+
+            {/* Solo se muestran si NO es materia prima */}
+            {!isMateriaPrima && (
+              <>
+                <CampoBoolean
+                  control={form.control}
+                  name="materia_prima"
+                  label="Es Materia Prima"
+                  placeholder="Seleccione una opción"
+                />
+                <CampoNumero
+                  control={form.control}
+                  name="stock_prod"
+                  label="Stock"
+                  placeholder="Stock"
+                />
+                <CampoFecha
+                  control={form.control}
+                  name="fech_ven_prod"
+                  label="Fecha de Vencimiento"
+                />
+                <CampoBoolean
+                  control={form.control}
+                  name="aplica_iva"
+                  label="Aplica IVA"
+                  placeholder="Seleccione una opción"
+                />
+              </>
+            )}
+          </div>
+        </div>
+        {/* Zona de imagen */}
+        <div className="col-span-2 flex h-full items-center justify-center">
+          <ZonaImagen
+            imageFile={imageFile}
+            imagePreview={imagePreview || ""}
+            setImageFile={setImageFile}
+            setImagePreview={setImagePreview}
+            imageInputRef={imageInputRef}
+            handleImageSelect={handleImageSelect}
+            handleImageDrop={handleImageDrop}
+            handleDragOver={handleDragOver}
           />
         </div>
-        <ZonaImagen
-          imageFile={imageFile}
-          imagePreview={imagePreview}
-          setImageFile={setImageFile}
-          setImagePreview={setImagePreview}
-          imageInputRef={imageInputRef}
-          handleImageSelect={handleImageSelect}
-          handleImageDrop={handleImageDrop}
-          handleDragOver={handleDragOver}
-        />
-        <div className="col-span-2 flex justify-end">
-          <Button type="submit" className="bg-[#f6b100] text-black w-full">
-            Guardar cambios
+        {/* Botón de envío */}
+        <div className="col-span-2 col-start-5 mt-4 flex justify-end gap-4">
+          <Button type="button" onClick={() => form.reset()}>
+            Limpiar
+          </Button>
+          <Button
+            className="bg-[#f6b100] text-black hover:bg-[#f6b100]/80"
+            type="submit"
+          >
+            Guardar Cambios
           </Button>
         </div>
       </form>

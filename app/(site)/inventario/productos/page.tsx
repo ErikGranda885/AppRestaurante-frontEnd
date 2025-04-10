@@ -8,7 +8,7 @@ import { GeneralDialog } from "@/components/shared/dialogGen";
 import { FormProducts } from "@/components/shared/products-comp/createProductForm";
 import { BulkUploadProductDialog } from "@/components/shared/products-comp/cargaProducts";
 import { EditProductForm } from "@/components/shared/products-comp/editProductForm";
-import { MetricCard } from "@/components/shared/products-comp/componentes/page/metricCard";
+import { MetricCard } from "@/components/shared/metricCard";
 import { CategoryCombobox } from "@/components/shared/products-comp/componentes/page/categoryCombobox";
 import { StatusTabs } from "@/components/shared/products-comp/componentes/page/statusTabs";
 import { CheckCircle, Upload, XCircle } from "lucide-react";
@@ -31,6 +31,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { ICategory, IProduct, IProductEdit } from "@/lib/types";
+import { ToastError } from "@/components/shared/toast/toastError";
+import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 
 export type Option = {
   value: string;
@@ -250,53 +252,13 @@ export default function Page() {
             : p,
         ),
       );
-      toast.custom(
-        (t) => (
-          <div
-            className={`${
-              t.visible ? "animate-enter" : "animate-leave"
-            } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
-            style={{ animationDuration: "3s" }}
-          >
-            <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-[#166534]">
-                Mensaje Informativo
-              </p>
-              <p className="text-sm text-[#166534]/80">
-                Producto inactivado exitosamente.
-              </p>
-            </div>
-            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
-              <div className="progress-bar h-full bg-[#4ADE80]" />
-            </div>
-          </div>
-        ),
-        { duration: 2000, position: "top-right" },
-      );
+      ToastSuccess({
+        message: "Producto inactivado exitosamente.",
+      });
     } catch (error) {
-      toast.custom(
-        (t) => (
-          <div
-            className={`${
-              t.visible ? "animate-enter" : "animate-leave"
-            } relative flex w-96 items-start gap-3 rounded-lg border border-red-500 bg-red-100 p-4 shadow-lg`}
-            style={{ animationDuration: "3s" }}
-          >
-            <XCircle className="mt-1 h-6 w-6 text-red-600" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-red-600">Error</p>
-              <p className="text-sm text-red-600/80">
-                Hubo un error al realizar la acción.
-              </p>
-            </div>
-            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-red-500/20">
-              <div className="progress-bar h-full bg-red-500" />
-            </div>
-          </div>
-        ),
-        { duration: 2000, position: "top-right" },
-      );
+      ToastError({
+        message: "Hubo un error al inactivar el producto.",
+      });
     } finally {
       setProductToDeactivate(null);
     }
@@ -318,53 +280,13 @@ export default function Page() {
             : p,
         ),
       );
-      toast.custom(
-        (t) => (
-          <div
-            className={`${
-              t.visible ? "animate-enter" : "animate-leave"
-            } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
-            style={{ animationDuration: "3s" }}
-          >
-            <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-[#166534]">
-                Mensaje Informativo
-              </p>
-              <p className="text-sm text-[#166534]/80">
-                Producto activado exitosamente.
-              </p>
-            </div>
-            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
-              <div className="progress-bar h-full bg-[#4ADE80]" />
-            </div>
-          </div>
-        ),
-        { duration: 2000, position: "top-right" },
-      );
+      ToastSuccess({
+        message: "Producto activado exitosamente.",
+      });
     } catch (error) {
-      toast.custom(
-        (t) => (
-          <div
-            className={`${
-              t.visible ? "animate-enter" : "animate-leave"
-            } relative flex w-96 items-start gap-3 rounded-lg border border-red-500 bg-red-100 p-4 shadow-lg`}
-            style={{ animationDuration: "3s" }}
-          >
-            <XCircle className="mt-1 h-6 w-6 text-red-600" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-red-600">Error</p>
-              <p className="text-sm text-red-600/80">
-                Hubo un error al realizar la acción.
-              </p>
-            </div>
-            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-red-500/20">
-              <div className="progress-bar h-full bg-red-500" />
-            </div>
-          </div>
-        ),
-        { duration: 2000, position: "top-right" },
-      );
+      ToastError({
+        message: "Hubo un error al activar el producto.",
+      });
     } finally {
       setProductToActivate(null);
     }
@@ -625,7 +547,7 @@ export default function Page() {
             if (!open) setEditProduct(null);
           }}
         >
-          <DialogContent className="border-border">
+          <DialogContent className="w-[700px] max-w-none border-border">
             <DialogHeader>
               <DialogTitle>Editar Producto</DialogTitle>
               <DialogDescription>
@@ -650,6 +572,8 @@ export default function Page() {
                   return new Date();
                 })(),
                 img_prod: editProduct.img_prod,
+                aplica_iva: editProduct.iva_prod,
+                materia_prima: editProduct.mat_prod ?? false,
               }}
               categoryOptions={categoryOptions.filter(
                 (opt) => opt.value !== "",

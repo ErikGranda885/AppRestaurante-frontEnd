@@ -91,11 +91,9 @@ export function Combobox({
               {filteredItems.map((item) => (
                 <CommandItem
                   key={String(item.value)}
-                  value={`${item.value} ${item.label}`} // Incluye id y label para que la búsqueda funcione.
+                  value={`${item.value} ${item.label}`}
                   onSelect={(selectedValue) => {
-                    // Extraemos el id suponiendo que es la primera parte del string.
                     const selectedId = selectedValue.split(" ")[0];
-                    // Si se selecciona el mismo id, se limpia; de lo contrario, se guarda el id.
                     onChange(
                       String(selectedId) === String(value) ? "" : selectedId,
                     );

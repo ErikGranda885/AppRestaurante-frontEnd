@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Combobox, Option } from "@/components/shared/combobox";
-import toast from "react-hot-toast";
+import { ToastSuccess } from "../toast/toastSuccess";
+import { ToastError } from "../toast/toastError";
 
 // Expresión regular para el nombre
 const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ]+( [A-Za-zÁÉÍÓÚáéíóúÑñ]+)?$/;
@@ -113,43 +114,26 @@ export function EditUserForm({
         },
       );
       if (!res.ok) {
-        throw new Error(`Error: ${res.status}`);
+        const errorData = await res.json();
+        throw new Error(errorData.message || `Error: ${res.status}`);
       }
       const data = await res.json();
       onSuccess(data);
-      toast.custom(
-        (t) => (
-          <div
-            className={`${
-              t.visible ? "animate-enter" : "animate-leave"
-            } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
-            style={{ animationDuration: "3s" }}
-          >
-            <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-[#166534]">
-                Mensaje Informativo
-              </p>
-              <p className="text-sm text-[#166534]/80">
-                Usuario actualizado exitosamente.
-              </p>
-            </div>
-            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
-              <div className="progress-bar h-full bg-[#4ADE80]" />
-            </div>
-          </div>
-        ),
-        { duration: 2000, position: "top-right" },
-      );
-      console.log("Usuario actualizado:", data);
+      ToastSuccess({
+        message: "El usuario ha sido actualizado correctamente.",
+      });
+
       const storedUser = localStorage.getItem("user_name") || "";
       if (storedUser === initialData.usuario) {
         localStorage.setItem("user_name", values.usuario);
         window.dispatchEvent(new Event("userNameUpdated"));
       }
     } catch (err) {
-      console.error("Error al actualizar el usuario:", err);
-      toast.error("Error al actualizar el usuario");
+      const errorMessage =
+        err instanceof Error ? err.message : "Error inesperado";
+      ToastError({
+        message: "Error al crear el usuario: " + errorMessage,
+      });
     }
   };
 

@@ -1,5 +1,7 @@
 "use client";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
+import { ToastError } from "@/components/shared/toast/toastError";
+import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -59,7 +61,11 @@ export default function Page() {
       try {
         const response = await fetch("http://localhost:5000/productos");
         const data = await response.json();
-        setProducts(data);
+        console.log("esta es la data: ", data);
+        const activeProducts = data.filter(
+          (producto: any) => producto.est_prod === "Activo",
+        );
+        setProducts(activeProducts);
       } catch (error) {
         console.error("Error al cargar los productos:", error);
       }
@@ -224,30 +230,9 @@ export default function Page() {
   const handleSaveOrder = async () => {
     /* Verificar si existe algun producto agregado a la orden */
     if (orderItems.length === 0) {
-      toast.custom(
-        (t) => (
-          <div
-            className={`${
-              t.visible ? "animate-enter" : "animate-leave"
-            } relative flex w-96 items-start gap-3 rounded-lg border border-red-500 bg-red-100 p-4 shadow-lg`}
-            style={{ animationDuration: "3s" }}
-          >
-            <XCircle className="mt-1 h-6 w-6 text-red-600" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-red-600">Error</p>
-              <p className="text-sm text-red-600/80">
-                {
-                  "Debe seleccionar por lo menos un producto para finalizar la orden."
-                }
-              </p>
-            </div>
-            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-red-500/20">
-              <div className="progress-bar h-full bg-red-500" />
-            </div>
-          </div>
-        ),
-        { duration: 2000, position: "top-right" },
-      );
+      ToastError({
+        message: "No hay productos en la orden.",
+      });
       return;
     } else {
       try {
@@ -312,53 +297,15 @@ export default function Page() {
           }
         }
 
-        toast.custom(
-          (t) => (
-            <div
-              className={`${
-                t.visible ? "animate-enter" : "animate-leave"
-              } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
-              style={{ animationDuration: "3s" }}
-            >
-              <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-[#166534]">
-                  Mensaje Informativo
-                </p>
-                <p className="text-sm text-[#166534]/80">
-                  Se ha realizado la compra exitosamente. Gracias por su compra.
-                </p>
-              </div>
-              <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
-                <div className="progress-bar h-full bg-[#4ADE80]" />
-              </div>
-            </div>
-          ),
-          { duration: 2000, position: "top-right" },
-        );
+        ToastSuccess({
+          message: "Orden guardada con éxito.",
+        });
         setOrderItems([]);
       } catch (error: any) {
         console.error(error);
-        toast.custom(
-          (t) => (
-            <div
-              className={`${
-                t.visible ? "animate-enter" : "animate-leave"
-              } relative flex w-96 items-start gap-3 rounded-lg border border-red-500 bg-red-100 p-4 shadow-lg`}
-              style={{ animationDuration: "3s" }}
-            >
-              <XCircle className="mt-1 h-6 w-6 text-red-600" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-red-600">Error</p>
-                <p className="text-sm text-red-600/80">{error.message}</p>
-              </div>
-              <div className="absolute bottom-0 left-0 h-[3px] w-full bg-red-500/20">
-                <div className="progress-bar h-full bg-red-500" />
-              </div>
-            </div>
-          ),
-          { duration: 2000, position: "top-right" },
-        );
+        ToastError({
+          message: "Error al guardar la orden: " + error.message,
+        });
       }
     }
   };

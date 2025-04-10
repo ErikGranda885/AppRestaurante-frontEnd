@@ -10,16 +10,18 @@ import { es } from "date-fns/locale";
 import toast from "react-hot-toast";
 import { uploadImage } from "@/firebase/subirImage";
 import { CheckCircle } from "lucide-react";
-import { CampoNumero } from "./componentes/forms/campoNumero";
+import { CampoNumero } from "../form/campoNumero";
 import {
   CampoCategoria,
   CategoryOption,
 } from "./componentes/forms/campoCategoria";
-import { CampoFecha } from "./componentes/forms/campoFecha";
+import { CampoFecha } from "../form/campoFecha";
 import { ZonaImagen } from "./componentes/forms/zonaImagen";
-import { CampoTexto } from "./componentes/forms/campoTexto";
+import { CampoTexto } from "../form/campoTexto";
 import { CampoBoolean } from "./componentes/forms/campoComBool";
 import { ICategory } from "@/lib/types";
+import { ToastSuccess } from "../toast/toastSuccess";
+import { ToastError } from "../toast/toastError";
 
 export type Option = {
   value: string;
@@ -196,33 +198,14 @@ export function FormProducts({
       const resData = await response.json();
       onSuccess(resData);
       form.reset();
-      toast.custom(
-        (t: any) => (
-          <div
-            className={`${
-              t.visible ? "animate-enter" : "animate-leave"
-            } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
-            style={{ animationDuration: "3s" }}
-          >
-            <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-[#166534]">
-                Mensaje Informativo
-              </p>
-              <p className="text-sm text-[#166534]/80">
-                Producto creado exitosamente.
-              </p>
-            </div>
-            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
-              <div className="progress-bar h-full bg-[#4ADE80]" />
-            </div>
-          </div>
-        ),
-        { duration: 2000, position: "top-right" },
-      );
+      ToastSuccess({
+        message: "Producto creado correctamente",
+      });
     } catch (error) {
       console.error("Error al crear el producto:", error);
-      toast.error("Error al crear el producto", { duration: 3000 });
+      ToastError({
+        message: "Error al crear el producto",
+      });
     }
   };
 
@@ -230,11 +213,15 @@ export function FormProducts({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="grid max-w-4xl grid-cols-6"
+        className={`grid max-w-4xl ${
+          isMateriaPrima ? "grid-cols-1" : "grid-cols-6"
+        }`}
       >
         {/* Columna Izquierda: Campos organizados en 2 filas */}
         <div className="col-span-4 flex flex-col gap-4 pr-3">
-          <div className="grid grid-cols-2 gap-2 p-2">
+          <div
+            className={`p-2" grid ${isMateriaPrima ? "grid-cols-1" : "grid-cols-2 gap-2"} `}
+          >
             <CampoTexto
               control={form.control}
               name="nom_prod"

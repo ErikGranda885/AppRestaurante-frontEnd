@@ -20,7 +20,7 @@ export interface CampoBooleanProps {
   name: string;
   label: string;
   placeholder?: string;
-  options?: { value: number; label: string }[];
+  options?: { value: boolean; label: string }[];
   className?: string;
 }
 
@@ -32,10 +32,10 @@ export const CampoBoolean: React.FC<CampoBooleanProps> = ({
   options,
   className,
 }) => {
-  // Opciones por defecto
+  // Opciones por defecto usando valores booleanos
   const defaultOptions = [
-    { value: 1, label: "Sí" },
-    { value: 0, label: "No" },
+    { value: true, label: "Sí" },
+    { value: false, label: "No" },
   ];
   const selectOptions = options || defaultOptions;
 
@@ -57,7 +57,8 @@ export const CampoBoolean: React.FC<CampoBooleanProps> = ({
               <Select
                 value={stringValue}
                 onValueChange={(val) => {
-                  field.onChange(Number(val));
+                  // Convertimos el string ("true" o "false") a booleano
+                  field.onChange(val === "true");
                 }}
               >
                 <SelectTrigger className={className}>

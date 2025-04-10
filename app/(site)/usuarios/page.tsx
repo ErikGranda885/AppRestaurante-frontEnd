@@ -6,12 +6,8 @@ import {
   CheckCircle,
   MoreHorizontal,
   Upload,
-  Folder,
-  FolderX,
-  Folders,
   TrendingUpIcon,
   UserCheck,
-  UserCog,
   UserX,
 } from "lucide-react";
 import {
@@ -40,11 +36,12 @@ import { BulkUploadDialog } from "@/components/shared/users-comp/cargaUsers";
 import {
   Card,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
+import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
+import { ToastError } from "@/components/shared/toast/toastError";
 
 export type DataUsers = {
   id: string;
@@ -106,34 +103,14 @@ export default function Page() {
             u.id === user.id ? { ...u, estado: "Inactivo" } : u,
           ),
         );
-        toast.custom(
-          (t) => (
-            <div
-              className={`${
-                t.visible ? "animate-enter" : "animate-leave"
-              } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
-              style={{ animationDuration: "3s" }}
-            >
-              <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-[#166534]">
-                  Mensaje Informativo
-                </p>
-                <p className="text-sm text-[#166534]/80">
-                  Se ha inactivado el usuario exitosamente.
-                </p>
-              </div>
-              <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
-                <div className="progress-bar h-full bg-[#4ADE80]" />
-              </div>
-            </div>
-          ),
-          { duration: 2000, position: "top-right" },
-        );
+        ToastSuccess({
+          message: "Se ha inactivado el usuario exitosamente.",
+        });
       })
       .catch((err) => {
-        toast.error("Error al inactivar el usuario", { duration: 3000 });
-        console.error("Error al inactivar usuario:", err);
+        ToastError({
+          message: ` Error al inactivar el usuario: ${err.message}`,
+        });
       });
   };
 
@@ -153,34 +130,14 @@ export default function Page() {
         setUsuarios((prev) =>
           prev.map((u) => (u.id === user.id ? { ...u, estado: "Activo" } : u)),
         );
-        toast.custom(
-          (t) => (
-            <div
-              className={`${
-                t.visible ? "animate-enter" : "animate-leave"
-              } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
-              style={{ animationDuration: "3s" }}
-            >
-              <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-[#166534]">
-                  Mensaje Informativo
-                </p>
-                <p className="text-sm text-[#166534]/80">
-                  Se ha activado el usuario exitosamente.
-                </p>
-              </div>
-              <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
-                <div className="progress-bar h-full bg-[#4ADE80]" />
-              </div>
-            </div>
-          ),
-          { duration: 2000, position: "top-right" },
-        );
+        ToastSuccess({
+          message: "Se ha activado el usuario exitosamente.",
+        });
       })
       .catch((err) => {
-        toast.error("Error al activar el usuario", { duration: 3000 });
-        console.error("Error al activar usuario:", err);
+        ToastError({
+          message: ` Error al activar el usuario: ${err.message}`,
+        });
       });
   };
 
@@ -218,27 +175,46 @@ export default function Page() {
     },
     {
       accessorKey: "estado",
-      header: () => <div className="text-right">Estado</div>,
+      header: () => <div className="text-center">Estado</div>,
       cell: ({ row }) => {
-        const estado = String(row.getValue("estado")).toLowerCase();
-        let estadoStyles = "border-gray-100 text-gray-100";
-        if (estado === "activo") {
-          estadoStyles =
-            "px-3.5 success-text border-[--success-per] dark:bg-[#377cfb]/10";
-        } else if (estado === "inactivo") {
-          estadoStyles = "px-2 error-text border-[--error-per]";
+        const estadoOriginal = String(row.getValue("estado")) || "";
+        const estado = estadoOriginal.toLowerCase();
+
+        let circleColor = "bg-gray-500";
+        let textColor = "text-gray-600";
+
+        switch (estado) {
+          case "activo":
+            circleColor = "bg-[#17c964]";
+            textColor = "";
+            break;
+          case "inactivo":
+            circleColor = "bg-[#f31260]";
+            textColor = "";
+            break;
+
+          default:
+            circleColor = "bg-gray-500";
+            textColor = "text-gray-600";
+            break;
         }
+
         return (
-          <div className="text-right font-medium">
-            <span className={`rounded border py-1 ${estadoStyles}`}>
-              {row.getValue("estado")}
-            </span>
+          // Contenedor centrado
+          <div className="text-center">
+            <div className="inline-flex items-center justify-start gap-1 p-1">
+              <span className={`h-1 w-1 rounded-full ${circleColor}`} />
+              <span className={`text-xs font-medium capitalize ${textColor}`}>
+                {estadoOriginal}
+              </span>
+            </div>
           </div>
         );
       },
     },
     {
       id: "actions",
+      header: "Acciones",
       enableHiding: false,
       cell: ({ row }) => {
         const user = row.original;
@@ -478,7 +454,7 @@ export default function Page() {
             <GeneralDialog
               open={openCreate}
               onOpenChange={setOpenCreate}
-              triggerText={"Crear Usuario"}
+              triggerText={"Nuevo Usuario"}
               title="Crear Nuevo Usuario"
               description="Ingresa la información para crear un nuevo usuario."
               submitText="Crear Usuario"

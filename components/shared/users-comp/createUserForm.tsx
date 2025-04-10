@@ -3,7 +3,6 @@ import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -15,8 +14,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Combobox, Option } from "@/components/shared/combobox";
-import toast from "react-hot-toast";
-import { CheckCircle, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
+import { ToastError } from "../toast/toastError";
+import { ToastSuccess } from "../toast/toastSuccess";
 
 // Expresión regular: solo letras (incluyendo acentos y ñ) y opcionalmente un único espacio entre dos grupos.
 const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ]+( [A-Za-zÁÉÍÓÚáéíóúÑñ]+)?$/;
@@ -93,38 +93,21 @@ export function CreateUserForm({
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        throw new Error(`Error: ${res.status}`);
+        const errorData = await res.json();
+        throw new Error(errorData.message || `Error: ${res.status}`);
       }
       const data = await res.json();
       onSuccess(data);
       form.reset();
-      toast.custom(
-        (t) => (
-          <div
-            className={`${
-              t.visible ? "animate-enter" : "animate-leave"
-            } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
-            style={{ animationDuration: "3s" }}
-          >
-            <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-[#166534]">
-                Mensaje Informativo
-              </p>
-              <p className="text-sm text-[#166534]/80">
-                Usuario creado exitosamente.
-              </p>
-            </div>
-            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
-              <div className="progress-bar h-full bg-[#4ADE80]" />
-            </div>
-          </div>
-        ),
-        { duration: 2000, position: "top-right" },
-      );
+      ToastSuccess({
+        message: "Usuario creado correctamente",
+      });
     } catch (err) {
-      console.error("Error al crear el usuario:", err);
-      toast.error("Error al crear el usuario");
+      const errorMessage =
+        err instanceof Error ? err.message : "Error inesperado";
+      ToastError({
+        message: "Error al crear el usuario: " + errorMessage,
+      });
     }
   };
 
@@ -147,7 +130,7 @@ export function CreateUserForm({
                   className={`pr-10 dark:bg-[#09090b] ${
                     error
                       ? "border-2 border-[var(--error-per)]"
-                      : "dark:border dark:border-default-700"
+                      : "dark:border-default-700 dark:border"
                   }`}
                 />
               </FormControl>
@@ -172,7 +155,7 @@ export function CreateUserForm({
                   className={`pr-10 dark:bg-[#09090b] ${
                     error
                       ? "border-2 border-[var(--error-per)]"
-                      : "dark:border dark:border-default-700"
+                      : "dark:border-default-700 dark:border"
                   }`}
                 />
               </FormControl>
@@ -199,7 +182,7 @@ export function CreateUserForm({
                     className={`pr-10 dark:bg-[#09090b] ${
                       error
                         ? "border-2 border-[var(--error-per)]"
-                        : "dark:border dark:border-default-700"
+                        : "dark:border-default-700 dark:border"
                     }`}
                   />
                   <button
@@ -237,7 +220,7 @@ export function CreateUserForm({
                     className={`w-full pr-10 dark:bg-[#09090b] ${
                       error
                         ? "border-2 border-[var(--error-per)]"
-                        : "dark:border dark:border-default-700"
+                        : "dark:border-default-700 dark:border"
                     }`}
                   />
                 </div>
@@ -249,7 +232,9 @@ export function CreateUserForm({
 
         {/* Botón de envío: abarca ambas columnas */}
         <div className="flex justify-end pt-4 sm:col-span-2">
-          <Button type="submit" className="bg-[#f6b100] text-black">Crear Usuario</Button>
+          <Button type="submit" className="bg-[#f6b100] text-black">
+            Crear Usuario
+          </Button>
         </div>
       </form>
     </Form>

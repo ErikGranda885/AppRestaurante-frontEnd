@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import toast from "react-hot-toast";
+import { ToastSuccess } from "../toast/toastSuccess";
+import { ToastError } from "../toast/toastError";
 
 // Esquema base para editar categorías
 const editCategorySchemaBase = z.object({
@@ -48,21 +50,27 @@ export function EditCategoryForm({
     return editCategorySchemaBase.superRefine(async (values, ctx) => {
       const newName = values.nom_cate.trim().toLowerCase();
       const initialName = initialCategoryNameRef.current.trim().toLowerCase();
-  
+
       // Solo consultamos si el nombre cambió de verdad
       if (newName !== initialName) {
         try {
           const url = `http://localhost:5000/categorias/verificar?nom_cate=${encodeURIComponent(
-            values.nom_cate.trim()
+            values.nom_cate.trim(),
           )}`;
-          console.log("[EditCategory] Verificando nombre:", values.nom_cate.trim());
+          console.log(
+            "[EditCategory] Verificando nombre:",
+            values.nom_cate.trim(),
+          );
           console.log("[EditCategory] URL de verificación:", url);
-  
+
           const res = await fetch(url);
           console.log("[EditCategory] Status fetch:", res.status);
           const exists = await res.json();
-          console.log("[EditCategory] Respuesta del servidor (exists):", exists);
-  
+          console.log(
+            "[EditCategory] Respuesta del servidor (exists):",
+            exists,
+          );
+
           if (exists === true) {
             console.warn("[EditCategory] El servidor indica que ya existe");
             ctx.addIssue({
@@ -80,11 +88,12 @@ export function EditCategoryForm({
           });
         }
       } else {
-        console.log("[EditCategory] Nombre sin cambios, no verifico en servidor");
+        console.log(
+          "[EditCategory] Nombre sin cambios, no verifico en servidor",
+        );
       }
     });
   }, [initialData.nom_cate]);
-  
 
   const form = useForm<EditCategoryFormValues>({
     resolver: zodResolver(schema),
@@ -112,33 +121,14 @@ export function EditCategoryForm({
       }
       const data = await res.json();
       onSuccess(data);
-      toast.custom(
-        (t) => (
-          <div
-            className={`${
-              t.visible ? "animate-enter" : "animate-leave"
-            } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
-            style={{ animationDuration: "3s" }}
-          >
-            <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-[#166534]">
-                Mensaje Informativo
-              </p>
-              <p className="text-sm text-[#166534]/80">
-                Categoría actualizada exitosamente.
-              </p>
-            </div>
-            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
-              <div className="progress-bar h-full bg-[#4ADE80]" />
-            </div>
-          </div>
-        ),
-        { duration: 2000, position: "top-right" },
-      );
+      ToastSuccess({
+        message: "Categoría actualizada correctamente",
+      });
     } catch (err) {
       console.error("Error al actualizar la categoría:", err);
-      toast.error("Error al actualizar la categoría");
+      ToastError({
+        message: "Error al actualizar la categoría",
+      });
     }
   };
 

@@ -14,13 +14,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
 import { IProduct, IProductCreate, IProductEdit } from "@/lib/types";
+import { ToastError } from "../toast/toastError";
+import { ToastSuccess } from "../toast/toastSuccess";
 
 interface BulkUploadProductDialogProps {
   categoryOptions: { value: string; label: string }[];
   onSuccess: (newProducts: IProduct[]) => void;
   onClose: () => void;
 }
-
 
 // Se definen las columnas requeridas según lo que se espera en la carga masiva
 const requiredColumns = [
@@ -49,7 +50,7 @@ export function BulkUploadProductDialog({
         return (
           value !== undefined && value !== null && String(value).trim() !== ""
         );
-      })
+      }),
     );
   };
 
@@ -92,38 +93,18 @@ export function BulkUploadProductDialog({
         complete: (results) => {
           const headers = results.meta.fields || [];
           if (!validateHeaders(headers)) {
-            toast.custom(
-              (t) => (
-                <div
-                  className={`${
-                    t.visible ? "animate-enter" : "animate-leave"
-                  } relative flex w-96 items-start gap-3 rounded-lg border border-red-400 bg-red-50 p-4 shadow-lg`}
-                  style={{ animationDuration: "3s" }}
-                >
-                  <CheckCircle className="mt-1 h-6 w-6 text-red-500" />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-red-500">
-                      Error
-                    </p>
-                    <p className="text-sm text-red-500/80">
-                      El archivo CSV contiene columnas incompletas o con
-                      encabezados incorrectos.
-                    </p>
-                  </div>
-                  <div className="absolute bottom-0 left-0 h-[3px] w-full bg-red-400/20">
-                    <div className="progress-bar h-full bg-red-400" />
-                  </div>
-                </div>
-              ),
-              { duration: 3000, position: "top-right" }
-            );
+            ToastError({
+              message:
+                "El archivo CSV contiene columnas incompletas o con encabezados incorrectos.",
+            });
             setPreviewData([]);
             return;
           }
           if (!validateRows(results.data)) {
-            toast.error(
-              "El archivo contiene celdas vacías en campos requeridos."
-            );
+            ToastError({
+              message:
+                "El archivo contiene celdas vacías en campos requeridos.",
+            });
             setPreviewData([]);
             return;
           }
@@ -131,7 +112,9 @@ export function BulkUploadProductDialog({
         },
         error: (error) => {
           console.error("Error al parsear el archivo CSV:", error);
-          toast.error("Error al leer el archivo CSV");
+          ToastError({
+            message: "Error al leer el archivo CSV",
+          });
         },
       });
     } else if (
@@ -144,14 +127,18 @@ export function BulkUploadProductDialog({
         const arrayBuffer = e.target?.result;
         try {
           if (!arrayBuffer) {
-            toast.error("No se pudo leer el archivo XLSX");
+            ToastError({
+              message: "El archivo XLSX no se pudo leer correctamente.",
+            });
             return;
           }
           const workbook = new ExcelJS.Workbook();
           await workbook.xlsx.load(arrayBuffer as ArrayBuffer);
           const worksheet = workbook.worksheets[0];
           if (!worksheet) {
-            toast.error("El archivo XLSX está vacío");
+            ToastError({
+              message: "El archivo XLSX no contiene hojas válidas.",
+            });
             return;
           }
 
@@ -164,31 +151,10 @@ export function BulkUploadProductDialog({
 
           if (!validateHeaders(headers)) {
             setPreviewData([]);
-            toast.custom(
-              (t) => (
-                <div
-                  className={`${
-                    t.visible ? "animate-enter" : "animate-leave"
-                  } relative flex w-96 items-start gap-3 rounded-lg border border-red-400 bg-red-50 p-4 shadow-lg`}
-                  style={{ animationDuration: "3s" }}
-                >
-                  <CheckCircle className="mt-1 h-6 w-6 text-red-500" />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-red-500">
-                      Error
-                    </p>
-                    <p className="text-sm text-red-500/80">
-                      El archivo XLSX contiene columnas incompletas o con
-                      encabezados incorrectos.
-                    </p>
-                  </div>
-                  <div className="absolute bottom-0 left-0 h-[3px] w-full bg-red-400/20">
-                    <div className="progress-bar h-full bg-red-400" />
-                  </div>
-                </div>
-              ),
-              { duration: 3000, position: "top-right" }
-            );
+            ToastError({
+              message:
+                "El archivo XLSX contiene columnas incompletas o con encabezados incorrectos.",
+            });
             return;
           }
 
@@ -208,9 +174,10 @@ export function BulkUploadProductDialog({
           });
 
           if (!validateRows(formattedData)) {
-            toast.error(
-              "El archivo contiene celdas vacías en campos requeridos."
-            );
+            ToastError({
+              message:
+                "El archivo contiene celdas vacías en campos requeridos.",
+            });
             setPreviewData([]);
             return;
           }
@@ -218,31 +185,9 @@ export function BulkUploadProductDialog({
           setPreviewData(formattedData);
         } catch (err) {
           console.error("Error al parsear el archivo XLSX:", err);
-          toast.custom(
-            (t) => (
-              <div
-                className={`${
-                  t.visible ? "animate-enter" : "animate-leave"
-                } relative flex w-96 items-start gap-3 rounded-lg border border-red-400 bg-red-50 p-4 shadow-lg`}
-                style={{ animationDuration: "3s" }}
-              >
-                <CheckCircle className="mt-1 h-6 w-6 text-red-500" />
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-red-500">
-                    Error
-                  </p>
-                  <p className="text-sm text-red-500/80">
-                    El archivo XLSX contiene columnas incompletas o con
-                    encabezados incorrectos.
-                  </p>
-                </div>
-                <div className="absolute bottom-0 left-0 h-[3px] w-full bg-red-400/20">
-                  <div className="progress-bar h-full bg-red-400" />
-                </div>
-              </div>
-            ),
-            { duration: 3000, position: "top-right" }
-          );
+          ToastError({
+            message: "Error al leer el archivo XLSX",
+          });
           setPreviewData([]);
           return;
         }
@@ -250,11 +195,16 @@ export function BulkUploadProductDialog({
 
       reader.onerror = (error) => {
         console.error("Error reading XLSX file:", error);
-        toast.error("Error al leer el archivo XLSX");
+        ToastError({
+          message: "Error al leer el archivo XLSX",
+        });
       };
       reader.readAsArrayBuffer(selectedFile);
     } else {
-      toast.error("Solo se admite archivo CSV o XLSX en este ejemplo");
+      ToastError({
+        message:
+          "Formato de archivo no válido. Seleccione un archivo CSV o XLSX.",
+      });
     }
   };
 
@@ -265,11 +215,17 @@ export function BulkUploadProductDialog({
   // Función para descargar la plantilla de productos desde el backend
   const handleDownloadTemplate = async () => {
     try {
-      const response = await fetch("http://localhost:5000/productos/plantilla", {
-        method: "GET",
-      });
+      const response = await fetch(
+        "http://localhost:5000/productos/plantilla",
+        {
+          method: "GET",
+        },
+      );
       if (!response.ok) {
-        toast.error("Error al descargar la plantilla " + response.statusText);
+        const errorMsg = await response.text();
+        ToastError({
+          message: `Error al descargar la plantilla: ${errorMsg}`,
+        });
         return;
       }
       const blob = await response.blob();
@@ -283,31 +239,34 @@ export function BulkUploadProductDialog({
       window.URL.revokeObjectURL(url);
     } catch (error: any) {
       console.error("Error descargando la plantilla:", error);
-      toast.error("Error al descargar la plantilla");
+      ToastError({
+        message: "Error al descargar la plantilla: " + error.message,
+      });
     }
   };
 
   const handleUpload = async () => {
     if (previewData.length === 0) {
-      toast.error("No hay datos para cargar");
+      ToastError({
+        message: "No hay datos para cargar. Seleccione un archivo válido.",
+      });
       return;
     }
     setLoading(true);
     try {
       const defaultImageUrl =
         "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/productos%2Fproduct-default.jpg?alt=media&token=a06d2373-fd9a-4fa5-a715-3c9ab7ae546d";
-        const processedData: IProductCreate[] = previewData.map((row) => ({
-          cate_prod: Number(row["cate_prod"]),
-          nom_prod: row["nom_prod"],
-          prec_prod: Number(row["prec_prod"]),
-          stock_prod: Number(row["stock_prod"]),
-          fech_ven_prod: row["fech_ven_prod"],
-          est_prod: "Activo",
-          img_prod: defaultImageUrl,
-          iva_prod: true,
-          mat_prod: false,
-        }));
-        
+      const processedData: IProductCreate[] = previewData.map((row) => ({
+        cate_prod: Number(row["cate_prod"]),
+        nom_prod: row["nom_prod"],
+        prec_prod: Number(row["prec_prod"]),
+        stock_prod: Number(row["stock_prod"]),
+        fech_ven_prod: row["fech_ven_prod"],
+        est_prod: "Activo",
+        img_prod: defaultImageUrl,
+        iva_prod: true,
+        mat_prod: false,
+      }));
 
       const res = await fetch("http://localhost:5000/productos/masivo", {
         method: "POST",
@@ -325,61 +284,23 @@ export function BulkUploadProductDialog({
       }
       if (data.productos && data.productos.length > 0) {
         onSuccess(data.productos);
-        toast.custom(
-          (t) => (
-            <div
-              className={`${
-                t.visible ? "animate-enter" : "animate-leave"
-              } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
-              style={{ animationDuration: "3s" }}
-            >
-              <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-[#166534]">
-                  Mensaje Informativo
-                </p>
-                <p className="text-sm text-[#166534]/80">
-                  Productos cargados exitosamente.
-                </p>
-              </div>
-              <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
-                <div className="progress-bar h-full bg-[#4ADE80]" />
-              </div>
-            </div>
-          ),
-          { duration: 2000, position: "top-right" }
-        );
+        ToastSuccess({
+          message: `Se cargaron ${data.productos.length} productos correctamente`,
+        });
       }
       if (data.errors && data.errors.length > 0) {
         const errorList = data.errors
           .map((err: any) => err.error || JSON.stringify(err))
           .join(", ");
-        toast.error("Algunos registros no se cargaron: " + errorList);
+        ToastError({
+          message: `Errores en la carga masiva: ${errorList}`,
+        });
       }
       onClose();
     } catch (error: any) {
-      toast.custom(
-        (t) => (
-          <div
-            className={`${
-              t.visible ? "animate-enter" : "animate-leave"
-            } relative flex w-96 items-start gap-3 rounded-lg border border-red-400 bg-red-50 p-4 shadow-lg`}
-            style={{ animationDuration: "3s" }}
-          >
-            <CheckCircle className="mt-1 h-6 w-6 text-red-500" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-red-500">Error</p>
-              <p className="text-sm text-red-500/80">
-                Ha ocurrido un error: {error.message}.
-              </p>
-            </div>
-            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-red-400/20">
-              <div className="progress-bar h-full bg-red-400" />
-            </div>
-          </div>
-        ),
-        { duration: 3000, position: "top-right" }
-      );
+      ToastError({
+        message: error.message || "Error al cargar los productos",
+      });
     } finally {
       setLoading(false);
     }
@@ -485,8 +406,7 @@ export function BulkUploadProductDialog({
                               className="border border-gray-200 px-4 py-2 text-sm text-gray-700 dark:text-white"
                             >
                               {categoryOptions.find(
-                                (option) =>
-                                  option.value === String(rolValue)
+                                (option) => option.value === String(rolValue),
                               )?.label || String(rolValue)}
                             </td>
                           );

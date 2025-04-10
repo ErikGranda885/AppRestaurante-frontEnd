@@ -15,6 +15,8 @@ import {
 import { Input } from "@/components/ui/input";
 import toast from "react-hot-toast";
 import { CheckCircle } from "lucide-react";
+import { ToastSuccess } from "../toast/toastSuccess";
+import { ToastError } from "../toast/toastError";
 
 // Definición del esquema para crear categorías
 const createCategorySchema = z
@@ -87,33 +89,14 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
       const data = await res.json();
       onSuccess(data);
       form.reset();
-      toast.custom(
-        (t) => (
-          <div
-            className={`${
-              t.visible ? "animate-enter" : "animate-leave"
-            } relative flex w-96 items-start gap-3 rounded-lg border border-[#4ADE80] bg-[#F0FFF4] p-4 shadow-lg`}
-            style={{ animationDuration: "3s" }}
-          >
-            <CheckCircle className="mt-1 h-6 w-6 text-[#166534]" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-[#166534]">
-                Mensaje Informativo
-              </p>
-              <p className="text-sm text-[#166534]/80">
-                Categoría creada exitosamente.
-              </p>
-            </div>
-            <div className="absolute bottom-0 left-0 h-[3px] w-full bg-[#4ADE80]/20">
-              <div className="progress-bar h-full bg-[#4ADE80]" />
-            </div>
-          </div>
-        ),
-        { duration: 2000, position: "top-right" },
-      );
+      ToastSuccess({
+        message: "Categoría creada correctamente",
+      });
     } catch (err) {
       console.error("Error al crear la categoría:", err);
-      toast.error("Error al crear la categoría");
+      ToastError({
+        message: "Error al crear la categoría",
+      });
     }
   };
 
