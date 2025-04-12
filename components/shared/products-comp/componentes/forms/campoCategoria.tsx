@@ -57,7 +57,7 @@ export const CampoCategoria: React.FC<CampoCategoriaProps> = ({
                   aria-expanded={open}
                   className={cn(
                     "w-full justify-between font-normal",
-                    error ? "border-2 border-red-500" : "",
+                    error ? "border-2 border-[#f31260]" : "",
                   )}
                 >
                   {field.value

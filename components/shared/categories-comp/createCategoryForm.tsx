@@ -13,47 +13,32 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import toast from "react-hot-toast";
-import { CheckCircle } from "lucide-react";
 import { ToastSuccess } from "../toast/toastSuccess";
 import { ToastError } from "../toast/toastError";
 
 // Definición del esquema para crear categorías
-const createCategorySchema = z
-  .object({
-    nom_cate: z
-      .string()
-      .min(2, { message: "El nombre debe tener al menos 2 caracteres." })
-      .regex(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/, {
-        message: "El nombre solo puede contener letras y espacios",
-      }),
-    desc_cate: z.string().optional(),
-  })
-  .superRefine(async (values, ctx) => {
-    const { nom_cate } = values;
-    try {
-      const res = await fetch(
-        `http://localhost:5000/categorias/verificar?nombre=${encodeURIComponent(
-          nom_cate,
-        )}`,
-      );
-      const data = await res.json();
-      // Si data es true, significa que la categoría ya existe
-      if (data === true) {
-        ctx.addIssue({
-          code: "custom",
-          message: "La categoría ya se encuentra registrada",
-          path: ["nombre"],
-        });
-      }
-    } catch (error) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Error al verificar la categoría",
-        path: ["nombre"],
-      });
-    }
-  });
+const createCategorySchema = z.object({
+  nom_cate: z
+    .string()
+    .min(2, { message: "El nombre debe tener al menos 2 caracteres." })
+    .regex(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/, {
+      message: "El nombre solo puede contener letras y espacios",
+    })
+    .refine(
+      ((nombre: string) => {
+        return fetch(
+          `http://localhost:5000/categorias/verificar?nombre=${encodeURIComponent(nombre)}`,
+        )
+          .then((res) => res.json())
+          .then((data) => !data.exists);
+      }) as (nombre: string) => Promise<boolean>,
+      {
+        message: "El nombre de la categoria ya se encuentra resgistrado",
+        async: true,
+      } as any,
+    ),
+  desc_cate: z.string().optional(),
+});
 
 type CreateCategoryFormValues = z.infer<typeof createCategorySchema>;
 

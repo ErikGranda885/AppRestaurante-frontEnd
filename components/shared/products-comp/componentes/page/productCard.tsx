@@ -1,7 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Edit2, XCircle, CheckCircle } from "lucide-react";
+import { Edit2, XCircle, CheckCircle, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -74,15 +74,30 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     <Card className="group relative flex h-[110px] max-w-lg overflow-hidden rounded-lg border border-border bg-white p-3 shadow-md transition-colors duration-300 dark:bg-[#262626]">
       {/* Overlay para botones de acción */}
       <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-        <div className="flex space-x-4">
+        <div className="flex space-x-2">
+          {/* Botón para Mostrar */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-gray-800 shadow transition-colors duration-200 hover:bg-blue-100 dark:bg-gray-800 dark:hover:bg-gray-700">
+                  <Eye className="dark:text-white" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Mostrar</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          {/* Botón para Editar */}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   onClick={() => onEdit(product)}
-                  className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow hover:bg-[#b3d4fa] dark:bg-[#002147]"
+                  className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-blue-600 shadow transition-colors duration-200 hover:bg-blue-200 dark:bg-gray-800 dark:hover:bg-blue-900"
                 >
-                  <Edit2 className="h-6 w-6 text-[#006fee]" />
+                  <Edit2 />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -90,6 +105,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+
+          {/* Botón para Activar/Inactivar */}
           {product.est_prod === "Activo" ? (
             <TooltipProvider>
               <Tooltip>
@@ -97,9 +114,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   <Button
                     onClick={() => onDeactivate(product)}
                     variant="destructive"
-                    className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow hover:bg-[#fbb8cf] dark:bg-[#49051d]"
+                    className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-red-600 shadow transition-colors duration-200 hover:bg-red-100 dark:bg-gray-800 dark:hover:bg-red-900"
                   >
-                    <XCircle className="error-text h-6 w-6" />
+                    <XCircle />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -113,9 +130,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 <TooltipTrigger asChild>
                   <Button
                     onClick={() => onActivate(product)}
-                    className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow hover:bg-green-100 dark:bg-green-900"
+                    className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-green-600 shadow transition-colors duration-200 hover:bg-green-100 dark:bg-gray-800 dark:hover:bg-green-900"
                   >
-                    <CheckCircle className="h-6 w-6 text-green-600" />
+                    <CheckCircle className="h-5 w-5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -140,25 +157,31 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="flex flex-1 flex-col">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold">{product.nom_prod}</h2>
-            <span className="text-xs">Stock: {product.stock_prod}</span>
-          </div>
-          <div className="text-xs font-semibold">
-            <span className="text-xs text-muted-foreground">Categoría: </span>
-            {typeof product.cate_prod === "object"
-              ? product.cate_prod.nom_cate
-              : product.cate_prod}
-          </div>
-          {!product.mat_prod && (
-            <div className={`text-xs font-bold ${expirationColorClass}`}>
-              <span className="text-xs text-muted-foreground">Caduca: </span>
-              {expirationText}
-            </div>
-          )}
-          <div>
-            <span className="text-sm font-bold">
-              <span className="text-xs text-muted-foreground">Precio: </span>$
-              {product.prec_prod.toFixed(2)}
+            <span className="text-xs">
+              Stock:
+              {product.stock_prod === null ? "0" : product.stock_prod}
             </span>
+          </div>
+
+          <div className="text-xs font-semibold">
+            <div>
+              <span className="text-xs text-muted-foreground">Categoría: </span>
+              {typeof product.cate_prod === "object"
+                ? product.cate_prod.nom_cate
+                : product.cate_prod}
+            </div>
+          </div>
+
+          <div className={`text-xs font-bold ${expirationColorClass}`}>
+            <span className="text-xs text-muted-foreground">Caduca: </span>
+            {expirationText}
+          </div>
+
+          <div className="text-xs font-semibold">
+            <span className="text-xs text-muted-foreground">
+              Precio de venta:
+            </span>{" "}
+            ${product.prec_vent_prod === null ? "0.00" : product.prec_vent_prod}
           </div>
         </div>
       </div>

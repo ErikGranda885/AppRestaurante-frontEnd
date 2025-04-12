@@ -11,7 +11,15 @@ import { EditProductForm } from "@/components/shared/products-comp/editProductFo
 import { MetricCard } from "@/components/shared/metricCard";
 import { CategoryCombobox } from "@/components/shared/products-comp/componentes/page/categoryCombobox";
 import { StatusTabs } from "@/components/shared/products-comp/componentes/page/statusTabs";
-import { CheckCircle, Upload, XCircle } from "lucide-react";
+import {
+  CheckCircle,
+  CloudDownload,
+  Plus,
+  Search,
+  SlidersHorizontal,
+  Upload,
+  XCircle,
+} from "lucide-react";
 import { ProductCard } from "@/components/shared/products-comp/componentes/page/productCard";
 import { Paginator } from "@/components/shared/products-comp/componentes/page/paginator";
 import {
@@ -33,6 +41,7 @@ import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { ICategory, IProduct, IProductEdit } from "@/lib/types";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
+import { Separator } from "@/components/ui/separator";
 
 export type Option = {
   value: string;
@@ -201,9 +210,9 @@ export default function Page() {
       return daysA - daysB;
     });
   } else if (sortCriteria === "priceAsc") {
-    filteredProducts = [...filteredProducts].sort(
+    /* filteredProducts = [...filteredProducts].sort(
       (a, b) => a.prec_prod - b.prec_prod,
-    );
+    ); */
   } else {
     if (statusFilter === "all") {
       filteredProducts = [...filteredProducts].sort((a, b) => {
@@ -300,8 +309,123 @@ export default function Page() {
         submenu={true}
         isLoading={false}
       >
-        <div className="p-6">
+        <div className="px-6 pt-2">
           {/* Tarjetas de métricas */}
+          <div className="mb-5 flex items-center justify-between">
+            <GeneralDialog
+              open={openCreate}
+              onOpenChange={setOpenCreate}
+              triggerText={
+                <>
+                  {" "}
+                  <Plus className="h-4 w-4 font-light" /> Añade nuevos productos
+                </>
+              }
+              title="Crear Nuevo Producto"
+              description="Ingresa la información para crear un nuevo producto."
+              submitText="Crear Producto"
+              contentWidth="700px"
+              contentHeight="auto"
+            >
+              <FormProducts
+                onSuccess={(data: any) => {
+                  setAllProducts((prev) => [...prev, data.producto]);
+                  setOpenCreate(false);
+                }}
+              />
+            </GeneralDialog>
+            <div className="flex items-center gap-3">
+              {/* Input para buscar */}
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <Search className="h-4 w-4 text-gray-500" />
+                </div>
+                <Input
+                  type="text"
+                  placeholder="Buscar producto..."
+                  className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                />
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    className="border-border text-[12px] font-semibold"
+                    variant="secondary"
+                  >
+                    <span className="text-[12px] font-semibold">
+                      <SlidersHorizontal className="h-4 w-4" />
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56">
+                  <DropdownMenuLabel>Ordenar por:</DropdownMenuLabel>
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        setSortCriteria("none");
+                        setCurrentPage(1);
+                      }}
+                    >
+                      Quitar filtro
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        setSortCriteria("alphabetical");
+                        setCurrentPage(1);
+                      }}
+                    >
+                      Alfabético (A-Z)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        setSortCriteria("stockAsc");
+                        setCurrentPage(1);
+                      }}
+                    >
+                      Menor stock a mayor stock
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        setSortCriteria("expirationAsc");
+                        setCurrentPage(1);
+                      }}
+                    >
+                      Por días hasta vencimiento
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        setSortCriteria("priceAsc");
+                        setCurrentPage(1);
+                      }}
+                    >
+                      Precio de menor a mayor
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Separator className="h-8" orientation="vertical" />
+
+              <Button
+                className="border-border text-[12px] font-semibold"
+                variant={"secondary"}
+                onClick={() => setOpenBulkUpload(true)}
+              >
+                <Upload className="h-4 w-4" /> Importar
+              </Button>
+              {/* Boton para exportar la tabla*/}
+              <Button
+                className="border-border text-[12px] font-semibold"
+                variant={"secondary"}
+              >
+                <CloudDownload className="h-4 w-4" /> Exportar
+              </Button>
+            </div>
+          </div>
           <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-4">
             <MetricCard
               titulo="Productos Registrados"
@@ -409,16 +533,6 @@ export default function Page() {
             {/* Filtros y acciones */}
             <div className="flex flex-row justify-between pb-5">
               <div className="flex items-center gap-2">
-                <Input
-                  type="text"
-                  placeholder="Buscar producto..."
-                  className="w-[160px] border border-white/20 bg-white/10 text-sm"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                />
                 <label className="text-sm text-secondary-foreground">
                   Categoría:
                 </label>
@@ -426,25 +540,6 @@ export default function Page() {
                   options={categoryOptions}
                   value={selectedCategory}
                   onValueChange={handleCategorySelect}
-                />
-                <label className="text-sm text-secondary-foreground">
-                  Estado:
-                </label>
-                <StatusTabs
-                  value={statusFilter}
-                  onValueChange={(newValue) => {
-                    setStatusFilter(newValue);
-                    setCurrentPage(1);
-                  }}
-                />
-                <label className="text-sm text-secondary-foreground">
-                  Ordenar por:
-                </label>
-                <SortDropdown
-                  onSelect={(key) => {
-                    setSortCriteria(key);
-                    setCurrentPage(1);
-                  }}
                 />
               </div>
               {/* Diálogo de carga masiva */}
@@ -458,31 +553,6 @@ export default function Page() {
                   categoryOptions={[]}
                 />
               )}
-              <div className="flex">
-                <Button
-                  className="mr-4"
-                  onClick={() => setOpenBulkUpload(true)}
-                >
-                  <Upload className="mr-2 h-4 w-4" /> Importar
-                </Button>
-                <GeneralDialog
-                  open={openCreate}
-                  onOpenChange={setOpenCreate}
-                  triggerText={<>Nuevo Producto</>}
-                  title="Crear Nuevo Producto"
-                  description="Ingresa la información para crear un nuevo producto."
-                  submitText="Crear Producto"
-                  contentWidth="700px"
-                  contentHeight="auto"
-                >
-                  <FormProducts
-                    onSuccess={(data: any) => {
-                      setAllProducts((prev) => [...prev, data.producto]);
-                      setOpenCreate(false);
-                    }}
-                  />
-                </GeneralDialog>
-              </div>
             </div>
 
             {/* Sección de productos */}
@@ -498,7 +568,7 @@ export default function Page() {
               </div>
             ) : (
               <>
-                <div className="mt-4 grid h-[246px] grid-cols-1 gap-6 overflow-y-auto sm:grid-cols-2 md:grid-cols-3">
+                <div className="mt-4 grid h-[210px] grid-cols-1 gap-6 overflow-y-auto sm:grid-cols-2 md:grid-cols-3">
                   {currentProducts.map((product) => (
                     <ProductCard
                       key={product.id_prod}
@@ -557,23 +627,11 @@ export default function Page() {
             <EditProductForm
               initialData={{
                 id: editProduct.id_prod.toString(),
-                nom_prod: editProduct.nom_prod,
-                prec_prod: editProduct.prec_prod,
-                stock_prod: editProduct.stock_prod,
-                categoria: editProduct.cate_prod,
-                fech_ven_prod: (() => {
-                  const parts = editProduct.fech_ven_prod.split("/");
-                  if (parts.length === 3) {
-                    const day = parseInt(parts[0], 10);
-                    const month = parseInt(parts[1], 10) - 1;
-                    const year = parseInt(parts[2], 10);
-                    return new Date(year, month, day);
-                  }
-                  return new Date();
-                })(),
+                nombre: editProduct.nom_prod,
+                categoria: editProduct.cate_prod.toString(),
+                tipo_prod: editProduct.tip_prod || "",
+                undidad_prod: editProduct.und_prod || "",
                 img_prod: editProduct.img_prod,
-                aplica_iva: editProduct.iva_prod,
-                materia_prima: editProduct.mat_prod ?? false,
               }}
               categoryOptions={categoryOptions.filter(
                 (opt) => opt.value !== "",

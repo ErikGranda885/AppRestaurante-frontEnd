@@ -37,7 +37,7 @@ export function GeneralDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button className="bg-[#f6b100] text-black">{triggerText}</Button>
+        <Button className="text-[12px] font-semibold">{triggerText}</Button>
       </DialogTrigger>
       <DialogContent
         className={`border-border ${contentClassName ? contentClassName : "w-[500px] max-w-none"}`}

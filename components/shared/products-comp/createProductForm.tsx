@@ -5,23 +5,18 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import toast from "react-hot-toast";
 import { uploadImage } from "@/firebase/subirImage";
-import { CheckCircle } from "lucide-react";
-import { CampoNumero } from "../form/campoNumero";
 import {
   CampoCategoria,
   CategoryOption,
 } from "./componentes/forms/campoCategoria";
-import { CampoFecha } from "../form/campoFecha";
 import { ZonaImagen } from "./componentes/forms/zonaImagen";
 import { CampoTexto } from "../form/campoTexto";
-import { CampoBoolean } from "./componentes/forms/campoComBool";
 import { ICategory } from "@/lib/types";
 import { ToastSuccess } from "../toast/toastSuccess";
 import { ToastError } from "../toast/toastError";
+import { CampoSelectUnidad } from "./componentes/forms/campoSelectUnidad";
+import { CampoSelectTipo } from "./componentes/forms/campoTipo";
 
 export type Option = {
   value: string;
@@ -31,56 +26,28 @@ export type Option = {
 /* ============================
    ESQUEMA DEL FORMULARIO
 =============================== */
-const FormSchema = z
-  .object({
-    nom_prod: z
-      .string()
-      .nonempty("El nombre del producto es requerido")
-      .superRefine(async (nombre, ctx) => {
-        const res = await fetch(
-          `http://localhost:5000/productos/verificar/producto?nombre=${encodeURIComponent(
-            nombre,
-          )}`,
-        );
-        const data = await res.json();
-        if (data.exists) {
-          ctx.addIssue({
-            code: "custom",
-            message: "El producto ya se encuentra registrado",
-          });
-        }
-      }),
-    prec_prod: z.coerce
-      .number({ required_error: "El precio es requerido" })
-      .positive("El precio debe ser mayor a cero"),
-    stock_prod: z.coerce.number({ required_error: "El stock es requerido" }),
-    categoria: z.coerce.number({ required_error: "La categoría es requerida" }),
-    // La fecha de vencimiento es opcional para productos que sean materia prima
-    fech_ven_prod: z.date().optional(),
-    aplica_iva: z
-      .preprocess((val) => Number(val) === 1, z.boolean())
-      .default(true),
-    // Usamos "materia_prima" para alinear con el backend
-    materia_prima: z
-      .preprocess((val) => Number(val) === 1, z.boolean())
-      .default(false),
-  })
-  .superRefine((data, ctx) => {
-    if (!data.materia_prima && !data.fech_ven_prod) {
-      ctx.addIssue({
-        code: "custom",
-        message: "La fecha de vencimiento es requerida",
-        path: ["fech_ven_prod"],
-      });
-    }
-    if (!data.materia_prima && data.stock_prod <= 0) {
-      ctx.addIssue({
-        code: "custom",
-        message: "El stock debe ser mayor a cero",
-        path: ["stock_prod"],
-      });
-    }
-  });
+const FormSchema = z.object({
+  nombre: z
+    .string()
+    .nonempty("El nombre del producto es requerido")
+    .refine(
+      ((nombre: string) => {
+        return fetch(
+          `http://localhost:5000/productos/verificar?nombre=${encodeURIComponent(nombre)}`,
+        )
+          .then((res) => res.json())
+          .then((data) => !data.exists);
+      }) as (nombre: string) => Promise<boolean>,
+      {
+        message: "El nombre del producto ya se encuentra registrado",
+        async: true,
+      } as any,
+    ),
+
+  categoria: z.string().nonempty("Seleccione una categoría"),
+  tipo_prod: z.string().nonempty("Seleccione un tipo de producto"),
+  undidad_prod: z.string().nonempty("Seleccione una unidad de medida"),
+});
 
 type FormValues = z.infer<typeof FormSchema>;
 
@@ -92,18 +59,12 @@ export function FormProducts({
   const form = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      nom_prod: "",
-      prec_prod: 0,
-      stock_prod: 0,
-      categoria: 0,
-      fech_ven_prod: new Date(),
-      aplica_iva: undefined,
-      materia_prima: undefined,
+      nombre: "",
+      categoria: "",
+      tipo_prod: "",
+      undidad_prod: "",
     },
   });
-
-  // Se utiliza watch para saber el valor de "materia_prima"
-  const isMateriaPrima = form.watch("materia_prima");
 
   // Cargar opciones de categoría desde la API
   const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
@@ -160,30 +121,16 @@ export function FormProducts({
     if (imageFile) {
       imageUrl = await uploadImage(imageFile);
     } else {
-      // Imagen por defecto
       imageUrl =
         "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/productos%2Fproduct-default.jpg?alt=media&token=a06d2373-fd9a-4fa5-a715-3c9ab7ae546d";
     }
 
-    // Si es materia prima, forzamos stock a 0 y la fecha de vencimiento queda vacía.
-    const stock = data.materia_prima ? 0 : data.stock_prod;
-    const fechVenc = data.materia_prima
-      ? ""
-      : data.fech_ven_prod
-        ? format(data.fech_ven_prod, "dd/MM/yyyy", { locale: es })
-        : "";
-    const iva = data.materia_prima ? false : data.aplica_iva;
-
     const payload = {
-      nom_prod: data.nom_prod,
-      prec_prod: data.prec_prod,
-      stock_prod: stock,
-      cate_prod: data.categoria,
-      fech_ven_prod: fechVenc,
+      nom_prod: data.nombre,
+      cate_prod: Number(data.categoria),
       img_prod: imageUrl,
-      est_prod: "Activo",
-      iva_prod: iva,
-      mat_prod: data.materia_prima,
+      tip_prod: data.tipo_prod,
+      und_prod: data.undidad_prod,
     };
 
     try {
@@ -213,70 +160,40 @@ export function FormProducts({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className={`grid max-w-4xl ${
-          isMateriaPrima ? "grid-cols-1" : "grid-cols-6"
-        }`}
+        className="grid grid-cols-2 gap-4"
       >
         {/* Columna Izquierda: Campos organizados en 2 filas */}
-        <div className="col-span-4 flex flex-col gap-4 pr-3">
-          <div
-            className={`p-2" grid ${isMateriaPrima ? "grid-cols-1" : "grid-cols-2 gap-2"} `}
-          >
+        <div className="col-span-1 flex flex-col gap-4 pr-3">
+          <div className="grid grid-cols-1 gap-4">
             <CampoTexto
               control={form.control}
-              name="nom_prod"
+              name="nombre"
               label="Nombre del Producto"
               placeholder="Nombre del producto"
             />
-            <CampoNumero
-              control={form.control}
-              name="prec_prod"
-              label="Precio"
-              placeholder="Precio"
-              step="0.01"
-              parseValue={(value: string) =>
-                parseFloat(value.replace(",", "."))
-              }
-            />
+
             <CampoCategoria
               control={form.control}
               name="categoria"
               label="Categoría"
               options={categoryOptions}
             />
-            {/* Campo para seleccionar si es materia prima, siempre visible */}
-            <CampoBoolean
+            <CampoSelectTipo
               control={form.control}
-              name="materia_prima"
-              label="Es Materia Prima"
-              placeholder="Seleccione una opción"
+              name="tipo_prod"
+              label="Tipo de Producto"
+              placeholder="Seleccione el tipo de producto"
             />
-            {/* Mostrar estos campos solo si NO es materia prima */}
-            {!isMateriaPrima && (
-              <>
-                <CampoNumero
-                  control={form.control}
-                  name="stock_prod"
-                  label="Stock"
-                  placeholder="Stock"
-                />
-                <CampoFecha
-                  control={form.control}
-                  name="fech_ven_prod"
-                  label="Fecha de Vencimiento"
-                />
-                <CampoBoolean
-                  control={form.control}
-                  name="aplica_iva"
-                  label="Aplica IVA"
-                  placeholder="Seleccione una opción"
-                />
-              </>
-            )}
+            <CampoSelectUnidad
+              control={form.control}
+              name="undidad_prod"
+              label="Unidad de Medida"
+              placeholder="Seleccione una unidad"
+            />
           </div>
         </div>
         {/* Columna Derecha: Zona de imagen */}
-        <div className="col-span-2 flex h-full items-center justify-center">
+        <div className="col-span-1 flex h-full items-center justify-center">
           <ZonaImagen
             imageFile={imageFile}
             imagePreview={imagePreview || ""}
@@ -289,7 +206,7 @@ export function FormProducts({
           />
         </div>
         {/* Botón de envío */}
-        <div className="col-span-2 col-start-5 mt-4 flex justify-end gap-4">
+        <div className="col-span-2 mt-4 flex justify-end gap-4">
           <Button type="button" onClick={() => form.reset()}>
             Limpiar
           </Button>

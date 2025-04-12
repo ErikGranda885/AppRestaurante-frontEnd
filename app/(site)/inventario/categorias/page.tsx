@@ -9,6 +9,9 @@ import {
   FolderX,
   Folders,
   CheckCircle,
+  Plus,
+  Search,
+  CloudDownload,
 } from "lucide-react";
 import { GeneralDialog } from "@/components/shared/dialogGen";
 import toast, { Toaster } from "react-hot-toast";
@@ -35,13 +38,14 @@ import { EditCategoryForm } from "@/components/shared/categories-comp/editCatego
 import { ICategory } from "@/lib/types";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { ToastError } from "@/components/shared/toast/toastError";
+import { Input } from "@/components/ui/input";
 
 // Ahora, en lugar de definir un tipo local, usamos ICategory directamente
 export default function Page() {
   const [categories, setCategories] = React.useState<ICategory[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [editCategory, setEditCategory] = React.useState<ICategory | null>(
     null,
   );
@@ -228,12 +232,18 @@ export default function Page() {
   };
 
   // Filtrar categorías según el estado (usando est_cate de ICategory)
-  const filteredCategories =
-    selectedStatus === ""
-      ? categories
-      : categories.filter(
-          (cat) => cat.est_cate?.toLowerCase() === selectedStatus.toLowerCase(),
-        );
+  const filteredCategorias = categories.filter((cat) => {
+    // Filtrar por estado si se ha seleccionado alguno
+    const matchesState =
+      selectedStatus === "" ||
+      cat.est_cate?.toLowerCase() === selectedStatus.toLowerCase();
+    // Filtrar por searchQuery (por nombre o descripción)
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch =
+      cat.nom_cate.toLowerCase().includes(searchLower) ||
+      (cat.desc_cate && cat.desc_cate.toLowerCase().includes(searchLower));
+    return matchesState && matchesSearch;
+  });
 
   const handleCardClick = (status: string) => {
     if (selectedStatus.toLowerCase() === status.toLowerCase()) {
@@ -255,6 +265,62 @@ export default function Page() {
         submenu={true}
         isLoading={false}
       >
+        <div className="px-6 pt-2">
+          <div className="mb-5 flex items-center justify-between">
+            <GeneralDialog
+              open={openCreate}
+              onOpenChange={setOpenCreate}
+              triggerText={
+                <>
+                  {" "}
+                  <Plus className="h-4 w-4 font-light" /> Añade nueva categoría
+                </>
+              }
+              title="Crear Nueva Categoría"
+              description="Ingresa la información para crear una nueva categoría."
+              submitText="Crear Categoría"
+            >
+              <CreateCategoryForm
+                onSuccess={(data: any) => {
+                  setCategories((prev) => [...prev, data.categoria]);
+                  setOpenCreate(false);
+                }}
+              />
+            </GeneralDialog>
+            <div className="flex items-center gap-3">
+              {/* Input para buscar */}
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <Search className="h-4 w-4 text-gray-500" />
+                </div>
+                <Input
+                  type="text"
+                  placeholder="Buscar categorias..."
+                  className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                  }}
+                />
+              </div>
+              <Button
+                onClick={() => setOpenBulkUpload(true)}
+                className="border-border text-[12px] font-semibold"
+                variant={"secondary"}
+              >
+                <Upload className="h-4 w-4" />
+                Importar
+              </Button>
+              {/* Boton para exportar la tabla*/}
+              <Button
+                className="border-border text-[12px] font-semibold"
+                variant={"secondary"}
+              >
+                <CloudDownload className="h-4 w-4" /> Exportar
+              </Button>
+            </div>
+          </div>
+        </div>
         <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#111315]">
           {/* Tarjetas resumen */}
           <div className="flex flex-col gap-4 px-6 pt-6 md:flex-row md:justify-between">
@@ -394,34 +460,10 @@ export default function Page() {
             </GeneralDialog>
           )}
 
-          {/* Botones para acciones: Importar y Crear */}
-          <div className="flex justify-end space-x-4 px-6 pb-4 pt-5">
-            <Button onClick={() => setOpenBulkUpload(true)}>
-              <Upload className="mr-2 h-4 w-4" />
-              Importar
-            </Button>
-
-            <GeneralDialog
-              open={openCreate}
-              onOpenChange={setOpenCreate}
-              triggerText={<>Nueva Categoría</>}
-              title="Crear Nueva Categoría"
-              description="Ingresa la información para crear una nueva categoría."
-              submitText="Crear Categoría"
-            >
-              <CreateCategoryForm
-                onSuccess={(data: any) => {
-                  setCategories((prev) => [...prev, data.categoria]);
-                  setOpenCreate(false);
-                }}
-              />
-            </GeneralDialog>
-          </div>
-
           {/* Tabla de categorías */}
           <div className="px-6 pb-4">
             <DataTable<ICategory>
-              data={filteredCategories}
+              data={filteredCategorias}
               columns={categoryColumns}
             />
           </div>

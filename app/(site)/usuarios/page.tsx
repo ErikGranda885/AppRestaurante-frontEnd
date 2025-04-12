@@ -8,6 +8,9 @@ import {
   TrendingUpIcon,
   UserCheck,
   UserX,
+  Plus,
+  Search,
+  CloudDownload,
 } from "lucide-react";
 import {
   Dialog,
@@ -41,6 +44,8 @@ import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { IRol } from "@/lib/types";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export type DataUsers = {
   id: string;
@@ -58,6 +63,7 @@ export default function Page() {
   const [selectedState, setSelectedState] = React.useState<string>("");
   const [editUser, setEditUser] = React.useState<DataUsers | null>(null);
   const [openCreate, setOpenCreate] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
   useProtectedRoute();
   // Cargar usuarios desde la API
   React.useEffect(() => {
@@ -142,6 +148,28 @@ export default function Page() {
 
   /* Definición de las columnas de la tabla */
   const userColumns: ColumnDef<DataUsers>[] = [
+    {
+      id: "id",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
     {
       accessorKey: "usuario",
       header: "Nombre",
@@ -282,12 +310,19 @@ export default function Page() {
   }, []);
 
   // Filtrado de usuarios según estado
-  const filteredUsers =
-    selectedState === ""
-      ? usuarios
-      : usuarios.filter(
-          (user) => user.estado?.toLowerCase() === selectedState.toLowerCase(),
-        );
+  const filteredUsers = usuarios.filter((user) => {
+    // Filtrar por estado si se ha seleccionado alguno
+    const matchesState =
+      selectedState === "" ||
+      user.estado?.toLowerCase() === selectedState.toLowerCase();
+    // Filtrar por searchQuery (por nombre, correo o rol)
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch =
+      user.usuario.toLowerCase().includes(searchLower) ||
+      user.correo.toLowerCase().includes(searchLower) ||
+      user.rolNombre.toLowerCase().includes(searchLower);
+    return matchesState && matchesSearch;
+  });
 
   const handleCardClick = (estado: string) => {
     if (selectedState.toLowerCase() === estado.toLowerCase()) {
@@ -306,6 +341,82 @@ export default function Page() {
         submenu={false}
         isLoading={false}
       >
+        <div className="px-6 pt-2">
+          <div className="mb-5 flex items-center justify-between">
+            <GeneralDialog
+              open={openCreate}
+              onOpenChange={setOpenCreate}
+              triggerText={
+                <>
+                  {" "}
+                  <Plus className="h-4 w-4 font-light" /> Añade nuevos usuarios
+                </>
+              }
+              title="Crear Nuevo Usuario"
+              description="Ingresa la información para crear un nuevo usuario."
+              submitText="Crear Usuario"
+            >
+              <CreateUserForm
+                roleOptions={roleOptions}
+                onSuccess={(data: any) => {
+                  const rolData = data.usuario.rol_usu;
+                  const roleId = rolData.id_rol;
+                  const roleName = rolData.nom_rol;
+
+                  const createdUser: DataUsers = {
+                    id: data.usuario.id_usu.toString(),
+                    usuario: data.usuario.nom_usu,
+                    correo: data.usuario.email_usu,
+                    estado: data.usuario.esta_usu,
+                    rol: roleId?.toString(),
+                    rolNombre: roleName,
+                  };
+
+                  // Actualiza tu estado con createdUser
+                  setUsuarios((prev) => [...prev, createdUser]);
+                  setOpenCreate(false);
+                }}
+                onRoleCreated={(newRole: IRol) => {
+                  console.log("Nuevo rol recibido en padre:", newRole);
+                  setRoleOptions((prev) => [...prev, newRole]);
+                }}
+              />
+            </GeneralDialog>
+            <div className="flex items-center gap-3">
+              {/* Input para buscar */}
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <Search className="h-4 w-4 text-gray-500" />
+                </div>
+                <Input
+                  type="text"
+                  placeholder="Buscar usuarios"
+                  className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                  }}
+                />
+              </div>
+              {/* Boton para importar */}
+              <Button
+                className="border-border text-[12px] font-semibold"
+                variant={"secondary"}
+                onClick={() => setOpenBulkUpload(true)}
+              >
+                <Upload className="h-4 w-4" />
+                Importar
+              </Button>
+              {/* Boton para exportar la tabla*/}
+              <Button
+                className="border-border text-[12px] font-semibold"
+                variant={"secondary"}
+              >
+                <CloudDownload className="h-4 w-4" /> Exportar
+              </Button>
+            </div>
+          </div>
+        </div>
         <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#111315]">
           {/* Tarjetas distribuidas en flex */}
           <div className="flex flex-col gap-4 px-6 pt-6 md:flex-row md:justify-between">
@@ -458,49 +569,6 @@ export default function Page() {
               onClose={() => setOpenBulkUpload(false)}
             />
           )}
-
-          {/* Botones de acciones: Importar y Crear */}
-          <div className="flex justify-end space-x-4 px-6 pb-4 pt-5">
-            <Button className="" onClick={() => setOpenBulkUpload(true)}>
-              <Upload className="mr-2 h-4 w-4" />
-              Importar
-            </Button>
-
-            <GeneralDialog
-              open={openCreate}
-              onOpenChange={setOpenCreate}
-              triggerText={"Nuevo Usuario"}
-              title="Crear Nuevo Usuario"
-              description="Ingresa la información para crear un nuevo usuario."
-              submitText="Crear Usuario"
-            >
-              <CreateUserForm
-                roleOptions={roleOptions}
-                onSuccess={(data: any) => {
-                  const rolData = data.usuario.rol_usu;
-                  const roleId = rolData.id_rol;
-                  const roleName = rolData.nom_rol;
-
-                  const createdUser: DataUsers = {
-                    id: data.usuario.id_usu.toString(),
-                    usuario: data.usuario.nom_usu,
-                    correo: data.usuario.email_usu,
-                    estado: data.usuario.esta_usu,
-                    rol: roleId?.toString(),
-                    rolNombre: roleName,
-                  };
-
-                  // Actualiza tu estado con createdUser
-                  setUsuarios((prev) => [...prev, createdUser]);
-                  setOpenCreate(false);
-                }}
-                onRoleCreated={(newRole: IRol) => {
-                  console.log("Nuevo rol recibido en padre:", newRole);
-                  setRoleOptions((prev) => [...prev, newRole]);
-                }}
-              />
-            </GeneralDialog>
-          </div>
 
           {/* Tabla */}
           <div className="px-6 pb-4">

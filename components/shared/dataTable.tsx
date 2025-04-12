@@ -12,7 +12,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,7 +20,6 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -73,12 +72,6 @@ export function DataTable<T>({ data, columns }: DataTableProps<T>) {
   return (
     <div className="w-full">
       <div className="flex items-center py-4">
-        <Input
-          placeholder="Buscar..."
-          value={globalFilter}
-          onChange={(event) => setGlobalFilter(event.target.value)}
-          className="max-w-sm"
-        />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
@@ -102,7 +95,7 @@ export function DataTable<T>({ data, columns }: DataTableProps<T>) {
         </DropdownMenu>
       </div>
       <div>
-        <Table className="border-border overflow-hidden rounded-lg border">
+        <Table className="overflow-hidden rounded-lg border border-border">
           <TableHeader className="bg-secondary">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
@@ -150,7 +143,7 @@ export function DataTable<T>({ data, columns }: DataTableProps<T>) {
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="text-muted-foreground flex-1 text-sm">
+        <div className="flex-1 text-sm text-muted-foreground">
           {table.getFilteredSelectedRowModel().rows.length} de{" "}
           {table.getFilteredRowModel().rows.length} fila(s) seleccionadas.
         </div>
@@ -160,7 +153,7 @@ export function DataTable<T>({ data, columns }: DataTableProps<T>) {
             size="sm"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="text-black dark:border dark:border-default-700 dark:bg-[#09090b] dark:text-white"
+            className="dark:border-default-700 text-black dark:border dark:bg-[#09090b] dark:text-white"
           >
             Anterior
           </Button>
@@ -169,7 +162,7 @@ export function DataTable<T>({ data, columns }: DataTableProps<T>) {
             size="sm"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="text-black dark:border dark:border-default-700 dark:bg-[#09090b] dark:text-white"
+            className="dark:border-default-700 text-black dark:border dark:bg-[#09090b] dark:text-white"
           >
             Siguiente
           </Button>

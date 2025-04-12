@@ -14,7 +14,7 @@ import { CampoTexto } from "../form/campoTexto";
 import { CampoNumero } from "../form/campoNumero";
 import { CampoFecha } from "../form/campoFecha";
 import { IInsumo } from "@/lib/types";
-import { CampoSelectUnidad } from "./form/campoSelectUnidad";
+import { CampoSelectUnidad } from "../products-comp/componentes/forms/campoSelectUnidad";
 
 /* ================================
    ESQUEMA DEL FORMULARIO CON ZOD

@@ -8,14 +8,15 @@ export interface ICategory {
 export interface IProduct {
   id_prod: number;
   nom_prod: string;
-  prec_prod: number;
-  iva_prod: boolean;
+  tip_prod: string;
+  und_prod: string;
+  prec_vent_prod: number;
+  prec_comp_prod: number;
   stock_prod: number;
-  cate_prod: ICategory;
-  est_prod: string;
   fech_ven_prod: string;
   img_prod: string;
-  mat_prod?: boolean;
+  est_prod: string;
+  cate_prod: ICategory;
 }
 export interface IInsumo {
   id_ins: number;

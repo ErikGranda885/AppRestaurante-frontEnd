@@ -1,9 +1,9 @@
 "use client";
 import * as React from "react";
+import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { CheckCircle } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -14,18 +14,33 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import toast from "react-hot-toast";
 import { ToastSuccess } from "../toast/toastSuccess";
 import { ToastError } from "../toast/toastError";
 
-// Esquema base para editar categorías
+// Declaramos un ref para almacenar el nombre inicial y así evitar la validación si no ha cambiado
+const initialDataCorreoRef = { current: "" };
+
 const editCategorySchemaBase = z.object({
   nom_cate: z
     .string()
     .min(2, { message: "El nombre debe tener al menos 2 caracteres." })
     .regex(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/, {
       message: "El nombre solo puede contener letras y espacios",
-    }),
+    })
+    .refine(
+      async (nombre: string) => {
+        if (nombre === initialDataCorreoRef.current) return true;
+        const res = await fetch(
+          `http://localhost:5000/categorias/verificar?nombre=${encodeURIComponent(nombre)}`,
+        );
+        const data = await res.json();
+        return !data.exists;
+      },
+      {
+        message: "El nombre de la categoría ya se encuentra registrado",
+        async: true,
+      } as any,
+    ),
   desc_cate: z.string().optional(),
 });
 
@@ -40,68 +55,18 @@ export function EditCategoryForm({
   initialData,
   onSuccess,
 }: EditCategoryFormProps) {
-  // Guardamos el nombre inicial en un ref para comparar si se modifica
-  const initialCategoryNameRef = React.useRef(initialData.nom_cate);
+  // Actualizamos el ref con el valor inicial de "nom_cate" para comparar en la validación asíncrona
   React.useEffect(() => {
-    initialCategoryNameRef.current = initialData.nom_cate;
-  }, [initialData.nom_cate]);
-
-  const schema = React.useMemo(() => {
-    return editCategorySchemaBase.superRefine(async (values, ctx) => {
-      const newName = values.nom_cate.trim().toLowerCase();
-      const initialName = initialCategoryNameRef.current.trim().toLowerCase();
-
-      // Solo consultamos si el nombre cambió de verdad
-      if (newName !== initialName) {
-        try {
-          const url = `http://localhost:5000/categorias/verificar?nom_cate=${encodeURIComponent(
-            values.nom_cate.trim(),
-          )}`;
-          console.log(
-            "[EditCategory] Verificando nombre:",
-            values.nom_cate.trim(),
-          );
-          console.log("[EditCategory] URL de verificación:", url);
-
-          const res = await fetch(url);
-          console.log("[EditCategory] Status fetch:", res.status);
-          const exists = await res.json();
-          console.log(
-            "[EditCategory] Respuesta del servidor (exists):",
-            exists,
-          );
-
-          if (exists === true) {
-            console.warn("[EditCategory] El servidor indica que ya existe");
-            ctx.addIssue({
-              code: "custom",
-              message: "La categoría ya se encuentra registrada",
-              path: ["nom_cate"],
-            });
-          }
-        } catch (err) {
-          console.error("[EditCategory] Error al verificar categoría:", err);
-          ctx.addIssue({
-            code: "custom",
-            message: "Error al verificar la categoría",
-            path: ["nom_cate"],
-          });
-        }
-      } else {
-        console.log(
-          "[EditCategory] Nombre sin cambios, no verifico en servidor",
-        );
-      }
-    });
+    initialDataCorreoRef.current = initialData.nom_cate;
   }, [initialData.nom_cate]);
 
   const form = useForm<EditCategoryFormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(editCategorySchemaBase),
     defaultValues: initialData,
   });
 
   const onSubmit = async (values: EditCategoryFormValues) => {
-    // Armamos el payload con los campos que espera el backend
+    // Armamos el payload según lo que espera el backend
     const payload = {
       nom_cate: values.nom_cate,
       desc_cate: values.desc_cate,
@@ -117,17 +82,19 @@ export function EditCategoryForm({
         },
       );
       if (!res.ok) {
-        throw new Error(`Error: ${res.status}`);
+        // Intentamos extraer el mensaje de error de la respuesta
+        const errorResponse = await res.json();
+        throw new Error(errorResponse.message || `Error: ${res.status}`);
       }
       const data = await res.json();
       onSuccess(data);
       ToastSuccess({
         message: "Categoría actualizada correctamente",
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error al actualizar la categoría:", err);
       ToastError({
-        message: "Error al actualizar la categoría",
+        message: `Error al actualizar la categoría: ${err.message}`,
       });
     }
   };
@@ -135,7 +102,7 @@ export function EditCategoryForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        {/* Campo: nom_cate de la Categoría */}
+        {/* Campo para el nombre de la categoría */}
         <FormField
           control={form.control}
           name="nom_cate"
@@ -160,7 +127,7 @@ export function EditCategoryForm({
           )}
         />
 
-        {/* Campo: Descripción (opcional) */}
+        {/* Campo para la descripción (opcional) */}
         <FormField
           control={form.control}
           name="desc_cate"
