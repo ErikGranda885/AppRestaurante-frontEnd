@@ -8,13 +8,12 @@ import {
   Folder,
   FolderX,
   Folders,
-  CheckCircle,
   Plus,
   Search,
   CloudDownload,
 } from "lucide-react";
 import { GeneralDialog } from "@/components/shared/dialogGen";
-import toast, { Toaster } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -40,42 +39,20 @@ import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { Input } from "@/components/ui/input";
 
-// Ahora, en lugar de definir un tipo local, usamos ICategory directamente
-export default function Page() {
-  const [categories, setCategories] = React.useState<ICategory[]>([]);
-  const [loading, setLoading] = React.useState(true);
+export default function PaginaCategorias() {
+  // Estados
+  const [categorias, setCategorias] = React.useState<ICategory[]>([]);
+  const [cargando, setCargando] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = React.useState<string>("");
-  const [editCategory, setEditCategory] = React.useState<ICategory | null>(
+  const [consulta, setConsulta] = React.useState<string>("");
+  const [categoriaEditar, setEditCategory] = React.useState<ICategory | null>(
     null,
   );
-  const [openBulkUpload, setOpenBulkUpload] = React.useState(false);
+  const [abrirCargaMasiva, setAbrirCargaMasiva] = React.useState(false);
   const [selectedStatus, setSelectedStatus] = React.useState<string>("");
-  const [openCreate, setOpenCreate] = React.useState(false);
+  const [abrirCrear, setAbrirCrear] = React.useState(false);
 
-  useProtectedRoute();
-
-  // Cargar categorías desde la API y asignarlas directamente a ICategory
-  React.useEffect(() => {
-    fetch("http://localhost:5000/categorias")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Error al cargar las categorías");
-        }
-        return res.json();
-      })
-      .then((data: any) => {
-        // Suponemos que data.categorias ya tiene la forma de ICategory[]
-        setCategories(data.categorias);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, []);
-
-  /* Definición de las columnas de la tabla para categorías usando ICategory */
+  // Definición de las columnas de la tabla para categorías
   const categoryColumns: ColumnDef<ICategory>[] = [
     {
       accessorKey: "nom_cate",
@@ -108,7 +85,6 @@ export default function Page() {
             circleColor = "bg-[#f31260]";
             textColor = "";
             break;
-
           default:
             circleColor = "bg-gray-500";
             textColor = "text-gray-600";
@@ -116,9 +92,8 @@ export default function Page() {
         }
 
         return (
-          // Contenedor centrado
           <div className="text-center">
-            <div className="inline-flex items-center justify-start gap-1 p-1">
+            <div className="inline-flex items-center gap-1 p-1">
               <span className={`h-1 w-1 rounded-full ${circleColor}`} />
               <span className={`text-xs font-medium capitalize ${textColor}`}>
                 {estadoOriginal}
@@ -129,7 +104,7 @@ export default function Page() {
       },
     },
     {
-      id: "actions",
+      id: "acciones",
       header: "Acciones",
       enableHiding: false,
       cell: ({ row }) => {
@@ -138,7 +113,7 @@ export default function Page() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
+                <span className="sr-only">Abrir menú</span>
                 <MoreHorizontal />
               </Button>
             </DropdownMenuTrigger>
@@ -172,9 +147,31 @@ export default function Page() {
       },
     },
   ];
+  useProtectedRoute();
 
-  const handleDeactivate = (category: ICategory) => {
-    fetch(`http://localhost:5000/categorias/inactivar/${category.id_cate}`, {
+  // Cargar categorías desde la API
+  React.useEffect(() => {
+    fetch("http://localhost:5000/categorias")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Error al cargar las categorías");
+        }
+        return res.json();
+      })
+      .then((data: any) => {
+        // Se asume que data.categorias corresponde a ICategory[]
+        setCategorias(data.categorias);
+        setCargando(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setCargando(false);
+      });
+  }, []);
+
+  // Función para inactivar una categoría
+  const handleDeactivate = (categoria: ICategory) => {
+    fetch(`http://localhost:5000/categorias/inactivar/${categoria.id_cate}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}),
@@ -184,26 +181,27 @@ export default function Page() {
         return res.json();
       })
       .then(() => {
-        setCategories((prev) =>
+        setCategorias((prev) =>
           prev.map((cat) =>
-            cat.id_cate === category.id_cate
+            cat.id_cate === categoria.id_cate
               ? { ...cat, est_cate: "Inactivo" }
               : cat,
           ),
         );
         ToastSuccess({
-          message: `La categoría "${category.nom_cate}" ha sido inactivada con éxito.`,
+          message: `La categoría "${categoria.nom_cate}" ha sido inactivada con éxito.`,
         });
       })
       .catch((err) => {
         ToastError({
-          message: `Error al inactivar la categoría "${category.nom_cate}"`,
+          message: `Error al inactivar la categoría "${categoria.nom_cate}"`,
         });
       });
   };
 
-  const handleActivate = (category: ICategory) => {
-    fetch(`http://localhost:5000/categorias/activar/${category.id_cate}`, {
+  // Función para activar una categoría
+  const handleActivate = (categoria: ICategory) => {
+    fetch(`http://localhost:5000/categorias/activar/${categoria.id_cate}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}),
@@ -213,39 +211,38 @@ export default function Page() {
         return res.json();
       })
       .then(() => {
-        setCategories((prev) =>
+        setCategorias((prev) =>
           prev.map((cat) =>
-            cat.id_cate === category.id_cate
+            cat.id_cate === categoria.id_cate
               ? { ...cat, est_cate: "Activo" }
               : cat,
           ),
         );
         ToastSuccess({
-          message: `La categoría "${category.nom_cate}" ha sido activada con éxito.`,
+          message: `La categoría "${categoria.nom_cate}" ha sido activada con éxito.`,
         });
       })
       .catch((err) => {
         ToastError({
-          message: `Error al activar la categoría "${category.nom_cate}"`,
+          message: `Error al activar la categoría "${categoria.nom_cate}"`,
         });
       });
   };
 
-  // Filtrar categorías según el estado (usando est_cate de ICategory)
-  const filteredCategorias = categories.filter((cat) => {
-    // Filtrar por estado si se ha seleccionado alguno
-    const matchesState =
+  // Filtrar categorías según estado y consulta
+  const filteredCategorias = categorias.filter((cat) => {
+    const cumpleEstado =
       selectedStatus === "" ||
       cat.est_cate?.toLowerCase() === selectedStatus.toLowerCase();
-    // Filtrar por searchQuery (por nombre o descripción)
-    const searchLower = searchQuery.toLowerCase();
-    const matchesSearch =
-      cat.nom_cate.toLowerCase().includes(searchLower) ||
-      (cat.desc_cate && cat.desc_cate.toLowerCase().includes(searchLower));
-    return matchesState && matchesSearch;
+    const busqueda = consulta.toLowerCase();
+    const cumpleBusqueda =
+      cat.nom_cate.toLowerCase().includes(busqueda) ||
+      (cat.desc_cate && cat.desc_cate.toLowerCase().includes(busqueda));
+    return cumpleEstado && cumpleBusqueda;
   });
 
-  const handleCardClick = (status: string) => {
+  // Cambiar filtro de estado desde las tarjetas
+  const handleClickTarjeta = (status: string) => {
     if (selectedStatus.toLowerCase() === status.toLowerCase()) {
       setSelectedStatus("");
     } else {
@@ -254,7 +251,7 @@ export default function Page() {
   };
 
   if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
-  if (loading) return <div className="p-4">Cargando categorías...</div>;
+  if (cargando) return <div className="p-4">Cargando categorías...</div>;
 
   return (
     <>
@@ -265,14 +262,13 @@ export default function Page() {
         submenu={true}
         isLoading={false}
       >
-        <div className="px-6 pt-2">
+        <div className="px-6 pt-2 ">
           <div className="mb-5 flex items-center justify-between">
             <GeneralDialog
-              open={openCreate}
-              onOpenChange={setOpenCreate}
+              open={abrirCrear}
+              onOpenChange={setAbrirCrear}
               triggerText={
                 <>
-                  {" "}
                   <Plus className="h-4 w-4 font-light" /> Añade nueva categoría
                 </>
               }
@@ -282,39 +278,34 @@ export default function Page() {
             >
               <CreateCategoryForm
                 onSuccess={(data: any) => {
-                  setCategories((prev) => [...prev, data.categoria]);
-                  setOpenCreate(false);
+                  setCategorias((prev) => [...prev, data.categoria]);
+                  setAbrirCrear(false);
                 }}
               />
             </GeneralDialog>
             <div className="flex items-center gap-3">
-              {/* Input para buscar */}
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <Search className="h-4 w-4 text-gray-500" />
                 </div>
                 <Input
                   type="text"
-                  placeholder="Buscar categorias..."
+                  placeholder="Buscar categorías..."
                   className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                  }}
+                  value={consulta}
+                  onChange={(e) => setConsulta(e.target.value)}
                 />
               </div>
               <Button
-                onClick={() => setOpenBulkUpload(true)}
+                onClick={() => setAbrirCargaMasiva(true)}
                 className="border-border text-[12px] font-semibold"
-                variant={"secondary"}
+                variant="secondary"
               >
-                <Upload className="h-4 w-4" />
-                Importar
+                <Upload className="h-4 w-4" /> Importar
               </Button>
-              {/* Boton para exportar la tabla*/}
               <Button
                 className="border-border text-[12px] font-semibold"
-                variant={"secondary"}
+                variant="secondary"
               >
                 <CloudDownload className="h-4 w-4" /> Exportar
               </Button>
@@ -324,9 +315,10 @@ export default function Page() {
         <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#111315]">
           {/* Tarjetas resumen */}
           <div className="flex flex-col gap-4 px-6 pt-6 md:flex-row md:justify-between">
+            {/* Tarjeta: Categorías Totales */}
             <Card
-              onClick={() => handleCardClick("")}
-              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
+              onClick={() => handleClickTarjeta("")}
+              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
                 selectedStatus === "" ? "ring-2 ring-secondary" : ""
               } group`}
             >
@@ -337,7 +329,7 @@ export default function Page() {
                   </CardTitle>
                   <div className="mt-2 flex items-center gap-5">
                     <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
-                      {categories.length}
+                      {categorias.length}
                     </span>
                     <span className="inline-block rounded-md bg-secondary px-2 py-1 text-sm font-bold dark:bg-blue-800/30">
                       +5%
@@ -352,10 +344,10 @@ export default function Page() {
                 </div>
               </CardHeader>
             </Card>
-
+            {/* Tarjeta: Categorías Activas */}
             <Card
-              onClick={() => handleCardClick("Activo")}
-              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
+              onClick={() => handleClickTarjeta("Activo")}
+              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
                 selectedStatus.toLowerCase() === "activo"
                   ? "ring-2 ring-secondary"
                   : ""
@@ -369,7 +361,7 @@ export default function Page() {
                   <div className="mt-2 flex items-center gap-5">
                     <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
                       {
-                        categories.filter(
+                        categorias.filter(
                           (cat) => cat.est_cate?.toLowerCase() === "activo",
                         ).length
                       }
@@ -387,10 +379,10 @@ export default function Page() {
                 </div>
               </CardHeader>
             </Card>
-
+            {/* Tarjeta: Categorías Inactivas */}
             <Card
-              onClick={() => handleCardClick("Inactivo")}
-              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
+              onClick={() => handleClickTarjeta("Inactivo")}
+              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
                 selectedStatus.toLowerCase() === "inactivo"
                   ? "ring-2 ring-secondary"
                   : ""
@@ -404,12 +396,12 @@ export default function Page() {
                   <div className="mt-2 flex items-center gap-5">
                     <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
                       {
-                        categories.filter(
+                        categorias.filter(
                           (cat) => cat.est_cate?.toLowerCase() === "inactivo",
                         ).length
                       }
                     </span>
-                    <span className="error-text inline-block rounded-md bg-red-100 px-2 py-1 text-sm font-bold dark:bg-red-800/30">
+                    <span className="inline-block rounded-md bg-red-100 px-2 py-1 text-sm font-bold dark:bg-red-800/30">
                       -8%
                     </span>
                   </div>
@@ -418,46 +410,20 @@ export default function Page() {
                   </CardDescription>
                 </div>
                 <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
-                  <FolderX className="error-text h-7 w-7 transition-transform duration-300 group-hover:scale-110" />
+                  <FolderX className="h-7 w-7 text-red-500 transition-transform duration-300 group-hover:scale-110" />
                 </div>
               </CardHeader>
             </Card>
           </div>
 
           {/* Diálogo para carga masiva */}
-          {openBulkUpload && (
+          {abrirCargaMasiva && (
             <BulkUploadCategoryDialog
-              onSuccess={(newCategories: ICategory[]) => {
-                setCategories((prev) => [...prev, ...newCategories]);
+              onSuccess={(nuevasCategorias: ICategory[]) => {
+                setCategorias((prev) => [...prev, ...nuevasCategorias]);
               }}
-              onClose={() => setOpenBulkUpload(false)}
+              onClose={() => setAbrirCargaMasiva(false)}
             />
-          )}
-          {editCategory && (
-            <GeneralDialog
-              open={!!editCategory}
-              onOpenChange={(open) => {
-                if (!open) setEditCategory(null);
-              }}
-              triggerText={null}
-              title="Editar Categoría"
-              description="Modifica la información de la categoría."
-              submitText="Guardar cambios"
-            >
-              <EditCategoryForm
-                initialData={editCategory}
-                onSuccess={(data: any) => {
-                  setCategories((prev) =>
-                    prev.map((cat) =>
-                      cat.id_cate === data.categoria.id_cate
-                        ? data.categoria
-                        : cat,
-                    ),
-                  );
-                  setEditCategory(null);
-                }}
-              />
-            </GeneralDialog>
           )}
 
           {/* Tabla de categorías */}
@@ -469,6 +435,32 @@ export default function Page() {
           </div>
         </div>
       </ModulePageLayout>
+
+      {/* Diálogo para editar categoría */}
+      {categoriaEditar && (
+        <GeneralDialog
+          open={!!categoriaEditar}
+          onOpenChange={(open) => {
+            if (!open) setEditCategory(null);
+          }}
+          triggerText={null}
+          title="Editar Categoría"
+          description="Modifica la información de la categoría."
+          submitText="Guardar cambios"
+        >
+          <EditCategoryForm
+            initialData={categoriaEditar}
+            onSuccess={(data: any) => {
+              setCategorias((prev) =>
+                prev.map((cat) =>
+                  cat.id_cate === data.categoria.id_cate ? data.categoria : cat,
+                ),
+              );
+              setEditCategory(null);
+            }}
+          />
+        </GeneralDialog>
+      )}
     </>
   );
 }

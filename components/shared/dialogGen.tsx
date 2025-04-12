@@ -1,3 +1,4 @@
+"use client";
 import {
   Dialog,
   DialogTrigger,
@@ -11,7 +12,7 @@ import { Button } from "@/components/ui/button";
 export interface GeneralDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  triggerText: React.ReactNode;
+  triggerText?: React.ReactNode;
   title: React.ReactNode;
   description?: React.ReactNode;
   submitText?: React.ReactNode;
@@ -36,9 +37,11 @@ export function GeneralDialog({
 }: GeneralDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button className="text-[12px] font-semibold">{triggerText}</Button>
-      </DialogTrigger>
+      {triggerText && (
+        <DialogTrigger asChild>
+          <Button className="text-[12px] font-semibold">{triggerText}</Button>
+        </DialogTrigger>
+      )}
       <DialogContent
         className={`border-border ${contentClassName ? contentClassName : "w-[500px] max-w-none"}`}
         style={{

@@ -118,7 +118,7 @@ export function EditCategoryForm({
                   className={`pr-10 dark:bg-[#09090b] ${
                     error
                       ? "border-2 border-[var(--error-per)]"
-                      : "dark:border-default-700 dark:border"
+                      : "dark:border-0"
                   }`}
                 />
               </FormControl>

@@ -1,6 +1,6 @@
 // src/utils/dates.ts
 export const parseDateString = (
-  dateStr: string | null | undefined
+  dateStr: string | null | undefined,
 ): Date | null => {
   if (!dateStr || typeof dateStr !== "string") {
     return null;
@@ -26,8 +26,11 @@ export const resetTime = (date: Date): Date => {
 };
 
 export const getDaysUntilExpiration = (
-  expirationDateString: string | null | undefined
+  expirationDateString: string | null | undefined,
 ): number | null => {
+  if (!expirationDateString) {
+    return null;
+  }
   const expirationDate = parseDateString(expirationDateString);
   if (!expirationDate) return null;
   const today = resetTime(new Date());

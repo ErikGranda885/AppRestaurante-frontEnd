@@ -46,7 +46,11 @@ import { ToastError } from "@/components/shared/toast/toastError";
 import { IRol } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SERVICIOS } from "@/services/usuarios.service";
+import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
+// Importa el componente de diálogo generalizado para confirmar acciones
 
+// Tipo de dato para los usuarios
 export type DataUsers = {
   id: string;
   usuario: string;
@@ -56,18 +60,38 @@ export type DataUsers = {
   rolNombre: string;
 };
 
-export default function Page() {
-  const [roleOptions, setRoleOptions] = React.useState<IRol[]>([]);
+// Tipo para definir la acción a confirmar (activar o inactivar)
+type TipoAccion = "activar" | "inactivar";
+
+// En el objeto de acción, se almacena el id, el nombre del usuario y el tipo de acción
+type AccionUsuario = {
+  id: string;
+  usuario: string;
+  tipo: TipoAccion;
+};
+
+export default function PaginaUsuarios() {
+  // Estados
+  const [rolOpciones, setRolOpciones] = React.useState<IRol[]>([]);
   const [usuarios, setUsuarios] = React.useState<DataUsers[]>([]);
-  const [openBulkUpload, setOpenBulkUpload] = React.useState(false);
-  const [selectedState, setSelectedState] = React.useState<string>("");
-  const [editUser, setEditUser] = React.useState<DataUsers | null>(null);
-  const [openCreate, setOpenCreate] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState<string>("");
+  const [abrirCargaMasiva, setAbrirCargaMasiva] = React.useState(false);
+  const [estadoSeleccionado, setEstadoSeleccionado] =
+    React.useState<string>("");
+  const [usuarioEditar, setUsuarioEditar] = React.useState<DataUsers | null>(
+    null,
+  );
+  const [abrirCrear, setAbrirCrear] = React.useState(false);
+  const [consultaBusqueda, setConsultaBusqueda] = React.useState<string>("");
+
+  // Estado para la acción de confirmar (activar o inactivar)
+  const [accionUsuario, setAccionUsuario] =
+    React.useState<AccionUsuario | null>(null);
+
   useProtectedRoute();
-  // Cargar usuarios desde la API
+
+  // Cargar usuarios utilizando el servicio centralizado
   React.useEffect(() => {
-    fetch("http://localhost:5000/usuarios")
+    fetch(SERVICIOS.usuarios)
       .then((res) => {
         if (!res.ok) {
           throw new Error("Error al cargar los usuarios");
@@ -75,7 +99,7 @@ export default function Page() {
         return res.json();
       })
       .then((data: any[]) => {
-        const transformed = data.map((item) => ({
+        const transformados = data.map((item) => ({
           id: item.id_usu.toString(),
           usuario: item.nom_usu,
           correo: item.email_usu,
@@ -83,15 +107,40 @@ export default function Page() {
           rol: item.rol_usu.id_rol.toString(),
           rolNombre: item.rol_usu.nom_rol,
         }));
-        setUsuarios(transformed);
+        setUsuarios(transformados);
       })
       .catch((err) => {
         console.error("Error al cargar usuarios:", err);
       });
   }, []);
 
-  const handleInactivar = (user: DataUsers) => {
-    fetch(`http://localhost:5000/usuarios/inactivar/${user.id}`, {
+  // Cargar roles utilizando el servicio centralizado
+  React.useEffect(() => {
+    fetch(SERVICIOS.roles)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Error al cargar roles");
+        }
+        return res.json();
+      })
+      .then((data: any) => {
+        const rolesData = Array.isArray(data) ? data : data.roles;
+        if (!Array.isArray(rolesData)) {
+          throw new Error("La respuesta de roles no es un arreglo");
+        }
+        const rolesActivos: IRol[] = rolesData.filter(
+          (rol: any) => rol.est_rol === "Activo",
+        );
+        setRolOpciones(rolesActivos);
+      })
+      .catch((err) => {
+        console.error("Error al cargar roles:", err);
+      });
+  }, []);
+
+  // Función para inactivar un usuario (se llama después de confirmar la acción)
+  const ejecutarInactivacion = (usuario: DataUsers) => {
+    fetch(SERVICIOS.inactivarUsuario(usuario.id), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}),
@@ -105,7 +154,7 @@ export default function Page() {
       .then(() => {
         setUsuarios((prev) =>
           prev.map((u) =>
-            u.id === user.id ? { ...u, estado: "Inactivo" } : u,
+            u.id === usuario.id ? { ...u, estado: "Inactivo" } : u,
           ),
         );
         ToastSuccess({
@@ -114,13 +163,14 @@ export default function Page() {
       })
       .catch((err) => {
         ToastError({
-          message: ` Error al inactivar el usuario: ${err.message}`,
+          message: `Error al inactivar el usuario: ${err.message}`,
         });
       });
   };
 
-  const handleActivar = (user: DataUsers) => {
-    fetch(`http://localhost:5000/usuarios/activar/${user.id}`, {
+  // Función para activar un usuario (se llama después de confirmar la acción)
+  const ejecutarActivacion = (usuario: DataUsers) => {
+    fetch(SERVICIOS.activarUsuario(usuario.id), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}),
@@ -133,7 +183,9 @@ export default function Page() {
       })
       .then(() => {
         setUsuarios((prev) =>
-          prev.map((u) => (u.id === user.id ? { ...u, estado: "Activo" } : u)),
+          prev.map((u) =>
+            u.id === usuario.id ? { ...u, estado: "Activo" } : u,
+          ),
         );
         ToastSuccess({
           message: "Se ha activado el usuario exitosamente.",
@@ -141,13 +193,30 @@ export default function Page() {
       })
       .catch((err) => {
         ToastError({
-          message: ` Error al activar el usuario: ${err.message}`,
+          message: `Error al activar el usuario: ${err.message}`,
         });
       });
   };
 
+  // Función general para confirmar la acción seleccionada (activar/inactivar)
+  const confirmarAccion = async () => {
+    if (!accionUsuario) return;
+
+    // Buscar el usuario en el listado
+    const usuario = usuarios.find((u) => u.id === accionUsuario.id);
+    if (!usuario) return;
+
+    if (accionUsuario.tipo === "inactivar") {
+      ejecutarInactivacion(usuario);
+    } else {
+      ejecutarActivacion(usuario);
+    }
+
+    setAccionUsuario(null);
+  };
+
   /* Definición de las columnas de la tabla */
-  const userColumns: ColumnDef<DataUsers>[] = [
+  const columnasUsuarios: ColumnDef<DataUsers>[] = [
     {
       id: "id",
       header: ({ table }) => (
@@ -157,14 +226,14 @@ export default function Page() {
             (table.getIsSomePageRowsSelected() && "indeterminate")
           }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
+          aria-label="Seleccionar todos"
         />
       ),
       cell: ({ row }) => (
         <Checkbox
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
+          aria-label="Seleccionar fila"
         />
       ),
       enableSorting: false,
@@ -207,31 +276,29 @@ export default function Page() {
         const estadoOriginal = String(row.getValue("estado")) || "";
         const estado = estadoOriginal.toLowerCase();
 
-        let circleColor = "bg-gray-500";
-        let textColor = "text-gray-600";
+        let colorCirculo = "bg-gray-500";
+        let colorTexto = "text-gray-600";
 
         switch (estado) {
           case "activo":
-            circleColor = "bg-[#17c964]";
-            textColor = "";
+            colorCirculo = "bg-[#17c964]";
+            colorTexto = "";
             break;
           case "inactivo":
-            circleColor = "bg-[#f31260]";
-            textColor = "";
+            colorCirculo = "bg-[#f31260]";
+            colorTexto = "";
             break;
-
           default:
-            circleColor = "bg-gray-500";
-            textColor = "text-gray-600";
+            colorCirculo = "bg-gray-500";
+            colorTexto = "text-gray-600";
             break;
         }
 
         return (
-          // Contenedor centrado
           <div className="text-center">
-            <div className="inline-flex items-center justify-start gap-1 p-1">
-              <span className={`h-1 w-1 rounded-full ${circleColor}`} />
-              <span className={`text-xs font-medium capitalize ${textColor}`}>
+            <div className="inline-flex items-center gap-1 p-1">
+              <span className={`h-1 w-1 rounded-full ${colorCirculo}`} />
+              <span className={`text-xs font-medium capitalize ${colorTexto}`}>
                 {estadoOriginal}
               </span>
             </div>
@@ -240,37 +307,49 @@ export default function Page() {
       },
     },
     {
-      id: "actions",
+      id: "acciones",
       header: "Acciones",
       enableHiding: false,
       cell: ({ row }) => {
-        const user = row.original;
+        const usuario = row.original;
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
+                <span className="sr-only">Abrir menú</span>
                 <MoreHorizontal />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="border-border">
               <DropdownMenuLabel>Acciones</DropdownMenuLabel>
               <DropdownMenuItem
-                onClick={() => setEditUser(user)}
+                onClick={() => setUsuarioEditar(usuario)}
                 className="cursor-pointer"
               >
                 Editar
               </DropdownMenuItem>
-              {String(user.estado).toLowerCase() === "inactivo" ? (
+              {String(usuario.estado).toLowerCase() === "inactivo" ? (
                 <DropdownMenuItem
-                  onClick={() => handleActivar(user)}
+                  onClick={() =>
+                    setAccionUsuario({
+                      id: usuario.id,
+                      usuario: usuario.usuario,
+                      tipo: "activar",
+                    })
+                  }
                   className="cursor-pointer"
                 >
                   Activar
                 </DropdownMenuItem>
               ) : (
                 <DropdownMenuItem
-                  onClick={() => handleInactivar(user)}
+                  onClick={() =>
+                    setAccionUsuario({
+                      id: usuario.id,
+                      usuario: usuario.usuario,
+                      tipo: "inactivar",
+                    })
+                  }
                   className="cursor-pointer"
                 >
                   Inactivar
@@ -284,51 +363,25 @@ export default function Page() {
     },
   ];
 
-  // Cargar roles desde la API
-  React.useEffect(() => {
-    fetch("http://localhost:5000/roles")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Error al cargar roles");
-        }
-        return res.json();
-      })
-      .then((data: any) => {
-        // Se asume que la respuesta es un arreglo o que viene en data.roles.
-        const rolesData = Array.isArray(data) ? data : data.roles;
-        if (!rolesData || !Array.isArray(rolesData)) {
-          throw new Error("La respuesta de roles no contiene un arreglo");
-        }
-        // Filtrar solo los roles activos y asignar directamente al estado.
-        const activeRoles: IRol[] = rolesData.filter(
-          (role: any) => role.est_rol === "Activo",
-        );
-        setRoleOptions(activeRoles);
-      })
-
-      .catch((err) => console.error("Error al cargar roles:", err));
-  }, []);
-
-  // Filtrado de usuarios según estado
-  const filteredUsers = usuarios.filter((user) => {
-    // Filtrar por estado si se ha seleccionado alguno
-    const matchesState =
-      selectedState === "" ||
-      user.estado?.toLowerCase() === selectedState.toLowerCase();
-    // Filtrar por searchQuery (por nombre, correo o rol)
-    const searchLower = searchQuery.toLowerCase();
-    const matchesSearch =
-      user.usuario.toLowerCase().includes(searchLower) ||
-      user.correo.toLowerCase().includes(searchLower) ||
-      user.rolNombre.toLowerCase().includes(searchLower);
-    return matchesState && matchesSearch;
+  // Filtrado de usuarios según estado y búsqueda
+  const usuariosFiltrados = usuarios.filter((usuario) => {
+    const cumpleEstado =
+      estadoSeleccionado === "" ||
+      usuario.estado?.toLowerCase() === estadoSeleccionado.toLowerCase();
+    const busqueda = consultaBusqueda.toLowerCase();
+    const cumpleBusqueda =
+      usuario.usuario.toLowerCase().includes(busqueda) ||
+      usuario.correo.toLowerCase().includes(busqueda) ||
+      usuario.rolNombre.toLowerCase().includes(busqueda);
+    return cumpleEstado && cumpleBusqueda;
   });
 
-  const handleCardClick = (estado: string) => {
-    if (selectedState.toLowerCase() === estado.toLowerCase()) {
-      setSelectedState("");
+  // Función para cambiar el filtro por estado (para las tarjetas)
+  const manejarClickTarjeta = (estado: string) => {
+    if (estadoSeleccionado.toLowerCase() === estado.toLowerCase()) {
+      setEstadoSeleccionado("");
     } else {
-      setSelectedState(estado);
+      setEstadoSeleccionado(estado);
     }
   };
 
@@ -344,12 +397,11 @@ export default function Page() {
         <div className="px-6 pt-2">
           <div className="mb-5 flex items-center justify-between">
             <GeneralDialog
-              open={openCreate}
-              onOpenChange={setOpenCreate}
+              open={abrirCrear}
+              onOpenChange={setAbrirCrear}
               triggerText={
                 <>
-                  {" "}
-                  <Plus className="h-4 w-4 font-light" /> Añade nuevos usuarios
+                  <Plus className="h-4 w-4 font-light" /> Añadir nuevos usuarios
                 </>
               }
               title="Crear Nuevo Usuario"
@@ -357,28 +409,22 @@ export default function Page() {
               submitText="Crear Usuario"
             >
               <CreateUserForm
-                roleOptions={roleOptions}
+                roleOptions={rolOpciones}
                 onSuccess={(data: any) => {
                   const rolData = data.usuario.rol_usu;
-                  const roleId = rolData.id_rol;
-                  const roleName = rolData.nom_rol;
-
-                  const createdUser: DataUsers = {
+                  const usuarioCreado: DataUsers = {
                     id: data.usuario.id_usu.toString(),
                     usuario: data.usuario.nom_usu,
                     correo: data.usuario.email_usu,
                     estado: data.usuario.esta_usu,
-                    rol: roleId?.toString(),
-                    rolNombre: roleName,
+                    rol: rolData.id_rol.toString(),
+                    rolNombre: rolData.nom_rol,
                   };
-
-                  // Actualiza tu estado con createdUser
-                  setUsuarios((prev) => [...prev, createdUser]);
-                  setOpenCreate(false);
+                  setUsuarios((prev) => [...prev, usuarioCreado]);
+                  setAbrirCrear(false);
                 }}
-                onRoleCreated={(newRole: IRol) => {
-                  console.log("Nuevo rol recibido en padre:", newRole);
-                  setRoleOptions((prev) => [...prev, newRole]);
+                onRoleCreated={(nuevoRol: IRol) => {
+                  setRolOpciones((prev) => [...prev, nuevoRol]);
                 }}
               />
             </GeneralDialog>
@@ -392,25 +438,22 @@ export default function Page() {
                   type="text"
                   placeholder="Buscar usuarios"
                   className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                  }}
+                  value={consultaBusqueda}
+                  onChange={(e) => setConsultaBusqueda(e.target.value)}
                 />
               </div>
-              {/* Boton para importar */}
+              {/* Botón para importar */}
               <Button
                 className="border-border text-[12px] font-semibold"
-                variant={"secondary"}
-                onClick={() => setOpenBulkUpload(true)}
+                variant="secondary"
+                onClick={() => setAbrirCargaMasiva(true)}
               >
-                <Upload className="h-4 w-4" />
-                Importar
+                <Upload className="h-4 w-4" /> Importar
               </Button>
-              {/* Boton para exportar la tabla*/}
+              {/* Botón para exportar */}
               <Button
                 className="border-border text-[12px] font-semibold"
-                variant={"secondary"}
+                variant="secondary"
               >
                 <CloudDownload className="h-4 w-4" /> Exportar
               </Button>
@@ -418,22 +461,20 @@ export default function Page() {
           </div>
         </div>
         <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#111315]">
-          {/* Tarjetas distribuidas en flex */}
+          {/* Tarjetas de métricas */}
           <div className="flex flex-col gap-4 px-6 pt-6 md:flex-row md:justify-between">
             {/* Tarjeta: Usuarios Totales */}
             <Card
-              onClick={() => handleCardClick("")}
-              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
-                selectedState === "" ? "ring-2 ring-secondary" : ""
+              onClick={() => manejarClickTarjeta("")}
+              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
+                estadoSeleccionado === "" ? "ring-2 ring-secondary" : ""
               } group`}
             >
               <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
                 <div className="flex-1">
-                  {/* Título */}
                   <CardTitle className="text-sm font-light text-secondary-foreground">
                     Usuarios Totales
                   </CardTitle>
-                  {/* Valor y badge de porcentaje */}
                   <div className="mt-2 flex items-center gap-5">
                     <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
                       {usuarios.length}
@@ -442,39 +483,34 @@ export default function Page() {
                       +12%
                     </span>
                   </div>
-                  {/* Periodo */}
                   <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
                     Este mes
                   </CardDescription>
                 </div>
-                {/* Ícono con efecto hover */}
                 <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
                   <TrendingUpIcon className="h-7 w-7 transition-transform duration-300 group-hover:scale-110" />
                 </div>
               </CardHeader>
             </Card>
-
             {/* Tarjeta: Usuarios Activos */}
             <Card
-              onClick={() => handleCardClick("Activo")}
-              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
-                selectedState.toLowerCase() === "activo"
+              onClick={() => manejarClickTarjeta("Activo")}
+              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
+                estadoSeleccionado.toLowerCase() === "activo"
                   ? "ring-2 ring-secondary"
                   : ""
               } group`}
             >
               <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
                 <div className="flex-1">
-                  {/* Título de la métrica */}
                   <CardTitle className="text-sm font-light text-secondary-foreground">
                     Usuarios Activos
                   </CardTitle>
-                  {/* Valor y badge de porcentaje */}
                   <div className="mt-2 flex items-center gap-5">
                     <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
                       {
                         usuarios.filter(
-                          (user) => user.estado?.toLowerCase() === "activo",
+                          (u) => u.estado?.toLowerCase() === "activo",
                         ).length
                       }
                     </span>
@@ -482,106 +518,97 @@ export default function Page() {
                       +12%
                     </span>
                   </div>
-                  {/* Periodo */}
                   <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
                     Este mes
                   </CardDescription>
                 </div>
-                {/* Ícono con efecto hover */}
                 <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
                   <UserCheck className="h-7 w-7 text-green-400 transition-transform duration-300 group-hover:scale-110" />
                 </div>
               </CardHeader>
             </Card>
-
             {/* Tarjeta: Usuarios Inactivos */}
             <Card
-              onClick={() => handleCardClick("Inactivo")}
-              className={`flex-1 cursor-pointer rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
-                selectedState.toLowerCase() === "inactivo"
+              onClick={() => manejarClickTarjeta("Inactivo")}
+              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
+                estadoSeleccionado.toLowerCase() === "inactivo"
                   ? "ring-2 ring-secondary"
                   : ""
               } group`}
             >
               <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
                 <div className="flex-1">
-                  {/* Título de la métrica */}
                   <CardTitle className="text-sm font-light text-secondary-foreground">
                     Usuarios Inactivos
                   </CardTitle>
-                  {/* Valor y badge de porcentaje */}
                   <div className="mt-2 flex items-center gap-5">
                     <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
                       {
                         usuarios.filter(
-                          (user) => user.estado?.toLowerCase() === "inactivo",
+                          (u) => u.estado?.toLowerCase() === "inactivo",
                         ).length
                       }
                     </span>
-                    <span className="error-text inline-block rounded-md bg-red-100 px-2 py-1 text-sm font-bold dark:bg-red-800/30">
+                    <span className="inline-block rounded-md bg-red-100 px-2 py-1 text-sm font-bold dark:bg-red-800/30">
                       -8%
                     </span>
                   </div>
-                  {/* Periodo */}
                   <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
                     Este mes
                   </CardDescription>
                 </div>
-                {/* Ícono con efecto hover */}
                 <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
-                  <UserX className="error-text h-7 w-7 transition-transform duration-300 group-hover:scale-110" />
+                  <UserX className="h-7 w-7 transition-transform duration-300 group-hover:scale-110" />
                 </div>
               </CardHeader>
             </Card>
           </div>
 
           {/* Diálogo para carga masiva */}
-          {openBulkUpload && (
+          {abrirCargaMasiva && (
             <BulkUploadDialog
-              roleOptions={roleOptions}
-              onSuccess={(usuariosNuevos: any[]) => {
-                const formattedUsers = usuariosNuevos.map((u: any) => {
-                  let rolId = "";
-                  let rolNombre = "";
+              roleOptions={rolOpciones}
+              onSuccess={(nuevosUsuarios: any[]) => {
+                const usuariosFormateados = nuevosUsuarios.map((u: any) => {
+                  let idRol = "";
+                  let nombreRol = "";
                   if (typeof u.rol_usu === "object") {
-                    // Ej.: { id_rol: 2, nom_rol: "Cocinero" }
-                    rolId = u.rol_usu.id_rol.toString();
-                    rolNombre = u.rol_usu.nom_rol;
+                    idRol = u.rol_usu.id_rol.toString();
+                    nombreRol = u.rol_usu.nom_rol;
                   } else {
-                    // Casos en que `rol_usu` ya venga como string o número
-                    rolId = u.rol_usu.toString();
-                    rolNombre = u.rol_usu.toString();
+                    idRol = u.rol_usu.toString();
+                    nombreRol = u.rol_usu.toString();
                   }
-
                   return {
                     id: u.id_usu.toString(),
                     usuario: u.nom_usu,
                     correo: u.email_usu,
                     estado: u.esta_usu,
-                    rol: rolId,
-                    rolNombre, // Asignamos "Cocinero" en el ejemplo
+                    rol: idRol,
+                    rolNombre: nombreRol,
                   };
                 });
-
-                // 2. Agregamos esos usuarios al estado local
-                setUsuarios((prev) => [...prev, ...formattedUsers]);
+                setUsuarios((prev) => [...prev, ...usuariosFormateados]);
               }}
-              onClose={() => setOpenBulkUpload(false)}
+              onClose={() => setAbrirCargaMasiva(false)}
             />
           )}
 
-          {/* Tabla */}
+          {/* Tabla de usuarios */}
           <div className="px-6 pb-4">
-            <DataTable<DataUsers> data={filteredUsers} columns={userColumns} />
+            <DataTable<DataUsers>
+              data={usuariosFiltrados}
+              columns={columnasUsuarios}
+            />
           </div>
         </div>
 
-        {/* Editar Usuario */}
-        {editUser && (
+        {/* Diálogo para editar usuario */}
+        {usuarioEditar && (
           <Dialog
             open
-            onOpenChange={(open) => {
-              if (!open) setEditUser(null);
+            onOpenChange={(abierto) => {
+              if (!abierto) setUsuarioEditar(null);
             }}
           >
             <DialogContent className="border-border sm:max-w-[425px]">
@@ -593,42 +620,57 @@ export default function Page() {
               </DialogHeader>
               <EditUserForm
                 initialData={{
-                  id: editUser.id,
-                  usuario: editUser.usuario,
-                  correo: editUser.correo,
+                  id: usuarioEditar.id,
+                  usuario: usuarioEditar.usuario,
+                  correo: usuarioEditar.correo,
                   password: "",
-                  rol: parseInt(editUser.rol),
+                  rol: parseInt(usuarioEditar.rol),
                 }}
-                roleOptions={roleOptions.map((role: IRol) => ({
+                roleOptions={rolOpciones.map((role: IRol) => ({
                   value: role.id_rol.toString(),
                   label: role.nom_rol,
                 }))}
                 onSuccess={(data) => {
-                  const updatedUser = {
+                  const usuarioActualizado: DataUsers = {
                     id: data.usuario.id_usu.toString(),
                     usuario: data.usuario.nom_usu,
                     correo: data.usuario.email_usu,
                     estado: data.usuario.esta_usu,
                     rol: data.usuario.rol_usu.toString(),
                     rolNombre:
-                      roleOptions.find(
-                        (option) =>
-                          option.id_rol.toString() ===
+                      rolOpciones.find(
+                        (opcion) =>
+                          opcion.id_rol.toString() ===
                           data.usuario.rol_usu.toString(),
                       )?.nom_rol || data.usuario.rol_usu.toString(),
                   };
                   setUsuarios((prev) =>
                     prev.map((u) =>
-                      u.id === updatedUser.id ? updatedUser : u,
+                      u.id === usuarioActualizado.id ? usuarioActualizado : u,
                     ),
                   );
-                  setEditUser(null);
+                  setUsuarioEditar(null);
                 }}
               />
             </DialogContent>
           </Dialog>
         )}
       </ModulePageLayout>
+
+      {/* Diálogo de confirmación para activar/inactivar usuario */}
+      {accionUsuario && (
+        <ModalModEstado
+          abierto={true}
+          onCambioAbierto={(abierto) => {
+            if (!abierto) setAccionUsuario(null);
+          }}
+          tipoAccion={accionUsuario.tipo}
+          nombreElemento={accionUsuario.usuario}
+          onConfirmar={confirmarAccion}
+        />
+      )}
+
+      <Toaster position="top-right" />
     </>
   );
 }

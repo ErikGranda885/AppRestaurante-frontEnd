@@ -50,16 +50,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const daysLeft = getDaysUntilExpiration(product.fech_ven_prod);
   const expirationText =
     daysLeft === null
-      ? "Fecha inválida"
+      ? "Sin fecha de vencimiento" // O el texto que prefieras
       : daysLeft > 0
-        ? `Quedan ${daysLeft} día${daysLeft === 1 ? "" : "s"}`
+        ? `Quedan <span class="math-inline">\{daysLeft\} día</span>{daysLeft === 1 ? "" : "s"}`
         : daysLeft === 0
           ? "Vence hoy"
-          : `Caducado hace ${Math.abs(daysLeft)} día${Math.abs(daysLeft) === 1 ? "" : "s"}`;
+          : `Caducado hace <span class="math-inline">\{Math\.abs\(daysLeft\)\} día</span>{Math.abs(daysLeft) === 1 ? "" : "s"}`;
 
   let expirationColorClass = "text-gray-400";
   if (daysLeft === null) {
-    expirationColorClass = "text-gray-500";
+    expirationColorClass = "text-gray-500"; // O alguna clase por defecto
   } else if (daysLeft < 0) {
     expirationColorClass = "error-text";
   } else if (daysLeft <= 3) {
@@ -166,9 +166,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <div className="text-xs font-semibold">
             <div>
               <span className="text-xs text-muted-foreground">Categoría: </span>
-              {typeof product.cate_prod === "object"
-                ? product.cate_prod.nom_cate
-                : product.cate_prod}
+              {product.cate_prod?.nom_cate == null}
             </div>
           </div>
 
