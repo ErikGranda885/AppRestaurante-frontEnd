@@ -33,7 +33,6 @@ import {
 import { ColumnDef } from "@tanstack/react-table";
 import { CreateUserForm } from "@/components/shared/usuarios/formularios/createUserForm";
 import { EditUserForm } from "@/components/shared/usuarios/formularios/editUserForm";
-import { BulkUploadDialog } from "@/components/shared/usuarios/formularios/cargaUsers";
 import {
   Card,
   CardDescription,
@@ -48,6 +47,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SERVICIOS } from "@/services/usuarios.service";
 import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
+import { BulkUploadUsersDialog } from "@/components/shared/usuarios/formularios/cargaUsers";
 // Importa el componente de diálogo generalizado para confirmar acciones
 
 // Tipo de dato para los usuarios
@@ -566,7 +566,7 @@ export default function PaginaUsuarios() {
 
           {/* Diálogo para carga masiva */}
           {abrirCargaMasiva && (
-            <BulkUploadDialog
+            <BulkUploadUsersDialog
               roleOptions={rolOpciones}
               onSuccess={(nuevosUsuarios: any[]) => {
                 const usuariosFormateados = nuevosUsuarios.map((u: any) => {
