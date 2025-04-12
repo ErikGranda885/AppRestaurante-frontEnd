@@ -10,11 +10,11 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import toast from "react-hot-toast";
 import { CheckCircle } from "lucide-react";
-import { CampoTexto } from "../form/campoTexto";
-import { CampoNumero } from "../form/campoNumero";
-import { CampoFecha } from "../form/campoFecha";
+import { CampoTexto } from "../varios/campoTexto";
+import { CampoNumero } from "../varios/campoNumero";
+import { CampoFecha } from "../varios/campoFecha";
 import { IInsumo } from "@/lib/types";
-import { CampoSelectUnidad } from "../products-comp/componentes/forms/campoSelectUnidad";
+import { CampoSelectUnidad } from "../productos/ui/campoSelectUnidad";
 
 /* ================================
    ESQUEMA DEL FORMULARIO CON ZOD
@@ -113,9 +113,7 @@ export function CreateInsumoForm({
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-      >
+      <form onSubmit={form.handleSubmit(onSubmit)}>
         <CampoTexto
           control={form.control}
           name="nom_ins"

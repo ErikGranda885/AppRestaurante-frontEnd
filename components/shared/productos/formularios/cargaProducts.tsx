@@ -1,4 +1,5 @@
 "use client";
+
 import * as React from "react";
 import Papa from "papaparse";
 import * as ExcelJS from "exceljs";
@@ -12,71 +13,47 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
-import { ToastError } from "../toast/toastError";
-import { ToastSuccess } from "../toast/toastSuccess";
-import { IRol } from "@/lib/types";
+import { IProduct, IProductCreate, IProductEdit } from "@/lib/types";
+import { ToastError } from "../../toast/toastError";
+import { ToastSuccess } from "../../toast/toastSuccess";
 
-interface BulkUploadDialogProps {
-  roleOptions: IRol[];
-  onSuccess: (newUsers: any[]) => void;
+interface BulkUploadProductDialogProps {
+  categoryOptions: { value: string; label: string }[];
+  onSuccess: (newProducts: IProduct[]) => void;
   onClose: () => void;
 }
 
-// Definir las columnas requeridas para usuarios
-const requiredColumns = ["nom_usu", "email_usu", "clave_usu", "rol_usu"];
+// Se definen las columnas requeridas según lo que se espera en la carga masiva
+const requiredColumns = [
+  "cate_prod",
+  "nom_prod",
+  "prec_prod",
+  "stock_prod",
+  "fech_ven_prod",
+];
 
-// Función auxiliar para sanitizar (convertir a string) un valor de celda
-const renderCell = (value: any): string => {
-  if (value && typeof value === "object" && "text" in value) {
-    return value.text;
-  }
-  return value;
-};
-
-// Valida que cada fila tenga datos (después de sanitizar) en los campos requeridos
-const validateRows = (rows: any[]): boolean => {
-  return rows.every((row) =>
-    requiredColumns.every((col) => {
-      const sanitized = renderCell(row[col]);
-      return (
-        sanitized !== undefined &&
-        sanitized !== null &&
-        String(sanitized).trim() !== ""
-      );
-    }),
-  );
-};
-
-// Transforma (sanitiza) cada fila para obtener valores planos
-const sanitizeRow = (row: any): any => {
-  const newRow: any = { ...row };
-  for (const key in newRow) {
-    newRow[key] = renderCell(newRow[key]);
-  }
-  return newRow;
-};
-
-export function BulkUploadDialog({
-  roleOptions,
+export function BulkUploadProductDialog({
+  categoryOptions,
   onSuccess,
   onClose,
-}: BulkUploadDialogProps) {
+}: BulkUploadProductDialogProps) {
   const [file, setFile] = React.useState<File | null>(null);
   const [previewData, setPreviewData] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Mapea las opciones de roles de IRol a { value, label }
-  const mappedRoleOptions = React.useMemo(
-    () =>
-      roleOptions.map((role: IRol) => ({
-        value: role.id_rol.toString(),
-        label: role.nom_rol,
-      })),
-    [roleOptions],
-  );
+  // Función para validar que cada fila tenga datos en las columnas requeridas
+  const validateRows = (rows: any[]): boolean => {
+    return rows.every((row) =>
+      requiredColumns.every((col) => {
+        const value = row[col];
+        return (
+          value !== undefined && value !== null && String(value).trim() !== ""
+        );
+      }),
+    );
+  };
 
-  // Función para manejar el drag & drop
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -87,6 +64,7 @@ export function BulkUploadDialog({
     e.stopPropagation();
     const droppedFiles = e.dataTransfer.files;
     if (droppedFiles && droppedFiles.length > 0) {
+      // Simulamos el cambio del input
       const event = {
         target: { files: droppedFiles },
       } as React.ChangeEvent<HTMLInputElement>;
@@ -130,11 +108,13 @@ export function BulkUploadDialog({
             setPreviewData([]);
             return;
           }
-          setPreviewData(results.data.map(sanitizeRow));
+          setPreviewData(results.data);
         },
         error: (error) => {
           console.error("Error al parsear el archivo CSV:", error);
-          ToastError({ message: "Error al leer el archivo CSV" });
+          ToastError({
+            message: "Error al leer el archivo CSV",
+          });
         },
       });
     } else if (
@@ -147,7 +127,9 @@ export function BulkUploadDialog({
         const arrayBuffer = e.target?.result;
         try {
           if (!arrayBuffer) {
-            ToastError({ message: "Error al leer el archivo XLSX" });
+            ToastError({
+              message: "El archivo XLSX no se pudo leer correctamente.",
+            });
             return;
           }
           const workbook = new ExcelJS.Workbook();
@@ -155,15 +137,18 @@ export function BulkUploadDialog({
           const worksheet = workbook.worksheets[0];
           if (!worksheet) {
             ToastError({
-              message: "El archivo XLSX no contiene hojas de cálculo.",
+              message: "El archivo XLSX no contiene hojas válidas.",
             });
             return;
           }
+
+          // Obtener encabezados de la primera fila
           let headers = worksheet.getRow(1).values as any[];
           if (headers[0] === undefined) {
             headers = headers.slice(1);
           }
           headers = headers.map((h: any) => String(h).toLowerCase().trim());
+
           if (!validateHeaders(headers)) {
             setPreviewData([]);
             ToastError({
@@ -172,13 +157,14 @@ export function BulkUploadDialog({
             });
             return;
           }
+
           const formattedData: any[] = [];
           worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
             if (rowNumber === 1) return; // omitir fila de encabezados
             const rowValues = row.values as any[];
             const rowData: any = {};
             headers.forEach((header: string, index: number) => {
-              let value = rowValues[index + 1]; // ExcelJS usa índices 1-based
+              let value = rowValues[index + 1]; // ExcelJS usa índice 1-based
               if (value instanceof Date) {
                 value = value.toLocaleDateString("es-ES");
               }
@@ -186,6 +172,7 @@ export function BulkUploadDialog({
             });
             formattedData.push(rowData);
           });
+
           if (!validateRows(formattedData)) {
             ToastError({
               message:
@@ -194,24 +181,30 @@ export function BulkUploadDialog({
             setPreviewData([]);
             return;
           }
-          setPreviewData(formattedData.map(sanitizeRow));
+
+          setPreviewData(formattedData);
         } catch (err) {
           console.error("Error al parsear el archivo XLSX:", err);
-          ToastError({ message: "Error al leer el archivo XLSX" });
+          ToastError({
+            message: "Error al leer el archivo XLSX",
+          });
           setPreviewData([]);
           return;
         }
       };
+
       reader.onerror = (error) => {
         console.error("Error reading XLSX file:", error);
-        ToastError({ message: "Error al leer el archivo XLSX" });
+        ToastError({
+          message: "Error al leer el archivo XLSX",
+        });
       };
       reader.readAsArrayBuffer(selectedFile);
     } else {
       ToastError({
-        message: "Formato de archivo no soportado. Seleccione un CSV o XLSX.",
+        message:
+          "Formato de archivo no válido. Seleccione un archivo CSV o XLSX.",
       });
-      setPreviewData([]);
     }
   };
 
@@ -219,14 +212,19 @@ export function BulkUploadDialog({
     fileInputRef.current?.click();
   };
 
+  // Función para descargar la plantilla de productos desde el backend
   const handleDownloadTemplate = async () => {
     try {
-      const response = await fetch("http://localhost:5000/usuarios/plantilla", {
-        method: "GET",
-      });
+      const response = await fetch(
+        "http://localhost:5000/productos/plantilla",
+        {
+          method: "GET",
+        },
+      );
       if (!response.ok) {
+        const errorMsg = await response.text();
         ToastError({
-          message: "No se pudo descargar la plantilla de usuarios.",
+          message: `Error al descargar la plantilla: ${errorMsg}`,
         });
         return;
       }
@@ -234,57 +232,43 @@ export function BulkUploadDialog({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "plantilla-usuarios.xlsx";
+      a.download = "plantilla-productos.xlsx";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     } catch (error: any) {
-      ToastError({ message: "No se pudo descargar la plantilla de usuarios." });
+      console.error("Error descargando la plantilla:", error);
+      ToastError({
+        message: "Error al descargar la plantilla: " + error.message,
+      });
     }
   };
 
   const handleUpload = async () => {
     if (previewData.length === 0) {
       ToastError({
-        message: "No hay datos para cargar. Seleccione un archivo.",
+        message: "No hay datos para cargar. Seleccione un archivo válido.",
       });
       return;
     }
     setLoading(true);
     try {
-      // Mapear las opciones de roles para obtener el formato esperado: { value, label }
-      const mappedRoleOptions = mappedRoleOptionsMemo();
+      const defaultImageUrl =
+        "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/productos%2Fproduct-default.jpg?alt=media&token=a06d2373-fd9a-4fa5-a715-3c9ab7ae546d";
+      const processedData: IProductCreate[] = previewData.map((row) => ({
+        cate_prod: Number(row["cate_prod"]),
+        nom_prod: row["nom_prod"],
+        prec_prod: Number(row["prec_prod"]),
+        stock_prod: Number(row["stock_prod"]),
+        fech_ven_prod: row["fech_ven_prod"],
+        est_prod: "Activo",
+        img_prod: defaultImageUrl,
+        iva_prod: true,
+        mat_prod: false,
+      }));
 
-      // Procesar cada fila y transformar el valor de rol textual a su value (cadena)
-      const processedData = previewData.map((row) => {
-        let roleValue = row["rol_usu"];
-        // Primero, verificamos si ya coincide con un value en mappedRoleOptions
-        const optionByValue = mappedRoleOptions.find(
-          (option) =>
-            option.value.toLowerCase() === String(roleValue).toLowerCase(),
-        );
-        if (optionByValue) {
-          roleValue = optionByValue.value;
-        } else {
-          // Si no, buscamos por etiqueta (label)
-          const optionByLabel = mappedRoleOptions.find(
-            (option) =>
-              option.label.toLowerCase() === String(roleValue).toLowerCase(),
-          );
-          if (optionByLabel) {
-            roleValue = optionByLabel.value;
-          } else {
-            throw new Error(`El rol con id ${roleValue} no fue encontrado`);
-          }
-        }
-        return {
-          ...row,
-          rol_usu: roleValue,
-        };
-      });
-
-      const res = await fetch("http://localhost:5000/usuarios/masivo", {
+      const res = await fetch("http://localhost:5000/productos/masivo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(processedData),
@@ -296,34 +280,37 @@ export function BulkUploadDialog({
           (data.errors &&
             data.errors.map((err: any) => err.error).join(", ")) ||
           "Error en la carga masiva";
-        console.log(errorMsg);
         throw new Error(errorMsg);
       }
-      onSuccess(data.usuarios);
-      ToastSuccess({
-        message: `Se han cargado ${data.usuarios.length} usuarios.`,
-      });
+      if (data.productos && data.productos.length > 0) {
+        onSuccess(data.productos);
+        ToastSuccess({
+          message: `Se cargaron ${data.productos.length} productos correctamente`,
+        });
+      }
+      if (data.errors && data.errors.length > 0) {
+        const errorList = data.errors
+          .map((err: any) => err.error || JSON.stringify(err))
+          .join(", ");
+        ToastError({
+          message: `Errores en la carga masiva: ${errorList}`,
+        });
+      }
       onClose();
     } catch (error: any) {
-      ToastError({ message: `Error al cargar usuarios: ${error.message}` });
+      ToastError({
+        message: error.message || "Error al cargar los productos",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  // Creamos la variable mapeada mediante una función de utilidad para usar en handleUpload y en la vista previa.
-  const mappedRoleOptionsMemo = React.useCallback(() => {
-    return roleOptions.map((role: IRol) => ({
-      value: role.id_rol.toString(),
-      label: role.nom_rol,
-    }));
-  }, [roleOptions]);
-
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="border-border dark:bg-[#09090b] sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Carga Masiva de Usuarios</DialogTitle>
+          <DialogTitle>Carga Masiva de Productos</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           {/* Instrucciones */}
@@ -342,7 +329,7 @@ export function BulkUploadDialog({
               <li>
                 Llena la plantilla. Las columnas requeridas son:{" "}
                 <strong className="dark:text-primary">
-                  nom_usu, email_usu, clave_usu y rol_usu
+                  cate_prod, nom_prod, prec_prod, stock_prod y fech_ven_prod
                 </strong>
                 .
               </li>
@@ -413,18 +400,14 @@ export function BulkUploadDialog({
                         const key = header.toLowerCase();
                         if (key === "rol_usu") {
                           const rolValue = row[header];
-                          const label =
-                            mappedRoleOptionsMemo().find(
-                              (option) =>
-                                option.value.toLowerCase() ===
-                                String(rolValue).toLowerCase(),
-                            )?.label || String(rolValue);
                           return (
                             <td
                               key={cellIndex}
                               className="border border-gray-200 px-4 py-2 text-sm text-gray-700 dark:text-white"
                             >
-                              {label}
+                              {categoryOptions.find(
+                                (option) => option.value === String(rolValue),
+                              )?.label || String(rolValue)}
                             </td>
                           );
                         } else {
@@ -459,7 +442,7 @@ export function BulkUploadDialog({
               disabled={loading || previewData.length === 0}
               className="bg-[#f6b100] text-black"
             >
-              {loading ? "Cargando..." : "Guardar Usuarios"}
+              {loading ? "Cargando..." : "Guardar Productos"}
             </Button>
           </div>
         </DialogFooter>

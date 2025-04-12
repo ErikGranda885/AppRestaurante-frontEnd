@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
-import { DataTable } from "@/components/shared/dataTable";
+import { DataTable } from "@/components/shared/varios/dataTable";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, MoreHorizontal, Upload } from "lucide-react";
 import {
@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardDescription,
 } from "@/components/ui/card";
-import { GeneralDialog } from "@/components/shared/dialogGen";
+import { GeneralDialog } from "@/components/shared/varios/dialogGen";
 import { CreateInsumoForm } from "@/components/shared/insumos-comp/createInsumoForm";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { IInsumo } from "@/lib/types";
@@ -405,7 +405,6 @@ export default function InsumosPage() {
               setOpenBulkUpload(false);
             }}
             onClose={() => setOpenBulkUpload(false)}
-            
           />
         )}
         {/* Acciones: Importar y Crear insumo */}

@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
-import { DataTable } from "@/components/shared/dataTable";
+import { DataTable } from "@/components/shared/varios/dataTable";
 import {
   MoreHorizontal,
   Upload,
@@ -19,7 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { GeneralDialog } from "@/components/shared/dialogGen";
+import { GeneralDialog } from "@/components/shared/varios/dialogGen";
 import { Toaster } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,9 +31,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ColumnDef } from "@tanstack/react-table";
-import { CreateUserForm } from "@/components/shared/users-comp/createUserForm";
-import { EditUserForm } from "@/components/shared/users-comp/editUserForm";
-import { BulkUploadDialog } from "@/components/shared/users-comp/cargaUsers";
+import { CreateUserForm } from "@/components/shared/usuarios/formularios/createUserForm";
+import { EditUserForm } from "@/components/shared/usuarios/formularios/editUserForm";
+import { BulkUploadDialog } from "@/components/shared/usuarios/formularios/cargaUsers";
 import {
   Card,
   CardDescription,

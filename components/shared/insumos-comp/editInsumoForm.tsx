@@ -18,8 +18,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Combobox, Option } from "@/components/shared/combobox";
-import { CampoFecha } from "../form/campoFecha";
+import { Combobox, Option } from "@/components/shared/varios/combobox";
+import { CampoFecha } from "../varios/campoFecha";
 
 /* ================================================================
    ESQUEMA DEL FORMULARIO PARA EDITAR INSUMO

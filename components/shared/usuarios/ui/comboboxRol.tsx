@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { Combobox } from "@/components/shared/combobox";
+import { Combobox } from "@/components/shared/varios/combobox";
 import { IRol } from "@/lib/types";
 
 export interface RoleComboboxProps {
@@ -41,7 +41,7 @@ export const RoleCombobox: React.FC<RoleComboboxProps> = ({
         }
       }}
       placeholder={placeholder}
-      className={className }
+      className={className}
     />
   );
 };

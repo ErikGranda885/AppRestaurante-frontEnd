@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
-import { DataTable } from "@/components/shared/dataTable";
+import { DataTable } from "@/components/shared/varios/dataTable";
 import {
   MoreHorizontal,
   Upload,
@@ -12,7 +12,7 @@ import {
   Search,
   CloudDownload,
 } from "lucide-react";
-import { GeneralDialog } from "@/components/shared/dialogGen";
+import { GeneralDialog } from "@/components/shared/varios/dialogGen";
 import toast, { Toaster } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,8 +24,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ColumnDef } from "@tanstack/react-table";
-import { CreateCategoryForm } from "@/components/shared/categories-comp/createCategoryForm";
-import { BulkUploadCategoryDialog } from "@/components/shared/categories-comp/cargaCategory";
+import { CreateCategoryForm } from "@/components/shared/categorias/formularios/createCategoryForm";
+import { BulkUploadCategoryDialog } from "@/components/shared/categorias/formularios/cargaCategory";
 import {
   Card,
   CardDescription,
@@ -33,7 +33,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
-import { EditCategoryForm } from "@/components/shared/categories-comp/editCategoryForm";
+import { EditCategoryForm } from "@/components/shared/categorias/formularios/editCategoryForm";
 import { ICategory } from "@/lib/types";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { ToastError } from "@/components/shared/toast/toastError";

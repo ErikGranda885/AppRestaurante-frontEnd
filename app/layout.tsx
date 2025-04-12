@@ -1,8 +1,8 @@
 // app/layout.tsx
 import "./globals.css";
 import type { Metadata } from "next";
-import { ThemeProvider } from "@/components/shared/theme-provider";
-import { ModeToggle } from "@/components/shared/modeToogle";
+import { ThemeProvider } from "@/components/shared/varios/theme-provider";
+import { ModeToggle } from "@/components/shared/varios/modeToogle";
 import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {

@@ -14,8 +14,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { ToastSuccess } from "../toast/toastSuccess";
-import { ToastError } from "../toast/toastError";
+import { ToastSuccess } from "../../toast/toastSuccess";
+import { ToastError } from "../../toast/toastError";
 
 // Declaramos un ref para almacenar el nombre inicial y así evitar la validación si no ha cambiado
 const initialDataCorreoRef = { current: "" };

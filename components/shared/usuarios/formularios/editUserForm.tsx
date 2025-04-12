@@ -16,9 +16,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Combobox, Option } from "@/components/shared/combobox";
-import { ToastSuccess } from "../toast/toastSuccess";
-import { ToastError } from "../toast/toastError";
+import { Combobox, Option } from "@/components/shared/varios/combobox";
+import { ToastSuccess } from "../../toast/toastSuccess";
+import { ToastError } from "../../toast/toastError";
 
 // Expresión regular para el nombre
 const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ]+( [A-Za-zÁÉÍÓÚáéíóúÑñ]+)?$/;

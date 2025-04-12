@@ -5,81 +5,95 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { CampoTexto } from "../form/campoTexto";
-import { CampoCategoria } from "./componentes/forms/campoCategoria";
-import { CampoSelectTipo } from "./componentes/forms/campoTipo";
-import { CampoSelectUnidad } from "./componentes/forms/campoSelectUnidad";
-import { ZonaImagen } from "./componentes/forms/zonaImagen";
-import { ToastSuccess } from "../toast/toastSuccess";
-import { ToastError } from "../toast/toastError";
 import { uploadImage } from "@/firebase/subirImage";
+import { CampoCategoria, CategoryOption } from "../ui/campoCategoria";
+import { ZonaImagen } from "../ui/zonaImagen";
+import { CampoTexto } from "../../varios/campoTexto";
+import { ICategory } from "@/lib/types";
+import { ToastSuccess } from "../../toast/toastSuccess";
+import { ToastError } from "../../toast/toastError";
+import { CampoSelectUnidad } from "../ui/campoSelectUnidad";
+import { CampoSelectTipo } from "../ui/campoTipo";
 
-// Declaramos un ref para almacenar el nombre inicial y así evitar la validación si no cambia
-const initialProductNameRef = { current: "" };
+export type Option = {
+  value: string;
+  label: string;
+};
 
-const editProductSchema = z.object({
+/* ============================
+   ESQUEMA DEL FORMULARIO
+=============================== */
+const FormSchema = z.object({
   nombre: z
     .string()
     .nonempty("El nombre del producto es requerido")
-    .min(2, { message: "El nombre debe tener al menos 2 caracteres." })
     .refine(
-      async (nombre: string) => {
-        // Si el nombre no se ha modificado, omite la verificación asíncrona
-        if (nombre === initialProductNameRef.current) return true;
-        const res = await fetch(
+      ((nombre: string) => {
+        return fetch(
           `http://localhost:5000/productos/verificar?nombre=${encodeURIComponent(nombre)}`,
-        );
-        const data = await res.json();
-        return !data.exists;
-      },
+        )
+          .then((res) => res.json())
+          .then((data) => !data.exists);
+      }) as (nombre: string) => Promise<boolean>,
       {
         message: "El nombre del producto ya se encuentra registrado",
         async: true,
       } as any,
     ),
+
   categoria: z.string().nonempty("Seleccione una categoría"),
   tipo_prod: z.string().nonempty("Seleccione un tipo de producto"),
   undidad_prod: z.string().nonempty("Seleccione una unidad de medida"),
 });
 
-export type EditProductFormValues = z.infer<typeof editProductSchema>;
+type FormValues = z.infer<typeof FormSchema>;
 
-interface EditProductFormProps {
-  initialData: {
-    id: string;
-    nombre: string;
-    categoria: string;
-    tipo_prod: string;
-    undidad_prod: string;
-    img_prod: string;
-  };
-  // Se utilizarán en el componente CampoCategoria
-  categoryOptions: { value: string; label: string }[];
-  onSuccess: (data: any) => void;
-}
-
-export function EditProductForm({
-  initialData,
-  categoryOptions,
+export function FormProducts({
   onSuccess,
-}: EditProductFormProps) {
-  // Actualizamos el ref con el valor inicial del nombre para la validación asíncrona
-  useEffect(() => {
-    initialProductNameRef.current = initialData.nombre;
-  }, [initialData.nombre]);
-
-  const form = useForm<EditProductFormValues>({
-    resolver: zodResolver(editProductSchema),
-    defaultValues: initialData,
+}: {
+  onSuccess: (data: any) => void;
+}) {
+  const form = useForm<FormValues>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      nombre: "",
+      categoria: "",
+      tipo_prod: "",
+      undidad_prod: "",
+    },
   });
 
-  // Estados para el manejo de la imagen y su previsualización
+  // Cargar opciones de categoría desde la API
+  const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
+  useEffect(() => {
+    fetch("http://localhost:5000/categorias")
+      .then((res) => {
+        if (!res.ok) throw new Error("Error al cargar categorías");
+        return res.json();
+      })
+      .then((data: any) => {
+        // Filtrar solo categorías activas (usando la interfaz ICategory)
+        const active = data.categorias.filter(
+          (cate: ICategory) => cate.est_cate?.toLowerCase() === "activo",
+        );
+        const options: Option[] = [
+          { value: "", label: "Todos" },
+          ...active.map((cate: ICategory) => ({
+            value: cate.id_cate.toString(),
+            label: cate.nom_cate,
+          })),
+        ];
+        setCategoryOptions(options);
+      })
+      .catch((err) => console.error("Error al cargar categorías:", err));
+  }, []);
+
+  // Estados para la imagen y su previsualización
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>(
-    initialData.img_prod,
-  );
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
+  // Funciones para el manejo de imagen en ZonaImagen
   const handleImageSelect = () => {
     imageInputRef.current?.click();
   };
@@ -98,41 +112,43 @@ export function EditProductForm({
     e.preventDefault();
   };
 
-  const onSubmit = async (values: EditProductFormValues) => {
-    let imageUrl = imagePreview;
+  // Función de envío del formulario
+  const onSubmit = async (data: FormValues) => {
+    let imageUrl = imagePreview || "";
     if (imageFile) {
       imageUrl = await uploadImage(imageFile);
+    } else {
+      imageUrl =
+        "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/productos%2Fproduct-default.jpg?alt=media&token=a06d2373-fd9a-4fa5-a715-3c9ab7ae546d";
     }
 
-    // Se arma el payload que espera el backend
     const payload = {
-      nom_prod: values.nombre,
-      cate_prod: Number(values.categoria),
-      tip_prod: values.tipo_prod,
-      und_prod: values.undidad_prod,
+      nom_prod: data.nombre,
+      cate_prod: Number(data.categoria),
       img_prod: imageUrl,
+      tip_prod: data.tipo_prod,
+      und_prod: data.undidad_prod,
     };
 
     try {
-      const res = await fetch(
-        `http://localhost:5000/productos/${initialData.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        },
-      );
-      if (!res.ok) {
-        const errorResponse = await res.json();
-        throw new Error(errorResponse.message || `Error: ${res.status}`);
+      const response = await fetch("http://localhost:5000/productos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        throw new Error(`Error al crear el producto: ${response.status}`);
       }
-      const data = await res.json();
-      onSuccess(data);
-      ToastSuccess({ message: "Producto actualizado correctamente" });
-    } catch (err: any) {
-      console.error("Error al actualizar el producto:", err);
+      const resData = await response.json();
+      onSuccess(resData);
+      form.reset();
+      ToastSuccess({
+        message: "Producto creado correctamente",
+      });
+    } catch (error) {
+      console.error("Error al crear el producto:", error);
       ToastError({
-        message: `Error al actualizar el producto: ${err.message}`,
+        message: "Error al crear el producto",
       });
     }
   };
@@ -159,14 +175,12 @@ export function EditProductForm({
               label="Categoría"
               options={categoryOptions}
             />
-
             <CampoSelectTipo
               control={form.control}
               name="tipo_prod"
               label="Tipo de Producto"
               placeholder="Seleccione el tipo de producto"
             />
-
             <CampoSelectUnidad
               control={form.control}
               name="undidad_prod"
@@ -197,7 +211,7 @@ export function EditProductForm({
             className="bg-[#f6b100] text-black hover:bg-[#f6b100]/80"
             type="submit"
           >
-            Guardar Cambios
+            Crear Producto
           </Button>
         </div>
       </form>

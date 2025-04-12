@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { RoleCombobox } from "./componentes/form/comboboxRol";
+import { RoleCombobox } from "../ui/comboboxRol";
 import { Eye, EyeOff } from "lucide-react";
 import {
   Dialog,
@@ -23,8 +23,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ToastError } from "../toast/toastError";
-import { ToastSuccess } from "../toast/toastSuccess";
+import { ToastError } from "../../toast/toastError";
+import { ToastSuccess } from "../../toast/toastSuccess";
 import { IRol } from "@/lib/types";
 
 // Esquema para el formulario principal de crear usuario
@@ -363,7 +363,7 @@ export function CreateUserForm({
                 )}
               />
               <DialogFooter>
-                <div className="flex justify-end space-x-2 items-center mt-3">
+                <div className="mt-3 flex items-center justify-end space-x-2">
                   <Button
                     variant="outline"
                     onClick={() => setShowRoleModal(false)}

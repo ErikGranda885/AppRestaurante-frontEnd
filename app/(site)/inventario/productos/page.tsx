@@ -4,12 +4,12 @@ import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "react-hot-toast";
-import { GeneralDialog } from "@/components/shared/dialogGen";
-import { FormProducts } from "@/components/shared/products-comp/createProductForm";
-import { BulkUploadProductDialog } from "@/components/shared/products-comp/cargaProducts";
-import { EditProductForm } from "@/components/shared/products-comp/editProductForm";
-import { MetricCard } from "@/components/shared/metricCard";
-import { CategoryCombobox } from "@/components/shared/products-comp/componentes/page/categoryCombobox";
+import { GeneralDialog } from "@/components/shared/varios/dialogGen";
+import { FormProducts } from "@/components/shared/productos/formularios/createProductForm";
+import { BulkUploadProductDialog } from "@/components/shared/productos/formularios/cargaProducts";
+import { EditProductForm } from "@/components/shared/productos/formularios/editProductForm";
+import { MetricCard } from "@/components/shared/varios/metricCard";
+import { CategoryCombobox } from "@/components/shared/productos/ui/categoryCombobox";
 import {
   CloudDownload,
   Plus,
@@ -17,8 +17,8 @@ import {
   SlidersHorizontal,
   Upload,
 } from "lucide-react";
-import { ProductCard } from "@/components/shared/products-comp/componentes/page/productCard";
-import { Paginator } from "@/components/shared/products-comp/componentes/page/paginator";
+import { ProductCard } from "@/components/shared/productos/ui/productCard";
+import { Paginator } from "@/components/shared/productos/ui/paginator";
 import { Separator } from "@/components/ui/separator";
 import { getDaysUntilExpiration } from "@/utils/dates";
 

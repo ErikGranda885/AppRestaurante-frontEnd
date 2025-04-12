@@ -1,5 +1,4 @@
 "use client";
-
 import * as React from "react";
 import Papa from "papaparse";
 import * as ExcelJS from "exceljs";
@@ -13,36 +12,27 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
-import { IProduct, IProductCreate, IProductEdit } from "@/lib/types";
-import { ToastError } from "../toast/toastError";
-import { ToastSuccess } from "../toast/toastSuccess";
-
-interface BulkUploadProductDialogProps {
-  categoryOptions: { value: string; label: string }[];
-  onSuccess: (newProducts: IProduct[]) => void;
+import { ICategory } from "@/lib/types";
+import { ToastError } from "../../toast/toastError";
+import { ToastSuccess } from "../../toast/toastSuccess";
+interface BulkUploadCategoryDialogProps {
+  onSuccess: (newCategories: ICategory[]) => void;
   onClose: () => void;
 }
 
-// Se definen las columnas requeridas según lo que se espera en la carga masiva
-const requiredColumns = [
-  "cate_prod",
-  "nom_prod",
-  "prec_prod",
-  "stock_prod",
-  "fech_ven_prod",
-];
+const requiredColumns = ["nom_cate", "desc_cate"];
 
-export function BulkUploadProductDialog({
-  categoryOptions,
+export function BulkUploadCategoryDialog({
   onSuccess,
   onClose,
-}: BulkUploadProductDialogProps) {
+}: BulkUploadCategoryDialogProps) {
   const [file, setFile] = React.useState<File | null>(null);
   const [previewData, setPreviewData] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(false);
+  const [isDragging, setIsDragging] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Función para validar que cada fila tenga datos en las columnas requeridas
+  // Valida que cada fila tenga datos en las columnas requeridas
   const validateRows = (rows: any[]): boolean => {
     return rows.every((row) =>
       requiredColumns.every((col) => {
@@ -54,34 +44,16 @@ export function BulkUploadProductDialog({
     );
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const droppedFiles = e.dataTransfer.files;
-    if (droppedFiles && droppedFiles.length > 0) {
-      // Simulamos el cambio del input
-      const event = {
-        target: { files: droppedFiles },
-      } as React.ChangeEvent<HTMLInputElement>;
-      handleFileChange(event);
-      e.dataTransfer.clearData();
-    }
+  // Valida los encabezados
+  const validateHeaders = (headers: string[]): boolean => {
+    const lowerHeaders = headers.map((h) => h.toLowerCase().trim());
+    return requiredColumns.every((col) => lowerHeaders.includes(col));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
     setFile(selectedFile);
-
-    const validateHeaders = (headers: string[]): boolean => {
-      const lowerHeaders = headers.map((h) => h.toLowerCase().trim());
-      return requiredColumns.every((col) => lowerHeaders.includes(col));
-    };
 
     if (
       selectedFile.type === "text/csv" ||
@@ -93,25 +65,23 @@ export function BulkUploadProductDialog({
         complete: (results) => {
           const headers = results.meta.fields || [];
           if (!validateHeaders(headers)) {
-            ToastError({
-              message:
-                "El archivo CSV contiene columnas incompletas o con encabezados incorrectos.",
-            });
             setPreviewData([]);
+            ToastError({
+              message: "El archivo CSV contiene encabezados incorrectos.",
+            });
             return;
           }
           if (!validateRows(results.data)) {
+            setPreviewData([]);
             ToastError({
               message:
                 "El archivo contiene celdas vacías en campos requeridos.",
             });
-            setPreviewData([]);
             return;
           }
           setPreviewData(results.data);
         },
         error: (error) => {
-          console.error("Error al parsear el archivo CSV:", error);
           ToastError({
             message: "Error al leer el archivo CSV",
           });
@@ -128,7 +98,7 @@ export function BulkUploadProductDialog({
         try {
           if (!arrayBuffer) {
             ToastError({
-              message: "El archivo XLSX no se pudo leer correctamente.",
+              message: "El archivo XLSX no se pudo leer.",
             });
             return;
           }
@@ -137,27 +107,23 @@ export function BulkUploadProductDialog({
           const worksheet = workbook.worksheets[0];
           if (!worksheet) {
             ToastError({
-              message: "El archivo XLSX no contiene hojas válidas.",
+              message: "El archivo XLSX no contiene hojas de cálculo.",
             });
             return;
           }
-
           // Obtener encabezados de la primera fila
           let headers = worksheet.getRow(1).values as any[];
           if (headers[0] === undefined) {
             headers = headers.slice(1);
           }
           headers = headers.map((h: any) => String(h).toLowerCase().trim());
-
           if (!validateHeaders(headers)) {
             setPreviewData([]);
             ToastError({
-              message:
-                "El archivo XLSX contiene columnas incompletas o con encabezados incorrectos.",
+              message: "El archivo XLSX contiene encabezados incorrectos.",
             });
             return;
           }
-
           const formattedData: any[] = [];
           worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
             if (rowNumber === 1) return; // omitir fila de encabezados
@@ -172,27 +138,22 @@ export function BulkUploadProductDialog({
             });
             formattedData.push(rowData);
           });
-
           if (!validateRows(formattedData)) {
+            setPreviewData([]);
             ToastError({
               message:
                 "El archivo contiene celdas vacías en campos requeridos.",
             });
-            setPreviewData([]);
             return;
           }
-
           setPreviewData(formattedData);
         } catch (err) {
           console.error("Error al parsear el archivo XLSX:", err);
           ToastError({
             message: "Error al leer el archivo XLSX",
           });
-          setPreviewData([]);
-          return;
         }
       };
-
       reader.onerror = (error) => {
         console.error("Error reading XLSX file:", error);
         ToastError({
@@ -201,9 +162,9 @@ export function BulkUploadProductDialog({
       };
       reader.readAsArrayBuffer(selectedFile);
     } else {
+      setPreviewData([]);
       ToastError({
-        message:
-          "Formato de archivo no válido. Seleccione un archivo CSV o XLSX.",
+        message: "Formato de archivo no soportado. Seleccione un CSV o XLSX.",
       });
     }
   };
@@ -212,63 +173,58 @@ export function BulkUploadProductDialog({
     fileInputRef.current?.click();
   };
 
-  // Función para descargar la plantilla de productos desde el backend
-  const handleDownloadTemplate = async () => {
-    try {
-      const response = await fetch(
-        "http://localhost:5000/productos/plantilla",
-        {
-          method: "GET",
-        },
-      );
-      if (!response.ok) {
-        const errorMsg = await response.text();
-        ToastError({
-          message: `Error al descargar la plantilla: ${errorMsg}`,
-        });
-        return;
-      }
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "plantilla-productos.xlsx";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    } catch (error: any) {
-      console.error("Error descargando la plantilla:", error);
-      ToastError({
-        message: "Error al descargar la plantilla: " + error.message,
-      });
+  const handleDownloadTemplate = () => {
+    window.open("http://localhost:5000/categorias/plantilla", "_blank");
+  };
+
+  // Manejo de drag & drop
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const droppedFiles = e.dataTransfer.files;
+    if (droppedFiles && droppedFiles.length > 0) {
+      const event = {
+        target: { files: droppedFiles },
+      } as React.ChangeEvent<HTMLInputElement>;
+      handleFileChange(event);
+      e.dataTransfer.clearData();
     }
   };
 
   const handleUpload = async () => {
     if (previewData.length === 0) {
       ToastError({
-        message: "No hay datos para cargar. Seleccione un archivo válido.",
+        message: "No hay datos para cargar. Seleccione un archivo primero.",
       });
       return;
     }
     setLoading(true);
     try {
-      const defaultImageUrl =
-        "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/productos%2Fproduct-default.jpg?alt=media&token=a06d2373-fd9a-4fa5-a715-3c9ab7ae546d";
-      const processedData: IProductCreate[] = previewData.map((row) => ({
-        cate_prod: Number(row["cate_prod"]),
-        nom_prod: row["nom_prod"],
-        prec_prod: Number(row["prec_prod"]),
-        stock_prod: Number(row["stock_prod"]),
-        fech_ven_prod: row["fech_ven_prod"],
-        est_prod: "Activo",
-        img_prod: defaultImageUrl,
-        iva_prod: true,
-        mat_prod: false,
+      // Transformamos cada fila para ajustarla a lo que espera el backend.
+      // Se crea un objeto con las propiedades de ICategory (excepto id_cate, que se genera en el backend).
+      const processedData = previewData.map((row) => ({
+        nom_cate: row["nom_cate"],
+        desc_cate: row["desc_cate"],
+        est_cate: "Activo",
       }));
 
-      const res = await fetch("http://localhost:5000/productos/masivo", {
+      const res = await fetch("http://localhost:5000/categorias/masivo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(processedData),
@@ -282,10 +238,12 @@ export function BulkUploadProductDialog({
           "Error en la carga masiva";
         throw new Error(errorMsg);
       }
-      if (data.productos && data.productos.length > 0) {
-        onSuccess(data.productos);
+      if (data.categorias && data.categorias.length > 0) {
+        // Se espera que la API retorne categorías en la forma de ICategory,
+        // donde id_cate es de tipo number.
+        onSuccess(data.categorias);
         ToastSuccess({
-          message: `Se cargaron ${data.productos.length} productos correctamente`,
+          message: `Se cargaron ${data.categorias.length} categorías`,
         });
       }
       if (data.errors && data.errors.length > 0) {
@@ -293,13 +251,15 @@ export function BulkUploadProductDialog({
           .map((err: any) => err.error || JSON.stringify(err))
           .join(", ");
         ToastError({
-          message: `Errores en la carga masiva: ${errorList}`,
+          message: `Se encontraron errores en la carga: ${errorList}`,
         });
       }
       onClose();
     } catch (error: any) {
       ToastError({
-        message: error.message || "Error al cargar los productos",
+        message:
+          error.message ||
+          "Ocurrió un error inesperado al cargar las categorías.",
       });
     } finally {
       setLoading(false);
@@ -308,14 +268,14 @@ export function BulkUploadProductDialog({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="border-border dark:bg-[#09090b] sm:max-w-3xl">
+      <DialogContent className="dark:border-default-700 dark:border dark:bg-[#09090b] sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Carga Masiva de Productos</DialogTitle>
+          <DialogTitle>Carga Masiva de Categorías</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           {/* Instrucciones */}
           <div className="rounded bg-gray-100 p-4 dark:border-none dark:bg-[#1E1E1E] dark:text-white">
-            <h2 className="mb-2 font-mono dark:text-gray-100">
+            <h2 className="mb-2 text-lg font-bold dark:text-gray-100">
               Pasos para la carga masiva:
             </h2>
             <ol className="list-inside list-decimal text-sm text-gray-700 dark:text-white">
@@ -329,21 +289,20 @@ export function BulkUploadProductDialog({
               <li>
                 Llena la plantilla. Las columnas requeridas son:{" "}
                 <strong className="dark:text-primary">
-                  cate_prod, nom_prod, prec_prod, stock_prod y fech_ven_prod
+                  nom_cate y desc_cate
                 </strong>
                 .
               </li>
               <li>
-                Guarda el archivo y selecciónalo haciendo clic en{" "}
-                <span className="font-semibold dark:text-primary">
-                  Seleccionar archivo
-                </span>
-                .
+                Guarda el archivo y selecciónalo arrastrándolo a la zona o
+                haciendo clic.
               </li>
               <li>Verifica la vista previa de los datos en la tabla.</li>
               <li>
                 Si todo es correcto, haz clic en{" "}
-                <span className="font-semibold dark:text-primary">Cargar</span>{" "}
+                <span className="font-semibold dark:text-primary">
+                  Guardar Categorías
+                </span>{" "}
                 para subir la información.
               </li>
             </ol>
@@ -362,7 +321,9 @@ export function BulkUploadProductDialog({
             />
             <div
               onClick={handleUploadClick}
+              onDragEnter={handleDragEnter}
               onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               className="dark:border-default-700 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-6 hover:border-gray-400 dark:text-white dark:hover:border-gray-500"
             >
@@ -396,31 +357,14 @@ export function BulkUploadProductDialog({
                 <tbody>
                   {previewData.map((row, rowIndex) => (
                     <tr key={rowIndex} className="border border-gray-200">
-                      {Object.keys(row).map((header, cellIndex) => {
-                        const key = header.toLowerCase();
-                        if (key === "rol_usu") {
-                          const rolValue = row[header];
-                          return (
-                            <td
-                              key={cellIndex}
-                              className="border border-gray-200 px-4 py-2 text-sm text-gray-700 dark:text-white"
-                            >
-                              {categoryOptions.find(
-                                (option) => option.value === String(rolValue),
-                              )?.label || String(rolValue)}
-                            </td>
-                          );
-                        } else {
-                          return (
-                            <td
-                              key={cellIndex}
-                              className="border border-gray-200 px-4 py-2 text-sm text-gray-700 dark:text-white"
-                            >
-                              {row[header]}
-                            </td>
-                          );
-                        }
-                      })}
+                      {Object.keys(row).map((header, cellIndex) => (
+                        <td
+                          key={cellIndex}
+                          className="border border-gray-200 px-4 py-2 text-sm text-gray-700 dark:text-white"
+                        >
+                          {row[header]}
+                        </td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>
@@ -439,10 +383,10 @@ export function BulkUploadProductDialog({
             </Button>
             <Button
               onClick={handleUpload}
-              disabled={loading || previewData.length === 0}
               className="bg-[#f6b100] text-black"
+              disabled={loading || previewData.length === 0}
             >
-              {loading ? "Cargando..." : "Guardar Productos"}
+              {loading ? "Cargando..." : "Guardar Categorías"}
             </Button>
           </div>
         </DialogFooter>

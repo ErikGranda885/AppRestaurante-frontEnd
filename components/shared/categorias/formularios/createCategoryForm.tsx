@@ -13,8 +13,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { ToastSuccess } from "../toast/toastSuccess";
-import { ToastError } from "../toast/toastError";
+import { ToastSuccess } from "../../toast/toastSuccess";
+import { ToastError } from "../../toast/toastError";
 
 // Definición del esquema para crear categorías
 const createCategorySchema = z.object({
