@@ -5,57 +5,70 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { CampoTexto } from "../../varios/campoTexto";
+import { uploadImage } from "@/firebase/subirImage";
 import { CampoCategoria } from "../ui/campoCategoria";
-import { CampoSelectTipo } from "../ui/campoTipo";
-import { CampoSelectUnidad } from "../ui/campoSelectUnidad";
 import { ZonaImagen } from "../ui/zonaImagen";
+import { CampoTexto } from "../../varios/campoTexto";
+import { ICategory } from "@/lib/types";
 import { ToastSuccess } from "../../toast/toastSuccess";
 import { ToastError } from "../../toast/toastError";
-import { uploadImage } from "@/firebase/subirImage";
+import { CampoSelectUnidad } from "../ui/campoSelectUnidad";
+import { SERVICIOS } from "@/services/productos.service";
+import { CampoSelectTipo } from "../ui/campoTipo";
 
-// Declaramos un ref para almacenar el nombre inicial y así evitar la validación si no cambia
+// Ref para almacenar el nombre inicial del producto (para omitir validación asíncrona si no cambia)
 const initialProductNameRef = { current: "" };
 
-const editProductSchema = z.object({
-  nombre: z
-    .string()
-    .nonempty("El nombre del producto es requerido")
-    .min(2, { message: "El nombre debe tener al menos 2 caracteres." })
-    .refine(
-      async (nombre: string) => {
-        // Si el nombre no se ha modificado, omite la verificación asíncrona
-        if (nombre === initialProductNameRef.current) return true;
-        const res = await fetch(
-          `http://localhost:5000/productos/verificar?nombre=${encodeURIComponent(nombre)}`,
-        );
-        const data = await res.json();
-        return !data.exists;
-      },
-      {
-        message: "El nombre del producto ya se encuentra registrado",
-        async: true,
-      } as any,
-    ),
-  categoria: z.string().nonempty("Seleccione una categoría"),
-  tipo_prod: z.string().nonempty("Seleccione un tipo de producto"),
-  undidad_prod: z.string().nonempty("Seleccione una unidad de medida"),
-});
+const EsquemaFormulario = z
+  .object({
+    nombre: z
+      .string()
+      .nonempty("El nombre del producto es requerido")
+      .min(2, { message: "El nombre debe tener al menos 2 caracteres." })
+      .refine(
+        async (nombre: string) => {
+          if (nombre === initialProductNameRef.current) return true;
+          const res = await fetch(
+            `http://localhost:5000/productos/verificar?nombre=${encodeURIComponent(nombre)}`,
+          );
+          const data = await res.json();
+          return !data.exists;
+        },
+        {
+          message: "El nombre del producto ya se encuentra registrado",
+          async: true,
+        } as any,
+      ),
+    categoria: z.string().optional(),
+    tipo_prod: z.string().nonempty("Seleccione un tipo de producto"),
+    undidad_prod: z.string().nonempty("Seleccione una unidad de medida"),
+  })
+  .superRefine((val, ctx) => {
+    if (
+      val.tipo_prod.toLowerCase() !== "insumo" &&
+      (!val.categoria || val.categoria.trim() === "")
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["categoria"],
+        message: "Seleccione una categoría",
+      });
+    }
+  });
 
-export type EditProductFormValues = z.infer<typeof editProductSchema>;
+export type EditProductFormValues = z.infer<typeof EsquemaFormulario>;
 
 interface EditProductFormProps {
   initialData: {
     id: string;
     nombre: string;
-    categoria: string;
+    categoria: string | null;
     tipo_prod: string;
     undidad_prod: string;
     img_prod: string;
   };
-  // Se utilizarán en el componente CampoCategoria
-  categoryOptions: { value: string; label: string }[];
   onSuccess: (data: any) => void;
+  categoryOptions: { value: string; label: string }[];
 }
 
 export function EditProductForm({
@@ -63,17 +76,23 @@ export function EditProductForm({
   categoryOptions,
   onSuccess,
 }: EditProductFormProps) {
-  // Actualizamos el ref con el valor inicial del nombre para la validación asíncrona
   useEffect(() => {
     initialProductNameRef.current = initialData.nombre;
   }, [initialData.nombre]);
 
   const form = useForm<EditProductFormValues>({
-    resolver: zodResolver(editProductSchema),
-    defaultValues: initialData,
+    resolver: zodResolver(EsquemaFormulario),
+    defaultValues: {
+      nombre: initialData.nombre,
+      categoria: initialData.categoria || "",
+      tipo_prod: initialData.tipo_prod,
+      undidad_prod: initialData.undidad_prod,
+    },
   });
 
-  // Estados para el manejo de la imagen y su previsualización
+  // Obtiene el valor actual de "tipo_prod" y lo convierte a minúsculas
+  const tipoProducto = form.watch("tipo_prod")?.toLowerCase() || "";
+
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>(
     initialData.img_prod,
@@ -103,11 +122,10 @@ export function EditProductForm({
     if (imageFile) {
       imageUrl = await uploadImage(imageFile);
     }
-
-    // Se arma el payload que espera el backend
     const payload = {
       nom_prod: values.nombre,
-      cate_prod: Number(values.categoria),
+      // Si tipo_prod es "insumo", enviamos null, de lo contrario convertimos a number
+      cate_prod: tipoProducto === "insumo" ? null : Number(values.categoria),
       tip_prod: values.tipo_prod,
       und_prod: values.undidad_prod,
       img_prod: imageUrl,
@@ -143,7 +161,7 @@ export function EditProductForm({
         onSubmit={form.handleSubmit(onSubmit)}
         className="grid grid-cols-2 gap-4"
       >
-        {/* Columna Izquierda: Campos organizados en 2 filas */}
+        {/* Columna izquierda: Campos del formulario */}
         <div className="col-span-1 flex flex-col gap-4 pr-3">
           <div className="grid grid-cols-1 gap-4">
             <CampoTexto
@@ -153,19 +171,22 @@ export function EditProductForm({
               placeholder="Nombre del producto"
             />
 
-            <CampoCategoria
-              control={form.control}
-              name="categoria"
-              label="Categoría"
-              options={categoryOptions}
-            />
-
             <CampoSelectTipo
               control={form.control}
               name="tipo_prod"
               label="Tipo de Producto"
               placeholder="Seleccione el tipo de producto"
             />
+
+            {/* Se muestra el campo Categoría solo si el valor actual de tipo_prod no es "insumo" */}
+            {tipoProducto !== "insumo" && (
+              <CampoCategoria
+                control={form.control}
+                name="categoria"
+                label="Categoría"
+                options={categoryOptions}
+              />
+            )}
 
             <CampoSelectUnidad
               control={form.control}
@@ -175,7 +196,7 @@ export function EditProductForm({
             />
           </div>
         </div>
-        {/* Columna Derecha: Zona de imagen */}
+        {/* Columna derecha: Zona de imagen */}
         <div className="col-span-1 flex h-full items-center justify-center">
           <ZonaImagen
             imageFile={imageFile}

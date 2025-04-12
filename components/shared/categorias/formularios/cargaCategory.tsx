@@ -1,5 +1,5 @@
 "use client";
-import * as React from "react";
+import React, { useState, useRef } from "react";
 import Papa from "papaparse";
 import * as ExcelJS from "exceljs";
 import toast from "react-hot-toast";
@@ -11,10 +11,11 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Trash2, X, Edit2 } from "lucide-react";
 import { ICategory } from "@/lib/types";
 import { ToastError } from "../../toast/toastError";
 import { ToastSuccess } from "../../toast/toastSuccess";
+
 interface BulkUploadCategoryDialogProps {
   onSuccess: (newCategories: ICategory[]) => void;
   onClose: () => void;
@@ -26,13 +27,16 @@ export function BulkUploadCategoryDialog({
   onSuccess,
   onClose,
 }: BulkUploadCategoryDialogProps) {
-  const [file, setFile] = React.useState<File | null>(null);
-  const [previewData, setPreviewData] = React.useState<any[]>([]);
-  const [loading, setLoading] = React.useState(false);
-  const [isDragging, setIsDragging] = React.useState(false);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [previewData, setPreviewData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Valida que cada fila tenga datos en las columnas requeridas
+  // Estados para edición inline
+  const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
+  const [editedRow, setEditedRow] = useState<any>({});
+
   const validateRows = (rows: any[]): boolean => {
     return rows.every((row) =>
       requiredColumns.every((col) => {
@@ -44,7 +48,6 @@ export function BulkUploadCategoryDialog({
     );
   };
 
-  // Valida los encabezados
   const validateHeaders = (headers: string[]): boolean => {
     const lowerHeaders = headers.map((h) => h.toLowerCase().trim());
     return requiredColumns.every((col) => lowerHeaders.includes(col));
@@ -111,7 +114,6 @@ export function BulkUploadCategoryDialog({
             });
             return;
           }
-          // Obtener encabezados de la primera fila
           let headers = worksheet.getRow(1).values as any[];
           if (headers[0] === undefined) {
             headers = headers.slice(1);
@@ -126,11 +128,11 @@ export function BulkUploadCategoryDialog({
           }
           const formattedData: any[] = [];
           worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-            if (rowNumber === 1) return; // omitir fila de encabezados
+            if (rowNumber === 1) return;
             const rowValues = row.values as any[];
             const rowData: any = {};
             headers.forEach((header: string, index: number) => {
-              let value = rowValues[index + 1]; // ExcelJS usa índice 1-based
+              let value = rowValues[index + 1];
               if (value instanceof Date) {
                 value = value.toLocaleDateString("es-ES");
               }
@@ -177,13 +179,7 @@ export function BulkUploadCategoryDialog({
     window.open("http://localhost:5000/categorias/plantilla", "_blank");
   };
 
-  // Manejo de drag & drop
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
@@ -207,6 +203,29 @@ export function BulkUploadCategoryDialog({
     }
   };
 
+  // Función para eliminar una fila de la vista previa
+  const handleRemoveRow = (rowIndex: number) => {
+    setPreviewData((prev) => prev.filter((_, index) => index !== rowIndex));
+  };
+
+  const handleEditRow = (rowIndex: number) => {
+    setEditingRowIndex(rowIndex);
+    setEditedRow({ ...previewData[rowIndex] });
+  };
+
+  const handleSaveRow = (rowIndex: number) => {
+    setPreviewData((prev) =>
+      prev.map((row, index) => (index === rowIndex ? editedRow : row)),
+    );
+    setEditingRowIndex(null);
+    ToastSuccess({ message: "Fila actualizada correctamente." });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingRowIndex(null);
+    setEditedRow({});
+  };
+
   const handleUpload = async () => {
     if (previewData.length === 0) {
       ToastError({
@@ -216,8 +235,6 @@ export function BulkUploadCategoryDialog({
     }
     setLoading(true);
     try {
-      // Transformamos cada fila para ajustarla a lo que espera el backend.
-      // Se crea un objeto con las propiedades de ICategory (excepto id_cate, que se genera en el backend).
       const processedData = previewData.map((row) => ({
         nom_cate: row["nom_cate"],
         desc_cate: row["desc_cate"],
@@ -239,8 +256,6 @@ export function BulkUploadCategoryDialog({
         throw new Error(errorMsg);
       }
       if (data.categorias && data.categorias.length > 0) {
-        // Se espera que la API retorne categorías en la forma de ICategory,
-        // donde id_cate es de tipo number.
         onSuccess(data.categorias);
         ToastSuccess({
           message: `Se cargaron ${data.categorias.length} categorías`,
@@ -268,7 +283,7 @@ export function BulkUploadCategoryDialog({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="dark:border-default-700 dark:border dark:bg-[#09090b] sm:max-w-3xl">
+      <DialogContent className="dark:border dark:border-border dark:bg-[#09090b] sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Carga Masiva de Categorías</DialogTitle>
         </DialogHeader>
@@ -310,7 +325,7 @@ export function BulkUploadCategoryDialog({
               Descargar plantilla
             </Button>
           </div>
-          {/* Zona de arrastre para seleccionar archivo */}
+          {/* Zona para seleccionar archivo */}
           <div>
             <input
               type="file"
@@ -322,7 +337,7 @@ export function BulkUploadCategoryDialog({
             <div
               onClick={handleUploadClick}
               onDragEnter={handleDragEnter}
-              onDragOver={handleDragOver}
+              onDragOver={handleDragEnter}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               className="dark:border-default-700 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-6 hover:border-gray-400 dark:text-white dark:hover:border-gray-500"
@@ -338,33 +353,95 @@ export function BulkUploadCategoryDialog({
               )}
             </div>
           </div>
-          {/* Vista previa de los datos */}
+          {/* Vista previa de los datos con edición inline */}
           {previewData.length > 0 ? (
-            <div className="mt-4 max-h-[20vh] overflow-y-auto border">
+            <div className="mt-4 max-h-[20vh] overflow-y-auto border border-border">
               <table className="min-w-full border-collapse">
-                <thead className="bg-gray-50 dark:bg-gray-100">
+                <thead className="bg-[#f4f4f5] dark:bg-secondary">
                   <tr>
                     {Object.keys(previewData[0]).map((header, index) => (
                       <th
                         key={index}
-                        className="border border-gray-200 px-4 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:border-white dark:text-black"
+                        className="border border-border px-4 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:border-border dark:text-[#9999a1]"
                       >
                         {header}
                       </th>
                     ))}
+                    <th className="border border-border px-4 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:border-border dark:text-[#9999a1]">
+                      Acciones
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {previewData.map((row, rowIndex) => (
-                    <tr key={rowIndex} className="border border-gray-200">
+                    <tr key={rowIndex} className="border border-border">
                       {Object.keys(row).map((header, cellIndex) => (
                         <td
                           key={cellIndex}
-                          className="border border-gray-200 px-4 py-2 text-sm text-gray-700 dark:text-white"
+                          className="border border-border px-4 py-2 text-sm text-gray-700 dark:text-white"
                         >
-                          {row[header]}
+                          {editingRowIndex === rowIndex ? (
+                            <input
+                              type="text"
+                              value={editedRow[header]}
+                              onChange={(e) =>
+                                setEditedRow({
+                                  ...editedRow,
+                                  [header]: e.target.value,
+                                })
+                              }
+                              className="w-full rounded border px-2 py-1 text-sm"
+                            />
+                          ) : (
+                            row[header]
+                          )}
                         </td>
                       ))}
+                      <td className="w-2 border border-border px-2 py-2 text-sm">
+                        {editingRowIndex === rowIndex ? (
+                          <div className="flex space-x-2">
+                            <Button
+                              variant="link"
+                              className="success-text rounded-full bg-green-100 p-2 dark:bg-green-200 dark:text-green-900"
+                              size="sm"
+                              onClick={() => handleSaveRow(rowIndex)}
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                              <span className="sr-only">Guardar cambios</span>
+                            </Button>
+                            <Button
+                              variant="link"
+                              className="error-text rounded-full bg-red-100 p-2 dark:bg-red-200 dark:text-red-900"
+                              size="sm"
+                              onClick={handleCancelEdit}
+                            >
+                              <X className="h-4 w-4" />
+                              <span className="sr-only">Cancelar edición</span>
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex space-x-2">
+                            <Button
+                              variant="link"
+                              className="rounded-full bg-blue-100 p-2 text-blue-500 dark:text-blue-600"
+                              size="sm"
+                              onClick={() => handleEditRow(rowIndex)}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                              <span className="sr-only">Editar fila</span>
+                            </Button>
+                            <Button
+                              variant="link"
+                              className="error-text rounded-full bg-red-100 p-2 dark:bg-red-200 dark:text-red-900"
+                              size="sm"
+                              onClick={() => handleRemoveRow(rowIndex)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span className="sr-only">Eliminar fila</span>
+                            </Button>
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -378,7 +455,7 @@ export function BulkUploadCategoryDialog({
         </div>
         <DialogFooter>
           <div className="flex justify-end space-x-2">
-            <Button variant={"secondary"} onClick={onClose}>
+            <Button variant="secondary" onClick={onClose}>
               Cancelar
             </Button>
             <Button

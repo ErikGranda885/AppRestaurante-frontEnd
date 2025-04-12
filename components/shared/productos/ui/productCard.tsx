@@ -164,10 +164,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </div>
 
           <div className="text-xs font-semibold">
-            <div>
-              <span className="text-xs text-muted-foreground">Categoría: </span>
-              {product.cate_prod?.nom_cate == null}
-            </div>
+            {product.tip_prod == "Insumo" && (
+              <div>
+                <span className="text-xs text-muted-foreground">Tipo: </span>
+                {product.tip_prod}
+              </div>
+            )}
+          </div>
+
+          <div className="text-xs font-semibold">
+            {product.cate_prod?.nom_cate && (
+              <div>
+                <span className="text-xs text-muted-foreground">
+                  Categoría:{" "}
+                </span>
+                {product.cate_prod.nom_cate}
+              </div>
+            )}
           </div>
 
           <div className={`text-xs font-bold ${expirationColorClass}`}>
@@ -176,10 +189,27 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </div>
 
           <div className="text-xs font-semibold">
-            <span className="text-xs text-muted-foreground">
-              Precio de venta:
-            </span>{" "}
-            ${product.prec_vent_prod === null ? "0.00" : product.prec_vent_prod}
+            {product.tip_prod === "Insumo" ? (
+              <>
+                <span className="text-xs text-muted-foreground">
+                  Precio de compra:
+                </span>{" "}
+                $
+                {product.prec_comp_prod === null
+                  ? "0.00"
+                  : product.prec_comp_prod}
+              </>
+            ) : (
+              <>
+                <span className="text-xs text-muted-foreground">
+                  Precio de venta:
+                </span>{" "}
+                $
+                {product.prec_vent_prod === null
+                  ? "0.00"
+                  : product.prec_vent_prod}
+              </>
+            )}
           </div>
         </div>
       </div>

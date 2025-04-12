@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -14,47 +14,64 @@ import { ToastSuccess } from "../../toast/toastSuccess";
 import { ToastError } from "../../toast/toastError";
 import { CampoSelectUnidad } from "../ui/campoSelectUnidad";
 import { CampoSelectTipo } from "../ui/campoTipo";
+import { SERVICIOS } from "@/services/productos.service";
 
 export type Option = {
   value: string;
   label: string;
 };
 
-/* ============================
-   ESQUEMA DEL FORMULARIO
-=============================== */
-const FormSchema = z.object({
-  nombre: z
-    .string()
-    .nonempty("El nombre del producto es requerido")
-    .refine(
-      ((nombre: string) => {
-        return fetch(
-          `http://localhost:5000/productos/verificar?nombre=${encodeURIComponent(nombre)}`,
-        )
-          .then((res) => res.json())
-          .then((data) => !data.exists);
-      }) as (nombre: string) => Promise<boolean>,
-      {
-        message: "El nombre del producto ya se encuentra registrado",
-        async: true,
-      } as any,
-    ),
+// Esquema del formulario
+// Se define "categoria" como opcional y se usa superRefine para validar que, si el tipo de producto no es "insumo",
+// se requiera que el campo categoría tenga contenido (comparación insensible a mayúsculas).
+const EsquemaFormulario = z
+  .object({
+    nombre: z
+      .string()
+      .nonempty("El nombre del producto es requerido")
+      .refine(
+        async (nombre: string) => {
+          return fetch(
+            `http://localhost:5000/productos/verificar?nombre=${encodeURIComponent(nombre)}`,
+          )
+            .then((res) => res.json())
+            .then((data) => !data.exists);
+        },
+        {
+          message: "El nombre del producto ya se encuentra registrado",
+          async: true,
+        } as any,
+      ),
+    categoria: z.string().optional(),
+    tipo_prod: z.string().nonempty("Seleccione un tipo de producto"),
+    undidad_prod: z.string().nonempty("Seleccione una unidad de medida"),
+  })
+  .superRefine((val, ctx) => {
+    // Convertimos a minúsculas para comparar de forma insensible a mayúsculas
+    if (
+      val.tipo_prod.toLowerCase() !== "insumo" &&
+      (!val.categoria || val.categoria.trim() === "")
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["categoria"],
+        message: "Seleccione una categoría",
+      });
+    }
+  });
 
-  categoria: z.string().nonempty("Seleccione una categoría"),
-  tipo_prod: z.string().nonempty("Seleccione un tipo de producto"),
-  undidad_prod: z.string().nonempty("Seleccione una unidad de medida"),
-});
+export type ValoresFormulario = z.infer<typeof EsquemaFormulario>;
 
-type FormValues = z.infer<typeof FormSchema>;
+// Ref para almacenar el nombre inicial (para evitar verificación si no cambia)
+const initialProductNameRef = { current: "" };
 
 export function FormProducts({
   onSuccess,
 }: {
   onSuccess: (data: any) => void;
 }) {
-  const form = useForm<FormValues>({
-    resolver: zodResolver(FormSchema),
+  const form = useForm<ValoresFormulario>({
+    resolver: zodResolver(EsquemaFormulario),
     defaultValues: {
       nombre: "",
       categoria: "",
@@ -63,75 +80,80 @@ export function FormProducts({
     },
   });
 
-  // Cargar opciones de categoría desde la API
-  const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
+  // Usamos form.watch para obtener el valor actual de "tipo_prod"
+  const tipoProducto = form.watch("tipo_prod").toLowerCase();
+
+  // Cargar opciones de categoría desde la API mediante el servicio definido
+  const [opcionesCategoria, setOpcionesCategoria] = useState<CategoryOption[]>(
+    [],
+  );
   useEffect(() => {
-    fetch("http://localhost:5000/categorias")
+    fetch(SERVICIOS.categorias)
       .then((res) => {
         if (!res.ok) throw new Error("Error al cargar categorías");
         return res.json();
       })
       .then((data: any) => {
-        // Filtrar solo categorías activas (usando la interfaz ICategory)
-        const active = data.categorias.filter(
+        const activas = data.categorias.filter(
           (cate: ICategory) => cate.est_cate?.toLowerCase() === "activo",
         );
-        const options: Option[] = [
+        const opciones: Option[] = [
           { value: "", label: "Todos" },
-          ...active.map((cate: ICategory) => ({
+          ...activas.map((cate: ICategory) => ({
             value: cate.id_cate.toString(),
             label: cate.nom_cate,
           })),
         ];
-        setCategoryOptions(options);
+        setOpcionesCategoria(opciones);
       })
       .catch((err) => console.error("Error al cargar categorías:", err));
   }, []);
 
   // Estados para la imagen y su previsualización
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [imagenArchivo, setImagenArchivo] = useState<File | null>(null);
+  const [imagenPreview, setImagenPreview] = useState<string | null>(null);
+  const imagenInputRef = useRef<HTMLInputElement>(null);
 
-  // Funciones para el manejo de imagen en ZonaImagen
-  const handleImageSelect = () => {
-    imageInputRef.current?.click();
+  // Funciones para manejo de imagen
+  const seleccionarImagen = () => {
+    imagenInputRef.current?.click();
   };
 
-  const handleImageDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const manejarDropImagen = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0];
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+      const archivo = e.dataTransfer.files[0];
+      setImagenArchivo(archivo);
+      setImagenPreview(URL.createObjectURL(archivo));
       e.dataTransfer.clearData();
     }
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  const manejarDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
   };
 
   // Función de envío del formulario
-  const onSubmit = async (data: FormValues) => {
-    let imageUrl = imagePreview || "";
-    if (imageFile) {
-      imageUrl = await uploadImage(imageFile);
+  const onSubmit = async (data: ValoresFormulario) => {
+    let imageUrl = imagenPreview || "";
+    if (imagenArchivo) {
+      imageUrl = await uploadImage(imagenArchivo);
     } else {
       imageUrl =
         "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/productos%2Fproduct-default.jpg?alt=media&token=a06d2373-fd9a-4fa5-a715-3c9ab7ae546d";
     }
 
+    // Si el producto es insumo, enviamos null en "categoria"
     const payload = {
       nom_prod: data.nombre,
-      cate_prod: Number(data.categoria),
-      img_prod: imageUrl,
+      cate_prod: tipoProducto === "insumo" ? null : Number(data.categoria),
       tip_prod: data.tipo_prod,
       und_prod: data.undidad_prod,
+      img_prod: imageUrl,
     };
 
     try {
-      const response = await fetch("http://localhost:5000/productos", {
+      const response = await fetch(SERVICIOS.productos, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -159,7 +181,7 @@ export function FormProducts({
         onSubmit={form.handleSubmit(onSubmit)}
         className="grid grid-cols-2 gap-4"
       >
-        {/* Columna Izquierda: Campos organizados en 2 filas */}
+        {/* Columna izquierda: campos del formulario */}
         <div className="col-span-1 flex flex-col gap-4 pr-3">
           <div className="grid grid-cols-1 gap-4">
             <CampoTexto
@@ -168,19 +190,22 @@ export function FormProducts({
               label="Nombre del Producto"
               placeholder="Nombre del producto"
             />
-
-            <CampoCategoria
-              control={form.control}
-              name="categoria"
-              label="Categoría"
-              options={categoryOptions}
-            />
             <CampoSelectTipo
               control={form.control}
               name="tipo_prod"
               label="Tipo de Producto"
               placeholder="Seleccione el tipo de producto"
             />
+            {/* Solo se muestra el campo Categoría si el tipo no es "insumo" */}
+            {tipoProducto !== "insumo" && (
+              <CampoCategoria
+                control={form.control}
+                name="categoria"
+                label="Categoría"
+                options={opcionesCategoria}
+              />
+            )}
+
             <CampoSelectUnidad
               control={form.control}
               name="undidad_prod"
@@ -189,17 +214,17 @@ export function FormProducts({
             />
           </div>
         </div>
-        {/* Columna Derecha: Zona de imagen */}
+        {/* Columna derecha: zona de imagen */}
         <div className="col-span-1 flex h-full items-center justify-center">
           <ZonaImagen
-            imageFile={imageFile}
-            imagePreview={imagePreview || ""}
-            setImageFile={setImageFile}
-            setImagePreview={setImagePreview}
-            imageInputRef={imageInputRef}
-            handleImageSelect={handleImageSelect}
-            handleImageDrop={handleImageDrop}
-            handleDragOver={handleDragOver}
+            imageFile={imagenArchivo}
+            imagePreview={imagenPreview || ""}
+            setImageFile={setImagenArchivo}
+            setImagePreview={setImagenPreview}
+            imageInputRef={imagenInputRef}
+            handleImageSelect={seleccionarImagen}
+            handleImageDrop={manejarDropImagen}
+            handleDragOver={manejarDragOver}
           />
         </div>
         {/* Botón de envío */}

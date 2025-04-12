@@ -572,11 +572,12 @@ export default function PaginaProductos() {
                           ...prod,
                           cate_prod:
                             typeof prod.cate_prod === "object"
-                              ? prod.cate_prod?.id_cate
+                              ? prod.cate_prod?.id_cate ?? 0
                               : parseInt(prod.cate_prod, 10),
                         };
                         setProductoEditar(productoParaEditar);
                       }}
+                      
                       onActivate={(prod) =>
                         setProductoAccion({
                           id_prod: prod.id_prod,
@@ -628,59 +629,59 @@ export default function PaginaProductos() {
 
       {/* Diálogo para editar producto */}
       {productoEditar && (
-        <Dialog
-          open
-          onOpenChange={(open) => {
-            if (!open) setProductoEditar(null);
-          }}
-        >
-          <DialogContent className="w-[700px] max-w-none border-border">
-            <DialogHeader>
-              <DialogTitle>Editar Producto</DialogTitle>
-              <DialogDescription>
-                Modifica la información del producto.
-              </DialogDescription>
-            </DialogHeader>
-            <EditProductForm
-              initialData={{
-                id: productoEditar.id_prod.toString(),
-                nombre: productoEditar.nom_prod,
-                categoria: productoEditar.cate_prod.toString(),
-                tipo_prod: productoEditar.tip_prod || "",
-                undidad_prod: productoEditar.und_prod || "",
-                img_prod: productoEditar.img_prod,
-              }}
-              categoryOptions={opcionesCategorias.filter(
-                (opt) => opt.value !== "",
-              )}
-              onSuccess={(data) => {
-                const productoActualizado = data.producto;
-                const opcionCategoria = opcionesCategorias.find(
-                  (opt) =>
-                    opt.value === productoActualizado.cate_prod.toString(),
-                );
-                const productoConCategoria = {
-                  ...productoActualizado,
-                  cate_prod: {
-                    id_cate: Number(productoActualizado.cate_prod),
-                    nom_cate: opcionCategoria ? opcionCategoria.label : "",
-                  },
-                };
+  <Dialog
+    open
+    onOpenChange={(open) => {
+      if (!open) setProductoEditar(null);
+    }}
+  >
+    <DialogContent className="w-[700px] max-w-none border-border">
+      <DialogHeader>
+        <DialogTitle>Editar Producto</DialogTitle>
+        <DialogDescription>
+          Modifica la información del producto.
+        </DialogDescription>
+      </DialogHeader>
+      <EditProductForm
+        initialData={{
+          id: productoEditar.id_prod.toString(),
+          nombre: productoEditar.nom_prod,
+          // Si productoEditar.cate_prod es null, se asigna cadena vacía para evitar errores
+          categoria: productoEditar.cate_prod ? productoEditar.cate_prod.toString() : "",
+          tipo_prod: productoEditar.tip_prod || "",
+          undidad_prod: productoEditar.und_prod || "",
+          img_prod: productoEditar.img_prod,
+        }}
+        categoryOptions={opcionesCategorias.filter((opt) => opt.value !== "")}
+        onSuccess={(data) => {
+          const productoActualizado = data.producto;
+          const opcionCategoria = opcionesCategorias.find(
+            (opt) =>
+              productoActualizado.cate_prod != null &&
+              opt.value === productoActualizado.cate_prod.toString()
+          );
+          const productoConCategoria = {
+            ...productoActualizado,
+            cate_prod: {
+              id_cate: Number(productoActualizado.cate_prod),
+              nom_cate: opcionCategoria ? opcionCategoria.label : "",
+            },
+          };
 
-                setTodosLosProductos((prev) =>
-                  prev.map((p) =>
-                    p.id_prod.toString() ===
-                    productoActualizado.id_prod.toString()
-                      ? productoConCategoria
-                      : p,
-                  ),
-                );
-                setProductoEditar(null);
-              }}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
+          setTodosLosProductos((prev) =>
+            prev.map((p) =>
+              p.id_prod.toString() === productoActualizado.id_prod.toString()
+                ? productoConCategoria
+                : p
+            )
+          );
+          setProductoEditar(null);
+        }}
+      />
+    </DialogContent>
+  </Dialog>
+)}
+
 
       <Toaster position="top-right" />
     </>

@@ -11,7 +11,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle } from "lucide-react";
 import { ToastError } from "../../toast/toastError";
 import { ToastSuccess } from "../../toast/toastSuccess";
 import { IRol } from "@/lib/types";
