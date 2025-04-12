@@ -216,7 +216,7 @@ export default function PaginaUsuarios() {
   };
 
   /* Definición de las columnas de la tabla */
-  const columnasUsuarios: ColumnDef<DataUsers>[] = [
+  const usuariosColumnas: ColumnDef<DataUsers>[] = [
     {
       id: "id",
       header: ({ table }) => (
@@ -598,7 +598,7 @@ export default function PaginaUsuarios() {
           <div className="px-6 pb-4">
             <DataTable<DataUsers>
               data={usuariosFiltrados}
-              columns={columnasUsuarios}
+              columns={usuariosColumnas}
             />
           </div>
         </div>

@@ -13,7 +13,7 @@ import {
   CloudDownload,
 } from "lucide-react";
 import { GeneralDialog } from "@/components/shared/dialogGen";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -38,9 +38,15 @@ import { ICategory } from "@/lib/types";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { Input } from "@/components/ui/input";
+import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
+
+type AccionCategoria = {
+  id_cate: number;
+  nom_cate: string;
+  tipo: "activar" | "inactivar";
+};
 
 export default function PaginaCategorias() {
-  // Estados
   const [categorias, setCategorias] = React.useState<ICategory[]>([]);
   const [cargando, setCargando] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -51,9 +57,11 @@ export default function PaginaCategorias() {
   const [abrirCargaMasiva, setAbrirCargaMasiva] = React.useState(false);
   const [selectedStatus, setSelectedStatus] = React.useState<string>("");
   const [abrirCrear, setAbrirCrear] = React.useState(false);
+  const [accionCategoria, setAccionCategoria] =
+    React.useState<AccionCategoria | null>(null);
 
   // Definición de las columnas de la tabla para categorías
-  const categoryColumns: ColumnDef<ICategory>[] = [
+  const categoriaColumnas: ColumnDef<ICategory>[] = [
     {
       accessorKey: "nom_cate",
       header: "Nombre",
@@ -73,29 +81,29 @@ export default function PaginaCategorias() {
         const estadoOriginal = String(row.getValue("est_cate")) || "";
         const estado = estadoOriginal.toLowerCase();
 
-        let circleColor = "bg-gray-500";
-        let textColor = "text-gray-600";
+        let colorCirculo = "bg-gray-500";
+        let colorTexto = "text-gray-600";
 
         switch (estado) {
           case "activo":
-            circleColor = "bg-[#17c964]";
-            textColor = "";
+            colorCirculo = "bg-[#17c964]";
+            colorTexto = "";
             break;
           case "inactivo":
-            circleColor = "bg-[#f31260]";
-            textColor = "";
+            colorCirculo = "bg-[#f31260]";
+            colorTexto = "";
             break;
           default:
-            circleColor = "bg-gray-500";
-            textColor = "text-gray-600";
+            colorCirculo = "bg-gray-500";
+            colorTexto = "text-gray-600";
             break;
         }
 
         return (
           <div className="text-center">
             <div className="inline-flex items-center gap-1 p-1">
-              <span className={`h-1 w-1 rounded-full ${circleColor}`} />
-              <span className={`text-xs font-medium capitalize ${textColor}`}>
+              <span className={`h-1 w-1 rounded-full ${colorCirculo}`} />
+              <span className={`text-xs font-medium capitalize ${colorTexto}`}>
                 {estadoOriginal}
               </span>
             </div>
@@ -127,14 +135,26 @@ export default function PaginaCategorias() {
               </DropdownMenuItem>
               {String(category.est_cate).toLowerCase() === "inactivo" ? (
                 <DropdownMenuItem
-                  onClick={() => handleActivate(category)}
+                  onClick={() =>
+                    setAccionCategoria({
+                      id_cate: category.id_cate,
+                      nom_cate: category.nom_cate,
+                      tipo: "activar",
+                    })
+                  }
                   className="cursor-pointer"
                 >
                   Activar
                 </DropdownMenuItem>
               ) : (
                 <DropdownMenuItem
-                  onClick={() => handleDeactivate(category)}
+                  onClick={() =>
+                    setAccionCategoria({
+                      id_cate: category.id_cate,
+                      nom_cate: category.nom_cate,
+                      tipo: "inactivar",
+                    })
+                  }
                   className="cursor-pointer"
                 >
                   Inactivar
@@ -153,9 +173,7 @@ export default function PaginaCategorias() {
   React.useEffect(() => {
     fetch("http://localhost:5000/categorias")
       .then((res) => {
-        if (!res.ok) {
-          throw new Error("Error al cargar las categorías");
-        }
+        if (!res.ok) throw new Error("Error al cargar las categorías");
         return res.json();
       })
       .then((data: any) => {
@@ -229,6 +247,21 @@ export default function PaginaCategorias() {
       });
   };
 
+  // Función para confirmar la acción (activar/inactivar) usando el diálogo
+  const confirmarAccionCategoria = () => {
+    if (!accionCategoria) return;
+    const categoria = categorias.find(
+      (cat) => cat.id_cate === accionCategoria.id_cate,
+    );
+    if (!categoria) return;
+    if (accionCategoria.tipo === "inactivar") {
+      handleDeactivate(categoria);
+    } else {
+      handleActivate(categoria);
+    }
+    setAccionCategoria(null);
+  };
+
   // Filtrar categorías según estado y consulta
   const filteredCategorias = categorias.filter((cat) => {
     const cumpleEstado =
@@ -262,7 +295,7 @@ export default function PaginaCategorias() {
         submenu={true}
         isLoading={false}
       >
-        <div className="px-6 pt-2 ">
+        <div className="px-6 pt-2">
           <div className="mb-5 flex items-center justify-between">
             <GeneralDialog
               open={abrirCrear}
@@ -318,9 +351,7 @@ export default function PaginaCategorias() {
             {/* Tarjeta: Categorías Totales */}
             <Card
               onClick={() => handleClickTarjeta("")}
-              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
-                selectedStatus === "" ? "ring-2 ring-secondary" : ""
-              } group`}
+              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${selectedStatus === "" ? "ring-2 ring-secondary" : ""} group`}
             >
               <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
                 <div className="flex-1">
@@ -347,11 +378,7 @@ export default function PaginaCategorias() {
             {/* Tarjeta: Categorías Activas */}
             <Card
               onClick={() => handleClickTarjeta("Activo")}
-              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
-                selectedStatus.toLowerCase() === "activo"
-                  ? "ring-2 ring-secondary"
-                  : ""
-              } group`}
+              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${selectedStatus.toLowerCase() === "activo" ? "ring-2 ring-secondary" : ""} group`}
             >
               <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
                 <div className="flex-1">
@@ -382,11 +409,7 @@ export default function PaginaCategorias() {
             {/* Tarjeta: Categorías Inactivas */}
             <Card
               onClick={() => handleClickTarjeta("Inactivo")}
-              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
-                selectedStatus.toLowerCase() === "inactivo"
-                  ? "ring-2 ring-secondary"
-                  : ""
-              } group`}
+              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${selectedStatus.toLowerCase() === "inactivo" ? "ring-2 ring-secondary" : ""} group`}
             >
               <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
                 <div className="flex-1">
@@ -430,7 +453,7 @@ export default function PaginaCategorias() {
           <div className="px-6 pb-4">
             <DataTable<ICategory>
               data={filteredCategorias}
-              columns={categoryColumns}
+              columns={categoriaColumnas}
             />
           </div>
         </div>
@@ -461,6 +484,20 @@ export default function PaginaCategorias() {
           />
         </GeneralDialog>
       )}
+
+      {accionCategoria && (
+        <ModalModEstado
+          abierto={true}
+          onCambioAbierto={(open) => {
+            if (!open) setAccionCategoria(null);
+          }}
+          tipoAccion={accionCategoria.tipo}
+          nombreElemento={accionCategoria.nom_cate}
+          onConfirmar={confirmarAccionCategoria}
+        />
+      )}
+
+      <Toaster position="top-right" />
     </>
   );
 }
