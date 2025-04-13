@@ -32,9 +32,10 @@ import {
 export interface DataTableProps<T> {
   data: T[];
   columns: ColumnDef<T, any>[];
+  onRowClick?: (row: T) => void;
 }
 
-export function DataTable<T>({ data, columns }: DataTableProps<T>) {
+export function DataTable<T>({ data, columns, onRowClick }: DataTableProps<T>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -113,7 +114,11 @@ export function DataTable<T>({ data, columns }: DataTableProps<T>) {
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className="border border-secondary">
+                <TableRow
+                  key={row.id}
+                  className="cursor-pointer border border-secondary hover:bg-gray-100"
+                  onClick={() => onRowClick && onRowClick(row.original)}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="px-4 py-2">
                       {flexRender(

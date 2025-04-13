@@ -11,6 +11,7 @@ import { CloudDownload, Plus, Search, Upload } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { format } from "date-fns";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function Page() {
   const [abrirCrear, setAbrirCrear] = useState(false);
@@ -20,6 +21,7 @@ export default function Page() {
   const [loadingData, setLoadingData] = useState<boolean>(false);
 
   useProtectedRoute();
+  const router = useRouter();
 
   // Cargar compras y detalles al iniciar el componente
   useEffect(() => {
@@ -100,7 +102,7 @@ export default function Page() {
             </div>
             <div className="ml-2 flex flex-col">
               <p className="text-sm font-semibold">{usuario.nom_usu}</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 {usuario.rol_usu.nom_rol}
               </p>
             </div>
@@ -118,7 +120,7 @@ export default function Page() {
           <div className="flex items-center gap-2">
             <div className="relative h-8 w-8 flex-shrink-0">
               <Image
-                src={prov.img_prov || "/default-usuario.png"}
+                src={prov.img_prov || "/default-proveedor.png"}
                 alt={prov.nom_prov}
                 fill
                 className="rounded-md object-cover"
@@ -294,6 +296,9 @@ export default function Page() {
             <DataTable<ICompra>
               data={comprasFiltradas}
               columns={comprasColumnas}
+              onRowClick={(compra: ICompra) => {
+                router.push(`/compras/${compra.id_comp}`);
+              }}
             />
           </div>
         </div>
