@@ -5,6 +5,18 @@ export interface ICategory {
   est_cate?: string;
 }
 
+export interface IProveedor {
+  id_prov: number;
+  nom_prov: string;
+  cont_prov: string;
+  tel_prov: string;
+  direc_prov: string;
+  email_prov: string;
+  ruc_prov: string;
+  img_prov: string;
+  est_prov: string;
+}
+
 export interface IProduct {
   id_prod: number;
   nom_prod: string;
@@ -22,7 +34,7 @@ export interface IProduct {
 export interface ICompra {
   id_comp: number;
   tot_comp: number;
-  prov_comp: number;
+  prov_comp: IProveedor;
   usu_comp: number;
   fech_comp: string;
   estado_comp: string;
@@ -34,7 +46,7 @@ export interface ICompra {
 export interface IDetCompra {
   id_dcom: number;
   comp_dcom: ICompra;
-  prod_dcom: number;
+  prod_dcom: IProduct;
   cant_dcom: number;
   prec_uni_dcom: number;
   sub_tot_dcom: number;
