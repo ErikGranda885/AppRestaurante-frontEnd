@@ -18,30 +18,26 @@ export interface IProduct {
   est_prod: string;
   cate_prod: ICategory | null;
 }
-export interface IInsumo {
-  id_ins: number;
-  nom_ins: string;
-  und_ins: string;
-  stock_ins: number;
-  cost_uni_ins: number;
-  fech_ven_ins: string;
-  stock_min_ins: number;
-  est_insu: string;
-}
-export interface ICompraInsumo {
+
+export interface ICompra {
   id_comp: number;
-  prov_comp: number;
-  fech_comp: string;
-  insu_comp: number;
-  cant_comp: number;
-  cost_comp: number;
-  obs_comp: string;
-  fact_comp: number;
-  prod_comp: IProduct;
   tot_comp: number;
-  crea_en_comp: string;
-  act_en_comp: string;
+  prov_comp: number;
+  usu_comp: number;
+  fech_comp: string;
   estado_comp: string;
+  estado_pag_comp: string;
+  crea_en_comp: Date;
+  act_en_comp: Date;
+}
+
+export interface IDetCompra {
+  id_dcom: number;
+  comp_dcom: ICompra;
+  prod_dcom: number;
+  cant_dcom: number;
+  prec_uni_dcom: number;
+  sub_tot_dcom: number;
 }
 
 export interface IRol {

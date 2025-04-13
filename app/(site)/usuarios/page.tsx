@@ -395,6 +395,11 @@ export default function PaginaUsuarios() {
         isLoading={false}
       >
         <div className="px-6 pt-2">
+          <h1 className="text-xl font-bold">Usuarios</h1>
+          <p className="text-sm text-muted-foreground">
+            Aquí puedes gestionar los usuarios de tu negocio.
+          </p>
+          <div className="pt-4" />
           <div className="mb-5 flex items-center justify-between">
             <GeneralDialog
               open={abrirCrear}

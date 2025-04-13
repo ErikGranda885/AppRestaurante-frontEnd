@@ -73,11 +73,6 @@ export function DataTable<T>({ data, columns }: DataTableProps<T>) {
     <div className="w-full">
       <div className="flex items-center py-4">
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columnas <ChevronDown />
-            </Button>
-          </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="border-border">
             {table
               .getAllColumns()
