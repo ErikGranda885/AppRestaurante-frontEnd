@@ -11,9 +11,8 @@ import { ICompra, IDetCompra } from "@/lib/types";
 export default function DetalleCompraPage() {
   useProtectedRoute();
   const router = useRouter();
-  const { id_comp } = useParams(); // Extraemos el parámetro de la URL
+  const { id_comp } = useParams();
   const purchaseId = Number(id_comp);
-
   const [compra, setCompra] = useState<ICompra | null>(null);
   const [detalleCompra, setDetalleCompra] = useState<IDetCompra[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -23,7 +22,7 @@ export default function DetalleCompraPage() {
     async function fetchCompra() {
       setLoading(true);
       try {
-        // Obtén la compra por su ID (ajusta la URL de la API)
+        // Obtén la compra por su ID (ajusta la URL de la API según corresponda)
         const resCompra = await fetch(
           `http://localhost:5000/compras/${purchaseId}`,
         );
@@ -37,15 +36,20 @@ export default function DetalleCompraPage() {
           : compraData.data || compraData;
         setCompra(compraFinal);
 
-        // Obtener los detalles de la compra filtrando por comp_id (ajusta la URL según tu API)
+        // Para los detalles de compra usamos la URL especificada
+        console.log("ID de compra:", purchaseId);
         const resDet = await fetch(
           `http://localhost:5000/detCompras/${purchaseId}`,
         );
+
         if (!resDet.ok) {
           throw new Error("Error al obtener los detalles de la compra.");
         }
         const detData = await resDet.json();
+        console.log("Detalles de compra:", detData);
+        // Se asume que el endpoint retorna un array de detalles
         const detArray = Array.isArray(detData) ? detData : detData.data || [];
+        console.log("Detalles de compra procesados:", detArray);
         setDetalleCompra(detArray);
       } catch (err) {
         setError(err as Error);
@@ -99,7 +103,7 @@ export default function DetalleCompraPage() {
     >
       <div className="px-4 md:px-6 lg:px-8">
         {/* Flecha para regresar a la lista de compras */}
-        <div className="mb-5 flex items-center gap-2 dark:text-gray-400">
+        <div className="mb-2 flex items-center gap-2 dark:text-gray-400">
           <ArrowLeft
             className="h-8 w-8 cursor-pointer"
             onClick={handleGoBack}
@@ -168,53 +172,80 @@ export default function DetalleCompraPage() {
                   key={item.id_dcom}
                   className="rounded-md border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-600 dark:bg-gray-900"
                 >
-                  <h2 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
-                    {typeof item.prod_dcom === "object"
-                      ? item.prod_dcom.nom_prod
-                      : `Producto ID: ${item.prod_dcom}`}
-                  </h2>
-                  <div className="mt-4 flex items-center justify-between">
-                    <div className="flex items-start gap-4">
+                  {/* Encabezado / etiqueta, por si quieres mostrar estado (Por ejemplo: "Unfulfilled") */}
+                  <div className="mb-2 text-xs font-medium text-red-500 dark:text-red-300">
+                    Unfulfilled
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    {/* Miniatura del producto */}
+                    <div className="relative h-16 w-16 flex-shrink-0">
                       {typeof item.prod_dcom === "object" &&
                       item.prod_dcom.img_prod ? (
-                        <div className="relative h-20 w-20 flex-shrink-0">
-                          <Image
-                            src={item.prod_dcom.img_prod}
-                            alt={item.prod_dcom.nom_prod}
-                            fill
-                            className="rounded object-cover"
-                          />
-                        </div>
+                        <Image
+                          src={item.prod_dcom.img_prod}
+                          alt={item.prod_dcom.nom_prod}
+                          fill
+                          className="rounded object-cover"
+                        />
                       ) : (
                         <img
                           src="https://via.placeholder.com/80"
                           alt="Producto demo"
-                          className="h-20 w-20 rounded object-cover"
+                          className="h-full w-full rounded object-cover"
                         />
                       )}
-                      <div>
-                        <p className="text-sm font-bold text-gray-800 dark:text-white">
-                          {typeof item.prod_dcom === "object"
-                            ? item.prod_dcom.nom_prod
-                            : "Producto demo"}
-                        </p>
-                        {/* <p className="text-xs text-gray-500 dark:text-gray-300">
-                          {typeof item.prod_dcom === "object"
-                            ? item.prod_dcom.descripcion
-                            : "Descripción del producto"}
-                        </p> */}
+                    </div>
+
+                    {/* Información principal (nombre del producto, descripción, variantes) */}
+                    <div className="flex flex-col gap-1">
+                      <h2 className="text-sm font-semibold text-gray-800 dark:text-white">
+                        {typeof item.prod_dcom === "object"
+                          ? item.prod_dcom.nom_prod
+                          : "Producto demo"}
+                      </h2>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Use this personalized guide to get your store up and
+                        running
+                      </p>
+
+                      {/* Ejemplo de variantes o características del producto (como "Medium" / color) */}
+                      <div className="mt-1 flex items-center gap-2">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Medium
+                        </span>
+                        <div className="h-3 w-3 rounded-full bg-black" />
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                        $
+
+                    {/* Sección derecha: Cantidad, precio y botones de acción */}
+                    <div className="ml-auto flex flex-col items-end gap-1">
+                      {/* Cantidad x Precio unitario */}
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        {item.cant_dcom} x $
                         {parseFloat(
                           item.prec_uni_dcom as unknown as string,
                         ).toFixed(2)}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-300">
-                        Cantidad: {item.cant_dcom}
+
+                      {/* Subtotal (ej. 3 x 500 = 1500) */}
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                        $
+                        {parseFloat(
+                          (item.cant_dcom *
+                            item.prec_uni_dcom) as unknown as string,
+                        ).toFixed(2)}
                       </p>
+
+                      {/* Botones de acción */}
+                      <div className="mt-2 flex gap-1">
+                        <Button variant="secondary" className="text-xs">
+                          Fulfill Item
+                        </Button>
+                        <Button variant="secondary" className="text-xs">
+                          Create shipping label
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
