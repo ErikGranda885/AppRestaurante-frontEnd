@@ -1,4 +1,4 @@
-// app/(site)/layout.tsx
+
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
 

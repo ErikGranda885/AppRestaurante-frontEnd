@@ -84,53 +84,6 @@ export default function Page() {
         }
       },
     },
-    /* Usuario que realizó la compra */
-    {
-      header: "Usuario",
-      accessorKey: "usu_comp",
-      cell: ({ row }: any) => {
-        const usuario = row.original.usu_comp;
-        return (
-          <div className="flex items-center">
-            <div className="relative h-8 w-8 flex-shrink-0">
-              <Image
-                src={usuario.img_usu || "/default-usuario.png"}
-                alt={usuario.nom_usu}
-                fill
-                className="rounded-md object-cover"
-              />
-            </div>
-            <div className="ml-2 flex flex-col">
-              <p className="text-sm font-semibold">{usuario.nom_usu}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {usuario.rol_usu.nom_rol}
-              </p>
-            </div>
-          </div>
-        );
-      },
-    },
-    /* Proveedor de la compra */
-    {
-      header: "Proveedor",
-      accessorKey: "prov_comp",
-      cell: ({ row }: any) => {
-        const prov = row.original.prov_comp;
-        return (
-          <div className="flex items-center gap-2">
-            <div className="relative h-8 w-8 flex-shrink-0">
-              <Image
-                src={prov.img_prov || "/default-proveedor.png"}
-                alt={prov.nom_prov}
-                fill
-                className="rounded-md object-cover"
-              />
-            </div>
-            <span>{prov.nom_prov}</span>
-          </div>
-        );
-      },
-    },
     /* Total de la compra */
     {
       header: "Total",
@@ -176,6 +129,53 @@ export default function Page() {
           <span className={`rounded px-2 py-1 ${colorClass}`}>
             {cell.getValue()}
           </span>
+        );
+      },
+    },
+    /* Usuario que realizó la compra */
+    {
+      header: "Usuario",
+      accessorKey: "usu_comp",
+      cell: ({ row }: any) => {
+        const usuario = row.original.usu_comp;
+        return (
+          <div className="flex items-center">
+            <div className="relative h-8 w-8 flex-shrink-0">
+              <Image
+                src={usuario.img_usu || "/default-usuario.png"}
+                alt={usuario.nom_usu}
+                fill
+                className="rounded-md object-cover"
+              />
+            </div>
+            <div className="ml-2 flex flex-col">
+              <p className="text-sm font-semibold">{usuario.nom_usu}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {usuario.rol_usu.nom_rol}
+              </p>
+            </div>
+          </div>
+        );
+      },
+    },
+    /* Proveedor de la compra */
+    {
+      header: "Proveedor",
+      accessorKey: "prov_comp",
+      cell: ({ row }: any) => {
+        const prov = row.original.prov_comp;
+        return (
+          <div className="flex items-center gap-2">
+            <div className="relative h-8 w-8 flex-shrink-0">
+              <Image
+                src={prov.img_prov || "/default-proveedor.png"}
+                alt={prov.nom_prov}
+                fill
+                className="rounded-md object-cover"
+              />
+            </div>
+            <span>{prov.nom_prov}</span>
+          </div>
         );
       },
     },

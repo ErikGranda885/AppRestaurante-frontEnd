@@ -51,7 +51,7 @@ export default function ModulePageLayout({
           </Breadcrumb>
         </div>
       </header>
-      <div className="py-6 pt-0">
+      <div className="py-6 pt-0 ">
         <div className="w-full px-4">
           {isLoading ? <SkeletonCard /> : children}
         </div>

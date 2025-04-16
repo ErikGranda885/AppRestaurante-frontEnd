@@ -35,18 +35,28 @@ export interface ICompra {
   id_comp: number;
   tot_comp: number;
   prov_comp: IProveedor;
-  usu_comp: number;
+  usu_comp: IUsuario;
   fech_comp: string;
   estado_comp: string;
   estado_pag_comp: string;
   crea_en_comp: Date;
   act_en_comp: Date;
+  observ_comp: string;
+}
+
+export interface IUsuario {
+  id_usu: string;
+  nom_usu: string;
+  email_usu: string;
+  rol_usu: IRol;
+  img_usu: string;
 }
 
 export interface IDetCompra {
   id_dcom: number;
   comp_dcom: ICompra;
   prod_dcom: IProduct;
+  fech_ven_prod_dcom: string | null;
   cant_dcom: number;
   prec_uni_dcom: number;
   sub_tot_dcom: number;
