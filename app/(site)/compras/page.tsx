@@ -12,6 +12,7 @@ import React, { useEffect, useState } from "react";
 import { format } from "date-fns";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { ToastError } from "@/components/shared/toast/toastError";
 
 export default function Page() {
   const [abrirCrear, setAbrirCrear] = useState(false);
@@ -46,7 +47,10 @@ export default function Page() {
           : detComprasData.data;
         setDetCompras(detComprasArray || []);
       } catch (error) {
-        console.error("Error fetching data", error);
+        ToastError({
+          message:
+            "No se pudieron cargar las compras, comunicate con el administrador.",
+        });
       } finally {
         setLoadingData(false);
       }

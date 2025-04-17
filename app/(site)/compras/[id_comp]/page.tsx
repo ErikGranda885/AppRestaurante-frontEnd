@@ -17,6 +17,7 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { ICompra, IDetCompra } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ToastError } from "@/components/shared/toast/toastError";
 
 export default function DetalleCompraPage() {
   useProtectedRoute();
@@ -25,9 +26,11 @@ export default function DetalleCompraPage() {
   const purchaseId = Number(id_comp);
   const [compra, setCompra] = useState<ICompra | null>(null);
   const [detalleCompra, setDetalleCompra] = useState<IDetCompra[]>([]);
+  const [esEditado, setEsEditado] = useState(false);
+  const [esEditadoObservacion, setEsEditadoObservacion] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
-
+  /* Cargar detalle de la compra */
   useEffect(() => {
     async function fetchCompra() {
       setLoading(true);
@@ -71,9 +74,27 @@ export default function DetalleCompraPage() {
       fetchCompra();
     }
   }, [purchaseId]);
-
+  /* Regresar al listado de compras */
   const handleGoBack = () => {
     router.back();
+  };
+  const handleCambioObservacion = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
+    const value = e.target.value;
+
+    const palabras = value.trim().split(/\s+/).filter(Boolean);
+    const cantidadActual = palabras.length;
+
+    if (cantidadActual <= 50) {
+      setCompra((prev) => prev && { ...prev, observ_comp: value });
+    } else {
+    }
+  };
+
+  /* Guardar observaciones */
+  const handleGuardarObservacion = () => {
+    setEsEditado(false);
   };
 
   if (loading) {
@@ -151,6 +172,7 @@ export default function DetalleCompraPage() {
             <Button
               className="border-border text-[12px] font-semibold"
               variant="secondary"
+              onClick={() => setEsEditado(true)}
             >
               <Pencil className="h-4 w-4" /> Editar
             </Button>
@@ -275,7 +297,7 @@ export default function DetalleCompraPage() {
             </div>
 
             {/* Sección: Resumen de la compra */}
-            <div className="rounded-md border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-600 dark:bg-gray-900">
+            <div className="rounded-md border border-border bg-white p-4 shadow-sm dark:bg-[#1a1a1a]">
               <h2 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
                 Resumen de la compra
               </h2>
@@ -300,15 +322,11 @@ export default function DetalleCompraPage() {
                 <div className="flex justify-end">
                   {/* Si el estado de la factura de es pendiente coloca el boton regstrar */}
                   {compra.estado_pag_comp.toLowerCase() === "pendiente" && (
-                    <Button  className="text-xs">
-                      Registrar pago
-                    </Button>
+                    <Button className="text-xs">Registrar pago</Button>
                   )}
                   {/* Si el estado de la factura de es pagada coloca el boton ver factura */}
                   {compra.estado_pag_comp.toLowerCase() === "pagada" && (
-                    <Button  className="text-xs">
-                      Ver factura
-                    </Button>
+                    <Button className="text-xs">Ver factura</Button>
                   )}
                 </div>
               </div>
@@ -333,15 +351,52 @@ export default function DetalleCompraPage() {
                   <h3 className="mb-2 text-base font-semibold text-gray-800 dark:text-white">
                     Observaciones
                   </h3>
-                  <Button variant="ghost" className="text-xs">
-                    <Pencil className="h-4 w-4 text-[#9ba0a0]" />
+                  <Button
+                    variant="ghost"
+                    className="text-xs"
+                    onClick={() => setEsEditadoObservacion((prev) => !prev)}
+                    disabled={!esEditado}
+                  >
+                    <Pencil
+                      className={`h-4 w-4 ${
+                        esEditadoObservacion
+                          ? "text-black dark:text-white"
+                          : "text-[#9ba0a0]"
+                      }`}
+                    />
                   </Button>
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-300">
-                  {compra.observ_comp
-                    ? compra.observ_comp
-                    : "Sin observaciones."}
-                </p>
+                {esEditadoObservacion ? (
+                  <>
+                    <>
+                      <textarea
+                        className="max-h-40 w-full resize-none overflow-y-auto break-all rounded-md border-none px-2 py-1 text-sm text-gray-800 focus:outline-none focus:ring-0 dark:bg-[#1a1a1a] dark:text-white"
+                        value={compra.observ_comp || ""}
+                        onChange={handleCambioObservacion}
+                      />
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        {compra.observ_comp?.trim().split(/\s+/).filter(Boolean)
+                          .length || 0}{" "}
+                        / 50 palabras
+                      </p>
+                    </>
+
+                    <div className="flex justify-end">
+                      {esEditadoObservacion && (
+                        <Button
+                          className="mt-2 text-xs"
+                          onClick={handleGuardarObservacion}
+                        >
+                          Guardar
+                        </Button>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <p className="max-h-40 overflow-y-auto text-sm text-gray-500 dark:text-gray-300 break-all">
+                    {compra.observ_comp || "Sin observaciones."}
+                  </p>
+                )}
               </div>
             </div>
             {/* Informacion adicional */}
