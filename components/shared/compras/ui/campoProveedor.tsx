@@ -24,9 +24,14 @@ import { cn } from "@/lib/utils";
 
 export interface ProveedorOption {
   value: string;
-  label: string; // Mostrar nombre o ruc
-  ruc: string;
+  label: string;
   nombre: string;
+  ruc: string;
+  contacto?: string;
+  telefono?: string;
+  direccion?: string;
+  correo?: string;
+  imagen?: string;
 }
 
 interface CampoProveedorProps {

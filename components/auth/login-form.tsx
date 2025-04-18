@@ -53,6 +53,7 @@ export function LoginForm({
       // Si es exitoso
       const data = await response.json();
       console.log("Login exitoso", data);
+      localStorage.setItem("usuarioActual", JSON.stringify(data.usuario));
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("user_name", data.usuario.nom_usu);

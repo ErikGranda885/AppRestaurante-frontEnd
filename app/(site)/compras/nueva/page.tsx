@@ -3,7 +3,13 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, FormProvider } from "react-hook-form";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
-import { ICompra, IDetCompra, IProduct, IProveedor } from "@/lib/types";
+import {
+  ICompra,
+  IDetCompra,
+  IProduct,
+  IProveedor,
+  IUsuario,
+} from "@/lib/types";
 import {
   CampoProveedor,
   ProveedorOption,
@@ -15,7 +21,14 @@ import { CampoTipoDocumento } from "@/components/shared/compras/ui/campoTipoDocu
 import { CampoFormaPago } from "@/components/shared/compras/ui/campoFormaPago";
 import { CampoTexto } from "@/components/shared/varios/campoTexto";
 import { CampoTextArea } from "@/components/shared/compras/ui/campoTextArea";
-import { ArrowLeft, Box, ShoppingBag, Trash2, User } from "lucide-react";
+import {
+  ArrowLeft,
+  Box,
+  ShoppingBag,
+  Trash2,
+  Upload,
+  User,
+} from "lucide-react";
 import { CampoProducto } from "@/components/shared/compras/ui/campoProducto";
 import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
 import { CampoNumero } from "@/components/shared/varios/campoNumero";
@@ -25,6 +38,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
+import FacturaModal from "@/components/shared/compras/ui/ordenModal";
 export interface ProductoOption {
   value: string;
   nombre: string;
@@ -50,7 +64,9 @@ export default function NuevaCompraPage() {
   const [productosOptions, setProductosOptions] = useState<ProductoOption[]>(
     [],
   );
-
+  const [openFactura, setOpenFactura] = useState(false);
+  const [compraPreview, setCompraPreview] = useState<ICompra | null>(null);
+  const [usuarioActual, setUsuarioActual] = useState<IUsuario | null>(null);
   const methods = useForm({
     defaultValues: {
       proveedor: "",
@@ -64,6 +80,61 @@ export default function NuevaCompraPage() {
     },
     resolver: zodResolver(schema),
   });
+  const verResumen = () => {
+    const formValues = methods.getValues();
+
+    if (!formValues.proveedor || productos.length === 0) {
+      ToastError({
+        message: "Completa el formulario y agrega al menos un producto",
+      });
+      return;
+    }
+
+    const proveedorSeleccionado = proveedores.find(
+      (p) => p.value === formValues.proveedor,
+    );
+
+    if (!proveedorSeleccionado) {
+      ToastError({ message: "Proveedor no válido" });
+      return;
+    }
+
+    if (!usuarioActual) {
+      ToastError({ message: "No se pudo cargar el usuario actual" });
+      return;
+    }
+
+    const compraReal: ICompra = {
+      id_comp: 0,
+      tot_comp: productos.reduce((acc, p) => acc + p.sub_tot_dcom, 0),
+      prov_comp: {
+        id_prov: Number(formValues.proveedor),
+        nom_prov: proveedorSeleccionado?.nombre || "Proveedor",
+        cont_prov: proveedorSeleccionado?.contacto || "Desconocido",
+        tel_prov: proveedorSeleccionado?.telefono || "0000000000",
+        direc_prov:
+          proveedorSeleccionado?.direccion || "Dirección no especificada",
+        email_prov: proveedorSeleccionado?.correo || "proveedor@email.com",
+        ruc_prov: proveedorSeleccionado?.ruc || "0000000000000",
+        img_prov: proveedorSeleccionado?.imagen || "",
+        est_prov: "activo",
+      },
+      usu_comp: usuarioActual,
+      tipo_doc_comp: formValues.tipo_doc_comp || "Factura",
+      num_doc_comp: formValues.num_doc_comp || "0001-001-0000001",
+      form_pag_comp: formValues.forma_pago_comp || "efectivo",
+      fech_venc_comp: new Date().toISOString(),
+      fech_comp: new Date().toISOString(),
+      estado_comp: "pendiente",
+      estado_pag_comp: "pendiente",
+      crea_en_comp: new Date(),
+      act_en_comp: new Date(),
+      observ_comp: formValues.observ_comp || "",
+    };
+
+    setCompraPreview(compraReal);
+    setOpenFactura(true);
+  };
 
   const { control, handleSubmit, watch, setValue } = methods;
   const productoSeleccionado = watch("producto");
@@ -123,6 +194,14 @@ export default function NuevaCompraPage() {
         console.error("Error al cargar productos:", err);
         ToastError({ message: "Error al cargar productos: " + err.message });
       });
+  }, []);
+
+  /* Cargar usuario */
+  useEffect(() => {
+    const storedUser = localStorage.getItem("usuarioActual");
+    if (storedUser) {
+      setUsuarioActual(JSON.parse(storedUser));
+    }
   }, []);
 
   /* Agregar producto al detalle */
@@ -238,16 +317,28 @@ export default function NuevaCompraPage() {
           className="flex flex-col gap-4 p-4"
         >
           {/* Titulo de la pagina */}
-          <div className="flex flex-wrap gap-4">
-            <ArrowLeft
-              className="h-8 w-8 cursor-pointer"
-              onClick={handleGoBack}
-            />
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <ArrowLeft
+                className="h-8 w-8 cursor-pointer"
+                onClick={handleGoBack}
+              />
+              <div>
+                <h1 className="text-xl font-bold">Nueva Compra</h1>
+                <p className="text-sm text-muted-foreground">
+                  Complete los campos para crear una nueva compra.
+                </p>
+              </div>
+            </div>
+
             <div>
-              <h1 className="text-xl font-bold">Nueva Compra</h1>
-              <p className="text-sm text-muted-foreground">
-                Complete los campos para crear una nueva compra.
-              </p>
+              <Button
+                className="border-border text-[12px] font-semibold"
+                variant="secondary"
+                onClick={verResumen}
+              >
+                Visualizar Orden
+              </Button>
             </div>
           </div>
 
@@ -449,6 +540,14 @@ export default function NuevaCompraPage() {
             </Button>
           </div>
         </form>
+        {compraPreview && (
+          <FacturaModal
+            open={openFactura}
+            onClose={() => setOpenFactura(false)}
+            compra={compraPreview}
+            detalle={productos}
+          />
+        )}
       </FormProvider>
     </ModulePageLayout>
   );
