@@ -4,6 +4,7 @@ import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { Button } from "@/components/ui/button";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import {
+  ArrowDownToLine,
   ArrowLeft,
   Mail,
   MapPinned,
@@ -125,6 +126,25 @@ export default function DetalleCompraPage() {
       </ModulePageLayout>
     );
   }
+  const handleDescargarOrden = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/pdf/factura/${purchaseId}`,
+      );
+      if (!response.ok) throw new Error("Error al generar el PDF");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Factura_${purchaseId}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("❌ Error al imprimir la factura:", error);
+      alert("No se pudo generar el PDF. Inténtalo más tarde.");
+    }
+  };
 
   return (
     <ModulePageLayout
@@ -181,8 +201,9 @@ export default function DetalleCompraPage() {
             <Button
               className="border-border text-[12px] font-semibold"
               variant="secondary"
+              onClick={handleDescargarOrden}
             >
-              <Printer className="h-4 w-4" /> Imprimir
+              <ArrowDownToLine className="h-4 w-4" /> Descargar
             </Button>
           </div>
         </div>

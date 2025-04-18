@@ -35,108 +35,107 @@ const FacturaModal: React.FC<FacturaModalProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        {/* Encabezado */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold">
-              {compra.tipo_doc_comp} #{compra.id_comp}
-            </h2>
-            <p className="text-sm">
-              Fecha: {new Date(compra.fech_comp).toLocaleDateString()}
-            </p>
+        <div id="factura-preview" className="text-black">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold">
+                {compra.tipo_doc_comp} #{compra.id_comp}
+              </h2>
+              <p className="text-sm">
+                Fecha: {new Date(compra.fech_comp).toLocaleDateString()}
+              </p>
+            </div>
+            <Image
+              src="/imagenes/logo.png"
+              alt="Logo"
+              width={70}
+              height={40}
+              className="object-contain"
+            />
           </div>
-          <Image
-            src="/imagenes/logo.png"
-            alt="Logo"
-            width={70}
-            height={40}
-            className="object-contain"
-          />
-        </div>
 
-        {/* Datos de la compra */}
-        <div className="mb-6 grid grid-cols-2 gap-6 rounded-md border p-4 text-sm">
-          <div>
-            <h3 className="mb-1 text-sm font-bold uppercase">Emitido por:</h3>
-            <p>{compra.usu_comp.nom_usu}</p>
-            <p>{compra.usu_comp.email_usu}</p>
+          <div className="mb-6 grid grid-cols-2 gap-6 rounded-md border p-4 text-sm">
+            <div>
+              <h3 className="mb-1 text-sm font-bold uppercase">Emitido por:</h3>
+              <p>{compra.usu_comp.nom_usu}</p>
+              <p>{compra.usu_comp.email_usu}</p>
+            </div>
+            <div>
+              <h3 className="mb-1 text-sm font-bold uppercase">De:</h3>
+              <p>{compra.prov_comp.nom_prov}</p>
+              <p>{compra.prov_comp.email_prov}</p>
+              <p>{compra.prov_comp.tel_prov}</p>
+              <p>{compra.prov_comp.direc_prov}</p>
+            </div>
           </div>
-          <div>
-            <h3 className="mb-1 text-sm font-bold uppercase">De:</h3>
-            <p>{compra.prov_comp.nom_prov}</p>
-            <p>{compra.prov_comp.email_prov}</p>
-            <p>{compra.prov_comp.tel_prov}</p>
-            <p>{compra.prov_comp.direc_prov}</p>
-          </div>
-        </div>
 
-        {/* Tabla de productos */}
-        <div className="overflow-x-auto">
-          <table className="mb-4 w-full table-auto border text-sm">
-            <thead className="bg-zinc-100 dark:bg-zinc-800">
-              <tr>
-                <th className="border p-2 text-left">#</th>
-                <th className="border p-2 text-left">Producto</th>
-                <th className="border p-2 text-center">Cantidad</th>
-                <th className="border p-2 text-center">Precio Unitario</th>
-                <th className="border p-2 text-center">Subtotal</th>
-              </tr>
-            </thead>
-            <tbody>
-              {detalle.map((item, index) => (
-                <tr key={item.id_dcom}>
-                  <td className="border p-2">{index + 1}</td>
-                  <td className="border p-2">{item.prod_dcom.nom_prod}</td>
-                  <td className="border p-2 text-center">{item.cant_dcom}</td>
-                  <td className="border p-2 text-center">
-                    ${item.prec_uni_dcom.toFixed(2)}
-                  </td>
-                  <td className="border p-2 text-center">
-                    ${(item.cant_dcom * item.prec_uni_dcom).toFixed(2)}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="mb-4 w-full table-auto border text-sm">
+              <thead className="bg-zinc-100 dark:bg-zinc-800">
+                <tr>
+                  <th className="border p-2 text-left">#</th>
+                  <th className="border p-2 text-left">Producto</th>
+                  <th className="border p-2 text-center">Cantidad</th>
+                  <th className="border p-2 text-center">Precio Unitario</th>
+                  <th className="border p-2 text-center">Subtotal</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {detalle.map((item, index) => (
+                  <tr key={item.id_dcom}>
+                    <td className="border p-2">{index + 1}</td>
+                    <td className="border p-2">{item.prod_dcom.nom_prod}</td>
+                    <td className="border p-2 text-center">{item.cant_dcom}</td>
+                    <td className="border p-2 text-center">
+                      ${item.prec_uni_dcom.toFixed(2)}
+                    </td>
+                    <td className="border p-2 text-center">
+                      ${(item.cant_dcom * item.prec_uni_dcom).toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-        {/* Totales */}
-        <div className="ml-auto w-full max-w-sm rounded-md border p-4 text-sm">
-          <div className="flex justify-between">
-            <span>Total:</span>
-            <span className="font-semibold">
-              ${detalle.reduce((acc, p) => acc + p.sub_tot_dcom, 0).toFixed(2)}
-            </span>
+          <div className="ml-auto w-full max-w-sm rounded-md border p-4 text-sm">
+            <div className="flex justify-between">
+              <span>Total:</span>
+              <span className="font-semibold">
+                $
+                {detalle.reduce((acc, p) => acc + p.sub_tot_dcom, 0).toFixed(2)}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>Descuento:</span>
+              <span>$0.00</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Impuesto:</span>
+              <span>$0.00</span>
+            </div>
+            <div className="flex justify-between border-t pt-2 font-semibold">
+              <span>Total Final:</span>
+              <span>
+                $
+                {detalle.reduce((acc, p) => acc + p.sub_tot_dcom, 0).toFixed(2)}
+              </span>
+            </div>
           </div>
-          <div className="flex justify-between">
-            <span>Descuento:</span>
-            <span>$0.00</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Impuesto:</span>
-            <span>$0.00</span>
-          </div>
-          <div className="flex justify-between border-t pt-2 font-semibold">
-            <span>Total Final:</span>
-            <span>
-              ${detalle.reduce((acc, p) => acc + p.sub_tot_dcom, 0).toFixed(2)}
-            </span>
-          </div>
-        </div>
 
-        {/* Firmas */}
-        <div className="mt-10 grid grid-cols-3 text-center text-xs text-muted-foreground">
-          <div>
-            ________________________
-            <p>Encargado de cuenta</p>
-          </div>
-          <div>
-            ________________________
-            <p>Administrador</p>
-          </div>
-          <div>
-            ________________________
-            <p>Gerente general</p>
+          <div className="mt-10 grid grid-cols-3 text-center text-xs text-muted-foreground">
+            <div>
+              ________________________
+              <p>Encargado de cuenta</p>
+            </div>
+            <div>
+              ________________________
+              <p>Administrador</p>
+            </div>
+            <div>
+              ________________________
+              <p>Gerente general</p>
+            </div>
           </div>
         </div>
 
