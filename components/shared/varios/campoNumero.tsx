@@ -61,7 +61,9 @@ export const CampoNumero: React.FC<CampoNumeroProps> = ({
                 const num = parseFn(field.value);
                 field.onChange(isNaN(num) ? 0 : num);
               }}
-              className="dark:border-default-700 dark:border dark:bg-[#09090b]"
+              className={`${
+                error ? "border-2 border-[#f31260]" : ""
+              } w-full rounded-md`}
             />
           </FormControl>
           <FormMessage className="error-text" />

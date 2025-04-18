@@ -210,19 +210,13 @@ export default function Page() {
           </p>
           <div className="pt-2">
             <div className="mb-5 flex items-center justify-between">
-              <GeneralDialog
-                open={abrirCrear}
-                onOpenChange={setAbrirCrear}
-                triggerText={
-                  <>
-                    <Plus className="h-4 w-4 font-light" /> Añade una nueva
-                    compra
-                  </>
-                }
-                title="Crear Nueva Compra"
-                description="Ingresa la información para crear una nueva compra."
-                submitText="Crear Compra"
-              />
+              <Button
+                onClick={() => router.push("/compras/nueva")}
+                className="flex items-center gap-2 text-[12px] font-semibold"
+              >
+                <Plus className="h-4 w-4 font-light" /> Añade una nueva compra
+              </Button>
+
               <div className="flex items-center gap-3">
                 {/* Input de búsqueda */}
                 <div className="relative">

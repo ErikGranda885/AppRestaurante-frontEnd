@@ -18,6 +18,7 @@ import Image from "next/image";
 import { ICompra, IDetCompra } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ToastError } from "@/components/shared/toast/toastError";
+import { format, isValid, parse } from "date-fns";
 
 export default function DetalleCompraPage() {
   useProtectedRoute();
@@ -237,11 +238,16 @@ export default function DetalleCompraPage() {
                           {/* define el label de la fecha de vencimiento */}
                           <span className="text-xs text-gray-500 dark:text-gray-400">
                             {item.fech_ven_prod_dcom
-                              ? `Vence: ${new Date(
-                                  item.fech_ven_prod_dcom,
-                                ).toLocaleDateString("es-ES", {
-                                  dateStyle: "short",
-                                })}`
+                              ? (() => {
+                                  const parsed = parse(
+                                    item.fech_ven_prod_dcom,
+                                    "dd/MM/yyyy",
+                                    new Date(),
+                                  );
+                                  return isValid(parsed)
+                                    ? `Vence: ${format(parsed, "dd/MM/yyyy")}`
+                                    : "Fecha inválida";
+                                })()
                               : "Sin fecha de vencimiento"}
                           </span>
 
@@ -393,7 +399,7 @@ export default function DetalleCompraPage() {
                     </div>
                   </>
                 ) : (
-                  <p className="max-h-40 overflow-y-auto text-sm text-gray-500 dark:text-gray-300 break-all">
+                  <p className="max-h-40 overflow-y-auto break-all text-sm text-gray-500 dark:text-gray-300">
                     {compra.observ_comp || "Sin observaciones."}
                   </p>
                 )}

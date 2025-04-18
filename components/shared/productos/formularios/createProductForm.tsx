@@ -14,7 +14,7 @@ import { ToastSuccess } from "../../toast/toastSuccess";
 import { ToastError } from "../../toast/toastError";
 import { CampoSelectUnidad } from "../ui/campoSelectUnidad";
 import { CampoSelectTipo } from "../ui/campoTipo";
-import { SERVICIOS } from "@/services/productos.service";
+import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
 
 export type Option = {
   value: string;
@@ -88,7 +88,7 @@ export function FormProducts({
     [],
   );
   useEffect(() => {
-    fetch(SERVICIOS.categorias)
+    fetch(SERVICIOS_PRODUCTOS.categorias)
       .then((res) => {
         if (!res.ok) throw new Error("Error al cargar categorías");
         return res.json();
@@ -153,7 +153,7 @@ export function FormProducts({
     };
 
     try {
-      const response = await fetch(SERVICIOS.productos, {
+      const response = await fetch(SERVICIOS_PRODUCTOS.productos, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

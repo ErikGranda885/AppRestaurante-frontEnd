@@ -42,6 +42,10 @@ export interface ICompra {
   crea_en_comp: Date;
   act_en_comp: Date;
   observ_comp: string;
+  tipo_doc_comp: string;
+  num_doc_comp: string;
+  form_pag_comp: string;
+  fech_venc_comp: string;
 }
 
 export interface IUsuario {

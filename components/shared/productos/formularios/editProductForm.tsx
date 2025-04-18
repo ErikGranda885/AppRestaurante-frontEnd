@@ -13,7 +13,6 @@ import { ICategory } from "@/lib/types";
 import { ToastSuccess } from "../../toast/toastSuccess";
 import { ToastError } from "../../toast/toastError";
 import { CampoSelectUnidad } from "../ui/campoSelectUnidad";
-import { SERVICIOS } from "@/services/productos.service";
 import { CampoSelectTipo } from "../ui/campoTipo";
 
 // Ref para almacenar el nombre inicial del producto (para omitir validación asíncrona si no cambia)

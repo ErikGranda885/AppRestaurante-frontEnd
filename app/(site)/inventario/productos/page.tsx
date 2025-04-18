@@ -45,7 +45,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SERVICIOS } from "@/services/productos.service";
+import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
 
 // Tipos y constantes globales
 export type Opcion = {
@@ -62,7 +62,7 @@ const diasCaducidad = 10;
 function useObtenerCategorias() {
   const [opcionesCategorias, setOpcionesCategorias] = useState<Opcion[]>([]);
   useEffect(() => {
-    fetch(SERVICIOS.categorias)
+    fetch(SERVICIOS_PRODUCTOS.categorias)
       .then((res) => {
         if (!res.ok) throw new Error("Error al cargar categorías");
         return res.json();
@@ -94,7 +94,7 @@ function useObtenerProductos() {
   useEffect(() => {
     async function obtenerProductos() {
       try {
-        const respuesta = await fetch(SERVICIOS.productos);
+        const respuesta = await fetch(SERVICIOS_PRODUCTOS.productos);
         if (!respuesta.ok) throw new Error("Error al cargar productos");
         const datos = await respuesta.json();
         setTodosLosProductos(datos);
@@ -258,7 +258,7 @@ export default function PaginaProductos() {
     try {
       if (productoAccion.tipo === "inactivar") {
         const respuesta = await fetch(
-          SERVICIOS.inactivarProducto(productoAccion.id_prod),
+          SERVICIOS_PRODUCTOS.inactivarProducto(productoAccion.id_prod),
           { method: "PUT" },
         );
         if (!respuesta.ok) throw new Error("Error al inactivar el producto");
@@ -272,7 +272,7 @@ export default function PaginaProductos() {
         ToastSuccess({ message: "Producto inactivado exitosamente." });
       } else {
         const respuesta = await fetch(
-          SERVICIOS.activarProducto(productoAccion.id_prod),
+          SERVICIOS_PRODUCTOS.activarProducto(productoAccion.id_prod),
           { method: "PUT" },
         );
         if (!respuesta.ok) throw new Error("Error al activar el producto");

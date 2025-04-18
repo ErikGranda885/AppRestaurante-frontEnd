@@ -1,4 +1,4 @@
-export const SERVICIOS = {
+export const SERVICIOS_PRODUCTOS = {
   categorias: "http://localhost:5000/categorias",
   productos: "http://localhost:5000/productos",
   inactivarProducto: (id: number) =>
