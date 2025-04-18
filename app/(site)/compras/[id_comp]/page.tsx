@@ -198,12 +198,12 @@ export default function DetalleCompraPage() {
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
           {/* Columna izquierda: Ítems, resumen, timeline */}
           <div className="space-y-4 md:col-span-2">
-            <div className="rounded-md border border-border bg-white p-4 shadow-sm dark:bg-[#1a1a1a]">
+            <div className="h-auto rounded-md border border-border bg-white p-4 shadow-sm dark:bg-[#1a1a1a]">
               {/* Titulo de la card */}
               <h2 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
                 Artículos de la compra
               </h2>
-              <ScrollArea className="h-[273px] w-full rounded-md">
+              <ScrollArea className="max-h-[353px] w-full overflow-y-auto rounded-md">
                 {/* Sección: Ítems o Productos en la compra */}
                 {detalleCompra.length > 0 ? (
                   detalleCompra.map((item: IDetCompra) => (

@@ -1,19 +1,22 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import Image from "next/image";
 import { ICompra, IDetCompra } from "@/lib/types";
+import { Button } from "@/components/ui/button";
 
 interface FacturaModalProps {
   open: boolean;
   onClose: () => void;
   compra: ICompra;
   detalle: IDetCompra[];
+  onConfirm: () => void;
 }
 
 const FacturaModal: React.FC<FacturaModalProps> = ({
@@ -21,20 +24,23 @@ const FacturaModal: React.FC<FacturaModalProps> = ({
   onClose,
   compra,
   detalle,
+  onConfirm,
 }) => {
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto rounded-md bg-white p-8 text-black shadow-xl dark:bg-zinc-900 dark:text-white">
         <DialogHeader>
           <DialogTitle className="mb-4 text-start text-2xl font-bold tracking-wide">
-            Orden de compra
+            Previsualización del documento
           </DialogTitle>
         </DialogHeader>
 
-        {/* Encabezado con logo y número de factura */}
+        {/* Encabezado */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold">Factura #{compra.id_comp}</h2>
+            <h2 className="text-lg font-bold">
+              {compra.tipo_doc_comp} #{compra.id_comp}
+            </h2>
             <p className="text-sm">
               Fecha: {new Date(compra.fech_comp).toLocaleDateString()}
             </p>
@@ -48,7 +54,7 @@ const FacturaModal: React.FC<FacturaModalProps> = ({
           />
         </div>
 
-        {/* Desde / Para */}
+        {/* Datos de la compra */}
         <div className="mb-6 grid grid-cols-2 gap-6 rounded-md border p-4 text-sm">
           <div>
             <h3 className="mb-1 text-sm font-bold uppercase">Emitido por:</h3>
@@ -133,6 +139,15 @@ const FacturaModal: React.FC<FacturaModalProps> = ({
             <p>Gerente general</p>
           </div>
         </div>
+
+        <DialogFooter className="mt-8 flex justify-end gap-2">
+          <Button variant="secondary" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={onConfirm}>
+            Confirmar y Registrar
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

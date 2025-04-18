@@ -39,6 +39,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import FacturaModal from "@/components/shared/compras/ui/ordenModal";
+import { TIPO_DOCUMENTO_OPTIONS } from "@/lib/constants";
+import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 export interface ProductoOption {
   value: string;
   nombre: string;
@@ -51,9 +53,9 @@ const schema = z.object({
   num_doc_comp: z.string().min(1, "Ingrese el número de documento"),
   forma_pago_comp: z.string().min(1, "Seleccione la forma de pago"),
   observ_comp: z.string().optional(),
-  producto: z.string().min(1, "Seleccione un producto"),
-  cant_dcom: z.number().min(1, "Ingrese una cantidad válida (mayor a 0)"),
-  prec_uni_dcom: z.number().min(0.01, "El precio debe ser mayor a 0"),
+  producto: z.string().nullable().optional(),
+  cant_dcom: z.number().nullable().optional(),
+  prec_uni_dcom: z.number().nullable().optional(),
   fech_ven_prod_dcom: z.string().nullable().optional(),
 });
 
@@ -65,8 +67,10 @@ export default function NuevaCompraPage() {
     [],
   );
   const [openFactura, setOpenFactura] = useState(false);
-  const [compraPreview, setCompraPreview] = useState<ICompra | null>(null);
+  const [compraPreview, setCompraPreview] = useState<any | null>(null);
   const [usuarioActual, setUsuarioActual] = useState<IUsuario | null>(null);
+  const [ultimoIdCompra, setUltimoIdCompra] = useState<number>(0);
+
   const methods = useForm({
     defaultValues: {
       proveedor: "",
@@ -103,9 +107,12 @@ export default function NuevaCompraPage() {
       ToastError({ message: "No se pudo cargar el usuario actual" });
       return;
     }
+    const tipoDocumentoSeleccionado = TIPO_DOCUMENTO_OPTIONS.find(
+      (doc: any) => doc.value === formValues.tipo_doc_comp,
+    );
 
     const compraReal: ICompra = {
-      id_comp: 0,
+      id_comp: ultimoIdCompra + 1,
       tot_comp: productos.reduce((acc, p) => acc + p.sub_tot_dcom, 0),
       prov_comp: {
         id_prov: Number(formValues.proveedor),
@@ -120,7 +127,7 @@ export default function NuevaCompraPage() {
         est_prov: "activo",
       },
       usu_comp: usuarioActual,
-      tipo_doc_comp: formValues.tipo_doc_comp || "Factura",
+      tipo_doc_comp: tipoDocumentoSeleccionado?.label || "Factura",
       num_doc_comp: formValues.num_doc_comp || "0001-001-0000001",
       form_pag_comp: formValues.forma_pago_comp || "efectivo",
       fech_venc_comp: new Date().toISOString(),
@@ -159,6 +166,11 @@ export default function NuevaCompraPage() {
           label: `${prov.nom_prov} - ${prov.ruc_prov}`,
           nombre: prov.nom_prov,
           ruc: prov.ruc_prov,
+          contacto: prov.cont_prov,
+          telefono: prov.tel_prov,
+          direccion: prov.direc_prov,
+          correo: prov.email_prov,
+          imagen: prov.img_prov,
         }));
 
         setProveedores(opciones);
@@ -203,6 +215,44 @@ export default function NuevaCompraPage() {
       setUsuarioActual(JSON.parse(storedUser));
     }
   }, []);
+  /* Cargar compras */
+  useEffect(() => {
+    fetch("http://localhost:5000/compras")
+      .then((res) => {
+        if (!res.ok) throw new Error("Error al cargar compras");
+        return res.json();
+      })
+      .then((data: ICompra[]) => {
+        if (data.length > 0) {
+          const maxId = Math.max(...data.map((c) => c.id_comp));
+          setUltimoIdCompra(maxId);
+        } else {
+          setUltimoIdCompra(0);
+        }
+      })
+      .catch((err) => {
+        console.error("Error al obtener el último ID de compra:", err);
+      });
+  }, []);
+  /* Registrar Compra */
+  const registrarCompra = async () => {
+    if (!compraPreview) return;
+
+    const res = await fetch("http://localhost:5000/compras", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(compraPreview),
+    });
+
+    if (res.ok) {
+      // Aquí puedes hacer redirección, limpiar formulario o mostrar éxito
+      setOpenFactura(false);
+      setCompraPreview(null);
+      router.push("/compras"); // Ejemplo: redirige al listado
+    } else {
+      ToastError({ message: "Error al crear la compra" });
+    }
+  };
 
   /* Agregar producto al detalle */
   const agregarDetalleProducto = () => {
@@ -224,8 +274,15 @@ export default function NuevaCompraPage() {
     const nuevaCantidad = Number(cantidad);
     const nuevoPrecio = Number(precioUnitario);
     const fecha = fechaVencimiento
-      ? new Date(fechaVencimiento).toISOString()
+      ? new Date(fechaVencimiento).toLocaleDateString("es-EC", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        })
       : null;
+
+    console.log("🟡 Fecha ingresada desde el campo:", fechaVencimiento);
+    console.log("🟢 Fecha convertida a ISO:", fecha);
 
     setProductos((prev) => {
       const indexExistente = prev.findIndex(
@@ -235,7 +292,7 @@ export default function NuevaCompraPage() {
       if (indexExistente !== -1) {
         const productosActualizados = [...prev];
         const productoExistente = productosActualizados[indexExistente];
-
+        console.log("fecha de vencimiento: " + fechaVencimiento);
         productoExistente.cant_dcom += nuevaCantidad;
         productoExistente.sub_tot_dcom =
           productoExistente.cant_dcom * nuevoPrecio;
@@ -268,41 +325,140 @@ export default function NuevaCompraPage() {
     setValue("cant_dcom", 1);
     setValue("prec_uni_dcom", 0);
     setValue("fech_ven_prod_dcom", null);
+
+    methods.unregister("producto");
+    methods.unregister("cant_dcom");
+    methods.unregister("prec_uni_dcom");
+    methods.unregister("fech_ven_prod_dcom");
+
+    methods.clearErrors([
+      "producto",
+      "cant_dcom",
+      "prec_uni_dcom",
+      "fech_ven_prod_dcom",
+    ]);
   };
 
   /* Regresar al listado de compras */
   const handleGoBack = () => {
     router.back();
   };
+  /* Confirmar la compra */
+  const handleConfirmarCompra = async () => {
+    if (!compraPreview) return;
+
+    try {
+      // Paso 1: Registrar la compra
+      const resCompra = await fetch("http://localhost:5000/compras", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...compraPreview,
+          prov_comp: compraPreview.prov_comp.id_prov,
+          usu_comp: compraPreview.usu_comp.id_usu,
+          id_comp: undefined,
+          crea_en_comp: undefined,
+          act_en_comp: undefined,
+        }),
+      });
+
+      if (!resCompra.ok) throw new Error("Error al registrar la compra");
+
+      const compraGuardada = await resCompra.json();
+      const idCompra = compraGuardada.id_comp;
+
+      // Paso 2: Registrar cada detalle individualmente
+      for (const item of productos) {
+        const detalle = {
+          comp_dcom: idCompra,
+          prod_dcom: item.prod_dcom.id_prod,
+          cant_dcom: item.cant_dcom,
+          prec_uni_dcom: item.prec_uni_dcom,
+          sub_tot_dcom: item.sub_tot_dcom,
+          fech_ven_prod_dcom: item.fech_ven_prod_dcom || null,
+        };
+        // 🔍 Verifica aquí qué se enviará exactamente al backend
+        console.log("📦 Enviando detalle al backend:", detalle);
+        const resDetalle = await fetch("http://localhost:5000/detCompras", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(detalle),
+        });
+
+        if (!resDetalle.ok) {
+          throw new Error(
+            `Error al registrar el detalle del producto ${item.prod_dcom.nom_prod}`,
+          );
+        }
+      }
+
+      // Éxito total
+      setOpenFactura(false);
+      ToastSuccess({ message: "Compra registrada exitosamente" });
+      router.push("/compras");
+    } catch (error: any) {
+      ToastError({
+        message: error.message || "Error al registrar la compra",
+      });
+    }
+  };
+
   /* Ttoal de productos */
   const totalCompra = productos.reduce(
     (acc, item) => acc + item.prec_uni_dcom * item.cant_dcom,
     0,
   );
 
-  const onSubmit = async (formData: any) => {
-    const body: Partial<ICompra> = {
-      fech_comp: new Date().toISOString(),
-      estado_comp: "pendiente",
-      estado_pag_comp: "pendiente",
-      observ_comp: "",
+  const onSubmit = (formData: any) => {
+    const proveedorSeleccionado = proveedores.find(
+      (p) => p.value === formData.proveedor,
+    );
+
+    const tipoDocumentoSeleccionado = TIPO_DOCUMENTO_OPTIONS.find(
+      (doc) => doc.value === formData.tipo_doc_comp,
+    );
+
+    if (!proveedorSeleccionado || !usuarioActual) {
+      ToastError({ message: "Datos incompletos para la compra" });
+      return;
+    }
+
+    const compra: ICompra = {
+      id_comp: ultimoIdCompra + 1,
       tot_comp: productos.reduce(
         (acc, item) => acc + item.prec_uni_dcom * item.cant_dcom,
         0,
       ),
+      prov_comp: {
+        id_prov: Number(formData.proveedor),
+        nom_prov: proveedorSeleccionado.nombre,
+        ruc_prov: proveedorSeleccionado.ruc,
+        est_prov: "activo",
+        cont_prov: proveedorSeleccionado.contacto ?? "",
+        tel_prov: proveedorSeleccionado.telefono ?? "",
+        direc_prov: proveedorSeleccionado.direccion ?? "",
+        email_prov: proveedorSeleccionado.correo ?? "",
+        img_prov: proveedorSeleccionado.imagen ?? "",
+      },
+      usu_comp: {
+        id_usu: usuarioActual.id_usu,
+        nom_usu: usuarioActual.nom_usu,
+        email_usu: usuarioActual.email_usu,
+      } as IUsuario, // puedes adaptar según tu tipo
+      tipo_doc_comp: tipoDocumentoSeleccionado?.label || "Factura",
+      num_doc_comp: formData.num_doc_comp,
+      form_pag_comp: formData.forma_pago_comp,
+      fech_comp: new Date().toISOString(),
+      fech_venc_comp: new Date().toISOString(),
+      estado_comp: "pendiente",
+      estado_pag_comp: "pendiente",
+      crea_en_comp: new Date(),
+      act_en_comp: new Date(),
+      observ_comp: formData.observ_comp,
     };
 
-    const res = await fetch("http://localhost:5000/compras", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-    if (res.ok) {
-      router.push("/compras");
-    } else {
-      alert("Error al crear compra");
-    }
+    setCompraPreview(compra); // solo para mostrar en el modal
+    setOpenFactura(true);
   };
 
   return (
@@ -316,7 +472,7 @@ export default function NuevaCompraPage() {
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col gap-4 p-4"
         >
-          {/* Titulo de la pagina */}
+          {/* Título */}
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <ArrowLeft
@@ -330,16 +486,6 @@ export default function NuevaCompraPage() {
                 </p>
               </div>
             </div>
-
-            <div>
-              <Button
-                className="border-border text-[12px] font-semibold"
-                variant="secondary"
-                onClick={verResumen}
-              >
-                Visualizar Orden
-              </Button>
-            </div>
           </div>
 
           {/* Detalle del vendedor */}
@@ -350,48 +496,34 @@ export default function NuevaCompraPage() {
             </div>
 
             <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
-              <div className="w-full">
-                <CampoProveedor
-                  control={control}
-                  name="proveedor"
-                  label="Proveedor"
-                  options={proveedores}
-                />
-              </div>
-
-              <div className="w-full">
-                <CampoTipoDocumento
-                  control={control}
-                  name="tipo_doc_comp"
-                  label="Tipo de documento"
-                />
-              </div>
-
-              <div className="w-full">
-                <CampoTexto
-                  control={control}
-                  name="num_doc_comp"
-                  placeholder="Ingresa el numero de la factura"
-                  label="Número de documento"
-                />
-              </div>
-
-              <div className="w-full">
-                <CampoFormaPago
-                  control={control}
-                  name="forma_pago_comp"
-                  label="Forma de pago"
-                />
-              </div>
-
-              <div className="w-full">
-                <CampoTextArea
-                  control={control}
-                  name="observ_comp"
-                  label="Observaciones"
-                  placeholder="Escriba alguna observación relevante"
-                />
-              </div>
+              <CampoProveedor
+                control={control}
+                name="proveedor"
+                label="Proveedor"
+                options={proveedores}
+              />
+              <CampoTipoDocumento
+                control={control}
+                name="tipo_doc_comp"
+                label="Tipo de documento"
+              />
+              <CampoTexto
+                control={control}
+                name="num_doc_comp"
+                placeholder="Ingresa el número de la factura"
+                label="Número de documento"
+              />
+              <CampoFormaPago
+                control={control}
+                name="forma_pago_comp"
+                label="Forma de pago"
+              />
+              <CampoTextArea
+                control={control}
+                name="observ_comp"
+                label="Observaciones"
+                placeholder="Escriba alguna observación relevante"
+              />
             </div>
           </div>
 
@@ -412,29 +544,23 @@ export default function NuevaCompraPage() {
                 />
               </div>
 
-              <div>
-                <CampoNumero
-                  control={control}
-                  name="cant_dcom"
-                  label="Cantidad"
-                />
-              </div>
+              <CampoNumero
+                control={control}
+                name="cant_dcom"
+                label="Cantidad"
+              />
 
-              <div>
-                <CampoNumero
-                  control={control}
-                  name="prec_uni_dcom"
-                  label="Precio Unitario"
-                />
-              </div>
+              <CampoNumero
+                control={control}
+                name="prec_uni_dcom"
+                label="Precio Unitario"
+              />
 
-              <div>
-                <CampoFecha
-                  control={control}
-                  name="fech_ven_prod_dcom"
-                  label="Fecha de vencimiento"
-                />
-              </div>
+              <CampoFecha
+                control={control}
+                name="fech_ven_prod_dcom"
+                label="Fecha de vencimiento"
+              />
 
               <Button
                 type="button"
@@ -504,7 +630,7 @@ export default function NuevaCompraPage() {
                       </td>
                       <td className="p-2">
                         <Button
-                          variant={"ghost"}
+                          variant="ghost"
                           onClick={() =>
                             setProductos((prev) =>
                               prev.filter((_, i) => i !== index),
@@ -520,7 +646,7 @@ export default function NuevaCompraPage() {
               </table>
             </ScrollArea>
 
-            {/* Total de la compra */}
+            {/* Total */}
             <div className="flex justify-end rounded-b-md border-border bg-muted px-4 py-2">
               <p className="text-sm font-semibold">
                 Total:{" "}
@@ -530,6 +656,8 @@ export default function NuevaCompraPage() {
               </p>
             </div>
           </div>
+
+          {/* Botón guardar */}
           <div className="flex flex-col items-end gap-2">
             <Button
               type="submit"
@@ -540,12 +668,15 @@ export default function NuevaCompraPage() {
             </Button>
           </div>
         </form>
+
+        {/* Modal de previsualización */}
         {compraPreview && (
           <FacturaModal
             open={openFactura}
             onClose={() => setOpenFactura(false)}
             compra={compraPreview}
             detalle={productos}
+            onConfirm={handleConfirmarCompra}
           />
         )}
       </FormProvider>
