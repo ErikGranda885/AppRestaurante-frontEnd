@@ -588,6 +588,7 @@ export default function PaginaUsuarios() {
                     estado: u.esta_usu,
                     rol: idRol,
                     rolNombre: nombreRol,
+                    img_usu: u.img_usu || "",
                   };
                 });
                 setUsuarios((prev) => [...prev, ...usuariosFormateados]);

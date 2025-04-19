@@ -281,7 +281,8 @@ export function BulkUploadUsersDialog({
     }
     setLoading(true);
     try {
-      // Procesar cada fila: se mapea el rol usando la función de mapeo de roles
+      const defaultImageUrl =
+        "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/usuarios%2Fuser-default.webp?alt=media&token=14f267c3-c208-4f2a-88cd-e828147b5f94";
       const mappedRoles = mappedRoleOptionsMemo();
       const processedData = previewData.map((row) => {
         let roleValue = row["rol_usu"];
@@ -305,6 +306,7 @@ export function BulkUploadUsersDialog({
         return {
           ...row,
           rol_usu: roleValue,
+          img_usu: defaultImageUrl,
         };
       });
 

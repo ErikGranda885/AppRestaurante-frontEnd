@@ -137,13 +137,16 @@ export function FormProducts({
   const onSubmit = async (data: ValoresFormulario) => {
     let imageUrl = imagenPreview || "";
     if (imagenArchivo) {
-      imageUrl = await uploadImage(imagenArchivo);
+      imageUrl = await uploadImage(
+        imagenArchivo,
+        "productos", // carpeta en Firebase
+        `producto_${data.nombre.replace(/\s+/g, "_").toLowerCase()}`, // nombre personalizado
+      );
     } else {
       imageUrl =
         "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/productos%2Fproduct-default.jpg?alt=media&token=a06d2373-fd9a-4fa5-a715-3c9ab7ae546d";
     }
 
-    // Si el producto es insumo, enviamos null en "categoria"
     const payload = {
       nom_prod: data.nombre,
       cate_prod: tipoProducto === "insumo" ? null : Number(data.categoria),

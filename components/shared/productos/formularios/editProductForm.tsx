@@ -14,6 +14,7 @@ import { ToastSuccess } from "../../toast/toastSuccess";
 import { ToastError } from "../../toast/toastError";
 import { CampoSelectUnidad } from "../ui/campoSelectUnidad";
 import { CampoSelectTipo } from "../ui/campoTipo";
+import { eliminarImagen } from "@/firebase/eliminarImage";
 
 // Ref para almacenar el nombre inicial del producto (para omitir validación asíncrona si no cambia)
 const initialProductNameRef = { current: "" };
@@ -118,19 +119,32 @@ export function EditProductForm({
 
   const onSubmit = async (values: EditProductFormValues) => {
     let imageUrl = imagePreview;
-    if (imageFile) {
-      imageUrl = await uploadImage(imageFile);
-    }
-    const payload = {
-      nom_prod: values.nombre,
-      // Si tipo_prod es "insumo", enviamos null, de lo contrario convertimos a number
-      cate_prod: tipoProducto === "insumo" ? null : Number(values.categoria),
-      tip_prod: values.tipo_prod,
-      und_prod: values.undidad_prod,
-      img_prod: imageUrl,
-    };
 
     try {
+      if (imageFile) {
+        // Si había imagen anterior y no es la imagen por defecto, elimínala
+        const defaultImage =
+          "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/productos%2Fproduct-default.jpg?alt=media&token=c3e03102-01ac-4891-802a-40aff8502b45";
+
+        if (initialData.img_prod && initialData.img_prod !== defaultImage) {
+          await eliminarImagen(initialData.img_prod);
+        }
+
+        imageUrl = await uploadImage(
+          imageFile,
+          "productos",
+          `producto_${values.nombre.replace(/\s+/g, "_").toLowerCase()}`,
+        );
+      }
+
+      const payload = {
+        nom_prod: values.nombre,
+        cate_prod: tipoProducto === "insumo" ? null : Number(values.categoria),
+        tip_prod: values.tipo_prod,
+        und_prod: values.undidad_prod,
+        img_prod: imageUrl,
+      };
+
       const res = await fetch(
         `http://localhost:5000/productos/${initialData.id}`,
         {
