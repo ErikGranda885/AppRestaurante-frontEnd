@@ -86,7 +86,16 @@ export const data = {
         { title: "Reportes", url: "/inventario/reportes" },
       ],
     },
-    { title: "Compras", url: "/compras", icon: ShoppingCart, submenu: false },
+    {
+      title: "Compras",
+      url: "/compras",
+      icon: ShoppingCart,
+      submenu: true,
+      items: [
+        { title: "Historial de compras", url: "/compras/historial" },
+        { title: "Gestión de Proveedores", url: "/compras/proveedores" },
+      ],
+    },
     {
       title: "Cierre Diario",
       url: "/cierre-diario",

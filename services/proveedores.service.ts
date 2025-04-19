@@ -1,4 +1,4 @@
-export const SERVICIOS = {
+export const SERVICIOS_PROVEEDORES = {
   proveedores: "http://localhost:5000/proveedores", // GET lista completa | POST crear uno nuevo
   obtenerProveedor: (id: number | string) =>
     `http://localhost:5000/proveedores/${id}`, // GET un proveedor por ID

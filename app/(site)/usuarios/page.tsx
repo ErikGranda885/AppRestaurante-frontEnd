@@ -48,6 +48,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { SERVICIOS } from "@/services/usuarios.service";
 import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
 import { BulkUploadUsersDialog } from "@/components/shared/usuarios/formularios/cargaUsers";
+import Image from "next/image";
 // Importa el componente de diálogo generalizado para confirmar acciones
 
 // Tipo de dato para los usuarios
@@ -228,15 +229,23 @@ export default function PaginaUsuarios() {
 
         return (
           <div className="flex items-center gap-3">
-            <img
-              src={
-                imagen ||
-                "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/usuarios%2Fuser-default.jpg?alt=media&token=5e06ef7b-f1e0-41cb-9f39-4f1a1ff1e999"
-              }
-              alt="usuario"
-              className="h-9 w-9 rounded-full border object-cover"
-            />
-            <span className="font-medium capitalize">{nombre}</span>
+            <div className="relative h-9 w-9 flex-shrink-0 overflow-hidden rounded-md border bg-white">
+              <Image
+                src={
+                  imagen ||
+                  "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/usuarios%2Fuser-default.jpg?alt=media&token=5e06ef7b-f1e0-41cb-9f39-4f1a1ff1e999"
+                }
+                alt="usuario"
+                fill
+                className="object-cover"
+              />
+            </div>
+            <span
+              className="max-w-[150px] truncate font-medium capitalize"
+              title={nombre}
+            >
+              {nombre}
+            </span>
           </div>
         );
       },

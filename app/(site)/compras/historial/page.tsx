@@ -143,17 +143,22 @@ export default function Page() {
       cell: ({ row }: any) => {
         const usuario = row.original.usu_comp;
         return (
-          <div className="flex items-center">
-            <div className="relative h-8 w-8 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="relative h-9 w-9 flex-shrink-0 overflow-hidden rounded-md border bg-white">
               <Image
                 src={usuario.img_usu || "/default-usuario.png"}
                 alt={usuario.nom_usu}
                 fill
-                className="rounded-md object-cover"
+                className="object-cover"
               />
             </div>
-            <div className="ml-2 flex flex-col">
-              <p className="text-sm font-semibold">{usuario.nom_usu}</p>
+            <div className="flex flex-col">
+              <p
+                className="max-w-[150px] truncate text-sm font-semibold"
+                title={usuario.nom_usu}
+              >
+                {usuario.nom_usu}
+              </p>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 {usuario.rol_usu.nom_rol}
               </p>
@@ -169,16 +174,21 @@ export default function Page() {
       cell: ({ row }: any) => {
         const prov = row.original.prov_comp;
         return (
-          <div className="flex items-center gap-2">
-            <div className="relative h-8 w-8 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="relative h-9 w-9 flex-shrink-0 rounded-md border bg-white p-1">
               <Image
                 src={prov.img_prov || "/default-proveedor.png"}
                 alt={prov.nom_prov}
                 fill
-                className="rounded-md object-cover"
+                className="rounded-full object-contain"
               />
             </div>
-            <span>{prov.nom_prov}</span>
+            <span
+              className="max-w-[140px] truncate font-medium capitalize"
+              title={prov.nom_prov}
+            >
+              {prov.nom_prov}
+            </span>
           </div>
         );
       },

@@ -16,7 +16,7 @@ import {
 } from "@/components/shared/compras/ui/campoProveedor";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { Button } from "@/components/ui/button";
-import { SERVICIOS } from "@/services/proveedores.service";
+import { SERVICIOS_PROVEEDORES } from "@/services/proveedores.service";
 import { CampoTipoDocumento } from "@/components/shared/compras/ui/campoTipoDocumento";
 import { CampoFormaPago } from "@/components/shared/compras/ui/campoFormaPago";
 import { CampoTexto } from "@/components/shared/varios/campoTexto";
@@ -151,7 +151,7 @@ export default function NuevaCompraPage() {
 
   /* Cargar Proveedores */
   useEffect(() => {
-    fetch(SERVICIOS.proveedores)
+    fetch(SERVICIOS_PROVEEDORES.proveedores)
       .then((res) => {
         if (!res.ok) throw new Error("Error al cargar proveedores");
         return res.json();
@@ -248,7 +248,7 @@ export default function NuevaCompraPage() {
       // Aquí puedes hacer redirección, limpiar formulario o mostrar éxito
       setOpenFactura(false);
       setCompraPreview(null);
-      router.push("/compras"); // Ejemplo: redirige al listado
+      router.push("/compras/historial"); // Ejemplo: redirige al listado
     } else {
       ToastError({ message: "Error al crear la compra" });
     }
@@ -396,7 +396,7 @@ export default function NuevaCompraPage() {
       // Éxito total
       setOpenFactura(false);
       ToastSuccess({ message: "Compra registrada exitosamente" });
-      router.push("/compras");
+      router.push("/compras/historial");
     } catch (error: any) {
       ToastError({
         message: error.message || "Error al registrar la compra",
