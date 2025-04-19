@@ -1,13 +1,24 @@
-// src/firebase/uploadImage.ts
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "@/firebase/firebaseClient";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "./firebaseClient";
 
-export async function uploadImage(file: File): Promise<string> {
-  // Crea una referencia única para la imagen en la carpeta "productos"
-  const storageRef = ref(storage, `productos/${file.name}-${Date.now()}`);
-  // Sube el archivo
-  const snapshot = await uploadBytes(storageRef, file);
-  // Obtén y retorna la URL de descarga
-  const downloadURL = await getDownloadURL(snapshot.ref);
-  return downloadURL;
+export async function uploadImage(
+  file: File,
+  carpeta: string = "otros",
+  nombrePersonalizado?: string,
+): Promise<string> {
+  try {
+    const timestamp = Date.now();
+    const extension = file.name.split(".").pop();
+    const nombreArchivo = nombrePersonalizado
+      ? `${nombrePersonalizado}-${timestamp}.${extension}`
+      : `${file.name.split(".")[0]}-${timestamp}.${extension}`;
+
+    const storageRef = ref(storage, `${carpeta}/${nombreArchivo}`);
+    await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(storageRef);
+    return downloadURL;
+  } catch (error) {
+    console.error("Error al subir imagen a Firebase:", error);
+    throw error;
+  }
 }

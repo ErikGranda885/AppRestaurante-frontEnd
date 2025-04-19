@@ -1,7 +1,7 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getStorage } from "firebase/storage";
 
-// Tu configuración de Firebase
+// Configuración de Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDw36UN-V0571yI-uh-7xsfWCuOBhVTs2w",
   authDomain: "dicolaic-app.firebaseapp.com",
@@ -11,8 +11,8 @@ const firebaseConfig = {
   appId: "1:897181552851:web:630908fa18dc0e8482c426",
 };
 
-// Inicializa Firebase
-const app = initializeApp(firebaseConfig);
+// Inicialización segura (previene múltiples inicializaciones)
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Obtén el Storage y expórtalo
+// Exporta storage inicializado
 export const storage = getStorage(app);

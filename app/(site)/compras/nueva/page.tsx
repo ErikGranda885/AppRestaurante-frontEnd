@@ -272,7 +272,8 @@ export default function NuevaCompraPage() {
 
     const idProducto = Number(productoCompleto.value);
     const nuevaCantidad = Number(cantidad);
-    const nuevoPrecio = Number(precioUnitario);
+    const nuevoPrecio = Number(String(precioUnitario).replace(",", "."));
+
     const fecha = fechaVencimiento
       ? new Date(fechaVencimiento).toLocaleDateString("es-EC", {
           day: "2-digit",
@@ -473,7 +474,7 @@ export default function NuevaCompraPage() {
           className="flex flex-col gap-4 p-4"
         >
           {/* Título */}
-          <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <ArrowLeft
                 className="h-8 w-8 cursor-pointer"

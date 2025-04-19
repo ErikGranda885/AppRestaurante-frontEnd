@@ -58,6 +58,7 @@ export type DataUsers = {
   estado?: string;
   rol: string;
   rolNombre: string;
+  img_usu?: string;
 };
 
 // Tipo para definir la acción a confirmar (activar o inactivar)
@@ -106,6 +107,7 @@ export default function PaginaUsuarios() {
           estado: item.esta_usu,
           rol: item.rol_usu.id_rol.toString(),
           rolNombre: item.rol_usu.nom_rol,
+          img_usu: item.img_usu || "",
         }));
         setUsuarios(transformados);
       })
@@ -218,34 +220,28 @@ export default function PaginaUsuarios() {
   /* Definición de las columnas de la tabla */
   const usuariosColumnas: ColumnDef<DataUsers>[] = [
     {
-      id: "id",
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Seleccionar todos"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Seleccionar fila"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-    {
       accessorKey: "usuario",
-      header: "Nombre",
-      cell: ({ row }) => (
-        <div className="capitalize">{row.getValue("usuario")}</div>
-      ),
+      header: "Usuario",
+      cell: ({ row }) => {
+        const nombre = row.getValue("usuario") as string;
+        const imagen = row.original.img_usu as string;
+
+        return (
+          <div className="flex items-center gap-3">
+            <img
+              src={
+                imagen ||
+                "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/usuarios%2Fuser-default.jpg?alt=media&token=5e06ef7b-f1e0-41cb-9f39-4f1a1ff1e999"
+              }
+              alt="usuario"
+              className="h-9 w-9 rounded-full border object-cover"
+            />
+            <span className="font-medium capitalize">{nombre}</span>
+          </div>
+        );
+      },
     },
+
     {
       accessorKey: "correo",
       header: ({ column }) => (
@@ -424,6 +420,7 @@ export default function PaginaUsuarios() {
                     estado: data.usuario.esta_usu,
                     rol: rolData.id_rol.toString(),
                     rolNombre: rolData.nom_rol,
+                    img_usu: data.usuario.img_usu || "",
                   };
                   setUsuarios((prev) => [...prev, usuarioCreado]);
                   setAbrirCrear(false);
@@ -630,6 +627,7 @@ export default function PaginaUsuarios() {
                   correo: usuarioEditar.correo,
                   password: "",
                   rol: parseInt(usuarioEditar.rol),
+                  img_usu: usuarioEditar.img_usu,
                 }}
                 roleOptions={rolOpciones.map((role: IRol) => ({
                   value: role.id_rol.toString(),
@@ -648,6 +646,7 @@ export default function PaginaUsuarios() {
                           opcion.id_rol.toString() ===
                           data.usuario.rol_usu.toString(),
                       )?.nom_rol || data.usuario.rol_usu.toString(),
+                    img_usu: data.usuario.img_usu || "",
                   };
                   setUsuarios((prev) =>
                     prev.map((u) =>

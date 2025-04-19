@@ -1,7 +1,15 @@
 import React from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Edit2, XCircle, CheckCircle, Eye } from "lucide-react";
+import {
+  Edit2,
+  XCircle,
+  CheckCircle,
+  Eye,
+  Clock3,
+  AlertCircle,
+  CalendarX,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -18,7 +26,6 @@ export const mapCategory = (cate: any): ICategory => {
   if (typeof cate === "object" && cate !== null && "id_cate" in cate) {
     return cate as ICategory;
   }
-  // Si cate es un string, se crea un objeto con valores predeterminados
   return {
     id_cate: 0,
     nom_cate: cate,
@@ -48,34 +55,61 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onActivate,
 }) => {
   const daysLeft = getDaysUntilExpiration(product.fech_ven_prod);
-  const expirationText =
-    daysLeft === null
-      ? "Sin fecha de vencimiento" // O el texto que prefieras
-      : daysLeft > 0
-        ? `Quedan <span class="math-inline">\{daysLeft\} día</span>{daysLeft === 1 ? "" : "s"}`
-        : daysLeft === 0
-          ? "Vence hoy"
-          : `Caducado hace <span class="math-inline">\{Math\.abs\(daysLeft\)\} día</span>{Math.abs(daysLeft) === 1 ? "" : "s"}`;
 
-  let expirationColorClass = "text-gray-400";
+  // Texto JSX dinámico
+  let expirationText: React.ReactNode;
+  let expirationIcon = <Clock3 className="mr-1 inline-block h-4 w-4" />;
+  let expirationColorClass = "text-gray-500";
+
   if (daysLeft === null) {
-    expirationColorClass = "text-gray-500"; // O alguna clase por defecto
-  } else if (daysLeft < 0) {
-    expirationColorClass = "error-text";
-  } else if (daysLeft <= 3) {
-    expirationColorClass = "warning-text";
-  } else if (daysLeft <= 10) {
-    expirationColorClass = "ama-text";
+    expirationText = "Sin fecha de vencimiento";
+  } else if (daysLeft === 0) {
+    expirationText = <span className="font-semibold">Vence hoy</span>;
+    expirationColorClass = "text-yellow-500";
+    expirationIcon = <AlertCircle className="mr-1 inline-block h-4 w-4" />;
+  } else if (daysLeft > 0 && daysLeft <= 3) {
+    expirationText = (
+      <>
+        Quedan
+        <span className="font-semibold">
+          {" "}
+          {daysLeft} día{daysLeft === 1 ? "" : "s"}
+        </span>
+      </>
+    );
+    expirationColorClass = "text-yellow-500";
+    expirationIcon = <AlertCircle className="mr-1 inline-block h-4 w-4" />;
+  } else if (daysLeft > 3 && daysLeft <= 10) {
+    expirationText = (
+      <>
+        Quedan{" "} <span className="font-semibold">{daysLeft} días</span>
+      </>
+    );
+    expirationColorClass = "text-amber-500";
   } else if (daysLeft > 10) {
-    expirationColorClass = "success-text";
+    expirationText = (
+      <>
+        Quedan{" "} <span className="font-semibold"> {daysLeft} días</span>
+      </>
+    );
+    expirationColorClass = "text-green-600";
+  } else {
+    expirationText = (
+      <>
+        Caducado hace{" "}
+        <span className="font-semibold">
+          {Math.abs(daysLeft)} día{Math.abs(daysLeft) === 1 ? "" : "s"}
+        </span>
+      </>
+    );
+    expirationColorClass = "text-red-600";
+    expirationIcon = <CalendarX className="mr-1 inline-block h-4 w-4" />;
   }
 
   return (
     <Card className="group relative flex h-[110px] max-w-lg overflow-hidden rounded-lg border border-border bg-white p-3 shadow-md transition-colors duration-300 dark:bg-[#262626]">
-      {/* Overlay para botones de acción */}
       <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
         <div className="flex space-x-2">
-          {/* Botón para Mostrar */}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -89,7 +123,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             </Tooltip>
           </TooltipProvider>
 
-          {/* Botón para Editar */}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -106,7 +139,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             </Tooltip>
           </TooltipProvider>
 
-          {/* Botón para Activar/Inactivar */}
           {product.est_prod === "Activo" ? (
             <TooltipProvider>
               <Tooltip>
@@ -143,8 +175,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           )}
         </div>
       </div>
+
       <div className="relative z-10 flex w-full">
-        {/* Imagen */}
         <div className="relative mr-3 h-20 w-16 flex-shrink-0 overflow-hidden rounded-md">
           <Image
             src={product.img_prod}
@@ -153,38 +185,34 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             className="object-cover"
           />
         </div>
-        {/* Información */}
         <div className="flex flex-1 flex-col">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold">{product.nom_prod}</h2>
-            <span className="text-xs">
-              Stock:
-              {product.stock_prod === null ? "0" : product.stock_prod}
-            </span>
+            <span className="text-xs">Stock: {product.stock_prod ?? "0"}</span>
           </div>
 
-          <div className="text-xs font-semibold">
-            {product.tip_prod == "Insumo" && (
-              <div>
-                <span className="text-xs text-muted-foreground">Tipo: </span>
-                {product.tip_prod}
-              </div>
+          {product.tip_prod === "Insumo" && (
+            <div className="text-xs font-semibold">
+              <span className="text-xs text-muted-foreground">Tipo: </span>
+              {product.tip_prod}
+            </div>
+          )}
+
+          {product.cate_prod?.nom_cate && (
+            <div className="text-xs font-semibold">
+              <span className="text-xs text-muted-foreground">Categoría: </span>
+              {product.cate_prod.nom_cate}
+            </div>
+          )}
+
+          <div
+            className={cn(
+              "flex items-center text-xs font-bold",
+              expirationColorClass,
             )}
-          </div>
-
-          <div className="text-xs font-semibold">
-            {product.cate_prod?.nom_cate && (
-              <div>
-                <span className="text-xs text-muted-foreground">
-                  Categoría:{" "}
-                </span>
-                {product.cate_prod.nom_cate}
-              </div>
-            )}
-          </div>
-
-          <div className={`text-xs font-bold ${expirationColorClass}`}>
-            <span className="text-xs text-muted-foreground">Caduca: </span>
+          >
+            <span className="mr-1 text-xs text-muted-foreground">Caduca: </span>
+            {expirationIcon}
             {expirationText}
           </div>
 
@@ -192,27 +220,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             {product.tip_prod === "Insumo" ? (
               <>
                 <span className="text-xs text-muted-foreground">
-                  Precio de compra:
-                </span>{" "}
-                $
-                {product.prec_comp_prod === null
-                  ? "0.00"
-                  : product.prec_comp_prod}
+                  Precio de compra:{" "}
+                </span>
+                ${product.prec_comp_prod ?? "0.00"}
               </>
             ) : (
               <>
                 <span className="text-xs text-muted-foreground">
-                  Precio de venta:
-                </span>{" "}
-                $
-                {product.prec_vent_prod === null
-                  ? "0.00"
-                  : product.prec_vent_prod}
+                  Precio de venta:{" "}
+                </span>
+                ${product.prec_vent_prod ?? "0.00"}
               </>
             )}
           </div>
         </div>
       </div>
+
       <span
         className={cn(
           "absolute bottom-2 right-2 rounded-md px-2 py-1 text-xs font-semibold",

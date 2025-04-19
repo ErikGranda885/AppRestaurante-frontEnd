@@ -13,14 +13,8 @@ interface CampoNumeroProps {
   name: string;
   label: string;
   placeholder?: string;
-  /**
-   * Step se utiliza para determinar si se trata de un entero ("1") o decimal (por ejemplo, "0.01").
-   */
   step?: string;
-  /**
-   * Función opcional para parsear el valor ingresado.
-   */
-  parseValue?: (value: string) => number;
+  parseValue?: (value: string | number) => number;
 }
 
 export const CampoNumero: React.FC<CampoNumeroProps> = ({
@@ -28,13 +22,15 @@ export const CampoNumero: React.FC<CampoNumeroProps> = ({
   name,
   label,
   placeholder,
-  step = "1",
+  step = "0.01",
   parseValue,
 }) => {
-  // Función de parseo por defecto:
-  // Si step es "1", se parsea como entero; de lo contrario, se reemplaza la coma por punto y se parsea como decimal.
-  const defaultParse = (val: string) =>
-    step === "1" ? parseInt(val, 10) : parseFloat(val.replace(",", "."));
+  // ✅ Asegura que el valor se trate como string al hacer replace
+  const defaultParse = (val: string | number) =>
+    step === "1"
+      ? parseInt(String(val), 10)
+      : parseFloat(String(val).replace(",", "."));
+
   const parseFn = parseValue || defaultParse;
 
   return (
@@ -47,19 +43,19 @@ export const CampoNumero: React.FC<CampoNumeroProps> = ({
           <FormControl>
             <Input
               type="text"
-              placeholder={placeholder}
-              // Mostrar el valor como string (0 se mostrará como "0")
-              value={
-                field.value !== undefined && field.value !== null
-                  ? field.value.toString()
-                  : ""
-              }
-              // Mientras se edita, se actualiza como string
+              inputMode={step === "1" ? "numeric" : "decimal"}
+              placeholder={placeholder || (step === "1" ? "0" : "0.00")}
+              value={field.value ?? ""}
               onChange={(e) => field.onChange(e.target.value)}
-              // Al salir del campo, se convierte el valor ingresado a número
               onBlur={() => {
-                const num = parseFn(field.value);
-                field.onChange(isNaN(num) ? 0 : num);
+                const parsed = parseFn(field.value);
+                if (!isNaN(parsed)) {
+                  const fixed =
+                    step === "1" ? parsed : parseFloat(parsed.toFixed(2));
+                  field.onChange(fixed);
+                } else {
+                  field.onChange(""); // limpia si no es válido
+                }
               }}
               className={`${
                 error ? "border-2 border-[#f31260]" : ""

@@ -40,7 +40,7 @@ export default function Page() {
         setCompras(comprasArray || []);
 
         // Llamada a la API de detalles de compras
-        const resDetCompras = await fetch("http://localhost:5000/dets_compras");
+        const resDetCompras = await fetch("http://localhost:5000/detCompras");
         const detComprasData = await resDetCompras.json();
         const detComprasArray = Array.isArray(detComprasData)
           ? detComprasData

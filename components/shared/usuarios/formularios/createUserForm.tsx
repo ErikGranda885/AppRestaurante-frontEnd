@@ -26,6 +26,7 @@ import {
 import { ToastError } from "../../toast/toastError";
 import { ToastSuccess } from "../../toast/toastSuccess";
 import { IRol } from "@/lib/types";
+import { uploadImage } from "@/firebase/subirImage";
 
 // Esquema para el formulario principal de crear usuario
 const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ]+( [A-Za-zÁÉÍÓÚáéíóúÑñ]+)?$/;
@@ -92,6 +93,9 @@ export function CreateUserForm({
       rol: "",
     },
   });
+  const [imagenArchivo, setImagenArchivo] = React.useState<File | null>(null);
+  const [imagenPreview, setImagenPreview] = React.useState<string | null>(null);
+  const imagenInputRef = React.useRef<HTMLInputElement>(null);
 
   // Formulario para el modal de rol
   const {
@@ -106,26 +110,44 @@ export function CreateUserForm({
   });
 
   const onSubmit = async (values: CreateUserFormValues) => {
-    const payload = {
-      nom_usu: values.usuario,
-      email_usu: values.correo,
-      clave_usu: values.password,
-      rol_usu: parseInt(values.rol, 10), // Convierto el string a número
-    };
+    let imageUrl = "";
 
     try {
+      if (imagenArchivo) {
+        imageUrl = await uploadImage(
+          imagenArchivo,
+          "usuarios",
+          `usuario_${values.usuario.replace(/\s+/g, "_").toLowerCase()}`,
+        );
+      } else {
+        imageUrl =
+          "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/usuarios%2Fuser-default.webp?alt=media&token=14f267c3-c208-4f2a-88cd-e828147b5f94";
+      }
+
+      const payload = {
+        nom_usu: values.usuario,
+        email_usu: values.correo,
+        clave_usu: values.password,
+        rol_usu: parseInt(values.rol, 10),
+        img_usu: imageUrl,
+      };
+
       const res = await fetch("http://localhost:5000/usuarios", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.message || `Error: ${res.status}`);
       }
+
       const data = await res.json();
       onSuccess(data);
       form.reset();
+      setImagenArchivo(null);
+      setImagenPreview(null);
       ToastSuccess({ message: "Usuario creado correctamente" });
     } catch (err) {
       const errorMessage =
@@ -287,6 +309,36 @@ export function CreateUserForm({
             </FormItem>
           )}
         />
+        {/* Campo 5 : Imagen del usuario */}
+        <FormItem className="mt-2">
+          <FormLabel className="text-black dark:text-white">
+            Imagen de usuario
+          </FormLabel>
+          <FormControl>
+            <div>
+              <Input
+                type="file"
+                accept="image/*"
+                ref={imagenInputRef}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setImagenArchivo(file);
+                    setImagenPreview(URL.createObjectURL(file));
+                  }
+                }}
+                className="dark:border-default-700 dark:border dark:bg-[#09090b]"
+              />
+              {imagenPreview && (
+                <img
+                  src={imagenPreview}
+                  alt="Previsualización"
+                  className="mt-2 h-20 w-20 rounded-full object-cover"
+                />
+              )}
+            </div>
+          </FormControl>
+        </FormItem>
 
         {/* Botón de envío */}
         <div className="flex justify-end gap-2 pt-4 sm:col-span-2">
