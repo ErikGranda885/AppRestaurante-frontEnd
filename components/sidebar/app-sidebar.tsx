@@ -75,15 +75,14 @@ export const data = {
       ],
     },
     {
-      title: "Inventario",
-      url: "/inventario",
+      title: "Productos",
+      url: "/productos",
       icon: Box,
       submenu: true,
       items: [
-        { title: "Gestión de Categorias", url: "/inventario/categorias" },
-        { title: "Gestión de Insumos", url: "/inventario/insumos" },
-        { title: "Gestión de Productos", url: "/inventario/productos" },
-        { title: "Reportes", url: "/inventario/reportes" },
+        { title: "Gestión de categorias", url: "/productos/categorias" },
+        { title: "Gestión de productos", url: "/productos/listado" },
+        { title: "Reportes", url: "/productos/reportes" },
       ],
     },
     {

@@ -21,7 +21,7 @@ import {
   UserX,
   MoreHorizontal,
 } from "lucide-react";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import { IProveedor } from "@/lib/types";
 import { DataTable } from "@/components/shared/varios/dataTable";
@@ -40,6 +40,7 @@ import { CreateProveedorForm } from "@/components/shared/proveedores/formularios
 import { EditProveedorForm } from "@/components/shared/proveedores/formularios/editProveedorForm";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
+import { BulkUploadProveedoresDialog } from "@/components/shared/proveedores/formularios/cargaProveedores";
 
 export default function Dashboard() {
   useProtectedRoute();
@@ -56,6 +57,7 @@ export default function Dashboard() {
     nombre: string;
     tipo: "activar" | "inactivar";
   } | null>(null);
+  const [abrirCargaMasiva, setAbrirCargaMasiva] = useState(false);
 
   const ejecutarCambioEstado = (
     proveedor: IProveedor,
@@ -334,6 +336,7 @@ export default function Dashboard() {
               <Button
                 className="border-border text-[12px] font-semibold"
                 variant="secondary"
+                onClick={() => setAbrirCargaMasiva(true)}
               >
                 <Upload className="h-4 w-4" /> Importar
               </Button>
@@ -463,6 +466,16 @@ export default function Dashboard() {
             tipoAccion={accionProveedor.tipo}
             nombreElemento={accionProveedor.nombre}
             onConfirmar={confirmarAccion}
+          />
+        )}
+
+        {abrirCargaMasiva && (
+          <BulkUploadProveedoresDialog
+            onSuccess={(nuevos) => {
+              setProveedores((prev) => [...prev, ...nuevos]);
+              setAbrirCargaMasiva(false);
+            }}
+            onClose={() => setAbrirCargaMasiva(false)}
           />
         )}
       </>
