@@ -36,15 +36,75 @@ import {
 import { ColumnDef } from "@tanstack/react-table";
 import { SERVICIOS_PROVEEDORES } from "@/services/proveedores.service";
 import Image from "next/image";
+import { CreateProveedorForm } from "@/components/shared/proveedores/formularios/createProveedorForm";
+import { EditProveedorForm } from "@/components/shared/proveedores/formularios/editProveedorForm";
+import { ToastError } from "@/components/shared/toast/toastError";
+import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
 
 export default function Dashboard() {
   useProtectedRoute();
   const [proveedores, setProveedores] = React.useState<IProveedor[]>([]);
   const [abrirCrear, setAbrirCrear] = React.useState(false);
+  const [abrirEditar, setAbrirEditar] = React.useState(false);
+  const [proveedorEditando, setProveedorEditando] =
+    React.useState<IProveedor | null>(null);
   const [estadoSeleccionado, setEstadoSeleccionado] =
     React.useState<string>("");
   const [consultaBusqueda, setConsultaBusqueda] = React.useState<string>("");
+  const [accionProveedor, setAccionProveedor] = React.useState<{
+    id: string;
+    nombre: string;
+    tipo: "activar" | "inactivar";
+  } | null>(null);
 
+  const ejecutarCambioEstado = (
+    proveedor: IProveedor,
+    nuevoEstado: "Activo" | "Inactivo",
+  ) => {
+    const servicio =
+      nuevoEstado === "Activo"
+        ? SERVICIOS_PROVEEDORES.activarProveedor(proveedor.id_prov)
+        : SERVICIOS_PROVEEDORES.inactivarProveedor(proveedor.id_prov);
+
+    fetch(servicio, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(`Error: ${res.status}`);
+        return res.json();
+      })
+      .then(() => {
+        setProveedores((prev) =>
+          prev.map((p) =>
+            p.id_prov === proveedor.id_prov
+              ? { ...p, est_prov: nuevoEstado }
+              : p,
+          ),
+        );
+        ToastSuccess({
+          message: `Se ha ${nuevoEstado === "Activo" ? "activado" : "inactivado"} el proveedor exitosamente.`,
+        });
+      })
+      .catch((err) => {
+        ToastError({
+          message: `Error al ${nuevoEstado === "Activo" ? "activar" : "inactivar"} el proveedor: ${err.message}`,
+        });
+      });
+  };
+
+  const confirmarAccion = () => {
+    if (!accionProveedor) return;
+    const proveedor = proveedores.find(
+      (p) => p.id_prov.toString() === accionProveedor.id,
+    );
+    if (!proveedor) return;
+    ejecutarCambioEstado(
+      proveedor,
+      accionProveedor.tipo === "activar" ? "Activo" : "Inactivo",
+    );
+    setAccionProveedor(null);
+  };
   const proveedoresFiltrados = proveedores.filter((prov) => {
     const cumpleEstado =
       estadoSeleccionado === "" ||
@@ -63,15 +123,15 @@ export default function Dashboard() {
       header: "Proveedor",
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
-          <div className="relative h-9 w-9 rounded-md border bg-white p-1">
+          <div className="relative h-9 w-9 overflow-hidden rounded-md border border-gray-300 bg-white p-[2px] dark:border-gray-600">
             <Image
               src={
                 row.original.img_prov ||
-                "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/usuarios%2Fuser-default.jpg?alt=media"
+                "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/proveedores%2Fproveedor-defecto.png?alt=media&token=91f55bd4-862b-488b-ae86-29c10199a7c8"
               }
               alt="proveedor"
               fill
-              className="rounded-full object-contain"
+              className="object-cover"
             />
           </div>
           <span
@@ -90,20 +150,37 @@ export default function Dashboard() {
     { accessorKey: "ruc_prov", header: "RUC" },
     {
       accessorKey: "est_prov",
-      header: "Estado",
+      header: () => <div className="text-center">Estado</div>,
       cell: ({ row }) => {
-        const estado = row.getValue("est_prov") as string;
+        const estadoOriginal = String(row.getValue("est_prov")) || "";
+        const estado = estadoOriginal.toLowerCase();
+
+        let colorCirculo = "bg-gray-500";
+        let colorTexto = "text-gray-600";
+
+        switch (estado) {
+          case "activo":
+            colorCirculo = "bg-[#17c964]";
+            colorTexto = "";
+            break;
+          case "inactivo":
+            colorCirculo = "bg-[#f31260]";
+            colorTexto = "";
+            break;
+          default:
+            colorCirculo = "bg-gray-500";
+            colorTexto = "text-gray-600";
+            break;
+        }
+
         return (
           <div className="text-center">
-            <span
-              className={`inline-block rounded-full px-2 py-1 text-xs font-semibold uppercase ${
-                estado.toLowerCase() === "activo"
-                  ? "bg-green-100 text-green-800"
-                  : "bg-red-100 text-red-800"
-              }`}
-            >
-              {estado}
-            </span>
+            <div className="inline-flex items-center gap-1 p-1">
+              <span className={`h-1 w-1 rounded-full ${colorCirculo}`} />
+              <span className={`text-xs font-medium capitalize ${colorTexto}`}>
+                {estadoOriginal}
+              </span>
+            </div>
           </div>
         );
       },
@@ -111,24 +188,48 @@ export default function Dashboard() {
     {
       id: "acciones",
       header: "Acciones",
-      cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <MoreHorizontal />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-            <DropdownMenuItem className="cursor-pointer">
-              Editar
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">
-              Activar/Inactivar
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
+      cell: ({ row }) => {
+        const proveedor = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => {
+                  setProveedorEditando(proveedor);
+                  setAbrirEditar(true);
+                }}
+              >
+                Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() =>
+                  setAccionProveedor({
+                    id: proveedor.id_prov.toString(),
+                    nombre: proveedor.nom_prov,
+                    tipo:
+                      proveedor.est_prov.toLowerCase() === "activo"
+                        ? "inactivar"
+                        : "activar",
+                  })
+                }
+              >
+                {proveedor.est_prov.toLowerCase() === "activo"
+                  ? "Inactivar"
+                  : "Activar"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
     },
   ];
 
@@ -173,8 +274,50 @@ export default function Dashboard() {
               }
               title="Crear Nuevo Proveedor"
               description="Ingresa la información para crear un nuevo proveedor."
-              submitText="Crear Proveedor"
-            ></GeneralDialog>
+              contentClassName="w-[600px] max-w-none"
+            >
+              <CreateProveedorForm
+                onSuccess={(nuevoProveedor) => {
+                  setAbrirCrear(false);
+                  setProveedores((prev) => [...prev, nuevoProveedor]);
+                }}
+              />
+            </GeneralDialog>
+
+            {proveedorEditando && (
+              <GeneralDialog
+                open={abrirEditar}
+                onOpenChange={setAbrirEditar}
+                title="Editar Proveedor"
+                description="Actualiza la información del proveedor seleccionado."
+                contentClassName="w-[600px] max-w-none"
+              >
+                <EditProveedorForm
+                  initialData={{
+                    id: String(proveedorEditando.id_prov),
+                    nombre: proveedorEditando.nom_prov,
+                    contacto: proveedorEditando.cont_prov,
+                    telefono: proveedorEditando.tel_prov,
+                    direccion: proveedorEditando.direc_prov,
+                    email: proveedorEditando.email_prov,
+                    ruc: proveedorEditando.ruc_prov,
+                    img_prov: proveedorEditando.img_prov,
+                  }}
+                  onSuccess={(proveedorActualizado) => {
+                    setAbrirEditar(false);
+                    setProveedorEditando(null);
+                    setProveedores((prev) =>
+                      prev.map((prov) =>
+                        prov.id_prov === proveedorActualizado.id_prov
+                          ? proveedorActualizado
+                          : prov,
+                      ),
+                    );
+                  }}
+                />
+              </GeneralDialog>
+            )}
+
             <div className="flex items-center gap-3">
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -311,6 +454,17 @@ export default function Dashboard() {
             />
           </div>
         </div>
+        {accionProveedor && (
+          <ModalModEstado
+            abierto={true}
+            onCambioAbierto={(abierto) => {
+              if (!abierto) setAccionProveedor(null);
+            }}
+            tipoAccion={accionProveedor.tipo}
+            nombreElemento={accionProveedor.nombre}
+            onConfirmar={confirmarAccion}
+          />
+        )}
       </>
     </ModulePageLayout>
   );
