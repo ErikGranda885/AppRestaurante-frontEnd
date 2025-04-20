@@ -25,7 +25,6 @@ export interface IProduct {
   prec_vent_prod: number;
   prec_comp_prod: number;
   stock_prod: number;
-  fech_ven_prod: string | null;
   img_prod: string;
   est_prod: string;
   cate_prod: ICategory | null;

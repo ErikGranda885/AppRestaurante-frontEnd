@@ -20,7 +20,6 @@ import {
 import { ProductCard } from "@/components/shared/productos/ui/productCard";
 import { Paginator } from "@/components/shared/productos/ui/paginator";
 import { Separator } from "@/components/ui/separator";
-import { getDaysUntilExpiration } from "@/utils/dates";
 
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { ICategory, IProduct, IProductEdit } from "@/lib/types";
@@ -53,7 +52,7 @@ export type Opcion = {
   label: string;
 };
 
-type FiltroMetrica = "all" | "critical" | "soonExpire" | "outOfStock";
+type FiltroMetrica = "all" | "critical" | "outOfStock";
 
 const stockCritico = 10;
 const diasCaducidad = 10;
@@ -137,11 +136,6 @@ function filtrarProductos(
       (producto) =>
         producto.stock_prod <= stockCritico && producto.stock_prod > 0,
     );
-  } else if (filtroMetrica === "soonExpire") {
-    filtrados = filtrados.filter((producto) => {
-      const dias = getDaysUntilExpiration(producto.fech_ven_prod);
-      return dias !== null && dias <= diasCaducidad;
-    });
   } else if (filtroMetrica === "outOfStock") {
     filtrados = filtrados.filter((producto) => producto.stock_prod === 0);
   }
@@ -167,12 +161,6 @@ function ordenarProductos(
     ordenados.sort((a, b) => a.nom_prod.localeCompare(b.nom_prod));
   } else if (criterioOrden === "stockAsc") {
     ordenados.sort((a, b) => a.stock_prod - b.stock_prod);
-  } else if (criterioOrden === "expirationAsc") {
-    ordenados.sort((a, b) => {
-      const diasA = getDaysUntilExpiration(a.fech_ven_prod) ?? 0;
-      const diasB = getDaysUntilExpiration(b.fech_ven_prod) ?? 0;
-      return diasA - diasB;
-    });
   } else if (criterioOrden === "priceAsc") {
     // Aquí se puede implementar la lógica para ordenar por precio si es necesario
   } else if (criterioOrden === "none") {
@@ -301,6 +289,11 @@ export default function PaginaProductos() {
         isLoading={false}
       >
         <div className="px-6 pt-2">
+          <h1 className="text-xl font-bold">Productos</h1>
+          <p className="text-sm text-muted-foreground">
+            Aquí puedes gestionar los productos de tu negocio.
+          </p>
+          <div className="pt-4" />
           {/* Sección de acciones y búsqueda */}
           <div className="mb-5 flex items-center justify-between">
             <GeneralDialog
@@ -308,8 +301,7 @@ export default function PaginaProductos() {
               onOpenChange={setAbrirCrear}
               triggerText={
                 <>
-                  <Plus className="h-4 w-4 font-light" /> Añadir nuevos
-                  productos
+                  <Plus className="h-4 w-4 font-light" /> Añadir nuevo producto
                 </>
               }
               title="Crear Nuevo Producto"
@@ -379,14 +371,7 @@ export default function PaginaProductos() {
                     >
                       Menor stock a mayor stock
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => {
-                        setCriterioOrden("expirationAsc");
-                        setPaginaActual(1);
-                      }}
-                    >
-                      Por días hasta vencimiento
-                    </DropdownMenuItem>
+
                     <DropdownMenuItem
                       onSelect={() => {
                         setCriterioOrden("priceAsc");
@@ -486,27 +471,6 @@ export default function PaginaProductos() {
             />
 
             <MetricCard
-              titulo="Próx. a Caducar"
-              valor={
-                todosLosProductos.filter((producto) => {
-                  const dias = getDaysUntilExpiration(producto.fech_ven_prod);
-                  return dias !== null && dias <= diasCaducidad;
-                }).length
-              }
-              porcentaje=""
-              periodo={
-                <>
-                  Productos caducados o que caducan en{" "}
-                  <span className="font-bold">{diasCaducidad}</span> días o
-                  menos
-                </>
-              }
-              iconColor="text-pink-400"
-              badgeColorClass="bg-pink-100 dark:bg-pink-800/30 text-pink-500 dark:text-pink-400"
-              onClick={() => manejarFiltroMetrica("soonExpire")}
-            />
-
-            <MetricCard
               titulo="Productos Agotados"
               valor={todosLosProductos.filter((p) => p.stock_prod === 0).length}
               porcentaje=""
@@ -562,7 +526,7 @@ export default function PaginaProductos() {
               </div>
             ) : (
               <>
-                <div className="mt-4 grid h-[250px] grid-cols-1 gap-6 overflow-y-auto sm:grid-cols-2 md:grid-cols-3">
+                <div className="mt-4 grid h-[210px] grid-cols-1 gap-6 overflow-y-auto sm:grid-cols-2 md:grid-cols-3">
                   {productosPaginaActual.map((producto) => (
                     <ProductCard
                       key={producto.id_prod}

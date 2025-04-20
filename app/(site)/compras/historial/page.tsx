@@ -144,7 +144,7 @@ export default function Page() {
         const usuario = row.original.usu_comp;
         return (
           <div className="flex items-center gap-3">
-            <div className="relative h-9 w-9 flex-shrink-0 overflow-hidden rounded-md border bg-white">
+            <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-md border bg-white">
               <Image
                 src={usuario.img_usu || "/default-usuario.png"}
                 alt={usuario.nom_usu}
@@ -175,7 +175,7 @@ export default function Page() {
         const prov = row.original.prov_comp;
         return (
           <div className="flex items-center gap-3">
-            <div className="relative h-9 w-9 flex-shrink-0 rounded-md border bg-white p-1">
+            <div className="relative h-8 w-8 flex-shrink-0 rounded-md border bg-white p-1">
               <Image
                 src={prov.img_prov || "/default-proveedor.png"}
                 alt={prov.nom_prov}

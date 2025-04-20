@@ -296,6 +296,11 @@ export default function PaginaCategorias() {
         isLoading={false}
       >
         <div className="px-6 pt-2">
+          <h1 className="text-xl font-bold">Categorias</h1>
+          <p className="text-sm text-muted-foreground">
+            Aquí puedes gestionar las categorias de tu negocio.
+          </p>
+          <div className="pt-4" />
           <div className="mb-5 flex items-center justify-between">
             <GeneralDialog
               open={abrirCrear}

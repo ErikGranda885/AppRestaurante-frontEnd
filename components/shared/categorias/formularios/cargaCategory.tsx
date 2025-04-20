@@ -138,8 +138,18 @@ export function BulkUploadCategoryDialog({
               }
               rowData[header] = value || "";
             });
+
+            // Excluir fila de ejemplo
+            if (
+              rowData["nom_cate"]?.toLowerCase().includes("ej:") ||
+              rowData["nom_cate"]?.toLowerCase().includes("bebidas frías")
+            ) {
+              return;
+            }
+
             formattedData.push(rowData);
           });
+
           if (!validateRows(formattedData)) {
             setPreviewData([]);
             ToastError({
@@ -235,11 +245,16 @@ export function BulkUploadCategoryDialog({
     }
     setLoading(true);
     try {
-      const processedData = previewData.map((row) => ({
-        nom_cate: row["nom_cate"],
-        desc_cate: row["desc_cate"],
-        est_cate: "Activo",
-      }));
+      const processedData = previewData
+        .filter(
+          (row) =>
+            !row["nom_cate"]?.toLowerCase().includes("ej: bebidas frías"),
+        )
+        .map((row) => ({
+          nom_cate: row["nom_cate"],
+          desc_cate: row["desc_cate"],
+          est_cate: "Activo",
+        }));
 
       const res = await fetch("http://localhost:5000/categorias/masivo", {
         method: "POST",

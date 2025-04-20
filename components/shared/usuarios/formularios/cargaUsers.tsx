@@ -155,6 +155,7 @@ export function BulkUploadUsersDialog({
           const formattedData: any[] = [];
           worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
             if (rowNumber === 1) return;
+
             const rowValues = row.values as any[];
             const rowData: any = {};
             headers.forEach((header: string, index: number) => {
@@ -164,6 +165,15 @@ export function BulkUploadUsersDialog({
               }
               rowData[header] = value || "";
             });
+
+            // Ignorar fila de ejemplo si el nom_usu empieza con 'ej:' o contiene 'ejemplo'
+            if (
+              rowData.nom_usu?.toLowerCase().startsWith("ej") ||
+              rowData.nom_usu?.toLowerCase().includes("ejemplo")
+            ) {
+              return;
+            }
+
             formattedData.push(rowData);
           });
           if (!validateRows(formattedData)) {

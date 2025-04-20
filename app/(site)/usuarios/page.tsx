@@ -229,7 +229,7 @@ export default function PaginaUsuarios() {
 
         return (
           <div className="flex items-center gap-3">
-            <div className="relative h-9 w-9 flex-shrink-0 overflow-hidden rounded-md border bg-white">
+            <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-md border bg-white">
               <Image
                 src={
                   imagen ||
@@ -411,7 +411,7 @@ export default function PaginaUsuarios() {
               onOpenChange={setAbrirCrear}
               triggerText={
                 <>
-                  <Plus className="h-4 w-4 font-light" /> Añadir nuevos usuarios
+                  <Plus className="h-4 w-4 font-light" /> Añadir nuevo usuario
                 </>
               }
               title="Crear Nuevo Usuario"

@@ -136,12 +136,21 @@ export function BulkUploadProveedoresDialog({
           const formattedData: any[] = [];
           worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
             if (rowNumber === 1) return;
+
             const rowValues = row.values as any[];
             const rowData: any = {};
             headers.forEach((header: string, index: number) => {
               const rawValue = rowValues[index + 1];
-              rowData[header] = renderCell(rawValue);
+              rowData[header] = renderCell(rawValue).trim();
             });
+
+            if (
+              rowData.nom_prov?.toLowerCase().startsWith("ej") ||
+              rowData.nom_prov?.toLowerCase().includes("ejemplo")
+            ) {
+              return;
+            }
+
             rowData.img_prov = DEFAULT_IMAGE;
             formattedData.push(rowData);
           });
