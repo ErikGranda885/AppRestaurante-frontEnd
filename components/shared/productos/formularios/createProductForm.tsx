@@ -235,10 +235,7 @@ export function FormProducts({
           <Button type="button" onClick={() => form.reset()}>
             Limpiar
           </Button>
-          <Button
-            className="bg-[#f6b100] text-black hover:bg-[#f6b100]/80"
-            type="submit"
-          >
+          <Button className="hover:/80 text-black" type="submit">
             Crear Producto
           </Button>
         </div>

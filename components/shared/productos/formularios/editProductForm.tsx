@@ -224,15 +224,7 @@ export function EditProductForm({
         </div>
         {/* Botón de envío */}
         <div className="col-span-2 mt-4 flex justify-end gap-4">
-          <Button type="button" onClick={() => form.reset()}>
-            Limpiar
-          </Button>
-          <Button
-            className="bg-[#f6b100] text-black hover:bg-[#f6b100]/80"
-            type="submit"
-          >
-            Guardar Cambios
-          </Button>
+          <Button type="submit">Guardar Cambios</Button>
         </div>
       </form>
     </Form>

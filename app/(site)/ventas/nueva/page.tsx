@@ -96,7 +96,7 @@ export default function Page() {
     let filtered = products.filter((p) => !p.special);
     if (selectedCategory !== "Todos") {
       filtered = filtered.filter(
-        (p) => p.cate_prod.nom_cate === selectedCategory,
+        (p) => p.cate_prod?.nom_cate === selectedCategory,
       );
     }
     if (searchQuery.trim() !== "") {
@@ -206,18 +206,15 @@ export default function Page() {
     return orderItems.reduce((acc, item) => {
       const prod = products.find((p) => p.id_prod === item.productId);
       if (!prod) return acc;
-      return acc + prod.prec_prod * item.quantity;
+      return acc + prod.prec_vent_prod * item.quantity;
     }, 0);
   }, [orderItems, products]);
 
-  // Calcular el subtotal de los productos que tienen IVA (iva_prod true)
   const taxableSubtotal = useMemo(() => {
     return orderItems.reduce((acc, item) => {
       const prod = products.find((p) => p.id_prod === item.productId);
-      if (prod && prod.iva_prod == true) {
-        return acc + prod.prec_prod * item.quantity;
-      }
-      return acc;
+      if (!prod) return acc;
+      return acc + prod.prec_vent_prod * item.quantity;
     }, 0);
   }, [orderItems, products]);
 
@@ -263,7 +260,7 @@ export default function Page() {
             prod_det: item.productId,
             cant_det: item.quantity,
             pre_uni_det: products.find((p) => p.id_prod === item.productId)
-              ?.prec_prod,
+              ?.prec_vent_prod,
           };
           const detailResponse = await fetch(
             "http://localhost:5000/dets-ventas",
@@ -379,7 +376,7 @@ export default function Page() {
                         </div>
                         <div className="mt-2 px-1">
                           {prod.stock_prod <= 0 && (
-                            <div className="absolute right-2 rounded-md bg-[#be3e3f] px-2 py-1 text-xs font-bold text-white shadow">
+                            <div className="absolute right-2 rounded-md bg-[#f31260] px-2 py-1 text-xs font-bold text-white shadow">
                               Sin stock
                             </div>
                           )}
@@ -391,7 +388,7 @@ export default function Page() {
                           </p>
                           <p className="mt-1 text-sm font-bold text-gray-800 dark:text-gray-100">
                             ${" "}
-                            {prod.prec_prod.toLocaleString("id-ID", {
+                            {prod.prec_vent_prod.toLocaleString("id-ID", {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })}
@@ -400,33 +397,36 @@ export default function Page() {
                         </div>
                         <div className="mt-2 flex items-center justify-between px-1">
                           <div className="flex items-center gap-2">
-                            <button
+                            <Button
                               onClick={() => handleDecrement(prod.id_prod)}
-                              className="h-7 w-7 rounded bg-gray-200 text-sm font-bold hover:bg-gray-300 dark:bg-[#333] dark:text-white hover:dark:bg-[#333]"
+                              className="h-6 w-6 rounded bg-secondary text-sm font-bold text-black dark:text-white"
                             >
                               -
-                            </button>
+                            </Button>
                             <span className="w-5 text-center text-sm dark:text-gray-100">
                               {cartQ}
                             </span>
-                            <button
+                            <Button
                               onClick={() => handleIncrement(prod.id_prod)}
                               disabled={prod.stock_prod <= 0}
-                              className={`h-7 w-7 rounded bg-[#f6b100] text-sm font-bold text-black hover:bg-gray-300 dark:text-white hover:dark:bg-[#333] ${
+                              className={`h-6 w-6 rounded text-sm font-bold ${
                                 prod.stock_prod <= 0
                                   ? "cursor-not-allowed opacity-50"
                                   : ""
                               }`}
                             >
                               +
-                            </button>
+                            </Button>
                           </div>
                           <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                             ${" "}
-                            {(cartQ * prod.prec_prod).toLocaleString("id-ID", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
+                            {(cartQ * prod.prec_vent_prod).toLocaleString(
+                              "id-ID",
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              },
+                            )}
                           </p>
                         </div>
                       </div>
@@ -438,7 +438,7 @@ export default function Page() {
           </div>
 
           {/* Columna Derecha (Panel de Orden) */}
-          <div className="flex h-[calc(100vh-6rem)] w-full flex-col md:w-1/4 2xl:h-[710px]">
+          <div className="flex h-[calc(100vh-6rem)] w-full flex-col md:w-1/4 2xl:h-[682px]">
             <div className="rounded-t-lg bg-white p-4 shadow dark:bg-[#1a1a1a]">
               <h3 className="mb-2 text-lg font-bold dark:text-[#f5f5f5]">
                 Información del cliente
@@ -462,7 +462,7 @@ export default function Page() {
                 </div>
               </div>
               <Button
-                className="mt-3 w-full rounded bg-[#f6b100] text-sm font-bold text-black hover:bg-[#f6b100] dark:bg-[#f6b100] dark:text-black dark:hover:bg-[#f6b100]"
+                className="mt-3 w-full rounded text-sm font-bold"
                 onClick={handleOpenCustomerForm}
               >
                 Editar Información
@@ -526,7 +526,7 @@ export default function Page() {
 
                           <p className="text-xs dark:text-[#ababab]">
                             c/u ${" "}
-                            {prod.prec_prod.toLocaleString("id-ID", {
+                            {prod.prec_vent_prod.toLocaleString("id-ID", {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })}
@@ -535,13 +535,12 @@ export default function Page() {
                             {/* Total */}
                             <p className="text-xs font-semibold dark:text-white">
                               Total: ${" "}
-                              {(item.quantity * prod.prec_prod).toLocaleString(
-                                "id-ID",
-                                {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                },
-                              )}
+                              {(
+                                item.quantity * prod.prec_vent_prod
+                              ).toLocaleString("id-ID", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
                             </p>
                             <div className="flex gap-2">
                               <button
@@ -609,7 +608,7 @@ export default function Page() {
                 </span>
               </div>
               <Button
-                className="mt-3 w-full rounded bg-[#f6b100] text-sm font-bold text-black hover:bg-[#f6b100] dark:bg-[#f6b100] dark:text-black dark:hover:bg-[#f6b100]"
+                className="mt-3 w-full rounded text-sm font-bold"
                 onClick={handleSaveOrder}
               >
                 Guardar Orden

@@ -294,7 +294,7 @@ export function EditInsumoForm({
 
         {/* Botón de envío */}
         <div className="flex justify-end pt-4">
-          <Button type="submit" className="bg-[#f6b100] text-black">
+          <Button type="submit" className="text-black">
             Guardar cambios
           </Button>
         </div>

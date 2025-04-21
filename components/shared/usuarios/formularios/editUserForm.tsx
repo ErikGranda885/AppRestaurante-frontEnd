@@ -328,9 +328,7 @@ export function EditUserForm({
 
         {/* Botón de envío */}
         <div className="flex justify-end pt-4 sm:col-span-2">
-          <Button type="submit" className="bg-[#f6b100] text-black">
-            Guardar cambios
-          </Button>
+          <Button type="submit">Guardar cambios</Button>
         </div>
       </form>
     </Form>

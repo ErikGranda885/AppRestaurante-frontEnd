@@ -11,7 +11,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Trash2, X, Edit2 } from "lucide-react";
+import { CheckCircle, Trash2, X, Edit2, Download } from "lucide-react";
 import { ICategory } from "@/lib/types";
 import { ToastError } from "../../toast/toastError";
 import { ToastSuccess } from "../../toast/toastSuccess";
@@ -336,8 +336,11 @@ export function BulkUploadCategoryDialog({
                 para subir la información.
               </li>
             </ol>
-            <Button className="mt-2" onClick={handleDownloadTemplate}>
-              Descargar plantilla
+            <Button
+              className="mt-3 flex items-center gap-2"
+              onClick={handleDownloadTemplate}
+            >
+              <Download className="h-4 w-4" /> Descargar plantilla
             </Button>
           </div>
           {/* Zona para seleccionar archivo */}
@@ -475,7 +478,7 @@ export function BulkUploadCategoryDialog({
             </Button>
             <Button
               onClick={handleUpload}
-              className="bg-[#f6b100] text-black"
+              className="text-black"
               disabled={loading || previewData.length === 0}
             >
               {loading ? "Cargando..." : "Guardar Categorías"}

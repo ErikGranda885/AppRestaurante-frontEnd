@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { IProduct } from "@/lib/types";
 import { ToastError } from "../../toast/toastError";
 import { ToastSuccess } from "../../toast/toastSuccess";
+import { Download } from "lucide-react";
 
 interface BulkUploadProductDialogProps {
   categoryOptions: { value: string; label: string }[];
@@ -263,7 +264,7 @@ export function BulkUploadProductDialog({
               </li>
             </ol>
             <Button
-              className="mt-2"
+              className="mt-3 flex items-center gap-2"
               onClick={async () => {
                 try {
                   const response = await fetch(
@@ -283,7 +284,7 @@ export function BulkUploadProductDialog({
                 }
               }}
             >
-              Descargar plantilla
+              <Download className="h-4 w-4" /> Descargar plantilla
             </Button>
           </div>
 
@@ -344,7 +345,6 @@ export function BulkUploadProductDialog({
           <Button
             onClick={handleUpload}
             disabled={loading || previewData.length === 0}
-            className="bg-yellow-500 text-black"
           >
             {loading ? "Cargando..." : "Guardar Productos"}
           </Button>

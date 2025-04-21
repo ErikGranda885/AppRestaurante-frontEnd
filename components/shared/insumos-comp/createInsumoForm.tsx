@@ -152,7 +152,7 @@ export function CreateInsumoForm({
           label="Fecha de Vencimiento"
         />
         <div className="col-span-2 flex justify-end">
-          <Button type="submit" className="bg-[#f6b100] text-black">
+          <Button type="submit" className="text-black">
             Crear Insumo
           </Button>
         </div>

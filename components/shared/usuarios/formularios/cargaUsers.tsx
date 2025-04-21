@@ -11,7 +11,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Trash2, X, Edit2 } from "lucide-react";
+import { CheckCircle, Trash2, X, Edit2, Download } from "lucide-react";
 import { ToastError } from "../../toast/toastError";
 import { ToastSuccess } from "../../toast/toastSuccess";
 import { IRol } from "@/lib/types";
@@ -389,8 +389,11 @@ export function BulkUploadUsersDialog({
                 para subir la información.
               </li>
             </ol>
-            <Button className="mt-2" onClick={handleDownloadTemplate}>
-              Descargar plantilla
+            <Button
+              className="mt-3 flex items-center gap-2"
+              onClick={handleDownloadTemplate}
+            >
+              <Download className="h-4 w-4" /> Descargar plantilla
             </Button>
           </div>
           {/* Zona para seleccionar archivo */}
@@ -540,7 +543,6 @@ export function BulkUploadUsersDialog({
             <Button
               onClick={handleUpload}
               disabled={loading || previewData.length === 0}
-              className="bg-[#f6b100] text-black"
             >
               {loading ? "Cargando..." : "Guardar Usuarios"}
             </Button>

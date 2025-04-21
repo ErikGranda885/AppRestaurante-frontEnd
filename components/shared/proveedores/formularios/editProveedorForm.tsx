@@ -130,7 +130,7 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
         className="grid grid-cols-2 gap-6 sm:gap-x-8"
       >
         {/* Imagen con overlay */}
-        <div className="row-start-1 col-span-2 flex justify-center">
+        <div className="col-span-2 row-start-1 flex justify-center">
           <div
             onClick={seleccionarImagen}
             className="relative h-24 w-24 cursor-pointer rounded-full border-2 border-dashed border-gray-300 hover:border-primary"
@@ -250,7 +250,7 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
 
         {/* Botón de guardar */}
         <div className="flex justify-end pt-4">
-          <Button type="submit" className="bg-[#f6b100] text-black">
+          <Button type="submit" className="text-black">
             Guardar Cambios
           </Button>
         </div>

@@ -342,7 +342,7 @@ export function CreateUserForm({
 
         {/* Botón de envío */}
         <div className="flex justify-end gap-2 pt-4 sm:col-span-2">
-          <Button type="submit" className="bg-[#f6b100] text-black">
+          <Button type="submit" >
             Crear Usuario
           </Button>
         </div>
@@ -422,7 +422,7 @@ export function CreateUserForm({
                   >
                     Cancelar
                   </Button>
-                  <Button type="submit" className="bg-[#f6b100] text-black">
+                  <Button type="submit" className="text-black">
                     Crear
                   </Button>
                 </div>

@@ -554,7 +554,7 @@ export function BulkUploadInsumosDialog({
             <Button
               onClick={handleUpload}
               disabled={loading || previewData.length === 0}
-              className="bg-[#f6b100] text-black"
+              className="text-black"
             >
               {loading ? "Cargando..." : "Guardar Insumos"}
             </Button>

@@ -116,7 +116,7 @@ export function DataTable<T>({ data, columns, onRowClick }: DataTableProps<T>) {
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="cursor-pointer border border-secondary hover:bg-gray-100"
+                  className="cursor-pointer border border-secondary "
                   onClick={() => onRowClick && onRowClick(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (

@@ -332,7 +332,6 @@ export function BulkUploadProveedoresDialog({
           <Button
             onClick={handleUpload}
             disabled={loading}
-            className="bg-yellow-400 text-black"
           >
             {loading ? "Cargando..." : "Guardar Proveedores"}
           </Button>
