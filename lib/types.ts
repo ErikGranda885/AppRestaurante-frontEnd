@@ -28,6 +28,7 @@ export interface IProduct {
   img_prod: string;
   est_prod: string;
   cate_prod: ICategory | null;
+  fecha_vence_proxima?: string;
 }
 
 export interface ICompra {
@@ -63,6 +64,10 @@ export interface IDetCompra {
   cant_dcom: number;
   prec_uni_dcom: number;
   sub_tot_dcom: number;
+  lote_dcom: string;
+  cant_usada_dcom: number;
+  cant_disponible_dcom: number;
+  est_lote_dcom: string;
 }
 
 export interface IRol {

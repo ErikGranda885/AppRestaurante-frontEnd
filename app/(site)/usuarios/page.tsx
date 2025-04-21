@@ -229,7 +229,7 @@ export default function PaginaUsuarios() {
 
         return (
           <div className="flex items-center gap-3">
-            <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-md border bg-white">
+            <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-md border border-border bg-white">
               <Image
                 src={
                   imagen ||

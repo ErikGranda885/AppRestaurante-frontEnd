@@ -28,9 +28,9 @@ const FacturaModal: React.FC<FacturaModalProps> = ({
 }) => {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto rounded-md bg-white p-8 text-black shadow-xl dark:bg-zinc-900 dark:text-white">
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto rounded-md bg-white p-8 text-black shadow-xl ">
         <DialogHeader>
-          <DialogTitle className="mb-4 text-start text-2xl font-bold tracking-wide">
+          <DialogTitle className="mb-4 text-start text-2xl font-bold tracking-wide text-black">
             Previsualización del documento
           </DialogTitle>
         </DialogHeader>
@@ -71,7 +71,7 @@ const FacturaModal: React.FC<FacturaModalProps> = ({
 
           <div className="overflow-x-auto">
             <table className="mb-4 w-full table-auto border text-sm">
-              <thead className="bg-zinc-100 dark:bg-zinc-800">
+              <thead className="bg-zinc-100">
                 <tr>
                   <th className="border p-2 text-left">#</th>
                   <th className="border p-2 text-left">Producto</th>

@@ -54,7 +54,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onDeactivate,
   onActivate,
 }) => {
-  const daysLeft = getDaysUntilExpiration(product.fech_ven_prod);
+  const daysLeft = getDaysUntilExpiration(product.fecha_vence_proxima);
 
   // Texto JSX dinámico
   let expirationText: React.ReactNode;
@@ -82,14 +82,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   } else if (daysLeft > 3 && daysLeft <= 10) {
     expirationText = (
       <>
-        Quedan{" "} <span className="font-semibold">{daysLeft} días</span>
+        Quedan <span className="font-semibold">{daysLeft} días</span>
       </>
     );
     expirationColorClass = "text-amber-500";
   } else if (daysLeft > 10) {
     expirationText = (
       <>
-        Quedan{" "} <span className="font-semibold"> {daysLeft} días</span>
+        Quedan <span className="font-semibold"> {daysLeft} días</span>
       </>
     );
     expirationColorClass = "text-green-600";

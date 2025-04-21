@@ -41,6 +41,7 @@ import { motion } from "framer-motion";
 import FacturaModal from "@/components/shared/compras/ui/ordenModal";
 import { TIPO_DOCUMENTO_OPTIONS } from "@/lib/constants";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
+import { format } from "date-fns";
 export interface ProductoOption {
   value: string;
   nombre: string;
@@ -70,6 +71,7 @@ export default function NuevaCompraPage() {
   const [compraPreview, setCompraPreview] = useState<any | null>(null);
   const [usuarioActual, setUsuarioActual] = useState<IUsuario | null>(null);
   const [ultimoIdCompra, setUltimoIdCompra] = useState<number>(0);
+  const DIAS_UMBRAL_POR_VENCER = 30;
 
   const methods = useForm({
     defaultValues: {
@@ -254,6 +256,27 @@ export default function NuevaCompraPage() {
     }
   };
 
+  function calcularEstadoLote(
+    fechaVencimiento: string | null,
+    diasPorVencer = 30,
+  ): "vigente" | "por_vencer" | "vencido" {
+    if (!fechaVencimiento) return "vigente";
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0); // eliminar hora
+
+    const vencimiento = new Date(fechaVencimiento);
+    vencimiento.setHours(0, 0, 0, 0); // eliminar hora
+
+    const diferenciaDias = Math.floor(
+      (vencimiento.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24),
+    );
+
+    if (diferenciaDias < 0) return "vencido";
+    if (diferenciaDias <= diasPorVencer) return "por_vencer";
+    return "vigente";
+  }
+
   /* Agregar producto al detalle */
   const agregarDetalleProducto = () => {
     if (!productoSeleccionado || !cantidad || !precioUnitario) {
@@ -274,16 +297,9 @@ export default function NuevaCompraPage() {
     const nuevaCantidad = Number(cantidad);
     const nuevoPrecio = Number(String(precioUnitario).replace(",", "."));
 
-    const fecha = fechaVencimiento
-      ? new Date(fechaVencimiento).toLocaleDateString("es-EC", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        })
-      : null;
+    const fecha = fechaVencimiento ? fechaVencimiento : null;
 
-    console.log("🟡 Fecha ingresada desde el campo:", fechaVencimiento);
-    console.log("🟢 Fecha convertida a ISO:", fecha);
+    const loteGenerado = `L${Date.now()}`; // Podrías usar un generador más sofisticado si deseas
 
     setProductos((prev) => {
       const indexExistente = prev.findIndex(
@@ -293,15 +309,26 @@ export default function NuevaCompraPage() {
       if (indexExistente !== -1) {
         const productosActualizados = [...prev];
         const productoExistente = productosActualizados[indexExistente];
-        console.log("fecha de vencimiento: " + fechaVencimiento);
+
         productoExistente.cant_dcom += nuevaCantidad;
         productoExistente.sub_tot_dcom =
           productoExistente.cant_dcom * nuevoPrecio;
         productoExistente.prec_uni_dcom = nuevoPrecio;
         productoExistente.fech_ven_prod_dcom = fecha;
 
+        // Actualizar campos automáticos
+        productoExistente.cant_disponible_dcom =
+          (productoExistente.cant_disponible_dcom || 0) + nuevaCantidad;
+        productoExistente.est_lote_dcom = "Activo";
+
         return productosActualizados;
       } else {
+        const estadoLote = calcularEstadoLote(
+          fechaVencimiento ?? null,
+          DIAS_UMBRAL_POR_VENCER,
+        );
+
+        // ← aquí defines el umbral
         const nuevoDetalle: IDetCompra = {
           id_dcom: Date.now(),
           comp_dcom: {} as any,
@@ -310,11 +337,14 @@ export default function NuevaCompraPage() {
             nom_prod: productoCompleto.nombre,
             img_prod: productoCompleto.img_prod,
           } as IProduct,
-
           cant_dcom: nuevaCantidad,
           prec_uni_dcom: nuevoPrecio,
           sub_tot_dcom: nuevaCantidad * nuevoPrecio,
           fech_ven_prod_dcom: fecha,
+          lote_dcom: loteGenerado,
+          cant_usada_dcom: 0,
+          cant_disponible_dcom: nuevaCantidad,
+          est_lote_dcom: estadoLote,
         };
 
         return [...prev, nuevoDetalle];
@@ -376,10 +406,15 @@ export default function NuevaCompraPage() {
           cant_dcom: item.cant_dcom,
           prec_uni_dcom: item.prec_uni_dcom,
           sub_tot_dcom: item.sub_tot_dcom,
-          fech_ven_prod_dcom: item.fech_ven_prod_dcom || null,
+          fech_ven_prod_dcom: item.fech_ven_prod_dcom
+            ? format(new Date(item.fech_ven_prod_dcom), "yyyy-MM-dd")
+            : null,
+          lote_dcom: item.lote_dcom,
+          cant_usada_dcom: item.cant_usada_dcom,
+          cant_disponible_dcom: item.cant_disponible_dcom,
+          est_lote_dcom: item.est_lote_dcom,
         };
-        // 🔍 Verifica aquí qué se enviará exactamente al backend
-        console.log("📦 Enviando detalle al backend:", detalle);
+
         const resDetalle = await fetch("http://localhost:5000/detCompras", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -387,13 +422,18 @@ export default function NuevaCompraPage() {
         });
 
         if (!resDetalle.ok) {
+          // Si falla, eliminar la compra ya registrada (rollback manual)
+          await fetch(`http://localhost:5000/compras/${idCompra}`, {
+            method: "DELETE",
+          });
+
           throw new Error(
-            `Error al registrar el detalle del producto ${item.prod_dcom.nom_prod}`,
+            `Error al registrar el detalle del producto ${item.prod_dcom.nom_prod}. Se ha cancelado la compra.`,
           );
         }
       }
 
-      // Éxito total
+      // Si todo fue exitoso
       setOpenFactura(false);
       ToastSuccess({ message: "Compra registrada exitosamente" });
       router.push("/compras/historial");

@@ -243,19 +243,23 @@ export function BulkUploadProveedoresDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div className="rounded bg-gray-100 p-4 dark:border-none dark:bg-[#1E1E1E] dark:text-white">
-            <h2 className="mb-2 font-mono">Instrucciones:</h2>
-            <ul className="list-disc pl-5 text-sm">
+            <h2 className="mb-2 font-mono dark:text-gray-100">
+              Pasos para la carga masiva:
+            </h2>
+            <ol className="list-inside list-decimal text-sm text-gray-700 dark:text-white">
               <li>
                 Descarga y llena la plantilla con los datos de los proveedores.
               </li>
               <li>
-                Campos requeridos: nom_prov, email_prov, cont_prov, tel_prov,
+                Campos requeridos:  <strong className="dark:text-primary">
+                nom_prov, email_prov, cont_prov, tel_prov,
                 ruc_prov, direc_prov
+                </strong>
               </li>
               <li>
                 Selecciona o arrastra el archivo .CSV o .XLSX a continuación.
               </li>
-            </ul>
+            </ol>
             <Button
               className="mt-3 flex items-center gap-2"
               onClick={handleDownloadTemplate}

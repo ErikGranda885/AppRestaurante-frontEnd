@@ -45,6 +45,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
+import { SERVICIOS_INVENTARIO } from "@/services/inventario.service";
 
 // Tipos y constantes globales
 export type Opcion = {
@@ -93,8 +94,9 @@ function useObtenerProductos() {
   useEffect(() => {
     async function obtenerProductos() {
       try {
-        const respuesta = await fetch(SERVICIOS_PRODUCTOS.productos);
-        if (!respuesta.ok) throw new Error("Error al cargar productos");
+        const respuesta = await fetch(SERVICIOS_INVENTARIO.productosConStock);
+        if (!respuesta.ok)
+          throw new Error("Error al cargar productos con stock");
         const datos = await respuesta.json();
         setTodosLosProductos(datos);
       } catch (err: any) {

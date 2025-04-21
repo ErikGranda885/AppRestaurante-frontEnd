@@ -125,7 +125,7 @@ export default function Dashboard() {
       header: "Proveedor",
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
-          <div className="relative h-8 w-8 overflow-hidden rounded-md border border-gray-300 bg-white p-[2px] dark:border-gray-600">
+          <div className="relative h-8 w-8 overflow-hidden rounded-md border border-border bg-white p-[2px]">
             <Image
               src={
                 row.original.img_prov ||
