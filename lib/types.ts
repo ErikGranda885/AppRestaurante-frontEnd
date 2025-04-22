@@ -17,6 +17,25 @@ export interface IProveedor {
   est_prov: string;
 }
 
+export interface IDetalleProductoVenta {
+  nombre: string;
+  cantidad: number;
+  precio: number;
+  subtotal: number;
+}
+
+export interface IVentaDetalle {
+  id_venta: number;
+  cliente: IUsuario;
+  tipoOrden: string; // Alias de tip_pag_vent
+  estado: string; // est_vent
+  tipoPago: string; // tip_pag_vent
+  comprobante: string | null; // comprobante_num_vent
+  fecha: string; // fech_vent
+  total: number; // tot_vent
+  productos: IDetalleProductoVenta[];
+}
+
 export interface IProduct {
   id_prod: number;
   nom_prod: string;

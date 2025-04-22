@@ -580,113 +580,121 @@ export default function Page() {
               />
             </div>
             <div className="flex h-[228px] flex-col bg-white px-4 pt-3 shadow dark:bg-[#1a1a1a] 2xl:h-[225px]">
-              <div className="h-[220px]">
-                <h3 className="text-md mb-2 font-bold dark:text-[#f5f5f5]">
-                  Detalle de la orden
-                </h3>
-                {orderItems.length === 0 ? (
-                  <p className="text-sm dark:text-[#ababab]">
-                    No existen productos añadidos a la orden.
-                  </p>
-                ) : (
-                  <div className="flex flex-grow flex-col gap-2 overflow-auto">
-                    {orderItems.map((item, idx) => {
-                      const prod = products.find(
-                        (p) => p.id_prod === item.productId,
-                      );
-                      if (!prod) return null;
-                      return (
-                        <div
-                          key={`${prod.id_prod}-${idx}`}
-                          className="flex items-center gap-3 rounded-lg border border-border bg-gray-100 p-2 dark:bg-[#262626]"
-                        >
-                          <div className="relative h-12 w-12 overflow-hidden rounded">
-                            <Image
-                              src={prod.img_prod}
-                              alt={prod.nom_prod}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex flex-row items-center justify-between gap-2">
-                              <p className="text-sm font-semibold">
-                                {prod.nom_prod}
-                              </p>
-                              <button
-                                onClick={() => handleRemove(prod.id_prod)}
-                                className="ml-2 rounded bg-gray-200 p-1 text-red-500 hover:bg-gray-300 dark:bg-[#1a1a1a] hover:dark:bg-[#1c1c1c]"
-                                title="Eliminar producto"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  className="h-4 w-4"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4m-4 0a2 2 0 00-2 2h8a2 2 0 00-2-2m-4 0V3m0 0h4"
-                                  />
-                                </svg>
-                              </button>
+              <ScrollArea>
+                <div className="h-[225px]">
+                  <h3 className="text-md mb-2 font-bold dark:text-[#f5f5f5]">
+                    Detalle de la orden
+                  </h3>
+                  {orderItems.length === 0 ? (
+                    <p className="text-sm dark:text-[#ababab]">
+                      No existen productos añadidos a la orden.
+                    </p>
+                  ) : (
+                    <div className="flex flex-grow flex-col gap-2 overflow-auto">
+                      {orderItems.map((item, idx) => {
+                        const prod = products.find(
+                          (p) => p.id_prod === item.productId,
+                        );
+                        if (!prod) return null;
+                        return (
+                          <div
+                            key={`${prod.id_prod}-${idx}`}
+                            className="flex items-center gap-3 rounded-lg border border-border bg-gray-100 p-2 dark:bg-[#262626]"
+                          >
+                            <div className="relative h-12 w-12 overflow-hidden rounded">
+                              <Image
+                                src={prod.img_prod}
+                                alt={prod.nom_prod}
+                                fill
+                                className="object-cover"
+                              />
                             </div>
+                            <div className="flex-1">
+                              <div className="flex flex-row items-center justify-between gap-2">
+                                <p className="text-sm font-semibold">
+                                  {prod.nom_prod}
+                                </p>
+                                <button
+                                  onClick={() => handleRemove(prod.id_prod)}
+                                  className="ml-2 rounded bg-gray-200 p-1 text-red-500 hover:bg-gray-300 dark:bg-[#1a1a1a] hover:dark:bg-[#1c1c1c]"
+                                  title="Eliminar producto"
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-4 w-4"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4m-4 0a2 2 0 00-2 2h8a2 2 0 00-2-2m-4 0V3m0 0h4"
+                                    />
+                                  </svg>
+                                </button>
+                              </div>
 
-                            <p className="text-xs dark:text-[#ababab]">
-                              c/u ${" "}
-                              {prod.prec_vent_prod.toLocaleString("id-ID", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                            </p>
-                            <div className="flex items-center justify-between gap-2 pt-1 text-xs">
-                              {/* Total */}
-                              <p className="text-xs font-semibold dark:text-white">
-                                Total: ${" "}
-                                {safePrice(item.quantity * prod.prec_vent_prod)}
+                              <p className="text-xs dark:text-[#ababab]">
+                                c/u ${" "}
+                                {prod.prec_vent_prod.toLocaleString("id-ID", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
                               </p>
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => handleDecrement(prod.id_prod)}
-                                  className="rounded bg-gray-200 px-2 text-sm font-bold hover:bg-gray-300 dark:bg-[#1a1a1a] hover:dark:bg-[#1c1c1c]"
-                                >
-                                  -
-                                </button>
-                                <span className="text-sm dark:text-[#ababab]">
-                                  {item.quantity}
-                                </span>
-                                <button
-                                  onClick={() => handleIncrement(prod.id_prod)}
-                                  disabled={prod.stock_prod <= 0}
-                                  className={`rounded bg-gray-200 px-2 text-sm font-bold hover:bg-gray-300 dark:bg-[#1a1a1a] hover:dark:bg-[#1c1c1c] ${
-                                    prod.stock_prod <= 0
-                                      ? "cursor-not-allowed opacity-50"
-                                      : ""
-                                  }`}
-                                >
-                                  +
-                                </button>
+                              <div className="flex items-center justify-between gap-2 pt-1 text-xs">
+                                {/* Total */}
+                                <p className="text-xs font-semibold dark:text-white">
+                                  Total: ${" "}
+                                  {safePrice(
+                                    item.quantity * prod.prec_vent_prod,
+                                  )}
+                                </p>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() =>
+                                      handleDecrement(prod.id_prod)
+                                    }
+                                    className="rounded bg-gray-200 px-2 text-sm font-bold hover:bg-gray-300 dark:bg-[#1a1a1a] hover:dark:bg-[#1c1c1c]"
+                                  >
+                                    -
+                                  </button>
+                                  <span className="text-sm dark:text-[#ababab]">
+                                    {item.quantity}
+                                  </span>
+                                  <button
+                                    onClick={() =>
+                                      handleIncrement(prod.id_prod)
+                                    }
+                                    disabled={prod.stock_prod <= 0}
+                                    className={`rounded bg-gray-200 px-2 text-sm font-bold hover:bg-gray-300 dark:bg-[#1a1a1a] hover:dark:bg-[#1c1c1c] ${
+                                      prod.stock_prod <= 0
+                                        ? "cursor-not-allowed opacity-50"
+                                        : ""
+                                    }`}
+                                  >
+                                    +
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                    <hr
-                      className="mt-3 border-0 border-t border-dashed"
-                      style={{
-                        borderTopColor: "rgba(200, 200, 200, 0.5)",
-                        borderTopWidth: "2px",
-                        borderImage: "initial",
-                        borderSpacing: "10px",
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
+                        );
+                      })}
+                      <hr
+                        className="mt-3 border-0 border-t border-dashed"
+                        style={{
+                          borderTopColor: "rgba(200, 200, 200, 0.5)",
+                          borderTopWidth: "2px",
+                          borderImage: "initial",
+                          borderSpacing: "10px",
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
             </div>
             {/* Resumen de Pago y Botón para Guardar Orden */}
             <div className="rounded-b-lg bg-white px-4 pt-3 shadow dark:bg-[#1a1a1a]">
