@@ -7,10 +7,18 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { ICategory, IProduct } from "@/lib/types";
-import { CheckCircle, XCircle } from "lucide-react";
+import { SERVICIOS_INVENTARIO } from "@/services/inventario.service";
+import { safePrice } from "@/utils/format";
+import {
+  Banknote,
+  Pencil,
+  Printer,
+  Save,
+  Search,
+  Smartphone,
+} from "lucide-react";
 import Image from "next/image";
 import { useState, useMemo, useEffect, useRef } from "react";
-import toast from "react-hot-toast";
 
 interface IExtendedProduct extends IProduct {
   special?: boolean;
@@ -33,7 +41,9 @@ export default function Page() {
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [searchQuery, setSearchQuery] = useState("");
   const [categories, setCategories] = useState<ICategory[]>([]);
-
+  const [metodoPago, setMetodoPago] = useState<"transferencia" | "efectivo">(
+    "efectivo",
+  );
   // Estados para información del cliente
   const [customerName, setCustomerName] = useState("Erik Granda");
   const [tableInfo, setTableInfo] = useState("Orden para llevar");
@@ -55,21 +65,28 @@ export default function Page() {
     setShowCustomerForm(false);
   };
 
-  // Cargar productos desde la API
+  // Cargar productos desde la API de inventario
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const response = await fetch("http://localhost:5000/productos");
+        const response = await fetch(SERVICIOS_INVENTARIO.productosConStock);
         const data = await response.json();
-        console.log("esta es la data: ", data);
+
+        if (!Array.isArray(data)) {
+          console.error("La respuesta esperada debe ser un arreglo:", data);
+          return;
+        }
+
         const activeProducts = data.filter(
           (producto: any) => producto.est_prod === "Activo",
         );
         setProducts(activeProducts);
+        console.log("arreglo tomado del inventario", data);
       } catch (error) {
-        console.error("Error al cargar los productos:", error);
+        console.error("Error al cargar los productos desde inventario:", error);
       }
     }
+
     fetchProducts();
   }, []);
 
@@ -225,85 +242,96 @@ export default function Page() {
 
   // Función para enviar la orden a la API integrando ventas, detalles y actualización de stock
   const handleSaveOrder = async () => {
-    /* Verificar si existe algun producto agregado a la orden */
     if (orderItems.length === 0) {
       ToastError({
         message: "No hay productos en la orden.",
       });
       return;
-    } else {
-      try {
-        // Crear la venta
-        const salePayload = {
-          tot_vent: total,
-          fech_vent: new Date().toISOString(),
-          est_vent: "Sin cerrar",
-          usu_vent: parseInt(localStorage.getItem("user_id") || "0"),
-        };
-        const saleResponse = await fetch("http://localhost:5000/ventas", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(salePayload),
-        });
-        if (!saleResponse.ok) {
-          throw new Error(
-            "Error al crear la venta: " + saleResponse.statusText,
-          );
-        }
-        const saleData = await saleResponse.json();
-        const id_vent = saleData.venta.id_vent; // Ajusta según tu API
+    }
 
-        // Crear cada detalle de venta
-        for (const item of orderItems) {
-          const detailPayload = {
-            vent_det: id_vent,
-            prod_det: item.productId,
-            cant_det: item.quantity,
-            pre_uni_det: products.find((p) => p.id_prod === item.productId)
-              ?.prec_vent_prod,
-          };
-          const detailResponse = await fetch(
-            "http://localhost:5000/dets-ventas",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(detailPayload),
-            },
-          );
-          if (!detailResponse.ok) {
-            throw new Error("Error al crear el detalle de venta");
-          }
-        }
+    try {
+      // 1. Crear la venta
+      const salePayload = {
+        tot_vent: total,
+        fech_vent: new Date().toISOString(),
+        est_vent: "Sin cerrar",
+        tip_pag_vent: metodoPago,
+        usu_vent: parseInt(localStorage.getItem("user_id") || "0"),
+      };
+      console.log("Payload de venta:", salePayload);
 
-        // Actualizar el stock de cada producto:
-        for (const item of orderItems) {
-          const productState = products.find(
-            (p) => p.id_prod === item.productId,
-          );
-          const updatedStock = productState ? productState.stock_prod : 0;
-          const patchResponse = await fetch(
-            `http://localhost:5000/productos/${item.productId}`,
-            {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ stock_prod: updatedStock }),
-            },
-          );
-          if (!patchResponse.ok) {
-            throw new Error("Error al actualizar el stock del producto");
-          }
-        }
+      const saleResponse = await fetch("http://localhost:5000/ventas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(salePayload),
+      });
 
-        ToastSuccess({
-          message: "Orden guardada con éxito.",
-        });
-        setOrderItems([]);
-      } catch (error: any) {
-        console.error(error);
-        ToastError({
-          message: "Error al guardar la orden: " + error.message,
-        });
+      if (!saleResponse.ok) {
+        throw new Error("Error al crear la venta");
       }
+
+      const saleData = await saleResponse.json();
+      const id_vent = saleData.venta.id_vent;
+
+      // 2. Crear detalles de venta
+      for (const item of orderItems) {
+        const producto = products.find((p) => p.id_prod === item.productId);
+        if (!producto) continue;
+
+        const detailPayload = {
+          vent_dventa: id_vent,
+          prod_dventa: item.productId,
+          cant_dventa: item.quantity,
+          pre_uni_dventa: producto.prec_vent_prod,
+          sub_tot_dventa: item.quantity * producto.prec_vent_prod,
+        };
+
+        const detailResponse = await fetch(
+          "http://localhost:5000/dets-ventas",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(detailPayload),
+          },
+        );
+
+        if (!detailResponse.ok) {
+          throw new Error("Error al crear el detalle de venta");
+        }
+      }
+
+      // 3. Consumir stock por lote desde el backend
+      for (const item of orderItems) {
+        const consumoResponse = await fetch(
+          SERVICIOS_INVENTARIO.consumirPorLote,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              id_prod: item.productId,
+              cantidad: item.quantity,
+            }),
+          },
+        );
+
+        if (!consumoResponse.ok) {
+          throw new Error(
+            `Error al consumir stock del producto ID ${item.productId}`,
+          );
+        }
+      }
+
+      ToastSuccess({
+        message: "Orden guardada y stock consumido exitosamente.",
+      });
+      setOrderItems([]);
+    } catch (error: any) {
+      console.error(error);
+      ToastError({
+        message: "Error al guardar la orden: " + error.message,
+      });
     }
   };
 
@@ -331,12 +359,19 @@ export default function Page() {
                       luego guarda la orden.
                     </span>
                   </div>
-                  <Input
-                    placeholder="Buscar producto..."
-                    className="w-[220px]"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
+                  {/* Input para buscar */}
+                  <div className="relative">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                      <Search className="h-4 w-4 text-gray-500" />
+                    </div>
+                    <Input
+                      type="text"
+                      placeholder="Buscar producto..."
+                      className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   {["Todos", ...categories.map((cat) => cat.nom_cate)].map(
@@ -387,11 +422,7 @@ export default function Page() {
                             Stock: {prod.stock_prod}
                           </p>
                           <p className="mt-1 text-sm font-bold text-gray-800 dark:text-gray-100">
-                            ${" "}
-                            {prod.prec_vent_prod.toLocaleString("id-ID", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
+                            $ {safePrice(prod.prec_vent_prod)}
                             <span className="text-xs font-normal"> /u</span>
                           </p>
                         </div>
@@ -438,12 +469,21 @@ export default function Page() {
           </div>
 
           {/* Columna Derecha (Panel de Orden) */}
-          <div className="flex h-[calc(100vh-6rem)] w-full flex-col md:w-1/4 2xl:h-[682px]">
-            <div className="rounded-t-lg bg-white p-4 shadow dark:bg-[#1a1a1a]">
-              <h3 className="mb-2 text-lg font-bold dark:text-[#f5f5f5]">
-                Información del cliente
-              </h3>
-              <div className="space-y-2 text-sm text-gray-600">
+          <div className="flex h-[calc(80vh-6rem)] w-[356px] flex-col">
+            <div className="rounded-t-lg bg-white px-4 pt-4 shadow dark:bg-[#1a1a1a]">
+              <div className="flex items-center justify-between">
+                <h3 className="text-md mb-2 font-bold dark:text-[#f5f5f5]">
+                  Información del cliente
+                </h3>
+                <Button
+                  className="border-border text-[12px] font-semibold"
+                  variant="ghost"
+                  onClick={handleOpenCustomerForm}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="text-sm text-gray-600">
                 <div>
                   <label className="block text-black dark:text-[#f5f5f5]">
                     Nombre
@@ -461,157 +501,194 @@ export default function Page() {
                   </p>
                 </div>
               </div>
-              <Button
-                className="mt-3 w-full rounded text-sm font-bold"
-                onClick={handleOpenCustomerForm}
-              >
-                Editar Información
-              </Button>
+              <hr
+                className="mt-3 border-0 border-t border-dashed"
+                style={{
+                  borderTopColor: "rgba(200, 200, 200, 0.5)",
+                  borderTopWidth: "2px",
+                  borderImage: "initial",
+                  borderSpacing: "10px",
+                }}
+              />
             </div>
-
-            <div className="flex h-[228px] flex-col bg-white p-4 shadow dark:bg-[#1a1a1a] 2xl:h-[300px]">
-              <h3 className="mb-2 text-lg font-bold dark:text-[#f5f5f5]">
-                Detalle de la orden
-              </h3>
-              {orderItems.length === 0 ? (
-                <p className="text-sm dark:text-[#ababab]">
-                  No existen productos añadidos a la orden.
-                </p>
-              ) : (
-                <div className="flex flex-grow flex-col gap-2 overflow-auto">
-                  {orderItems.map((item, idx) => {
-                    const prod = products.find(
-                      (p) => p.id_prod === item.productId,
-                    );
-                    if (!prod) return null;
-                    return (
-                      <div
-                        key={`${prod.id_prod}-${idx}`}
-                        className="flex items-center gap-3 rounded-lg border border-border bg-gray-100 p-2 dark:bg-[#262626]"
-                      >
-                        <div className="relative h-12 w-12 overflow-hidden rounded">
-                          <Image
-                            src={prod.img_prod}
-                            alt={prod.nom_prod}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex flex-row items-center justify-between gap-2">
-                            <p className="text-sm font-semibold">
-                              {prod.nom_prod}
-                            </p>
-                            <button
-                              onClick={() => handleRemove(prod.id_prod)}
-                              className="ml-2 rounded bg-gray-200 p-1 text-red-500 hover:bg-gray-300 dark:bg-[#1a1a1a] hover:dark:bg-[#1c1c1c]"
-                              title="Eliminar producto"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-4 w-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4m-4 0a2 2 0 00-2 2h8a2 2 0 00-2-2m-4 0V3m0 0h4"
-                                />
-                              </svg>
-                            </button>
+            <div className="flex h-[228px] flex-col bg-white px-4 pt-3 shadow dark:bg-[#1a1a1a] 2xl:h-[225px]">
+              <div className="h-[220px]">
+                <h3 className="text-md mb-2 font-bold dark:text-[#f5f5f5]">
+                  Detalle de la orden
+                </h3>
+                {orderItems.length === 0 ? (
+                  <p className="text-sm dark:text-[#ababab]">
+                    No existen productos añadidos a la orden.
+                  </p>
+                ) : (
+                  <div className="flex flex-grow flex-col gap-2 overflow-auto">
+                    {orderItems.map((item, idx) => {
+                      const prod = products.find(
+                        (p) => p.id_prod === item.productId,
+                      );
+                      if (!prod) return null;
+                      return (
+                        <div
+                          key={`${prod.id_prod}-${idx}`}
+                          className="flex items-center gap-3 rounded-lg border border-border bg-gray-100 p-2 dark:bg-[#262626]"
+                        >
+                          <div className="relative h-12 w-12 overflow-hidden rounded">
+                            <Image
+                              src={prod.img_prod}
+                              alt={prod.nom_prod}
+                              fill
+                              className="object-cover"
+                            />
                           </div>
+                          <div className="flex-1">
+                            <div className="flex flex-row items-center justify-between gap-2">
+                              <p className="text-sm font-semibold">
+                                {prod.nom_prod}
+                              </p>
+                              <button
+                                onClick={() => handleRemove(prod.id_prod)}
+                                className="ml-2 rounded bg-gray-200 p-1 text-red-500 hover:bg-gray-300 dark:bg-[#1a1a1a] hover:dark:bg-[#1c1c1c]"
+                                title="Eliminar producto"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-4 w-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4m-4 0a2 2 0 00-2 2h8a2 2 0 00-2-2m-4 0V3m0 0h4"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
 
-                          <p className="text-xs dark:text-[#ababab]">
-                            c/u ${" "}
-                            {prod.prec_vent_prod.toLocaleString("id-ID", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </p>
-                          <div className="flex items-center justify-between gap-2 pt-1 text-xs">
-                            {/* Total */}
-                            <p className="text-xs font-semibold dark:text-white">
-                              Total: ${" "}
-                              {(
-                                item.quantity * prod.prec_vent_prod
-                              ).toLocaleString("id-ID", {
+                            <p className="text-xs dark:text-[#ababab]">
+                              c/u ${" "}
+                              {prod.prec_vent_prod.toLocaleString("id-ID", {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
                             </p>
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => handleDecrement(prod.id_prod)}
-                                className="rounded bg-gray-200 px-2 text-sm font-bold hover:bg-gray-300 dark:bg-[#1a1a1a] hover:dark:bg-[#1c1c1c]"
-                              >
-                                -
-                              </button>
-                              <span className="text-sm dark:text-[#ababab]">
-                                {item.quantity}
-                              </span>
-                              <button
-                                onClick={() => handleIncrement(prod.id_prod)}
-                                disabled={prod.stock_prod <= 0}
-                                className={`rounded bg-gray-200 px-2 text-sm font-bold hover:bg-gray-300 dark:bg-[#1a1a1a] hover:dark:bg-[#1c1c1c] ${
-                                  prod.stock_prod <= 0
-                                    ? "cursor-not-allowed opacity-50"
-                                    : ""
-                                }`}
-                              >
-                                +
-                              </button>
+                            <div className="flex items-center justify-between gap-2 pt-1 text-xs">
+                              {/* Total */}
+                              <p className="text-xs font-semibold dark:text-white">
+                                Total: ${" "}
+                                {safePrice(item.quantity * prod.prec_vent_prod)}
+                              </p>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleDecrement(prod.id_prod)}
+                                  className="rounded bg-gray-200 px-2 text-sm font-bold hover:bg-gray-300 dark:bg-[#1a1a1a] hover:dark:bg-[#1c1c1c]"
+                                >
+                                  -
+                                </button>
+                                <span className="text-sm dark:text-[#ababab]">
+                                  {item.quantity}
+                                </span>
+                                <button
+                                  onClick={() => handleIncrement(prod.id_prod)}
+                                  disabled={prod.stock_prod <= 0}
+                                  className={`rounded bg-gray-200 px-2 text-sm font-bold hover:bg-gray-300 dark:bg-[#1a1a1a] hover:dark:bg-[#1c1c1c] ${
+                                    prod.stock_prod <= 0
+                                      ? "cursor-not-allowed opacity-50"
+                                      : ""
+                                  }`}
+                                >
+                                  +
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                      );
+                    })}
+                    <hr
+                      className="mt-3 border-0 border-t border-dashed"
+                      style={{
+                        borderTopColor: "rgba(200, 200, 200, 0.5)",
+                        borderTopWidth: "2px",
+                        borderImage: "initial",
+                        borderSpacing: "10px",
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
-
             {/* Resumen de Pago y Botón para Guardar Orden */}
-            <div className="rounded-b-lg bg-white p-4 shadow dark:bg-[#1a1a1a]">
-              <h3 className="mb-2 text-lg font-bold">Resumen de pago</h3>
+            <div className="rounded-b-lg bg-white px-4 pt-3 shadow dark:bg-[#1a1a1a]">
+              <h3 className="text-md mb-2 font-bold">Resumen de pago</h3>
               <div className="mb-2 flex items-center justify-between text-sm text-gray-600">
                 <span className="dark:text-[#ababab]">Subtotal</span>
                 <span className="dark:text-[#f5f5f5]">
-                  ${" "}
-                  {subtotal.toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                  $ {safePrice(subtotal)}
                 </span>
               </div>
               <div className="mb-2 flex items-center justify-between text-sm text-gray-600">
                 <span className="dark:text-[#ababab]">Iva (15%)</span>
-                <span className="dark:text-[#f5f5f5]">
-                  ${" "}
-                  {tax.toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </span>
+                <span className="dark:text-[#f5f5f5]">$ {safePrice(tax)}</span>
               </div>
               <div className="mb-4 h-px w-full bg-gray-200"></div>
               <div className="mb-4 flex items-center justify-between font-bold text-gray-800">
                 <span className="dark:text-[#ababab]">Total</span>
                 <span className="dark:text-[#f5f5f5]">
-                  ${" "}
-                  {total.toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                  $ {safePrice(total)}
                 </span>
               </div>
+            </div>
+            {/* Metodo de pago */}
+            <div className="mt-3 rounded-lg bg-white p-4 shadow dark:bg-[#1a1a1a]">
+              <h3 className="text-md mb-2 font-bold dark:text-white">
+                Método de pago
+              </h3>
+
+              <div className="flex justify-between gap-2">
+                {/* Botón Transferencia */}
+                <Button
+                  onClick={() => setMetodoPago("transferencia")}
+                  className={`flex items-center gap-2 rounded-lg px-7 py-2 text-sm font-medium shadow-sm transition ${
+                    metodoPago === "transferencia"
+                      ? "border-2 border-emerald-500 bg-white text-emerald-700 dark:bg-[#2a2a2a] dark:text-emerald-400"
+                      : "border border-gray-300 bg-white text-gray-700 hover:border-gray-400 dark:bg-[#2a2a2a] dark:text-gray-300"
+                  }`}
+                >
+                  <Smartphone size={16} />
+                  Transferencia
+                </Button>
+
+                {/* Botón Efectivo */}
+                <Button
+                  onClick={() => setMetodoPago("efectivo")}
+                  className={`flex items-center gap-2 rounded-lg px-7 py-2 text-sm font-medium shadow-sm transition ${
+                    metodoPago === "efectivo"
+                      ? "border-2 border-emerald-500 bg-white text-emerald-700 dark:bg-[#2a2a2a] dark:text-emerald-400"
+                      : "border border-gray-300 bg-white text-gray-700 hover:border-gray-400 dark:bg-[#2a2a2a] dark:text-gray-300"
+                  }`}
+                >
+                  <Banknote size={16} />
+                  Efectivo
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex w-full items-center justify-between pt-3">
               <Button
-                className="mt-3 w-full rounded text-sm font-bold"
+                variant={"secondary"}
+                className="mt-3 rounded text-sm font-bold"
+              >
+                <Printer className="h-4 w-4" /> Imprimir
+              </Button>
+              <Button
+                variant={"primary"}
+                className="mt-3 w-[220px] rounded text-sm font-bold"
                 onClick={handleSaveOrder}
               >
-                Guardar Orden
+                <Save className="h-4 w-4" /> Guardar orden
               </Button>
             </div>
           </div>

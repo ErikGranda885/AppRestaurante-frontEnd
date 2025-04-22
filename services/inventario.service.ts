@@ -15,4 +15,6 @@ export const SERVICIOS_INVENTARIO = {
 
   // Lista de productos con lotes vencidos (puedes agregar este endpoint si deseas)
   productosVencidos: "http://localhost:5000/inventario/vencidos",
+  // Realiza consumo por lote (disminuye stock en orden de vencimiento)
+  consumirPorLote: "http://localhost:5000/inventario/consumir",
 };

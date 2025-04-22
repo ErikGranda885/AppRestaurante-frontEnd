@@ -528,7 +528,7 @@ export default function PaginaProductos() {
               </div>
             ) : (
               <>
-                <div className="mt-4 grid h-[210px] grid-cols-1 gap-6 overflow-y-auto sm:grid-cols-2 md:grid-cols-3">
+                <div className="mt-4 grid h-[245px] grid-cols-1 gap-6 overflow-y-auto sm:grid-cols-2 md:grid-cols-3">
                   {productosPaginaActual.map((producto) => (
                     <ProductCard
                       key={producto.id_prod}
