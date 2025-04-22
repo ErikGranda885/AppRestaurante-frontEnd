@@ -3,12 +3,21 @@ import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { uploadImage } from "@/firebase/subirImage";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { ICategory, IProduct } from "@/lib/types";
 import { SERVICIOS_INVENTARIO } from "@/services/inventario.service";
 import { safePrice } from "@/utils/format";
+import { format } from "date-fns";
 import {
   Banknote,
   Pencil,
@@ -44,6 +53,11 @@ export default function Page() {
   const [metodoPago, setMetodoPago] = useState<"transferencia" | "efectivo">(
     "efectivo",
   );
+  const [comprobanteNumero, setComprobanteNumero] = useState("");
+  const [comprobanteImagen, setComprobanteImagen] = useState<File | null>(null);
+  const [showDialogComprobante, setShowDialogComprobante] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
   // Estados para información del cliente
   const [customerName, setCustomerName] = useState("Erik Granda");
   const [tableInfo, setTableInfo] = useState("Orden para llevar");
@@ -239,26 +253,75 @@ export default function Page() {
   const tax = taxableSubtotal * 0.15; // IVA del 15%
   const discountGlobal = 0;
   const total = subtotal + tax - discountGlobal;
+  /* Cargar comprobante si es transferencia */
+  useEffect(() => {
+    if (metodoPago === "transferencia") {
+      setShowDialogComprobante(true);
+    } else {
+      setShowDialogComprobante(false);
+    }
+  }, [metodoPago]);
 
+  async function subirComprobanteTransferencia(
+    archivo: File,
+    idVenta: number,
+    nombreCliente: string,
+  ) {
+    const fechaHoy = format(new Date(), "yyyy-MM-dd");
+    const nombreNormalizado = nombreCliente
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "_");
+    const nombreArchivo = `venta_${idVenta}_${nombreNormalizado}_${fechaHoy}`;
+
+    const url = await uploadImage(
+      archivo,
+      `comprobantes/${fechaHoy}`,
+      nombreArchivo,
+    );
+    return url;
+  }
   // Función para enviar la orden a la API integrando ventas, detalles y actualización de stock
   const handleSaveOrder = async () => {
     if (orderItems.length === 0) {
+      ToastError({ message: "No hay productos en la orden." });
+      return;
+    }
+
+    // Validación para transferencia
+    if (
+      metodoPago === "transferencia" &&
+      (!comprobanteNumero || !comprobanteImagen)
+    ) {
       ToastError({
-        message: "No hay productos en la orden.",
+        message:
+          "Debes ingresar el número de comprobante y subir la imagen para completar la transferencia.",
       });
       return;
     }
 
     try {
-      // 1. Crear la venta
+      // Subir la imagen primero (si aplica)
+      let urlImg = "";
+      if (metodoPago === "transferencia") {
+        urlImg = await subirComprobanteTransferencia(
+          comprobanteImagen!,
+          Date.now(), // Puedes usar timestamp temporal
+          customerName,
+        );
+      }
+
+      // 1. Crear la venta inicialmente sin comprobante
       const salePayload = {
         tot_vent: total,
         fech_vent: new Date().toISOString(),
         est_vent: "Sin cerrar",
         tip_pag_vent: metodoPago,
         usu_vent: parseInt(localStorage.getItem("user_id") || "0"),
+        comprobante_num_vent:
+          metodoPago === "transferencia" ? comprobanteNumero : null,
+        comprobante_img_vent: metodoPago === "transferencia" ? urlImg : null,
       };
-      console.log("Payload de venta:", salePayload);
 
       const saleResponse = await fetch("http://localhost:5000/ventas", {
         method: "POST",
@@ -266,14 +329,12 @@ export default function Page() {
         body: JSON.stringify(salePayload),
       });
 
-      if (!saleResponse.ok) {
-        throw new Error("Error al crear la venta");
-      }
+      if (!saleResponse.ok) throw new Error("Error al crear la venta");
 
       const saleData = await saleResponse.json();
       const id_vent = saleData.venta.id_vent;
 
-      // 2. Crear detalles de venta
+      // 3. Crear detalles de venta
       for (const item of orderItems) {
         const producto = products.find((p) => p.id_prod === item.productId);
         if (!producto) continue;
@@ -300,15 +361,13 @@ export default function Page() {
         }
       }
 
-      // 3. Consumir stock por lote desde el backend
+      // 4. Consumir stock
       for (const item of orderItems) {
         const consumoResponse = await fetch(
           SERVICIOS_INVENTARIO.consumirPorLote,
           {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               id_prod: item.productId,
               cantidad: item.quantity,
@@ -327,6 +386,8 @@ export default function Page() {
         message: "Orden guardada y stock consumido exitosamente.",
       });
       setOrderItems([]);
+      setComprobanteNumero("");
+      setComprobanteImagen(null);
     } catch (error: any) {
       console.error(error);
       ToastError({
@@ -334,6 +395,13 @@ export default function Page() {
       });
     }
   };
+
+  const isGuardarDisabled = useMemo(() => {
+    if (metodoPago === "transferencia" && showDialogComprobante) {
+      return !comprobanteNumero || !comprobanteImagen;
+    }
+    return false;
+  }, [metodoPago, showDialogComprobante, comprobanteNumero, comprobanteImagen]);
 
   // ---------------------
   // RENDER
@@ -647,32 +715,41 @@ export default function Page() {
                 Método de pago
               </h3>
 
-              <div className="flex justify-between gap-2">
-                {/* Botón Transferencia */}
-                <Button
-                  onClick={() => setMetodoPago("transferencia")}
-                  className={`flex items-center gap-2 rounded-lg px-7 py-2 text-sm font-medium shadow-sm transition ${
-                    metodoPago === "transferencia"
-                      ? "border-2 border-emerald-500 bg-white text-emerald-700 dark:bg-[#2a2a2a] dark:text-emerald-400"
-                      : "border border-gray-300 bg-white text-gray-700 hover:border-gray-400 dark:bg-[#2a2a2a] dark:text-gray-300"
-                  }`}
-                >
-                  <Smartphone size={16} />
-                  Transferencia
-                </Button>
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between gap-2">
+                  {/* Botón Transferencia */}
+                  <Button
+                    onClick={() => {
+                      if (metodoPago === "transferencia") {
+                        setShowDialogComprobante((prev) => !prev); // ✅ Toggle modal
+                      } else {
+                        setMetodoPago("transferencia");
+                        setShowDialogComprobante(true);
+                      }
+                    }}
+                    className={`flex items-center gap-2 rounded-lg px-7 py-2 text-sm font-medium shadow-sm transition ${
+                      metodoPago === "transferencia"
+                        ? "border-2 border-emerald-500 bg-white text-emerald-700 dark:bg-[#2a2a2a] dark:text-emerald-400"
+                        : "border border-gray-300 bg-white text-gray-700 hover:border-gray-400 dark:bg-[#2a2a2a] dark:text-gray-300"
+                    }`}
+                  >
+                    <Smartphone size={16} />
+                    Transferencia
+                  </Button>
 
-                {/* Botón Efectivo */}
-                <Button
-                  onClick={() => setMetodoPago("efectivo")}
-                  className={`flex items-center gap-2 rounded-lg px-7 py-2 text-sm font-medium shadow-sm transition ${
-                    metodoPago === "efectivo"
-                      ? "border-2 border-emerald-500 bg-white text-emerald-700 dark:bg-[#2a2a2a] dark:text-emerald-400"
-                      : "border border-gray-300 bg-white text-gray-700 hover:border-gray-400 dark:bg-[#2a2a2a] dark:text-gray-300"
-                  }`}
-                >
-                  <Banknote size={16} />
-                  Efectivo
-                </Button>
+                  {/* Botón Efectivo */}
+                  <Button
+                    onClick={() => setMetodoPago("efectivo")}
+                    className={`flex items-center gap-2 rounded-lg px-7 py-2 text-sm font-medium shadow-sm transition ${
+                      metodoPago === "efectivo"
+                        ? "border-2 border-emerald-500 bg-white text-emerald-700 dark:bg-[#2a2a2a] dark:text-emerald-400"
+                        : "border border-gray-300 bg-white text-gray-700 hover:border-gray-400 dark:bg-[#2a2a2a] dark:text-gray-300"
+                    }`}
+                  >
+                    <Banknote size={16} />
+                    Efectivo
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -686,7 +763,8 @@ export default function Page() {
               <Button
                 variant={"primary"}
                 className="mt-3 w-[220px] rounded text-sm font-bold"
-                onClick={handleSaveOrder}
+                onClick={() => setShowConfirmDialog(true)}
+                disabled={isGuardarDisabled}
               >
                 <Save className="h-4 w-4" /> Guardar orden
               </Button>
@@ -738,6 +816,131 @@ export default function Page() {
             </div>
           </form>
         </div>
+      )}
+
+      {showDialogComprobante && (
+        <Dialog
+          open={showDialogComprobante}
+          onOpenChange={(open) => {
+            setShowDialogComprobante(open);
+            if (!open && (!comprobanteNumero || !comprobanteImagen)) {
+              setComprobanteNumero("");
+              setComprobanteImagen(null);
+              setMetodoPago("efectivo");
+            }
+          }}
+        >
+          <DialogContent className="w-[500px] max-w-none border-border">
+            <DialogHeader>
+              <DialogTitle>Información de transferencia</DialogTitle>
+              <DialogDescription>
+                Ingresa el número de comprobante y sube la imagen
+                correspondiente.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Número de comprobante
+                </label>
+                <Input
+                  type="text"
+                  placeholder="Ej: 123456789"
+                  value={comprobanteNumero}
+                  onChange={(e) => setComprobanteNumero(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Imagen del comprobante
+                </label>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setComprobanteImagen(e.target.files[0]);
+                    }
+                  }}
+                />
+
+                {/* ✅ Previsualización de imagen */}
+                {comprobanteImagen && (
+                  <div className="mt-3 rounded border border-border p-2">
+                    <p className="mb-2 text-sm text-gray-700 dark:text-gray-300">
+                      Previsualización:
+                    </p>
+                    <img
+                      src={URL.createObjectURL(comprobanteImagen)}
+                      alt="Previsualización del comprobante"
+                      className="max-h-48 w-auto rounded-md border object-contain"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDialogComprobante(false);
+                  setComprobanteNumero("");
+                  setComprobanteImagen(null);
+                }}
+              >
+                Cancelar
+              </Button>
+
+              <Button onClick={() => setShowDialogComprobante(false)}>
+                Confirmar
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {showConfirmDialog && (
+        <Dialog
+          open={showConfirmDialog}
+          onOpenChange={(open) => setShowConfirmDialog(open)}
+        >
+          <DialogContent className="w-[400px] max-w-none border-border">
+            <DialogHeader>
+              <DialogTitle>¿Confirmar orden?</DialogTitle>
+              <DialogDescription>
+                ¿Estás seguro que deseas guardar esta orden? Esta acción no se
+                puede deshacer.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDialogComprobante(false);
+                  setComprobanteNumero("");
+                  setComprobanteImagen(null);
+                  setMetodoPago("efectivo");
+                }}
+              >
+                Cancelar
+              </Button>
+
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setShowConfirmDialog(false);
+                  handleSaveOrder();
+                }}
+              >
+                Confirmar
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </ModulePageLayout>
   );

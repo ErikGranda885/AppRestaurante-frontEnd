@@ -1,4 +1,4 @@
-// app/(site)/ventas/nueva/page.tsx
+"use client";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 
@@ -11,11 +11,7 @@ export default function Page() {
       submenu={true}
       isLoading={false} //
     >
-      {/* Aquí va el contenido específico de la página */}
-      <div>
-        <h1>Nueva Venta</h1>
-        {/* Resto de la información y componentes */}
-      </div>
+      
     </ModulePageLayout>
   );
 }
