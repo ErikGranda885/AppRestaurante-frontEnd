@@ -80,4 +80,22 @@
     font-family: var(--font-principal);
     font-size: 0.95rem;
   }
+
+  @media print {
+    img {
+      max-height: 80px !important;
+      height: auto !important;
+      object-fit: contain !important;
+    }
+
+    header,
+    footer {
+      display: none !important;
+    }
+
+    a {
+      text-decoration: none !important;
+      color: black !important;
+    }
+  }
 }

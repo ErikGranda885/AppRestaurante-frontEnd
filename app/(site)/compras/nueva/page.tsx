@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, FormProvider } from "react-hook-form";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
@@ -42,6 +42,8 @@ import FacturaModal from "@/components/shared/compras/ui/ordenModal";
 import { TIPO_DOCUMENTO_OPTIONS } from "@/lib/constants";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { format } from "date-fns";
+import { useReactToPrint } from "react-to-print";
+import { GeneralDialog } from "@/components/shared/varios/dialogGen";
 export interface ProductoOption {
   value: string;
   nombre: string;
@@ -72,7 +74,8 @@ export default function NuevaCompraPage() {
   const [usuarioActual, setUsuarioActual] = useState<IUsuario | null>(null);
   const [ultimoIdCompra, setUltimoIdCompra] = useState<number>(0);
   const DIAS_UMBRAL_POR_VENCER = 30;
-
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const methods = useForm({
     defaultValues: {
       proveedor: "",
@@ -86,6 +89,14 @@ export default function NuevaCompraPage() {
     },
     resolver: zodResolver(schema),
   });
+  const { control, handleSubmit, watch, setValue } = methods;
+  const productoSeleccionado = watch("producto");
+  const cantidad = watch("cant_dcom");
+  const precioUnitario = watch("prec_uni_dcom");
+  const fechaVencimiento = watch("fech_ven_prod_dcom");
+
+  const handleImprimir = useReactToPrint({ contentRef });
+
   const verResumen = () => {
     const formValues = methods.getValues();
 
@@ -145,11 +156,20 @@ export default function NuevaCompraPage() {
     setOpenFactura(true);
   };
 
-  const { control, handleSubmit, watch, setValue } = methods;
-  const productoSeleccionado = watch("producto");
-  const cantidad = watch("cant_dcom");
-  const precioUnitario = watch("prec_uni_dcom");
-  const fechaVencimiento = watch("fech_ven_prod_dcom");
+  const handleConfirmarYImprimir = async () => {
+    setOpenConfirmDialog(true);
+  };
+
+  const handleDialogConfirm = async (guardarPDF: boolean) => {
+    setOpenConfirmDialog(false);
+
+    if (guardarPDF && contentRef.current) {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await handleImprimir();
+    }
+
+    await handleConfirmarCompra();
+  };
 
   /* Cargar Proveedores */
   useEffect(() => {
@@ -717,10 +737,29 @@ export default function NuevaCompraPage() {
             onClose={() => setOpenFactura(false)}
             compra={compraPreview}
             detalle={productos}
-            onConfirm={handleConfirmarCompra}
+            onConfirm={handleConfirmarYImprimir}
+            printRef={contentRef}
           />
         )}
       </FormProvider>
+      <GeneralDialog
+        open={openConfirmDialog}
+        onOpenChange={setOpenConfirmDialog}
+        title="¿Desea guardar una copia en PDF de esta orden?"
+        contentWidth="400px"
+      >
+        <div className="flex justify-end gap-4">
+          <Button
+            variant="secondary"
+            onClick={() => handleDialogConfirm(false)}
+          >
+            No
+          </Button>
+          <Button variant="primary" onClick={() => handleDialogConfirm(true)}>
+            Sí
+          </Button>
+        </div>
+      </GeneralDialog>
     </ModulePageLayout>
   );
 }

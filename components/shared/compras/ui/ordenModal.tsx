@@ -17,6 +17,7 @@ interface FacturaModalProps {
   compra: ICompra;
   detalle: IDetCompra[];
   onConfirm: () => void;
+  printRef?: React.RefObject<HTMLDivElement | null>; // ✅ acepta el null
 }
 
 const FacturaModal: React.FC<FacturaModalProps> = ({
@@ -25,17 +26,22 @@ const FacturaModal: React.FC<FacturaModalProps> = ({
   compra,
   detalle,
   onConfirm,
+  printRef,
 }) => {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto rounded-md bg-white p-8 text-black shadow-xl ">
-        <DialogHeader>
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto rounded-md bg-white p-8 text-black shadow-xl print:max-w-[100%] print:overflow-visible print:rounded-none print:p-0 print:shadow-none">
+        <DialogHeader className="print:hidden">
           <DialogTitle className="mb-4 text-start text-2xl font-bold tracking-wide text-black">
             Previsualización del documento
           </DialogTitle>
         </DialogHeader>
 
-        <div id="factura-preview" className="text-black">
+        <div
+          id="factura-preview"
+          ref={printRef ?? null}
+          className="w-full text-black print:w-full print:max-w-[100%] print:px-10 print:pb-12 print:pt-8 print:text-[13px]"
+        >
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold">
@@ -54,7 +60,7 @@ const FacturaModal: React.FC<FacturaModalProps> = ({
             />
           </div>
 
-          <div className="mb-6 grid grid-cols-2 gap-6 rounded-md border p-4 text-sm">
+          <div className="mb-6 grid grid-cols-2 gap-6 border p-4 text-sm">
             <div>
               <h3 className="mb-1 text-sm font-bold uppercase">Emitido por:</h3>
               <p>{compra.usu_comp.nom_usu}</p>
@@ -98,7 +104,7 @@ const FacturaModal: React.FC<FacturaModalProps> = ({
             </table>
           </div>
 
-          <div className="ml-auto w-full max-w-sm rounded-md border p-4 text-sm">
+          <div className="ml-auto w-full max-w-sm rounded-md border p-4 text-sm print:ml-0 print:mt-4 print:max-w-full">
             <div className="flex justify-between">
               <span>Total:</span>
               <span className="font-semibold">
@@ -139,7 +145,7 @@ const FacturaModal: React.FC<FacturaModalProps> = ({
           </div>
         </div>
 
-        <DialogFooter className="mt-8 flex justify-end gap-2">
+        <DialogFooter className="mt-8 flex justify-end gap-2 print:hidden">
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>

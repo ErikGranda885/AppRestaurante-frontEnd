@@ -43,7 +43,7 @@ export const CampoFecha: React.FC<CampoFechaProps> = ({
           <FormLabel>{label}</FormLabel>
           <FormControl>
             <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
+              <PopoverTrigger asChild >
                 <Button
                   variant="outline"
                   className={cn(
@@ -57,7 +57,7 @@ export const CampoFecha: React.FC<CampoFechaProps> = ({
                     : placeholder}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className="w-auto p-0 border border-border" align="start">
                 <Calendar
                   mode="single"
                   selected={field.value}
