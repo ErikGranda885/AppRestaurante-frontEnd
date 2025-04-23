@@ -140,9 +140,7 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
 
         {/* Botón de envío */}
         <div className="flex justify-end pt-4">
-          <Button type="submit" className="text-black">
-            Crear Categoría
-          </Button>
+          <Button type="submit">Crear Categoría</Button>
         </div>
       </form>
     </Form>

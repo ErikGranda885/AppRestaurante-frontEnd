@@ -13,21 +13,22 @@ export interface GeneralDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   triggerText?: React.ReactNode;
+  triggerVariant?: "outline" | "ghost" | "primary" | "secondary";
   title: React.ReactNode;
   description?: React.ReactNode;
   submitText?: React.ReactNode;
   onSubmit?: () => void;
   children?: React.ReactNode;
-  // Propiedades para modificar el tamaño del DialogContent
-  contentClassName?: string; // Clases personalizadas (opcional)
-  contentWidth?: string; // Ejemplo: "500px" o "90%"
-  contentHeight?: string; // Ejemplo: "auto" o "600px"
+  contentClassName?: string;
+  contentWidth?: string;
+  contentHeight?: string;
 }
 
 export function GeneralDialog({
   open,
   onOpenChange,
   triggerText,
+  triggerVariant = "primary",
   title,
   description,
   children,
@@ -39,7 +40,12 @@ export function GeneralDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       {triggerText && (
         <DialogTrigger asChild>
-          <Button className="text-[12px] font-semibold">{triggerText}</Button>
+          <Button
+            className="text-[12px] font-semibold"
+            variant={triggerVariant}
+          >
+            {triggerText}
+          </Button>
         </DialogTrigger>
       )}
       <DialogContent

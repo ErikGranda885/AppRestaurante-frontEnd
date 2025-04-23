@@ -1,10 +1,18 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
+import { useReactToPrint } from "react-to-print";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CloudDownload, Plus, Search, Upload } from "lucide-react";
+import {
+  CloudDownload,
+  Plus,
+  Printer,
+  Search,
+  Upload,
+  XCircle,
+} from "lucide-react";
 import { Toaster } from "react-hot-toast";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { GeneralDialog } from "@/components/shared/varios/dialogGen";
@@ -16,14 +24,30 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
+import { DateRangeFilter } from "@/components/shared/ventas/ui/dateRangeFilter";
+import { DateRange } from "react-day-picker";
+import { Combobox } from "@/components/shared/varios/combobox";
+import { endOfDay, isWithinInterval, startOfDay } from "date-fns";
+import { ComboboxPago } from "@/components/shared/ventas/ui/comboboxPago";
+import { ComboboxEstado } from "@/components/shared/ventas/ui/comboboxEstado";
+import { TicketPreview } from "@/components/shared/ventas/ui/ticketPreview";
+import { IVentaDetalle } from "@/lib/types";
 
 export default function Page() {
   const [abrirCrear, setAbrirCrear] = useState(false);
   const [consultaBusqueda, setConsultaBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("Todos");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [tipoPago, setTipoPago] = useState<string>("");
+  const [ventaSeleccionada, setVentaSeleccionada] =
+    useState<IVentaDetalle | null>(null);
+
+  const [modalAbierto, setModalAbierto] = useState(false);
 
   const { ventas, loading, error } = useVentasConDetalles(); // Hook que trae las ventas
   useProtectedRoute();
+  const contentRef = useRef<HTMLDivElement>(null);
+  const reactToPrintFn = useReactToPrint({ contentRef });
 
   const coloresUsuario = [
     "bg-emerald-500",
@@ -70,17 +94,36 @@ export default function Page() {
     });
   }
 
+  const limpiarFiltros = () => {
+    setConsultaBusqueda("");
+    setFiltroEstado("Todos");
+    setDateRange(undefined);
+    setTipoPago("");
+  };
+
   const ventasFiltradas = useMemo(() => {
-    return ventas
-      .filter((venta: any) =>
-        filtroEstado === "Todos" ? true : venta.estado === filtroEstado,
-      )
-      .filter((venta: any) =>
-        venta.cliente.nom_usu
-          .toLowerCase()
-          .includes(consultaBusqueda.toLowerCase()),
-      );
-  }, [ventas, filtroEstado, consultaBusqueda]);
+    return ventas.filter((venta) => {
+      const matchEstado =
+        filtroEstado === "Todos" ? true : venta.estado === filtroEstado;
+
+      const matchNombre = venta.cliente.nom_usu
+        .toLowerCase()
+        .includes(consultaBusqueda.toLowerCase());
+
+      const matchFecha =
+        !dateRange?.from || !dateRange?.to
+          ? true
+          : isWithinInterval(new Date(venta.fecha), {
+              start: startOfDay(dateRange.from),
+              end: endOfDay(dateRange.to),
+            });
+
+      const matchTipoPago =
+        tipoPago === "" ? true : venta.tipoPago === tipoPago;
+
+      return matchEstado && matchNombre && matchFecha && matchTipoPago;
+    });
+  }, [ventas, filtroEstado, consultaBusqueda, dateRange, tipoPago]);
 
   if (loading) return <p className="px-6 py-4">Cargando ventas...</p>;
   if (error) return <p className="px-6 py-4 text-red-500">Error: {error}</p>;
@@ -101,55 +144,82 @@ export default function Page() {
           </p>
           <div className="pt-4" />
           {/* Barra de búsqueda y botones */}
-          <div className="mb-5 flex items-center justify-between">
-            <div className="bg-blue-300">{/* Buscar por fecha */}</div>
-            <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            {/* Filtros (lado izquierdo) */}
+            <div className="flex flex-wrap items-end gap-4">
+              {/* Filtro por fecha */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  Rango de fecha
+                </label>
+                <DateRangeFilter value={dateRange} onChange={setDateRange} />
+              </div>
+
+              {/* Filtro por tipo de pago */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  Tipo de pago
+                </label>
+                <ComboboxPago value={tipoPago} onChange={setTipoPago} />
+              </div>
+
+              {/* Estado de la orden */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  Estado de orden
+                </label>
+                <ComboboxEstado
+                  value={filtroEstado}
+                  onChange={setFiltroEstado}
+                />
+              </div>
+            </div>
+            {/* Limpiar Filtros */}
+
+            {/* Botón Exportar (lado derecho) */}
+            <div className="flex gap-4">
+              {/* Búsqueda */}
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <Search className="h-4 w-4 text-gray-500" />
                 </div>
                 <Input
                   type="text"
-                  placeholder="Buscar ventas"
-                  className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
+                  placeholder="Buscar orden por usuario"
+                  className="w-[250px] border border-border pl-10 text-[12px]"
                   value={consultaBusqueda}
                   onChange={(e) => setConsultaBusqueda(e.target.value)}
                 />
               </div>
-              <Button variant="secondary" className="text-[12px] font-semibold">
-                <Upload className="h-4 w-4" /> Importar
+              <Button
+                variant="secondary"
+                className="text-[12px] font-semibold"
+                onClick={limpiarFiltros}
+              >
+                <XCircle className="h-4 w-4" />
+                Limpiar filtros
               </Button>
+
               <Button variant="secondary" className="text-[12px] font-semibold">
                 <CloudDownload className="h-4 w-4" /> Exportar
               </Button>
             </div>
           </div>
         </div>
-        {/* Agrega el filtrado por estado de la venta */}
-        <div className="px-6 pb-4">
-          <div className="flex flex-wrap gap-2">
-            {["Todos", "Sin cerrar", "Cerrada"].map((estado) => (
-              <Button
-                key={estado}
-                onClick={() => setFiltroEstado(estado)}
-                variant={filtroEstado === estado ? "primary" : "outline"}
-                className="text-sm"
-              >
-                {estado}
-              </Button>
-            ))}
-          </div>
-        </div>
 
         {/* Cards con Scroll */}
-        <div className="h-[500px] px-6 py-2">
+        <div className="h-[540px] px-6 pt-6">
           <ScrollArea className="h-full pr-2">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {ventasFiltradas.map((venta) => {
-                return (
+              {ventasFiltradas.length === 0 ? (
+                <div className="col-span-full text-center text-sm text-muted-foreground">
+                  No se encontraron resultados para los filtros aplicados.
+                </div>
+              ) : (
+                ventasFiltradas.map((venta) => (
                   <Card
                     key={venta.id_venta}
-                    className="flex h-[290px] flex-col justify-between overflow-hidden border border-border shadow dark:bg-[#1a1a1a]"
+                    className="flex h-[295px] flex-col justify-between overflow-hidden border border-border shadow dark:bg-[#1a1a1a]"
                   >
                     {/* HEADER */}
                     <CardHeader className="space-y-1 pb-2">
@@ -161,7 +231,7 @@ export default function Page() {
                           >
                             {venta.cliente.nom_usu.charAt(0).toUpperCase()}
                           </div>
-                          <div>
+                          <div className="bg">
                             <CardTitle className="text-sm font-bold leading-none">
                               {venta.cliente.nom_usu}
                             </CardTitle>
@@ -172,15 +242,30 @@ export default function Page() {
                         </div>
 
                         {/* Estado */}
-                        <div
-                          className={`rounded-md bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700`}
-                        >
-                          {venta.estado}
+                        <div className="flex flex-col items-end">
+                          {/* Estado (ej. Sin cerrar) */}
+                          <div className="rounded-md bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700">
+                            {venta.estado}
+                          </div>
+
+                          {/* Tipo de pago con punto indicador dinámico */}
+                          <div className="mt-1 flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                            <span
+                              className={`h-2 w-2 rounded-full ${
+                                venta.tipoPago === "efectivo"
+                                  ? "bg-green-500"
+                                  : venta.tipoPago === "transferencia"
+                                    ? "bg-blue-500"
+                                    : "bg-gray-400"
+                              }`}
+                            ></span>
+                            {venta.tipoPago}
+                          </div>
                         </div>
                       </div>
 
                       {/* Fecha y hora (segunda fila) */}
-                      <div className="flex justify-between pt-1 text-xs text-muted-foreground">
+                      <div className="flex justify-between border-b border-dashed border-gray-300 pb-1 pt-1 text-xs font-bold text-muted-foreground">
                         <span>{formatearFecha(venta.fecha)}</span>
                         <span>{formatearHora(venta.fecha)}</span>
                       </div>
@@ -223,25 +308,67 @@ export default function Page() {
                       </div>
                     </div>
 
-                    <CardFooter className="flex justify-between px-6 pb-4 pt-2">
+                    <CardFooter className="flex justify-end px-6 pb-4 pt-2">
                       <Button
+                        onClick={() => {
+                          setVentaSeleccionada(venta);
+                          setModalAbierto(true);
+                        }}
                         variant="secondary"
                         className="text-[12px] font-semibold"
                       >
                         Ver Detalles
                       </Button>
-                      <Button
+
+                      {/* <Button
                         className="text-[12px] font-semibold"
                         variant="primary"
                       >
                         Pagar
-                      </Button>
+                      </Button> */}
                     </CardFooter>
                   </Card>
-                );
-              })}
+                ))
+              )}
             </div>
           </ScrollArea>
+          {ventaSeleccionada && (
+            <GeneralDialog
+              open={modalAbierto}
+              onOpenChange={(open) => {
+                setModalAbierto(open);
+                if (!open) setVentaSeleccionada(null);
+              }}
+              triggerText={undefined}
+              triggerVariant="secondary"
+              title={"Previsualizacion recibo de compra"}
+              description={undefined}
+              contentClassName=""
+              contentWidth="350px"
+            >
+              <div ref={contentRef} className="printContent">
+                <TicketPreview venta={ventaSeleccionada} />
+              </div>
+              {/* Botón de imprimir */}
+              <div className="flex justify-between">
+                {ventaSeleccionada?.tipoPago === "transferencia" && (
+                  <div className="flex justify-end">
+                    <Button className="text-xs" variant="secondary">
+                      Ver Comprobante
+                    </Button>
+                  </div>
+                )}
+                <Button
+                  className="text-xs"
+                  variant="primary"
+                  onClick={() => reactToPrintFn()}
+                >
+                  <Printer className="h-4 w-4" />
+                  Imprimir
+                </Button>
+              </div>
+            </GeneralDialog>
+          )}
         </div>
       </ModulePageLayout>
     </>
