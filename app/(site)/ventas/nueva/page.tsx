@@ -1,5 +1,6 @@
 "use client";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
+import { ModalPagoEfectivo } from "@/components/shared/compras/ui/modalPagoEfe";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,14 @@ export default function Page() {
   const [metodoPago, setMetodoPago] = useState<"transferencia" | "efectivo">(
     "efectivo",
   );
+  const [pagoEfectivoConfirmado, setPagoEfectivoConfirmado] = useState(false);
+  const [pagoTransferenciaConfirmado, setPagoTransferenciaConfirmado] =
+    useState(false);
+
+  const [mostrarEfectivoModal, setMostarEfectivoModal] = useState(false);
+  const [efectivoRecibido, setEfectivoRecibido] = useState<number | null>(null);
+  const [efectivoCambio, setEfectivoCambio] = useState<number>(0);
+
   const [comprobanteNumero, setComprobanteNumero] = useState("");
   const [comprobanteImagen, setComprobanteImagen] = useState<File | null>(null);
   const [showDialogComprobante, setShowDialogComprobante] = useState(false);
@@ -321,6 +330,8 @@ export default function Page() {
         comprobante_num_vent:
           metodoPago === "transferencia" ? comprobanteNumero : null,
         comprobante_img_vent: metodoPago === "transferencia" ? urlImg : null,
+        efe_recibido_vent: metodoPago === "efectivo" ? efectivoRecibido : null,
+        efe_cambio_vent: metodoPago === "efectivo" ? efectivoCambio : null,
       };
 
       const saleResponse = await fetch("http://localhost:5000/ventas", {
@@ -388,6 +399,8 @@ export default function Page() {
       setOrderItems([]);
       setComprobanteNumero("");
       setComprobanteImagen(null);
+      setPagoEfectivoConfirmado(false);
+      setPagoTransferenciaConfirmado(false);
     } catch (error: any) {
       console.error(error);
       ToastError({
@@ -397,11 +410,16 @@ export default function Page() {
   };
 
   const isGuardarDisabled = useMemo(() => {
-    if (metodoPago === "transferencia" && showDialogComprobante) {
-      return !comprobanteNumero || !comprobanteImagen;
-    }
-    return false;
-  }, [metodoPago, showDialogComprobante, comprobanteNumero, comprobanteImagen]);
+    if (orderItems.length === 0) return true;
+    if (metodoPago === "efectivo") return !pagoEfectivoConfirmado;
+    if (metodoPago === "transferencia") return !pagoTransferenciaConfirmado;
+    return true;
+  }, [
+    orderItems,
+    metodoPago,
+    pagoEfectivoConfirmado,
+    pagoTransferenciaConfirmado,
+  ]);
 
   // ---------------------
   // RENDER
@@ -729,30 +747,34 @@ export default function Page() {
                   <Button
                     onClick={() => {
                       if (metodoPago === "transferencia") {
-                        setShowDialogComprobante((prev) => !prev); // ✅ Toggle modal
+                        setShowDialogComprobante((prev) => !prev);
                       } else {
                         setMetodoPago("transferencia");
                         setShowDialogComprobante(true);
                       }
                     }}
+                    disabled={total <= 0}
                     className={`flex items-center gap-2 rounded-lg px-7 py-2 text-sm font-medium shadow-sm transition ${
                       metodoPago === "transferencia"
                         ? "border-2 border-emerald-500 bg-white text-emerald-700 dark:bg-[#2a2a2a] dark:text-emerald-400"
                         : "border border-gray-300 bg-white text-gray-700 hover:border-gray-400 dark:bg-[#2a2a2a] dark:text-gray-300"
-                    }`}
+                    } ${total <= 0 ? "cursor-not-allowed opacity-50" : ""}`}
                   >
                     <Smartphone size={16} />
                     Transferencia
                   </Button>
 
-                  {/* Botón Efectivo */}
                   <Button
-                    onClick={() => setMetodoPago("efectivo")}
+                    onClick={() => {
+                      setMetodoPago("efectivo");
+                      setMostarEfectivoModal(true);
+                    }}
+                    disabled={total <= 0}
                     className={`flex items-center gap-2 rounded-lg px-7 py-2 text-sm font-medium shadow-sm transition ${
                       metodoPago === "efectivo"
                         ? "border-2 border-emerald-500 bg-white text-emerald-700 dark:bg-[#2a2a2a] dark:text-emerald-400"
                         : "border border-gray-300 bg-white text-gray-700 hover:border-gray-400 dark:bg-[#2a2a2a] dark:text-gray-300"
-                    }`}
+                    } ${total <= 0 ? "cursor-not-allowed opacity-50" : ""}`}
                   >
                     <Banknote size={16} />
                     Efectivo
@@ -763,14 +785,8 @@ export default function Page() {
 
             <div className="flex w-full items-center justify-between pt-3">
               <Button
-                variant={"secondary"}
-                className="mt-3 rounded text-sm font-bold"
-              >
-                <Printer className="h-4 w-4" /> Imprimir
-              </Button>
-              <Button
                 variant={"primary"}
-                className="mt-3 w-[220px] rounded text-sm font-bold"
+                className="mt-2 w-full rounded text-sm font-bold"
                 onClick={() => setShowConfirmDialog(true)}
                 disabled={isGuardarDisabled}
               >
@@ -883,7 +899,7 @@ export default function Page() {
                     <img
                       src={URL.createObjectURL(comprobanteImagen)}
                       alt="Previsualización del comprobante"
-                      className="max-h-48 w-auto rounded-md border object-contain"
+                      className="max-h-48 w-auto rounded-md border border-border object-contain"
                     />
                   </div>
                 )}
@@ -902,13 +918,43 @@ export default function Page() {
                 Cancelar
               </Button>
 
-              <Button onClick={() => setShowDialogComprobante(false)}>
+              <Button
+                onClick={() => {
+                  if (comprobanteNumero && comprobanteImagen) {
+                    setPagoTransferenciaConfirmado(true);
+                    setShowDialogComprobante(false);
+                  }
+                }}
+              >
                 Confirmar
               </Button>
             </div>
           </DialogContent>
         </Dialog>
       )}
+
+      <ModalPagoEfectivo
+        open={mostrarEfectivoModal}
+        onClose={() => setMostarEfectivoModal(false)}
+        onConfirm={() => {
+          setEfectivoCambio((efectivoRecibido ?? 0) - total);
+          setPagoEfectivoConfirmado(true);
+          setMostarEfectivoModal(false);
+        }}
+        efectivoRecibido={efectivoRecibido}
+        setEfectivoRecibido={setEfectivoRecibido}
+        total={total}
+        orderItems={orderItems.map((item) => {
+          const prod = products.find((p) => p.id_prod === item.productId);
+          return {
+            name: prod?.nom_prod ?? "Producto",
+            qty: item.quantity,
+            price: prod?.prec_vent_prod ?? 0,
+          };
+        })}
+        customerName={customerName}
+        tableInfo={tableInfo}
+      />
 
       {showConfirmDialog && (
         <Dialog

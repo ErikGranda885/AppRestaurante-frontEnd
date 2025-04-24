@@ -64,14 +64,19 @@ export function TicketPreview({ venta }: TicketPreviewProps) {
           <span>Total</span>
           <span>${venta.total.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between">
-          <span>Pago</span>
-          <span>${venta.total.toFixed(2)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Cambio</span>
-          <span>$0.00</span>
-        </div>
+
+        {venta.tipoPago === "efectivo" && (
+          <>
+            <div className="flex justify-between">
+              <span>Pago</span>
+              <span>${venta.efectivoRecibido?.toFixed(2) ?? "0.00"}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Cambio</span>
+              <span>${venta.efectivoCambio?.toFixed(2) ?? "0.00"}</span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Footer */}

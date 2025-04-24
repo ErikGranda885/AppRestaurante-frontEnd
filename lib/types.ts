@@ -32,6 +32,8 @@ export interface IVentaDetalle {
   tipoPago: string; // tip_pag_vent
   comprobante: string | null; // comprobante_num_vent
   fecha: string; // fech_vent
+  efectivoRecibido: number;
+  efectivoCambio: number;
   total: number; // tot_vent
   productos: IDetalleProductoVenta[];
 }
