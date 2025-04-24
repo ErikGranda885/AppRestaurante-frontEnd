@@ -32,6 +32,8 @@ import { ComboboxPago } from "@/components/shared/ventas/ui/comboboxPago";
 import { ComboboxEstado } from "@/components/shared/ventas/ui/comboboxEstado";
 import { TicketPreview } from "@/components/shared/ventas/ui/ticketPreview";
 import { IVentaDetalle } from "@/lib/types";
+import Image from "next/image";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function Page() {
   const [abrirCrear, setAbrirCrear] = useState(false);
@@ -43,11 +45,14 @@ export default function Page() {
     useState<IVentaDetalle | null>(null);
 
   const [modalAbierto, setModalAbierto] = useState(false);
-
+  const [mostrarComprobante, setMostrarComprobante] = useState(false);
+  const [mostrarContenidoComprobante, setMostrarContenidoComprobante] =
+    useState(false);
   const { ventas, loading, error } = useVentasConDetalles(); // Hook que trae las ventas
   useProtectedRoute();
   const contentRef = useRef<HTMLDivElement>(null);
   const reactToPrintFn = useReactToPrint({ contentRef });
+  const [imagenCargada, setImagenCargada] = useState(false);
 
   const coloresUsuario = [
     "bg-emerald-500",
@@ -100,6 +105,17 @@ export default function Page() {
     setDateRange(undefined);
     setTipoPago("");
   };
+
+  /* Mostrar el comprobante de la transferencia */
+  useEffect(() => {
+    if (mostrarComprobante) {
+      const timer = setTimeout(() => setMostrarContenidoComprobante(true), 300);
+      return () => clearTimeout(timer);
+    } else {
+      // Oculta el contenido inmediatamente al cerrar
+      setMostrarContenidoComprobante(false);
+    }
+  }, [mostrarComprobante]);
 
   const ventasFiltradas = useMemo(() => {
     return ventas.filter((venta) => {
@@ -337,27 +353,88 @@ export default function Page() {
               open={modalAbierto}
               onOpenChange={(open) => {
                 setModalAbierto(open);
-                if (!open) setVentaSeleccionada(null);
+                if (!open) {
+                  setVentaSeleccionada(null);
+                  setMostrarComprobante(false);
+                  setMostrarContenidoComprobante(false);
+                  setImagenCargada(false);
+                }
               }}
-              triggerText={undefined}
-              triggerVariant="secondary"
-              title={"Previsualizacion recibo de compra"}
-              description={undefined}
-              contentClassName=""
-              contentWidth="350px"
+              title={"Previsualización recibo de compra"}
+              contentClassName={`transition-all duration-500 ease-in-out max-w-none ${
+                mostrarComprobante ? "w-[750px]" : "w-[350px]"
+              }`}
             >
-              <div ref={contentRef} className="printContent">
-                <TicketPreview venta={ventaSeleccionada} />
+              <div className="flex">
+                {/* Ticket */}
+                <div ref={contentRef} className="w-1/2">
+                  <TicketPreview venta={ventaSeleccionada} />
+                </div>
+
+                {/* Contenedor animado */}
+                <motion.div
+                  key="comprobante-box"
+                  className="w-1/2"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: mostrarContenidoComprobante ? 1 : 0 }}
+                  transition={{ duration: 0.5 }}
+                  style={{
+                    pointerEvents: mostrarContenidoComprobante
+                      ? "auto"
+                      : "none",
+                    visibility: mostrarContenidoComprobante
+                      ? "visible"
+                      : "hidden",
+                  }}
+                >
+                  <motion.div
+                    initial={{ filter: "blur(8px)", opacity: 0 }}
+                    animate={
+                      imagenCargada
+                        ? { filter: "blur(0px)", opacity: 1 }
+                        : { filter: "blur(8px)", opacity: 0.4 }
+                    }
+                    transition={{ duration: 0.6 }}
+                    className="rounded-lg border border-border p-3 dark:bg-[#1a1a1a]"
+                  >
+                    <h4 className="mb-2 text-sm font-semibold dark:text-white">
+                      Comprobante de transferencia
+                    </h4>
+                    <div className="relative aspect-[4/4] w-full overflow-hidden rounded-md">
+                      {ventaSeleccionada?.comprobanteImg ? (
+                        <Image
+                          src={ventaSeleccionada.comprobanteImg}
+                          alt="Comprobante de Transferencia"
+                          fill
+                          className="object-contain"
+                          onLoadingComplete={() => setImagenCargada(true)}
+                        />
+                      ) : (
+                        <div className="text-center text-sm text-muted-foreground">
+                          No hay comprobante disponible para esta orden.
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                </motion.div>
               </div>
-              {/* Botón de imprimir */}
-              <div className="flex justify-between">
-                {ventaSeleccionada?.tipoPago === "transferencia" && (
-                  <div className="flex justify-end">
-                    <Button className="text-xs" variant="secondary">
-                      Ver Comprobante
+
+              {/* Botones */}
+              <div className="mt-4 flex flex-wrap items-center justify-start gap-2">
+                <div>
+                  {ventaSeleccionada?.tipoPago === "transferencia" && (
+                    <Button
+                      className="text-xs"
+                      variant={mostrarComprobante ? "destructive" : "secondary"}
+                      onClick={() => setMostrarComprobante((prev) => !prev)}
+                    >
+                      {mostrarComprobante
+                        ? "Ocultar comprobante"
+                        : "Ver comprobante"}
                     </Button>
-                  </div>
-                )}
+                  )}
+                </div>
+
                 <Button
                   className="text-xs"
                   variant="primary"

@@ -31,6 +31,7 @@ export interface IVentaDetalle {
   estado: string; // est_vent
   tipoPago: string; // tip_pag_vent
   comprobante: string | null; // comprobante_num_vent
+  comprobanteImg: string;
   fecha: string; // fech_vent
   efectivoRecibido: number;
   efectivoCambio: number;
