@@ -82,6 +82,7 @@ export const data = {
       items: [
         { title: "Gestión de categorias", url: "/productos/categorias" },
         { title: "Gestión de productos", url: "/productos/listado" },
+        { title: "Gestión de combos", url: "/productos/combos" },
         { title: "Reportes", url: "/productos/reportes" },
       ],
     },

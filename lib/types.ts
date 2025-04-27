@@ -27,15 +27,15 @@ export interface IDetalleProductoVenta {
 export interface IVentaDetalle {
   id_venta: number;
   cliente: IUsuario;
-  tipoOrden: string; // Alias de tip_pag_vent
-  estado: string; // est_vent
-  tipoPago: string; // tip_pag_vent
-  comprobante: string | null; // comprobante_num_vent
+  tipoOrden: string;
+  estado: string;
+  tipoPago: string;
+  comprobante: string | null;
   comprobanteImg: string;
-  fecha: string; // fech_vent
+  fecha: string;
   efectivoRecibido: number;
   efectivoCambio: number;
-  total: number; // tot_vent
+  total: number;
   productos: IDetalleProductoVenta[];
 }
 
@@ -97,6 +97,14 @@ export interface IRol {
   nom_rol: string;
   desc_rol?: string;
   est_rol?: string;
+}
+
+export interface IGasto {
+  id_gas: number;
+  desc_gas: string;
+  mont_gas: number;
+  fech_gas: string;
+  obs_gas: string;
 }
 
 export type IProductEdit = Omit<IProduct, "cate_prod"> & {

@@ -290,7 +290,7 @@ export default function PaginaCategorias() {
     <>
       <Toaster position="top-right" />
       <ModulePageLayout
-        breadcrumbLinkTitle="Inventario"
+        breadcrumbLinkTitle="Productos"
         breadcrumbPageTitle="Gestión de Categorías"
         submenu={true}
         isLoading={false}
