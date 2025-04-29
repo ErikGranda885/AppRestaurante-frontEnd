@@ -70,6 +70,20 @@ export interface ICompra {
   fech_venc_comp: string;
 }
 
+export interface ICierreDiario {
+  id_cier: number;
+  fech_cier: string;
+  tot_vent_cier: number;
+  tot_dep_cier: number;
+  tot_gas_cier: number;
+  tot_compras_pag_cier: number;
+  dif_cier: number;
+  comp_dep_cier: string;
+  fech_reg_cier: string;
+  usu_cier: IUsuario;
+  esta_cier: string;
+}
+
 export interface IUsuario {
   id_usu: string;
   nom_usu: string;
