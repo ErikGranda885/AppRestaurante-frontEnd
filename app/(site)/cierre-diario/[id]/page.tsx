@@ -3,7 +3,16 @@
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ArrowDownToLine, ArrowLeft, Pencil, Weight } from "lucide-react";
+import {
+  ArrowDownToLine,
+  ArrowLeft,
+  Copy,
+  Pencil,
+  Receipt,
+  ReceiptText,
+  ShoppingCart,
+  Weight,
+} from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
@@ -19,6 +28,8 @@ import Image from "next/image";
 import { ICierreDiario, IUsuario } from "@/lib/types";
 import { useMovimientosDelDia } from "@/hooks/cierresDiarios/useMovimientosDelDia"; // <--- Aquí importamos el hook
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
+import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 interface Movimiento {
   descripcion: string;
   monto: number;
@@ -27,6 +38,10 @@ interface Movimiento {
 export default function Dashboard() {
   const router = useRouter();
   const { id } = useParams();
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [numeroComprobante, setNumeroComprobante] = useState("");
+  const [valorDeposito, setValorDeposito] = useState("");
   useProtectedRoute();
 
   const bancos = BANCOS_EMPRESA;
@@ -59,6 +74,13 @@ export default function Dashboard() {
     }
   }, [id, router]);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      setPreviewUrl(URL.createObjectURL(selectedFile));
+    }
+  };
   const fechaCierre = cierreSeleccionado?.fech_cier ?? "";
 
   const { movimientos, isLoading: isLoadingMovimientos } =
@@ -109,7 +131,7 @@ export default function Dashboard() {
               className="border-border text-[12px] font-semibold"
               variant="secondary"
             >
-              <ArrowDownToLine className="h-4 w-4" /> Descargar
+              <ArrowDownToLine className="h-4 w-4" /> Cerrar Día
             </Button>
           </div>
         </div>
@@ -119,44 +141,68 @@ export default function Dashboard() {
       <div className="flex w-full flex-wrap gap-4 px-6 pt-4">
         {/* Columna Izquierda */}
         <div className="flex flex-col gap-2">
-          <Card className="h-[485px] w-[320px]">
+          <Card className="h-[485px] w-[300px] rounded-xl border border-border shadow-md dark:bg-[#1a1a1a]">
             <CardHeader>
-              <CardTitle>Resumen Económico</CardTitle>
+              <CardTitle className="text-lg font-bold text-secondary-foreground">
+                Resumen Económico
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-2 gap-3">
-                <ResumenItem
-                  label="Total Ventas"
-                  value={cierreSeleccionado.tot_vent_cier}
-                />
-                <ResumenItem
-                  label="Total Gastos"
-                  value={cierreSeleccionado.tot_gas_cier}
-                />
-                <ResumenItem
-                  label="Total Compras Pagadas"
-                  value={cierreSeleccionado.tot_compras_pag_cier}
-                />
-                <ResumenItem
-                  label="Total Depositado"
-                  value={cierreSeleccionado.tot_dep_cier}
-                />
-                <ResumenItem
-                  label="Diferencia"
-                  value={cierreSeleccionado.dif_cier}
-                />
+
+            <CardContent className="space-y-4">
+              {/* Totales principales */}
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between">
+                  <ResumenItem
+                    label="Total Ventas"
+                    value={cierreSeleccionado.tot_vent_cier}
+                  />
+                  <ResumenItem
+                    label="Total Efectivo"
+                    value={cierreSeleccionado.tot_vent_cier}
+                  />
+                </div>
               </div>
 
-              {/* Seleccionar Banco */}
-              <div>
-                <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
+              {/* Detalle General */}
+              <div className="space-y-2">
+                <p className="mt-2 text-xs font-semibold uppercase text-muted-foreground">
+                  Detalle General
+                </p>
+
+                <div className="flex justify-between text-xs">
+                  <span>Total Facturas Canceladas</span>
+                  <span>
+                    ${(cierreSeleccionado.tot_compras_pag_cier ?? 0).toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span>Total Gastos</span>
+                  <span>
+                    ${(cierreSeleccionado.tot_gas_cier ?? 0).toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span>Gastos</span>
+                  <span>
+                    ${(cierreSeleccionado.tot_gas_cier ?? 0).toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span>Diferencia</span>
+                  <span>${(cierreSeleccionado.dif_cier ?? 0).toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Selección de Banco */}
+              <div className="space-y-1">
+                <p className="mt-2 text-xs font-semibold uppercase text-muted-foreground">
                   Seleccionar Banco
-                </h3>
+                </p>
                 <Select onValueChange={(value) => setBancoSeleccionado(value)}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full rounded-md border border-border bg-background dark:bg-[#1a1a1a]">
                     <SelectValue placeholder="Selecciona un banco" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-background dark:bg-[#1a1a1a]">
                     {bancos.map((banco) => (
                       <SelectItem key={banco.id} value={banco.id}>
                         {banco.nombre}
@@ -166,20 +212,21 @@ export default function Dashboard() {
                 </Select>
               </div>
 
-              {/* Banco info */}
+              {/* Info del Banco visible + copiar */}
               {bancoInfo && (
-                <div className="mt-6 rounded-md border p-4 text-sm">
+                <div className="rounded-lg border border-border bg-muted/10 p-4 text-sm dark:bg-[#141414]">
                   <div className="flex items-center gap-4">
-                    <div className="flex-shrink-0">
+                    <div className="flex h-12 w-12 overflow-hidden rounded-md bg-white p-1">
                       <Image
                         src={bancoInfo.logo}
                         alt={bancoInfo.nombre}
-                        width={60}
-                        height={60}
-                        className="bg-white object-contain"
+                        width={48}
+                        height={48}
+                        className="object-contain"
                       />
                     </div>
-                    <div className="space-y-1">
+
+                    <div className="flex-1 space-y-1 text-xs">
                       <div>
                         <strong>Banco:</strong> {bancoInfo.nombre}
                       </div>
@@ -187,17 +234,40 @@ export default function Dashboard() {
                         <strong>Cuenta:</strong> {bancoInfo.cuenta}
                       </div>
                       <div>
-                        <strong>Tipo de Cuenta:</strong> {bancoInfo.tipoCuenta}
+                        <strong>Tipo:</strong> {bancoInfo.tipoCuenta}
                       </div>
                     </div>
                   </div>
+
+                  {/* Botón para copiar todos los datos */}
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="mt-3 w-full text-[11px] font-semibold"
+                    onClick={() => {
+                      const infoCompleta = `
+                        Banco: ${bancoInfo.nombre}
+                        Tipo de Cuenta: ${bancoInfo.tipoCuenta}
+                        Número de Cuenta: ${bancoInfo.cuenta}
+                        Titular: ${bancoInfo.nombreTitular}
+                        RUC/CI: ${bancoInfo.rucCi}
+                        Correo: ${bancoInfo.correo}
+                        Celular: ${bancoInfo.telefono}`.trim();
+                      navigator.clipboard.writeText(infoCompleta);
+                      ToastSuccess({
+                        message: "¡Información copiada exitosamente!",
+                      });
+                    }}
+                  >
+                    <Copy className="h-4 w-4" /> Copiar información completa
+                  </Button>
                 </div>
               )}
             </CardContent>
           </Card>
 
           {/* Responsable de cierre */}
-          <Card className="h-[90px] w-[320px]">
+          <Card className="h-[90px] w-[300px] border border-border dark:bg-[#1a1a1a]">
             <CardHeader className="h-2">
               <CardTitle>Responsable de Cierre</CardTitle>
             </CardHeader>
@@ -231,15 +301,19 @@ export default function Dashboard() {
           {/* Gastos y Compras */}
           <div className="flex gap-6">
             {/* Gastos */}
-            <Card className="h-[230px] flex-1">
+            <Card className="h-[230px] flex-1 border border-border dark:bg-[#1a1a1a]">
               <CardHeader>
-                <CardTitle>Gastos del Día</CardTitle>
+                <CardTitle>
+                  <div className="flex flex-wrap items-center">
+                    <ReceiptText className="mr-2 h-4 w-4" /> Gastos del día
+                  </div>
+                </CardTitle>
               </CardHeader>
 
               <ScrollArea className="h-[300px]">
                 <CardContent className="space-y-2">
                   {/* Encabezados de la tabla */}
-                  <div className="grid grid-cols-3 gap-4 border-b pb-2 text-xs font-semibold text-muted-foreground">
+                  <div className="grid grid-cols-3 gap-4 border-border pb-2 text-xs font-semibold text-muted-foreground">
                     <span>Descripción</span>
                     <span>Observación</span>
                     <span className="text-right">Monto</span>
@@ -250,7 +324,7 @@ export default function Dashboard() {
                     movimientos.gastos.map((gasto: any, index: number) => (
                       <div
                         key={index}
-                        className="grid grid-cols-3 items-center gap-4 border-b py-2 text-sm"
+                        className="grid grid-cols-3 items-center gap-4 border border-x-transparent border-b-border border-t-transparent py-2 text-sm"
                       >
                         <span>{gasto.desc_gas}</span>
                         <span className="truncate text-xs text-muted-foreground">
@@ -275,16 +349,20 @@ export default function Dashboard() {
             </Card>
 
             {/* Compras */}
-            <Card className="flex-1">
+            <Card className="flex-1 border border-border dark:bg-[#1a1a1a]">
               <CardHeader>
-                <CardTitle>Compras Pagadas</CardTitle>
+                <CardTitle>
+                  <div className="flex flex-wrap items-center">
+                    <ShoppingCart className="mr-2 h-4 w-4" /> Compras pagadas
+                  </div>
+                </CardTitle>
               </CardHeader>
 
               {/* Scroll interno */}
               <ScrollArea className="h-[110px]">
                 <CardContent className="space-y-2">
                   {/* Encabezados de la tabla */}
-                  <div className="grid grid-cols-3 gap-4 border-b pb-2 text-xs font-semibold text-muted-foreground">
+                  <div className="grid grid-cols-3 gap-4 border-border pb-2 text-xs font-semibold text-muted-foreground">
                     <span>Proveedor</span>
                     <span>Fecha</span>
                     <span className="text-right">Monto</span>
@@ -295,7 +373,7 @@ export default function Dashboard() {
                     movimientos.compras.map((compra: any, index: number) => (
                       <div
                         key={index}
-                        className="grid grid-cols-3 items-center gap-4 border-b py-2 text-sm"
+                        className="grid grid-cols-3 items-center gap-4 border border-x-transparent border-b-border border-t-transparent py-2 text-sm"
                       >
                         <span>{compra.proveedor}</span>
                         <span className="text-xs text-muted-foreground">
@@ -325,7 +403,7 @@ export default function Dashboard() {
           </div>
 
           {/* Ventas */}
-          <Card className="h-auto">
+          <Card className="flex-1 border border-border dark:bg-[#1a1a1a]">
             <CardHeader>
               <CardTitle>
                 <div className="flex flex-wrap items-center">
@@ -338,7 +416,7 @@ export default function Dashboard() {
             <ScrollArea className="h-[266px]">
               <CardContent className="space-y-2">
                 {/* Encabezados de la tabla */}
-                <div className="grid grid-cols-4 gap-4 border-b pb-2 text-xs font-semibold text-muted-foreground">
+                <div className="grid grid-cols-4 gap-4 border-border pb-2 text-xs font-semibold text-muted-foreground">
                   <span>#</span>
                   <span>Tipo de Pago</span>
                   <span>Estado</span>
@@ -350,7 +428,7 @@ export default function Dashboard() {
                   movimientos.ventas.map((venta: any, index: number) => (
                     <div
                       key={index}
-                      className="grid grid-cols-4 items-center gap-4 border-b py-2 text-sm"
+                      className="grid grid-cols-4 items-center gap-4 border border-x-transparent border-b-border border-t-transparent py-2 text-sm"
                     >
                       <span>{venta.id_vent}</span>
                       <span>{venta.tip_pag_vent}</span>
@@ -374,8 +452,127 @@ export default function Dashboard() {
           </Card>
 
           {/* Deposito */}
-          
         </div>
+        {/* Deposito */}
+        <Card className="w-[450px] border border-border dark:bg-[#1a1a1a]">
+          <CardHeader>
+            <CardTitle>
+              <div className="flex flex-wrap items-center">
+                <Receipt className="mr-2 h-4 w-4" /> Registrar Depósito
+              </div>
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            {/* Número de comprobante y valor */}
+            <div className="flex justify-between gap-6">
+              <div className="flex-1 space-y-1">
+                <label className="text-xs font-semibold text-muted-foreground">
+                  Número de Comprobante
+                </label>
+                <Input
+                  type="text"
+                  placeholder="Ej: 1234567890"
+                  value={numeroComprobante}
+                  onChange={(e) => setNumeroComprobante(e.target.value)}
+                />
+              </div>
+
+              <div className="flex-1 space-y-1">
+                <label className="text-xs font-semibold text-muted-foreground">
+                  Valor del Depósito
+                </label>
+                <Input
+                  type="number"
+                  placeholder="Ej: 150.00"
+                  value={valorDeposito}
+                  onChange={(e) => setValorDeposito(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Imagen del comprobante */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground">
+                Imagen del Comprobante
+              </label>
+
+              <label
+                className="relative flex w-full flex-col items-center justify-center rounded-md border-2 border-dashed p-6 text-center hover:cursor-pointer hover:border-secondary dark:bg-[#1a1a1a]"
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.currentTarget.classList.add("border-secondary"); // opcional: highlight visual
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.currentTarget.classList.remove("border-secondary"); // opcional: quitar highlight
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const file = e.dataTransfer.files[0];
+                  if (file && file.type.startsWith("image/")) {
+                    setPreviewUrl(URL.createObjectURL(file));
+                    setFile(file);
+                    ToastSuccess({
+                      message: "¡Imagen cargada exitosamente!",
+                    });
+                  }
+                }}
+              >
+                {previewUrl ? (
+                  <div
+                    className="relative h-[300px] w-full overflow-hidden rounded-md bg-cover bg-center"
+                    style={{ backgroundImage: `url(${previewUrl})` }}
+                    onMouseMove={(e) => {
+                      const { left, top, width, height } =
+                        e.currentTarget.getBoundingClientRect();
+                      const x = ((e.clientX - left) / width) * 100;
+                      const y = ((e.clientY - top) / height) * 100;
+                      e.currentTarget.style.backgroundPosition = `${x}% ${y}%`;
+                      e.currentTarget.style.backgroundSize = "200%";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundPosition = "center";
+                      e.currentTarget.style.backgroundSize = "contain";
+                    }}
+                  />
+                ) : (
+                  <div className="flex h-[300px] items-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <Receipt className="mb-2 w-8 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">
+                        Arrastra o haz click para seleccionar
+                      </p>
+                    </div>
+                  </div>
+                )}
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const selectedFile = e.target.files?.[0];
+                    if (selectedFile) {
+                      setPreviewUrl(URL.createObjectURL(selectedFile));
+                      setFile(selectedFile);
+                    }
+                  }}
+                  className="absolute inset-0 cursor-pointer opacity-0"
+                />
+              </label>
+            </div>
+
+            {/* Botón guardar */}
+            <Button
+              variant="secondary"
+              className="w-full text-[12px] font-semibold"
+            >
+              Guardar Depósito
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </ModulePageLayout>
   );
@@ -394,7 +591,7 @@ function ResumenItem({
       <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
         {label}
       </div>
-      <div className="text-2xl font-bold text-gray-900 dark:text-white">
+      <div className="text-4xl font-bold text-gray-900 dark:text-white">
         ${(value ?? 0).toFixed(2)}
       </div>
     </div>
