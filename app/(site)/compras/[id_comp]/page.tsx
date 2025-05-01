@@ -331,7 +331,7 @@ export default function DetalleCompraPage() {
               <div className="space-y-1 text-sm text-gray-700 dark:text-gray-200">
                 <div className="flex items-center justify-between">
                   <span>Valor total:</span>
-                  <span>${compra.tot_comp.toFixed(2)}</span>
+                  <span>${Number(compra.tot_comp ?? 0).toFixed(2)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Estado de pago:</span>

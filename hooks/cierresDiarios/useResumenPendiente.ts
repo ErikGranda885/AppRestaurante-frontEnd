@@ -1,33 +1,44 @@
-// src/hooks/cierresDiarios/useResumenPendiente.ts
-import useSWR from "swr";
+import { useEffect, useState } from "react";
+import { ICierreDiario, IResumenDelDia } from "@/lib/types";
+import { SERVICIOS_CIERRES } from "@/services/cierreDiario.service";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+export function useResumenPendiente(
+  fechaActual: string,
+  estadoSeleccionado: string,
+  lista: ICierreDiario[],
+) {
+  const [resumenPendiente, setResumenPendiente] =
+    useState<IResumenDelDia | null>(null);
 
-const SERVICIOS_CIERRES = {
-  resumenDelDia: (fecha: string) =>
-    `http://localhost:5000/cierres/resumen/${fecha}`,
-};
+  // No aplicar ajuste de zona horaria nuevamente
+  const fechaLocal = fechaActual; // Ya viene normalizada desde el componente
 
-export function useResumenPendiente(fecha: string, estado: string) {
-  const shouldFetch = estado === "pendientes"; // Solo cuando esté en pendientes
-  const { data, error, isLoading, mutate } = useSWR(
-    shouldFetch ? SERVICIOS_CIERRES.resumenDelDia(fecha) : null,
-    fetcher,
-    {
-      refreshInterval: 10_000, // cada 10 segundos refresca automáticamente (opcional)
-      dedupingInterval: 5_000, // evita muchas peticiones iguales seguidas
-      revalidateOnFocus: true, // refresca si el usuario vuelve a la pestaña
-    },
-  );
+  useEffect(() => {
+    const yaExisteHoy = lista.some((cierre) => {
+      const fechaCierre = new Date(cierre.fech_cier)
+        .toLocaleDateString("en-CA")
+        .replace(/-/g, "/");
+      return fechaCierre === fechaLocal && cierre.id_cier !== 0;
+    });
 
-  return {
-    resumenPendiente: data ?? {
-      totalVentas: 0,
-      totalGastos: 0,
-      totalComprasPagadas: 0,
-    },
-    isLoading,
-    isError: !!error,
-    refetchResumen: mutate, // puedes usarlo manualmente si quieres forzar actualización
-  };
+    if (estadoSeleccionado !== "por cerrar" || yaExisteHoy) {
+      setResumenPendiente(null);
+      return;
+    }
+
+    const obtenerResumen = async () => {
+      try {
+        const res = await fetch(SERVICIOS_CIERRES.movimientosDelDia(fechaLocal));
+        const data = await res.json();
+        setResumenPendiente(data);
+      } catch (error) {
+        console.error("Error al obtener movimientos del día:", error);
+        setResumenPendiente(null);
+      }
+    };
+
+    obtenerResumen();
+  }, [fechaActual, estadoSeleccionado, lista]);
+
+  return { resumenPendiente };
 }

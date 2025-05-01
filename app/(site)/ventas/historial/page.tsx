@@ -39,7 +39,11 @@ export default function Page() {
   const [abrirCrear, setAbrirCrear] = useState(false);
   const [consultaBusqueda, setConsultaBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("Todos");
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: startOfDay(new Date()),
+    to: endOfDay(new Date()),
+  });
+
   const [tipoPago, setTipoPago] = useState<string>("");
   const [ventaSeleccionada, setVentaSeleccionada] =
     useState<IVentaDetalle | null>(null);
@@ -102,8 +106,11 @@ export default function Page() {
   const limpiarFiltros = () => {
     setConsultaBusqueda("");
     setFiltroEstado("Todos");
-    setDateRange(undefined);
     setTipoPago("");
+    setDateRange({
+      from: startOfDay(new Date()),
+      to: endOfDay(new Date()),
+    });
   };
 
   /* Mostrar el comprobante de la transferencia */
@@ -304,7 +311,7 @@ export default function Page() {
                           <span className="truncate">{prod.nombre}</span>
                           <span className="text-center">{prod.cantidad}</span>
                           <span className="text-right">
-                            ${prod.subtotal.toFixed(2)}
+                            ${Number(prod.subtotal ?? 0).toFixed(2)}
                           </span>
                         </div>
                       ))}
@@ -320,7 +327,7 @@ export default function Page() {
                     <div className="px-6">
                       <div className="flex justify-between border-t border-dashed border-gray-300 pt-2 text-sm font-bold">
                         <span>Total</span>
-                        <span>${venta.total.toFixed(2)}</span>
+                        <span>${Number(venta.total ?? 0).toFixed(2)}</span>
                       </div>
                     </div>
 

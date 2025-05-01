@@ -1,4 +1,5 @@
 "use client";
+
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { DataTable } from "@/components/shared/varios/dataTable";
 import { GeneralDialog } from "@/components/shared/varios/dialogGen";
@@ -9,10 +10,30 @@ import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { ICompra, IDetCompra } from "@/lib/types";
 import { CloudDownload, Plus, Search, Upload } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { format } from "date-fns";
+import {
+  format,
+  isToday,
+  isYesterday,
+  isThisMonth,
+  startOfDay,
+  endOfDay,
+  subDays,
+  startOfMonth,
+  endOfMonth,
+} from "date-fns";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ToastError } from "@/components/shared/toast/toastError";
+import { Separator } from "@/components/ui/separator";
+import { DateRangeFilter } from "@/components/shared/ventas/ui/dateRangeFilter";
+import { DateRange } from "react-day-picker";
+import { Label } from "@/components/ui/label";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Page() {
   const [abrirCrear, setAbrirCrear] = useState(false);
@@ -20,26 +41,25 @@ export default function Page() {
   const [compras, setCompras] = useState<ICompra[]>([]);
   const [detCompras, setDetCompras] = useState<IDetCompra[]>([]);
   const [loadingData, setLoadingData] = useState<boolean>(false);
-
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: startOfDay(new Date()),
+    to: endOfDay(new Date()),
+  });
+  const [labelQuickRange, setLabelQuickRange] = useState("Hoy");
   useProtectedRoute();
   const router = useRouter();
 
-  // Cargar compras y detalles al iniciar el componente
   useEffect(() => {
     const fetchData = async () => {
       setLoadingData(true);
       try {
-        // Llamada a la API de compras
         const resCompras = await fetch("http://localhost:5000/compras");
         const comprasData = await resCompras.json();
-        console.log("Response de compras:", comprasData);
-        // Verificamos si comprasData es un array o está envuelto en una propiedad "data"
         const comprasArray = Array.isArray(comprasData)
           ? comprasData
           : comprasData.data;
         setCompras(comprasArray || []);
 
-        // Llamada a la API de detalles de compras
         const resDetCompras = await fetch("http://localhost:5000/detCompras");
         const detComprasData = await resDetCompras.json();
         const detComprasArray = Array.isArray(detComprasData)
@@ -59,28 +79,66 @@ export default function Page() {
     fetchData();
   }, []);
 
-  // Filtrar las compras según la búsqueda (por ejemplo, por fecha o estado)
+  const filtrarPorFecha = (compra: ICompra) => {
+    const fechaCompra = new Date(compra.fech_comp);
+    const desde = dateRange?.from ? startOfDay(dateRange.from) : null;
+    const hasta = dateRange?.to ? endOfDay(dateRange.to) : null;
+
+    if (!desde || !hasta) return true;
+
+    return fechaCompra >= desde && fechaCompra <= hasta;
+  };
+
+  const handleQuickRange = (option: "hoy" | "ayer" | "mes") => {
+    let newRange: DateRange;
+
+    if (option === "hoy") {
+      newRange = {
+        from: startOfDay(new Date()),
+        to: endOfDay(new Date()),
+      };
+      setLabelQuickRange("Hoy");
+    } else if (option === "ayer") {
+      const ayer = subDays(new Date(), 1);
+      newRange = {
+        from: startOfDay(ayer),
+        to: endOfDay(ayer),
+      };
+      setLabelQuickRange("Ayer");
+    } else {
+      newRange = {
+        from: startOfMonth(new Date()),
+        to: endOfMonth(new Date()),
+      };
+      setLabelQuickRange("Este mes");
+    }
+
+    setDateRange(newRange);
+  };
+
   const comprasFiltradas = compras.filter(
     (compra) =>
-      compra.fech_comp.toLowerCase().includes(consultaBusqueda.toLowerCase()) ||
-      compra.estado_comp.toLowerCase().includes(consultaBusqueda.toLowerCase()),
+      (compra.fech_comp
+        .toLowerCase()
+        .includes(consultaBusqueda.toLowerCase()) ||
+        compra.estado_comp
+          .toLowerCase()
+          .includes(consultaBusqueda.toLowerCase())) &&
+      filtrarPorFecha(compra),
   );
 
-  // Definir las columnas para el DataTable con renderizado personalizado
   const comprasColumnas = [
     {
       header: "ID",
       accessorKey: "id_comp",
       cell: ({ cell }: any) => `#${cell.getValue()}`,
     },
-    /* Fecha de compra */
     {
       header: "Fecha de compra",
       accessorKey: "fech_comp",
       cell: ({ cell }: any) => {
         const dateVal = new Date(cell.getValue());
         const today = new Date();
-        // Compara las fechas (sin tener en cuenta la hora) usando toDateString
         if (dateVal.toDateString() === today.toDateString()) {
           return `Hoy a las ${format(dateVal, "HH:mm")}`;
         } else {
@@ -88,26 +146,21 @@ export default function Page() {
         }
       },
     },
-    /* Total de la compra */
     {
       header: "Total",
       accessorKey: "tot_comp",
       cell: ({ cell }: any) => `$ ${parseFloat(cell.getValue()).toFixed(2)}`,
     },
-    /* Estado de pago de compra */
     {
       header: "Estado de pago",
       accessorKey: "estado_pag_comp",
       cell: ({ cell }: any) => {
         const estado = cell.getValue().toLowerCase();
         let colorClass = "";
-        if (estado === "pagado") {
-          colorClass = "bg-green-100 text-green-700";
-        } else if (estado === "pendiente") {
+        if (estado === "pagado") colorClass = "bg-green-100 text-green-700";
+        else if (estado === "pendiente")
           colorClass = "bg-yellow-100 text-yellow-700";
-        } else {
-          colorClass = "bg-gray-100 text-gray-700";
-        }
+        else colorClass = "bg-gray-100 text-gray-700";
         return (
           <span className={`rounded px-2 py-1 ${colorClass}`}>
             {cell.getValue()}
@@ -115,20 +168,16 @@ export default function Page() {
         );
       },
     },
-    /* Estado de compra */
     {
       header: "Estado de compra",
       accessorKey: "estado_comp",
       cell: ({ cell }: any) => {
         const estado = cell.getValue().toLowerCase();
         let colorClass = "";
-        if (estado === "pagado") {
-          colorClass = "bg-green-100 text-green-700";
-        } else if (estado === "pendiente") {
+        if (estado === "pagado") colorClass = "bg-green-100 text-green-700";
+        else if (estado === "pendiente")
           colorClass = "bg-yellow-100 text-yellow-700";
-        } else {
-          colorClass = "bg-gray-100 text-gray-700";
-        }
+        else colorClass = "bg-gray-100 text-gray-700";
         return (
           <span className={`rounded px-2 py-1 ${colorClass}`}>
             {cell.getValue()}
@@ -136,7 +185,6 @@ export default function Page() {
         );
       },
     },
-    /* Usuario que realizó la compra */
     {
       header: "Usuario",
       accessorKey: "usu_comp",
@@ -167,7 +215,6 @@ export default function Page() {
         );
       },
     },
-    /* Proveedor de la compra */
     {
       header: "Proveedor",
       accessorKey: "prov_comp",
@@ -175,7 +222,7 @@ export default function Page() {
         const prov = row.original.prov_comp;
         return (
           <div className="flex items-center gap-3">
-            <div className="relative h-8 w-8 flex-shrink-0 rounded-md border border-border  p-1">
+            <div className="relative h-8 w-8 flex-shrink-0 rounded-md border border-border p-1">
               <Image
                 src={prov.img_prov || "/default-proveedor.png"}
                 alt={prov.nom_prov}
@@ -195,11 +242,11 @@ export default function Page() {
     },
   ];
 
-  // Calcular las métricas
   const volumenTotal = compras.reduce(
-    (acc, compra) => acc + compra.tot_comp,
+    (acc, compra) => acc + Number(compra.tot_comp ?? 0),
     0,
   );
+
   const numeroCompras = compras.length;
   const promedioItems =
     numeroCompras > 0 ? (detCompras.length / numeroCompras).toFixed(2) : "0";
@@ -212,7 +259,6 @@ export default function Page() {
       isLoading={loadingData}
     >
       <div className="flex h-full w-full flex-col">
-        {/* Encabezado con título, descripción y controles */}
         <div className="flex h-full w-full flex-col px-4">
           <h1 className="text-xl font-bold">Compras</h1>
           <p className="w-[500px] text-sm text-muted-foreground">
@@ -226,9 +272,34 @@ export default function Page() {
               >
                 <Plus className="h-4 w-4 font-light" /> Añade una nueva compra
               </Button>
-
+              {/* Selector de fechas */}
               <div className="flex items-center gap-3">
-                {/* Input de búsqueda */}
+                {/* Filtro de fechas */}
+                <DateRangeFilter value={dateRange} onChange={setDateRange} />
+
+                {/* dropdown de fechas */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="text-[12px]">
+                      {labelQuickRange}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => handleQuickRange("hoy")}>
+                      Hoy
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickRange("ayer")}>
+                      Ayer
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickRange("mes")}>
+                      Este mes
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                {/* separator */}
+                {/* Separador visual entre filtros y buscador */}
+                <Separator orientation="vertical" className="h-6" />
+                {/* Buscador */}
                 <div className="relative">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                     <Search className="h-4 w-4 text-gray-500" />
@@ -236,19 +307,19 @@ export default function Page() {
                   <Input
                     type="text"
                     placeholder="Buscar compras..."
-                    className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
+                    className="w-[230px] border border-border bg-white/10 pl-10 text-[12px]"
                     value={consultaBusqueda}
                     onChange={(e) => setConsultaBusqueda(e.target.value)}
                   />
                 </div>
-                {/* Botón para importar */}
+
                 <Button
                   className="border-border text-[12px] font-semibold"
                   variant="secondary"
                 >
                   <Upload className="h-4 w-4" /> Importar
                 </Button>
-                {/* Botón para exportar */}
+
                 <Button
                   className="border-border text-[12px] font-semibold"
                   variant="secondary"
@@ -259,9 +330,8 @@ export default function Page() {
             </div>
           </div>
         </div>
-        {/* Sección de métricas y DataTable */}
+
         <div className="mx-4 h-full w-auto rounded-lg bg-[hsl(var(--card))]">
-          {/* Métricas */}
           <div className="flex flex-col gap-4 pt-4">
             <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:justify-between">
               <div className="flex-1">
@@ -299,7 +369,7 @@ export default function Page() {
               </div>
             </div>
           </div>
-          {/* Tabla de Datos */}
+
           <div className="pb-4">
             <DataTable<ICompra>
               data={comprasFiltradas}

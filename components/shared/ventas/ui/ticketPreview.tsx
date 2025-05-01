@@ -44,7 +44,9 @@ export function TicketPreview({ venta }: TicketPreviewProps) {
             <span className="w-10 text-right">
               ${(prod.subtotal / prod.cantidad).toFixed(2)}
             </span>
-            <span className="w-12 text-right">${prod.subtotal.toFixed(2)}</span>
+            <span className="w-12 text-right">
+              ${Number(prod.subtotal ?? 0).toFixed(2)}
+            </span>
           </div>
         ))}
       </div>
@@ -56,24 +58,24 @@ export function TicketPreview({ venta }: TicketPreviewProps) {
           <span>
             $
             {venta.productos
-              .reduce((acc: any, p: any) => acc + p.subtotal, 0)
+              .reduce((acc: number, p: any) => acc + Number(p.subtotal ?? 0), 0)
               .toFixed(2)}
           </span>
         </div>
         <div className="flex justify-between text-base font-bold">
           <span>Total</span>
-          <span>${venta.total.toFixed(2)}</span>
+          <span>${Number(venta.total ?? 0).toFixed(2)}</span>
         </div>
 
         {venta.tipoPago === "efectivo" && (
           <>
             <div className="flex justify-between">
               <span>Pago</span>
-              <span>${venta.efectivoRecibido?.toFixed(2) ?? "0.00"}</span>
+              <span>${Number(venta.efectivoRecibido ?? 0).toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
               <span>Cambio</span>
-              <span>${venta.efectivoCambio?.toFixed(2) ?? "0.00"}</span>
+              <span>${Number(venta.efectivoCambio ?? 0).toFixed(2)}</span>
             </div>
           </>
         )}

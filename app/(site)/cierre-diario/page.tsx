@@ -11,9 +11,12 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { useProtectedRoute } from "@/hooks/useProtectedRoute";
-import { ICierreDiario } from "@/lib/types";
-import { ColumnDef } from "@tanstack/react-table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Plus,
   Search,
@@ -24,97 +27,51 @@ import {
   AlertTriangle,
   MoreHorizontal,
 } from "lucide-react";
-import React, { useMemo, useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useFechaLocal } from "@/hooks/cierresDiarios/useFechaLocal";
-import { useFiltroCierres } from "@/hooks/cierresDiarios/useFiltroCierres";
-import { useResumenPendiente } from "@/hooks/cierresDiarios/useResumenPendiente";
+import React from "react";
+
 import { useRouter } from "next/navigation";
+import { useProtectedRoute } from "@/hooks/useProtectedRoute";
+import { useFechaLocal } from "@/hooks/cierresDiarios/useFechaLocal";
+import { useResumenPendiente } from "@/hooks/cierresDiarios/useResumenPendiente";
+import { ICierreDiario } from "@/lib/types";
+import { useCargarCierres } from "@/hooks/cierresDiarios/useCargarCierres";
+import { useListaCierres } from "@/hooks/cierresDiarios/useListaCierres";
+import { useResumenCierres } from "@/hooks/cierresDiarios/useResumenCierres";
+import { ColumnDef, Row } from "@tanstack/react-table";
+import { ToastError } from "@/components/shared/toast/toastError";
 
 export default function Page() {
   useProtectedRoute();
   const router = useRouter();
-  const [abrirCrear, setAbrirCrear] = useState(false);
+  const [abrirCrear, setAbrirCrear] = React.useState(false);
   const [estadoSeleccionado, setEstadoSeleccionado] =
-    useState<string>("pendientes");
-  const [cierres, setCierres] = useState<ICierreDiario[]>([]);
+    React.useState<string>("por cerrar");
+  const [cierres, setCierres] = React.useState<ICierreDiario[]>([]);
 
-  const fechaActual = useFechaLocal();
-  const { resumenPendiente, isLoading, isError, refetchResumen } =
-    useResumenPendiente(fechaActual, estadoSeleccionado);
+  const fechaActual = new Date().toLocaleDateString("en-CA"); // en hora local
 
-  const lista: (ICierreDiario & { pendiente?: boolean })[] = useMemo(() => {
-    const base = [...cierres];
-
-    if (resumenPendiente !== null) {
-      base.unshift({
-        id_cier: 0,
-        fech_cier: fechaActual,
-        tot_vent_cier: resumenPendiente.totalVentas || 0,
-        tot_gas_cier: resumenPendiente.totalGastos || 0,
-        tot_compras_pag_cier: resumenPendiente.totalComprasPagadas || 0,
-        tot_dep_cier: 0,
-        dif_cier:
-          (resumenPendiente.totalVentas || 0) -
-          (resumenPendiente.totalGastos || 0) -
-          (resumenPendiente.totalComprasPagadas || 0),
-        comp_dep_cier: "",
-        fech_reg_cier: fechaActual,
-        usu_cier: {
-          id_usu: "0",
-          nom_usu: "",
-          email_usu: "",
-          img_usu: "",
-          rol_usu: { id_rol: 0, nom_rol: "", desc_rol: "" },
-        },
-        esta_cier: "pendiente",
-      });
-    }
-
-    return base;
-  }, [cierres, resumenPendiente, fechaActual]);
-
-  const cierresFiltrados = useFiltroCierres({
-    cierres: lista,
+  const { resumenPendiente } = useResumenPendiente(
+    fechaActual,
     estadoSeleccionado,
-  });
+    cierres,
+  );
 
+  const lista = useListaCierres(
+    cierres,
+    resumenPendiente,
+    fechaActual,
+    estadoSeleccionado,
+  );
   const { totalDisponible, totalDepositado, diferenciaTotal, numeroCierres } =
-    useMemo(() => {
-      let disponible = 0;
-      let depositado = 0;
-      let diferencia = 0;
-      let cantidad = 0;
-
-      for (const cierre of cierresFiltrados) {
-        disponible +=
-          cierre.tot_vent_cier -
-          cierre.tot_gas_cier -
-          cierre.tot_compras_pag_cier;
-        depositado += cierre.tot_dep_cier;
-        diferencia += cierre.dif_cier;
-        cantidad += 1;
-      }
-
-      return {
-        totalDisponible: disponible,
-        totalDepositado: depositado,
-        diferenciaTotal: diferencia,
-        numeroCierres: cantidad,
-      };
-    }, [cierresFiltrados]);
-
+    useResumenCierres(lista);
   const cierresColumnas: ColumnDef<ICierreDiario>[] = [
     {
       accessorKey: "fech_cier",
       header: "Fecha de Cierre",
       cell: ({ getValue }) => {
-        const fechaCierre = (getValue() as string).split("T")[0];
+        const fechaCierre = new Date(getValue() as string)
+          .toISOString()
+          .split("T")[0];
         const esHoy = fechaCierre === fechaActual;
         return esHoy
           ? "Hoy"
@@ -128,22 +85,22 @@ export default function Page() {
     {
       accessorKey: "tot_vent_cier",
       header: "Total Ventas",
-      cell: ({ getValue }) => `$${Number(getValue()).toFixed(2)}`,
+      cell: ({ getValue }) => `$${Number(getValue())}`,
     },
     {
       accessorKey: "tot_gas_cier",
       header: "Total Gastos",
-      cell: ({ getValue }) => `$${Number(getValue()).toFixed(2)}`,
+      cell: ({ getValue }) => `$${Number(getValue())}`,
     },
     {
       accessorKey: "tot_compras_pag_cier",
       header: "Compras Pagadas",
-      cell: ({ getValue }) => `$${Number(getValue()).toFixed(2)}`,
+      cell: ({ getValue }) => `$${Number(getValue())}`,
     },
     {
       accessorKey: "tot_dep_cier",
       header: "Depositado",
-      cell: ({ getValue }) => `$${Number(getValue()).toFixed(2)}`,
+      cell: ({ getValue }) => `$${Number(getValue())}`,
     },
     {
       accessorKey: "dif_cier",
@@ -151,14 +108,12 @@ export default function Page() {
       cell: ({ getValue }) => {
         const value = Number(getValue());
         return (
-          <span className={value === 0 ? "" : "error-text"}>
-            ${value.toFixed(2)}
-          </span>
+          <span className={value === 0 ? "" : "error-text"}>${value}</span>
         );
       },
     },
     {
-      id: "estado_cierre",
+      id: "esta_cier",
       header: "Estado",
       cell: ({ row }) => {
         const estado = row.original.esta_cier?.toLowerCase();
@@ -168,16 +123,34 @@ export default function Page() {
               className={`rounded-md px-2 py-1 text-xs font-semibold ${
                 estado === "pendiente"
                   ? "bg-yellow-200 text-yellow-700"
-                  : "bg-green-200 text-green-700"
+                  : estado === "por cerrar"
+                    ? "bg-blue-200 text-blue-700"
+                    : "bg-green-200 text-green-700"
               }`}
             >
-              {estado === "pendiente" ? "Pendiente" : "Cerrado"}
+              {estado === "pendiente"
+                ? "Pendiente"
+                : estado === "por cerrar"
+                  ? "Por cerrar"
+                  : "Cerrado"}
             </span>
           </div>
         );
       },
     },
   ];
+
+  useCargarCierres({ estadoSeleccionado, setCierres });
+  function hayCierresAnterioresPendientes(
+    lista: ICierreDiario[],
+    seleccionado: ICierreDiario,
+  ): boolean {
+    return lista.some(
+      (cierre) =>
+        cierre.esta_cier.toLowerCase() === "pendiente" &&
+        new Date(cierre.fech_cier) < new Date(seleccionado.fech_cier),
+    );
+  }
 
   return (
     <ModulePageLayout
@@ -210,7 +183,6 @@ export default function Page() {
           </GeneralDialog>
 
           <div className="flex items-center gap-3">
-            {/* Buscar */}
             <div className="relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                 <Search className="h-4 w-4 text-gray-500" />
@@ -221,8 +193,6 @@ export default function Page() {
                 className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
               />
             </div>
-
-            {/* Botones Importar y Exportar */}
             <Button
               className="border-border text-[12px] font-semibold"
               variant="secondary"
@@ -239,18 +209,11 @@ export default function Page() {
         </div>
       </div>
 
-      {/* Tarjetas métricas */}
       <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#111315]">
         <div className="flex flex-col gap-4 px-6 pt-6 md:flex-row md:justify-between">
-          {/* NUEVA TARJETA: Resumen Pendiente */}
           <Card
-            className={`bg-blanco relative flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
-              ["pendientes", "cerrados"].includes(estadoSeleccionado)
-                ? "ring-2 ring-secondary"
-                : ""
-            } group`}
+            className={`bg-blanco relative flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${["pendientes", "cerrado"].includes(estadoSeleccionado) ? "ring-2 ring-secondary" : ""} group`}
           >
-            {/* Botón Dropdown arriba derecha */}
             <div className="absolute right-4 top-4">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -260,18 +223,20 @@ export default function Page() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="border-border">
                   <DropdownMenuItem
-                    onClick={() => {
-                      setEstadoSeleccionado("pendientes");
-                    }}
+                    onClick={() => setEstadoSeleccionado("por cerrar")}
+                  >
+                    Por cerrar
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => setEstadoSeleccionado("pendientes")}
                   >
                     Pendientes
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => {
-                      setEstadoSeleccionado("cerrados");
-                    }}
+                    onClick={() => setEstadoSeleccionado("cerrado")}
                   >
-                    Cerrados
+                    Cerrado
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -280,12 +245,12 @@ export default function Page() {
             <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
               <div className="flex-1">
                 <CardTitle className="text-sm font-light text-secondary-foreground">
-                  Resumen Pendiente
+                  Total Registrado
                 </CardTitle>
                 <div className="mt-2 flex items-center gap-5">
                   {resumenPendiente ? (
                     <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
-                      ${resumenPendiente.totalVentas?.toFixed(2)}
+                      ${Number(resumenPendiente.totalVentas ?? 0).toFixed(2)}
                     </span>
                   ) : (
                     <span className="text-sm text-gray-400 dark:text-gray-500">
@@ -294,11 +259,13 @@ export default function Page() {
                   )}
                 </div>
                 <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
-                  {estadoSeleccionado === "pendientes"
-                    ? "Pendiente de cierre"
-                    : estadoSeleccionado === "cerrados"
-                      ? "Cierres completados"
-                      : "Estado no seleccionado"}
+                  {estadoSeleccionado === "por cerrar"
+                    ? "Cierre automático pendiente de activación"
+                    : estadoSeleccionado === "pendientes"
+                      ? "Pendiente de validación"
+                      : estadoSeleccionado === "cerrado"
+                        ? "Cierres completados"
+                        : "Estado no seleccionado"}
                 </CardDescription>
               </div>
               <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
@@ -307,7 +274,6 @@ export default function Page() {
             </CardHeader>
           </Card>
 
-          {/* TARJETAS ANTERIORES */}
           <MetricCard
             label="Total Depositado"
             value={totalDepositado}
@@ -334,12 +300,19 @@ export default function Page() {
           />
         </div>
 
-        {/* Tabla de cierres */}
         <div className="px-6 pb-4">
           <DataTable<ICierreDiario>
-            data={cierresFiltrados}
+            data={lista}
             columns={cierresColumnas}
             onRowClick={(row) => {
+              if (hayCierresAnterioresPendientes(lista, row)) {
+                ToastError({
+                  message:
+                    "No puedes cerrar este día porque existen cierres anteriores pendientes.",
+                });
+                return;
+              }
+
               localStorage.setItem("cierreSeleccionado", JSON.stringify(row));
               router.push(`/cierre-diario/${row.id_cier}`);
             }}
@@ -350,7 +323,6 @@ export default function Page() {
   );
 }
 
-// COMPONENTE DE MÉTRICAS
 function MetricCard({
   label,
   value,
@@ -373,9 +345,7 @@ function MetricCard({
   return (
     <Card
       onClick={clickable && onClick ? onClick : undefined}
-      className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
-        selected ? "ring-2 ring-secondary" : ""
-      } group`}
+      className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${selected ? "ring-2 ring-secondary" : ""} group`}
     >
       <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
         <div className="flex-1">
@@ -384,15 +354,11 @@ function MetricCard({
           </CardTitle>
           <div className="mt-2 flex items-center gap-5">
             <span
-              className={`text-3xl font-extrabold ${
-                difference
-                  ? value >= 0
-                    ? ""
-                    : "text-red-600"
-                  : "text-gray-800 dark:text-white"
-              }`}
+              className={`text-3xl font-extrabold ${difference ? (Number(value) >= 0 ? "" : "text-red-600") : "text-gray-800 dark:text-white"}`}
             >
-              {isNumber ? value : `$${value.toFixed(2)}`}
+              {isNumber
+                ? Number(value ?? 0)
+                : `$${Number(value ?? 0).toFixed(2)}`}
             </span>
           </div>
           <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">

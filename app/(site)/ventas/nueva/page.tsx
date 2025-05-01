@@ -354,8 +354,8 @@ export default function Page() {
           vent_dventa: id_vent,
           prod_dventa: item.productId,
           cant_dventa: item.quantity,
-          pre_uni_dventa: producto.prec_vent_prod,
-          sub_tot_dventa: item.quantity * producto.prec_vent_prod,
+          pre_uni_dventa: Number(producto.prec_vent_prod ?? 0),
+          sub_tot_dventa: item.quantity * Number(producto.prec_vent_prod ?? 0),
         };
 
         const detailResponse = await fetch(

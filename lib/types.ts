@@ -121,6 +121,13 @@ export interface IGasto {
   obs_gas: string;
 }
 
+export interface IResumenDelDia {
+  totalVentas: number;
+  totalGastos: number;
+  totalComprasPagadas: number;
+}
+
+
 export type IProductEdit = Omit<IProduct, "cate_prod"> & {
   cate_prod: number;
   id_prod?: number;

@@ -4,12 +4,11 @@ import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
-  ArrowDownToLine,
   ArrowLeft,
   Copy,
-  Pencil,
   Receipt,
   ReceiptText,
+  Save,
   ShoppingCart,
   Weight,
 } from "lucide-react";
@@ -30,18 +29,24 @@ import { useMovimientosDelDia } from "@/hooks/cierresDiarios/useMovimientosDelDi
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
+import { DialogNumeracionEfectivo } from "@/components/shared/cierreDiario/ui/dialogNumeracionEfectivo";
 interface Movimiento {
   descripcion: string;
   monto: number;
 }
 
-export default function Dashboard() {
+export default function PaginaCierreDia() {
   const router = useRouter();
   const { id } = useParams();
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [numeroComprobante, setNumeroComprobante] = useState("");
   const [valorDeposito, setValorDeposito] = useState("");
+  const [openDialogNumeracion, setOpenDialogNumeracion] = useState(true);
+  const [totalEfectivo, setTotalEfectivo] = useState(0);
+  const [cerradoPorGuardado, setCerradoPorGuardado] = useState(false);
+  const [fueGuardadoEfectivo, setFueGuardadoEfectivo] = useState(false);
+
   useProtectedRoute();
 
   const bancos = BANCOS_EMPRESA;
@@ -74,6 +79,23 @@ export default function Dashboard() {
     }
   }, [id, router]);
 
+  /* Almacenar totalEfectivo */
+  useEffect(() => {
+    const totalGuardado = localStorage.getItem("totalEfectivo");
+    if (totalGuardado) {
+      setTotalEfectivo(parseFloat(totalGuardado));
+      setOpenDialogNumeracion(false);
+    } else {
+      setOpenDialogNumeracion(true);
+    }
+  }, []);
+
+  /* Cerrar Dia */
+  const handleCerrarDia = () => {
+    // lógica de cierre...
+    localStorage.removeItem("totalEfectivo");
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
@@ -86,8 +108,31 @@ export default function Dashboard() {
   const { movimientos, isLoading: isLoadingMovimientos } =
     useMovimientosDelDia(fechaCierre);
 
-  if (!cierreSeleccionado || isLoadingMovimientos)
+  const totalTransferencias = movimientos.ventas
+    .filter(
+      (venta: any) => venta.tip_pag_vent.toLowerCase() === "transferencia",
+    )
+    .reduce((acc: number, venta: any) => acc + venta.tot_vent, 0);
+
+  const totalFacturasCanceladas = cierreSeleccionado?.tot_compras_pag_cier ?? 0;
+  const totalGastos = cierreSeleccionado?.tot_gas_cier ?? 0;
+
+  const diferenciaCalculada =
+    (cierreSeleccionado?.tot_vent_cier ?? 0) -
+    (totalEfectivo +
+      totalTransferencias +
+      totalGastos +
+      totalFacturasCanceladas);
+
+  if (!cierreSeleccionado || isLoadingMovimientos) {
     return <div className="p-6">Cargando...</div>;
+  }
+
+  // Mostrar solo el diálogo si aún no se registra el efectivo
+  if (totalEfectivo === 0 && !openDialogNumeracion) {
+    setOpenDialogNumeracion(true);
+    return null; // Evita el render completo
+  }
 
   return (
     <ModulePageLayout
@@ -121,17 +166,11 @@ export default function Dashboard() {
 
           <div className="flex items-center gap-2">
             <Button
-              className="border-border text-[12px] font-semibold"
-              variant="secondary"
+              className="w-[150px] border-border text-[12px] font-semibold"
+              variant="primary"
+              disabled={totalEfectivo === 0}
             >
-              <Pencil className="h-4 w-4" /> Editar
-            </Button>
-
-            <Button
-              className="border-border text-[12px] font-semibold"
-              variant="secondary"
-            >
-              <ArrowDownToLine className="h-4 w-4" /> Cerrar Día
+              <Save className="h-4 w-4" /> Cerrar Día
             </Button>
           </div>
         </div>
@@ -139,63 +178,71 @@ export default function Dashboard() {
 
       {/* Cards Resumen */}
       <div className="flex w-full flex-wrap gap-4 px-6 pt-4">
-        {/* Columna Izquierda */}
-        <div className="flex flex-col gap-2">
-          <Card className="h-[485px] w-[300px] rounded-xl border border-border shadow-md dark:bg-[#1a1a1a]">
+        {/* Columna Izquierda: Resumen Económico */}
+        <div className="flex flex-col gap-4">
+          <Card className="min-h-[585px] w-[300px] rounded-xl border border-border shadow-md dark:bg-[#1a1a1a]">
             <CardHeader>
               <CardTitle className="text-lg font-bold text-secondary-foreground">
                 Resumen Económico
               </CardTitle>
             </CardHeader>
 
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               {/* Totales principales */}
-              <div className="flex flex-col gap-2">
-                <div className="flex justify-between">
-                  <ResumenItem
-                    label="Total Ventas"
-                    value={cierreSeleccionado.tot_vent_cier}
-                  />
-                  <ResumenItem
-                    label="Total Efectivo"
-                    value={cierreSeleccionado.tot_vent_cier}
-                  />
-                </div>
+              <div className="flex flex-wrap justify-between gap-2">
+                <ResumenItem
+                  label="Total Ventas"
+                  value={cierreSeleccionado.tot_vent_cier}
+                  ocultar={totalEfectivo === 0}
+                />
+                <ResumenItem
+                  label="Total a Depositar"
+                  value={totalEfectivo}
+                  ocultar={totalEfectivo === 0}
+                />
               </div>
 
               {/* Detalle General */}
               <div className="space-y-2">
-                <p className="mt-2 text-xs font-semibold uppercase text-muted-foreground">
+                <p className="text-xs font-semibold uppercase text-muted-foreground">
                   Detalle General
                 </p>
-
-                <div className="flex justify-between text-xs">
-                  <span>Total Facturas Canceladas</span>
-                  <span>
-                    ${(cierreSeleccionado.tot_compras_pag_cier ?? 0).toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span>Total Gastos</span>
-                  <span>
-                    ${(cierreSeleccionado.tot_gas_cier ?? 0).toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span>Gastos</span>
-                  <span>
-                    ${(cierreSeleccionado.tot_gas_cier ?? 0).toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span>Diferencia</span>
-                  <span>${(cierreSeleccionado.dif_cier ?? 0).toFixed(2)}</span>
-                </div>
+                {[
+                  { label: "Total efectivo registrado", value: totalEfectivo },
+                  {
+                    label: "Total transferencias registradas",
+                    value: totalTransferencias,
+                  },
+                  {
+                    label: "Total facturas canceladas",
+                    value: cierreSeleccionado.tot_compras_pag_cier ?? 0,
+                  },
+                  {
+                    label: "Total gastos",
+                    value: cierreSeleccionado.tot_gas_cier ?? 0,
+                  },
+                  {
+                    label: "Diferencia",
+                    value: diferenciaCalculada,
+                  },
+                ].map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex justify-between text-xs font-medium"
+                  >
+                    <span>{item.label}</span>
+                    <span>
+                      {totalEfectivo === 0
+                        ? "$*.**"
+                        : `$${item.value.toFixed(2)}`}
+                    </span>
+                  </div>
+                ))}
               </div>
 
-              {/* Selección de Banco */}
-              <div className="space-y-1">
-                <p className="mt-2 text-xs font-semibold uppercase text-muted-foreground">
+              {/* Banco */}
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase text-muted-foreground">
                   Seleccionar Banco
                 </p>
                 <Select onValueChange={(value) => setBancoSeleccionado(value)}>
@@ -212,21 +259,18 @@ export default function Dashboard() {
                 </Select>
               </div>
 
-              {/* Info del Banco visible + copiar */}
+              {/* Detalles del banco */}
               {bancoInfo && (
-                <div className="rounded-lg border border-border bg-muted/10 p-4 text-sm dark:bg-[#141414]">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 overflow-hidden rounded-md bg-white p-1">
-                      <Image
-                        src={bancoInfo.logo}
-                        alt={bancoInfo.nombre}
-                        width={48}
-                        height={48}
-                        className="object-contain"
-                      />
-                    </div>
-
-                    <div className="flex-1 space-y-1 text-xs">
+                <div className="space-y-1 rounded-lg border border-border bg-muted/10 p-4 text-xs">
+                  <div className="flex w-full items-center gap-3">
+                    <Image
+                      src={bancoInfo.logo}
+                      alt={bancoInfo.nombre}
+                      width={60}
+                      height={40}
+                      className="bg-white object-contain"
+                    />
+                    <div>
                       <div>
                         <strong>Banco:</strong> {bancoInfo.nombre}
                       </div>
@@ -238,60 +282,30 @@ export default function Dashboard() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Botón para copiar todos los datos */}
                   <Button
                     size="sm"
                     variant="secondary"
-                    className="mt-3 w-full text-[11px] font-semibold"
+                    className="mt-2 w-full text-[11px] font-semibold"
                     onClick={() => {
                       const infoCompleta = `
-                        Banco: ${bancoInfo.nombre}
-                        Tipo de Cuenta: ${bancoInfo.tipoCuenta}
-                        Número de Cuenta: ${bancoInfo.cuenta}
-                        Titular: ${bancoInfo.nombreTitular}
-                        RUC/CI: ${bancoInfo.rucCi}
-                        Correo: ${bancoInfo.correo}
-                        Celular: ${bancoInfo.telefono}`.trim();
+                  Banco: ${bancoInfo.nombre}
+                  Tipo de Cuenta: ${bancoInfo.tipoCuenta}
+                  Número de Cuenta: ${bancoInfo.cuenta}
+                  Titular: ${bancoInfo.nombreTitular}
+                  RUC/CI: ${bancoInfo.rucCi}
+                  Correo: ${bancoInfo.correo}
+                  Celular: ${bancoInfo.telefono}`.trim();
                       navigator.clipboard.writeText(infoCompleta);
                       ToastSuccess({
                         message: "¡Información copiada exitosamente!",
                       });
                     }}
                   >
-                    <Copy className="h-4 w-4" /> Copiar información completa
+                    <Copy className="mr-1 h-4 w-4" /> Copiar información
+                    completa
                   </Button>
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Responsable de cierre */}
-          <Card className="h-[90px] w-[300px] border border-border dark:bg-[#1a1a1a]">
-            <CardHeader className="h-2">
-              <CardTitle>Responsable de Cierre</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2 text-xs">
-                <div className="h-8 w-8 flex-shrink-0">
-                  <Image
-                    src={usuarioActual?.img_usu || "/default-avatar.png"}
-                    alt={usuarioActual?.nom_usu || "Usuario"}
-                    width={100}
-                    height={100}
-                    className="h-full w-full rounded-md object-cover"
-                  />
-                </div>
-
-                <div>
-                  <p className="text-sm font-semibold">
-                    {usuarioActual?.nom_usu || "Usuario"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {usuarioActual?.rol_usu.nom_rol || "Rol no definido"}
-                  </p>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </div>
@@ -310,7 +324,7 @@ export default function Dashboard() {
                 </CardTitle>
               </CardHeader>
 
-              <ScrollArea className="h-[300px]">
+              <ScrollArea className="h-[160px]">
                 <CardContent className="space-y-2">
                   {/* Encabezados de la tabla */}
                   <div className="grid grid-cols-3 gap-4 border-border pb-2 text-xs font-semibold text-muted-foreground">
@@ -353,7 +367,8 @@ export default function Dashboard() {
               <CardHeader>
                 <CardTitle>
                   <div className="flex flex-wrap items-center">
-                    <ShoppingCart className="mr-2 h-4 w-4" /> Compras pagadas
+                    <ShoppingCart className="mr-2 h-4 w-4" /> Facturas
+                    Canceladas
                   </div>
                 </CardTitle>
               </CardHeader>
@@ -438,7 +453,7 @@ export default function Dashboard() {
                           venta.tot_vent >= 0 ? "" : "text-red-600"
                         }`}
                       >
-                        ${venta.tot_vent.toFixed(2)}
+                        ${Number(venta.tot_vent ?? 0).toFixed(2)}
                       </span>
                     </div>
                   ))
@@ -454,7 +469,7 @@ export default function Dashboard() {
           {/* Deposito */}
         </div>
         {/* Deposito */}
-        <Card className="w-[450px] border border-border dark:bg-[#1a1a1a]">
+        <Card className="w-[410px] border border-border dark:bg-[#1a1a1a]">
           <CardHeader>
             <CardTitle>
               <div className="flex flex-wrap items-center">
@@ -568,12 +583,27 @@ export default function Dashboard() {
             <Button
               variant="secondary"
               className="w-full text-[12px] font-semibold"
+              disabled={totalEfectivo === 0}
             >
               Guardar Depósito
             </Button>
           </CardContent>
         </Card>
       </div>
+      <DialogNumeracionEfectivo
+        open={openDialogNumeracion}
+        onOpenChange={(open) => {
+          if (!open) {
+            setOpenDialogNumeracion(false);
+          }
+        }}
+        onGuardar={(total) => {
+          setFueGuardadoEfectivo(true);
+          setTotalEfectivo(total);
+          localStorage.setItem("totalEfectivo", total.toString());
+          setOpenDialogNumeracion(false);
+        }}
+      />
     </ModulePageLayout>
   );
 }
@@ -582,9 +612,11 @@ export default function Dashboard() {
 function ResumenItem({
   label,
   value,
+  ocultar = false,
 }: {
   label: string;
   value: number | undefined;
+  ocultar?: boolean;
 }) {
   return (
     <div className="space-y-1">
@@ -592,7 +624,10 @@ function ResumenItem({
         {label}
       </div>
       <div className="text-4xl font-bold text-gray-900 dark:text-white">
-        ${(value ?? 0).toFixed(2)}
+        {ocultar
+          ? "$*.**"
+          : `$${Number(value ?? 0).toFixed(2)}
+`}
       </div>
     </div>
   );

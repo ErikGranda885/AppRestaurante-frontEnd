@@ -15,8 +15,8 @@ import {
 } from "@/components/ui/popover";
 
 interface DateRangeFilterProps {
-  value?: DateRange;
-  onChange?: (range: DateRange | undefined) => void;
+  value: DateRange;
+  onChange: (range: DateRange) => void;
   className?: string;
 }
 
@@ -25,16 +25,6 @@ export function DateRangeFilter({
   onChange,
   className,
 }: DateRangeFilterProps) {
-  const [date, setDate] = React.useState<DateRange | undefined>(value);
-
-  const handleDateChange = (range: DateRange | undefined) => {
-    setDate(range);
-    onChange?.(range);
-  };
-  React.useEffect(() => {
-    setDate(value);
-  }, [value]);
-
   const formatDate = (d: Date) => format(d, "dd MMM yyyy");
 
   return (
@@ -51,15 +41,15 @@ export function DateRangeFilter({
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {date?.from ? (
-              date.to ? (
+            {value?.from ? (
+              value.to ? (
                 <>
-                  {formatDate(date.from)} - {formatDate(date.to)}
+                  {formatDate(value.from)} - {formatDate(value.to)}
                 </>
-              ) : isSameDay(date.from, new Date()) ? (
+              ) : isSameDay(value.from, new Date()) ? (
                 "Hoy"
               ) : (
-                formatDate(date.from)
+                formatDate(value.from)
               )
             ) : (
               <span>Seleccionar un rango de fechas</span>
@@ -73,9 +63,13 @@ export function DateRangeFilter({
           <Calendar
             initialFocus
             mode="range"
-            defaultMonth={date?.from}
-            selected={date}
-            onSelect={handleDateChange}
+            defaultMonth={value.from}
+            selected={value}
+            onSelect={(range) => {
+              if (range?.from && range?.to) {
+                onChange(range); // ✅ solo se envía si el rango está completo
+              }
+            }}
             numberOfMonths={2}
           />
         </PopoverContent>
