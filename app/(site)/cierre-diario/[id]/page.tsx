@@ -25,15 +25,11 @@ import {
 import { BANCOS_EMPRESA } from "../../configuraciones/infoEmpresa";
 import Image from "next/image";
 import { ICierreDiario, IUsuario } from "@/lib/types";
-import { useMovimientosDelDia } from "@/hooks/cierresDiarios/useMovimientosDelDia"; // <--- Aquí importamos el hook
+import { useMovimientosDelDia } from "@/hooks/cierresDiarios/useMovimientosDelDia";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { DialogNumeracionEfectivo } from "@/components/shared/cierreDiario/ui/dialogNumeracionEfectivo";
-interface Movimiento {
-  descripcion: string;
-  monto: number;
-}
 
 export default function PaginaCierreDia() {
   const router = useRouter();
@@ -42,29 +38,25 @@ export default function PaginaCierreDia() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [numeroComprobante, setNumeroComprobante] = useState("");
   const [valorDeposito, setValorDeposito] = useState("");
-  const [openDialogNumeracion, setOpenDialogNumeracion] = useState(true);
+  const [openDialogNumeracion, setOpenDialogNumeracion] = useState(false);
   const [totalEfectivo, setTotalEfectivo] = useState(0);
-  const [cerradoPorGuardado, setCerradoPorGuardado] = useState(false);
-  const [fueGuardadoEfectivo, setFueGuardadoEfectivo] = useState(false);
 
   useProtectedRoute();
 
   const bancos = BANCOS_EMPRESA;
-  const [bancoSeleccionado, setBancoSeleccionado] = useState(
-    bancos.length > 0 ? bancos[0].id : "",
-  );
+  const [bancoSeleccionado, setBancoSeleccionado] = useState(() => {
+    return Array.isArray(bancos) && bancos.length > 0 ? bancos[0].id : "";
+  });
+
   const [usuarioActual, setUsuarioActual] = useState<IUsuario | null>(null);
   const [cierreSeleccionado, setCierreSeleccionado] =
     useState<ICierreDiario | null>(null);
 
   const bancoInfo = bancos.find((banco) => banco.id === bancoSeleccionado);
 
-  /* Cargar usuario y cierre */
   useEffect(() => {
     const userData = localStorage.getItem("usuarioActual");
-    if (userData) {
-      setUsuarioActual(JSON.parse(userData));
-    }
+    if (userData) setUsuarioActual(JSON.parse(userData));
 
     const cierreData = localStorage.getItem("cierreSeleccionado");
     if (cierreData) {
@@ -79,59 +71,50 @@ export default function PaginaCierreDia() {
     }
   }, [id, router]);
 
-  /* Almacenar totalEfectivo */
   useEffect(() => {
     const totalGuardado = localStorage.getItem("totalEfectivo");
     if (totalGuardado) {
       setTotalEfectivo(parseFloat(totalGuardado));
-      setOpenDialogNumeracion(false);
     } else {
       setOpenDialogNumeracion(true);
     }
   }, []);
 
-  /* Cerrar Dia */
-  const handleCerrarDia = () => {
-    // lógica de cierre...
-    localStorage.removeItem("totalEfectivo");
-  };
+  const fechaCierre = cierreSeleccionado?.fech_cier
+    ? new Date(cierreSeleccionado.fech_cier).toISOString().split("T")[0]
+    : "";
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      setPreviewUrl(URL.createObjectURL(selectedFile));
-    }
-  };
-  const fechaCierre = cierreSeleccionado?.fech_cier ?? "";
+  const {
+    movimientos = { ventas: [], gastos: [], compras: [] },
+    isLoading: isLoadingMovimientos,
+  } = useMovimientosDelDia(fechaCierre);
 
-  const { movimientos, isLoading: isLoadingMovimientos } =
-    useMovimientosDelDia(fechaCierre);
+  useEffect(() => {
+    console.log("fechaCierre enviada al hook:", fechaCierre);
+    console.log("movimientos recibidos:", movimientos);
+  }, [fechaCierre, movimientos]);
 
-  const totalTransferencias = movimientos.ventas
-    .filter(
-      (venta: any) => venta.tip_pag_vent.toLowerCase() === "transferencia",
-    )
-    .reduce((acc: number, venta: any) => acc + venta.tot_vent, 0);
+  const totalTransferencias = Array.isArray(movimientos.ventas)
+    ? movimientos.ventas
+        .filter(
+          (venta: any) =>
+            venta?.tip_pag_vent?.toLowerCase() === "transferencia",
+        )
+        .reduce((acc: number, venta: any) => acc + (venta.tot_vent ?? 0), 0)
+    : 0;
 
   const totalFacturasCanceladas = cierreSeleccionado?.tot_compras_pag_cier ?? 0;
   const totalGastos = cierreSeleccionado?.tot_gas_cier ?? 0;
 
   const diferenciaCalculada =
-    (cierreSeleccionado?.tot_vent_cier ?? 0) -
-    (totalEfectivo +
-      totalTransferencias +
-      totalGastos +
-      totalFacturasCanceladas);
+    Number(cierreSeleccionado?.tot_vent_cier ?? 0) -
+    (Number(totalEfectivo) +
+      Number(totalTransferencias) +
+      Number(totalGastos) +
+      Number(totalFacturasCanceladas));
 
   if (!cierreSeleccionado || isLoadingMovimientos) {
     return <div className="p-6">Cargando...</div>;
-  }
-
-  // Mostrar solo el diálogo si aún no se registra el efectivo
-  if (totalEfectivo === 0 && !openDialogNumeracion) {
-    setOpenDialogNumeracion(true);
-    return null; // Evita el render completo
   }
 
   return (
@@ -234,7 +217,7 @@ export default function PaginaCierreDia() {
                     <span>
                       {totalEfectivo === 0
                         ? "$*.**"
-                        : `$${item.value.toFixed(2)}`}
+                        : `$${Number(item.value ?? 0).toFixed(2)}`}
                     </span>
                   </div>
                 ))}
@@ -334,7 +317,8 @@ export default function PaginaCierreDia() {
                   </div>
 
                   {/* Contenido dinámico */}
-                  {movimientos.gastos.length > 0 ? (
+                  {Array.isArray(movimientos.gastos) &&
+                  movimientos.gastos.length > 0 ? (
                     movimientos.gastos.map((gasto: any, index: number) => (
                       <div
                         key={index}
@@ -345,11 +329,9 @@ export default function PaginaCierreDia() {
                           {gasto.obs_gas || "-"}
                         </span>
                         <span
-                          className={`text-right font-semibold ${
-                            gasto.mont_gas >= 0 ? "" : "text-red-600"
-                          }`}
+                          className={`text-right font-semibold ${Number(gasto.mont_gas) >= 0 ? "" : "text-red-600"}`}
                         >
-                          ${gasto.mont_gas.toFixed(2)}
+                          ${Number(gasto.mont_gas).toFixed(2)}
                         </span>
                       </div>
                     ))
@@ -384,7 +366,8 @@ export default function PaginaCierreDia() {
                   </div>
 
                   {/* Contenido dinámico */}
-                  {movimientos.compras.length > 0 ? (
+                  {Array.isArray(movimientos.compras) &&
+                  movimientos.compras.length > 0 ? (
                     movimientos.compras.map((compra: any, index: number) => (
                       <div
                         key={index}
@@ -439,7 +422,8 @@ export default function PaginaCierreDia() {
                 </div>
 
                 {/* Contenido dinámico */}
-                {movimientos.ventas.length > 0 ? (
+                {Array.isArray(movimientos.ventas) &&
+                movimientos.ventas.length > 0 ? (
                   movimientos.ventas.map((venta: any, index: number) => (
                     <div
                       key={index}
@@ -590,25 +574,19 @@ export default function PaginaCierreDia() {
           </CardContent>
         </Card>
       </div>
+
       <DialogNumeracionEfectivo
         open={openDialogNumeracion}
-        onOpenChange={(open) => {
-          if (!open) {
-            setOpenDialogNumeracion(false);
-          }
-        }}
+        onOpenChange={(open) => setOpenDialogNumeracion(open)}
         onGuardar={(total) => {
-          setFueGuardadoEfectivo(true);
           setTotalEfectivo(total);
           localStorage.setItem("totalEfectivo", total.toString());
-          setOpenDialogNumeracion(false);
         }}
       />
     </ModulePageLayout>
   );
 }
 
-// Componentes auxiliares
 function ResumenItem({
   label,
   value,
@@ -624,29 +602,8 @@ function ResumenItem({
         {label}
       </div>
       <div className="text-4xl font-bold text-gray-900 dark:text-white">
-        {ocultar
-          ? "$*.**"
-          : `$${Number(value ?? 0).toFixed(2)}
-`}
+        {ocultar ? "$*.**" : `$${Number(value ?? 0).toFixed(2)}`}
       </div>
-    </div>
-  );
-}
-
-function SubCardItem({
-  label,
-  value,
-  obs,
-}: {
-  label: string;
-  value: number;
-  obs?: string;
-}) {
-  return (
-    <div className="flex justify-between text-sm">
-      <span>{label}</span>
-      <span>{obs}</span>
-      <span className="font-semibold">${(value ?? 0).toFixed(2)}</span>
     </div>
   );
 }

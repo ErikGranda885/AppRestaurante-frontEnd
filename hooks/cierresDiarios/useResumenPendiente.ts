@@ -10,8 +10,8 @@ export function useResumenPendiente(
   const [resumenPendiente, setResumenPendiente] =
     useState<IResumenDelDia | null>(null);
 
-  // No aplicar ajuste de zona horaria nuevamente
-  const fechaLocal = fechaActual; // Ya viene normalizada desde el componente
+  // Ya viene en formato "yyyy-MM-dd"
+  const fechaLocal = fechaActual;
 
   useEffect(() => {
     const yaExisteHoy = lista.some((cierre) => {
@@ -28,9 +28,26 @@ export function useResumenPendiente(
 
     const obtenerResumen = async () => {
       try {
-        const res = await fetch(SERVICIOS_CIERRES.movimientosDelDia(fechaLocal));
+        const res = await fetch(
+          SERVICIOS_CIERRES.movimientosDelDia(fechaLocal),
+        );
         const data = await res.json();
-        setResumenPendiente(data);
+
+        console.log("Resumen del día:", data); // 👈 Revisa esto en consola
+
+        // Validar que los campos existan y sean numéricos
+        if (
+          data &&
+          typeof data.totalVentas === "number" &&
+          typeof data.totalGastos === "number" &&
+          typeof data.totalComprasPagadas === "number" &&
+          typeof data.totalDepositado === "number"
+        ) {
+          setResumenPendiente(data as IResumenDelDia);
+        } else {
+          setResumenPendiente(null);
+          console.warn("Datos de resumen no válidos:", data);
+        }
       } catch (error) {
         console.error("Error al obtener movimientos del día:", error);
         setResumenPendiente(null);

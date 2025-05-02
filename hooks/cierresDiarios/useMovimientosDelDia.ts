@@ -1,24 +1,40 @@
+// hooks/cierresDiarios/useMovimientosDelDia.ts
+import { useEffect, useState } from "react";
 import { SERVICIOS_CIERRES } from "@/services/cierreDiario.service";
-import useSWR from "swr";
 
-// Definir el fetcher
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+export const useMovimientosDelDia = (fecha: string) => {
+  const [movimientos, setMovimientos] = useState({
+    ventas: [],
+    gastos: [],
+    compras: [],
+  });
+  const [isLoading, setIsLoading] = useState(true);
 
-export function useMovimientosDelDia(fecha: string) {
-  const { data, error, isLoading, mutate } = useSWR(
-    fecha ? SERVICIOS_CIERRES.movimientosDelDia(fecha) : null,
-    fetcher,
-    {
-      refreshInterval: 10_000, // refrescar cada 10s (opcional)
-      dedupingInterval: 5_000, // evita múltiples peticiones iguales en poco tiempo
-      revalidateOnFocus: true, // refresca si regresa la pestaña
-    },
-  );
+  useEffect(() => {
+    if (!fecha) return;
 
-  return {
-    movimientos: data ?? { ventas: [], gastos: [], compras: [] },
-    isLoading,
-    isError: !!error,
-    refetchMovimientos: mutate,
-  };
-}
+    const cargarMovimientos = async () => {
+      try {
+        setIsLoading(true);
+        const res = await fetch(SERVICIOS_CIERRES.movimientosDelDia(fecha));
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`HTTP ${res.status}: ${text}`);
+        }
+
+        const data = await res.json();
+        setMovimientos(data);
+      } catch (err) {
+        console.error("Error al cargar movimientos del día:", err);
+        setMovimientos({ ventas: [], gastos: [], compras: [] });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    cargarMovimientos();
+  }, [fecha]);
+
+  return { movimientos, isLoading };
+};

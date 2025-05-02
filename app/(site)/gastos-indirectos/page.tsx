@@ -187,7 +187,9 @@ export default function Page() {
   }, [estadoSeleccionado, gastos, busqueda]);
 
   const totalGastado = useMemo(() => {
-    return gastosFiltrados.reduce((acc, gasto) => acc + gasto.mont_gas, 0);
+    return gastosFiltrados
+      .reduce((acc, gasto) => acc + Number(gasto.mont_gas || 0), 0)
+      .toFixed(2);
   }, [gastosFiltrados]);
 
   const cantidadGastos = useMemo(() => {
@@ -361,7 +363,10 @@ export default function Page() {
                 <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
                   $
                   {gastosFiltrados
-                    .reduce((acc, gasto) => acc + gasto.mont_gas, 0)
+                    .reduce(
+                      (acc, gasto) => acc + Number(gasto.mont_gas || 0),
+                      0,
+                    )
                     .toFixed(2)}
                 </span>
               </div>
@@ -429,7 +434,10 @@ export default function Page() {
                 <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
                   $
                   {gastosFiltrados
-                    .reduce((acc, gasto) => acc + gasto.mont_gas, 0)
+                    .reduce(
+                      (acc, gasto) => acc + Number(gasto.mont_gas || 0),
+                      0,
+                    )
                     .toFixed(2)}
                 </span>
               </div>

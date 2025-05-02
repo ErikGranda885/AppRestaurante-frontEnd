@@ -301,22 +301,29 @@ export default function Page() {
         </div>
 
         <div className="px-6 pb-4">
-          <DataTable<ICierreDiario>
-            data={lista}
-            columns={cierresColumnas}
-            onRowClick={(row) => {
-              if (hayCierresAnterioresPendientes(lista, row)) {
-                ToastError({
-                  message:
-                    "No puedes cerrar este día porque existen cierres anteriores pendientes.",
-                });
-                return;
-              }
+          {lista.length > 0 ? (
+            <DataTable<ICierreDiario>
+              data={lista}
+              columns={cierresColumnas}
+              onRowClick={(row) => {
+                if (hayCierresAnterioresPendientes(lista, row)) {
+                  ToastError({
+                    message:
+                      "No puedes cerrar este día porque existen cierres anteriores pendientes.",
+                  });
+                  return;
+                }
 
-              localStorage.setItem("cierreSeleccionado", JSON.stringify(row));
-              router.push(`/cierre-diario/${row.id_cier}`);
-            }}
-          />
+                localStorage.setItem("cierreSeleccionado", JSON.stringify(row));
+                router.push(`/cierre-diario/${row.id_cier}`);
+              }}
+            />
+          ) : (
+            <div className="mt-10 flex h-10 items-center justify-center rounded-md border border-dashed border-gray-300 text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
+              No existen registros{" "}
+              <span className="mx-1 font-semibold">{estadoSeleccionado}</span> .
+            </div>
+          )}
         </div>
       </div>
     </ModulePageLayout>
