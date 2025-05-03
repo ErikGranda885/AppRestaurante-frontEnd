@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { Button } from "@/components/ui/button";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
@@ -8,19 +8,20 @@ import {
   ArrowLeft,
   Mail,
   MapPinned,
+  Paperclip,
   Pencil,
   Phone,
-  Printer,
   User,
-  Warehouse,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { ICompra, IDetCompra } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ToastError } from "@/components/shared/toast/toastError";
-import { format, isValid, parse } from "date-fns";
+import { format, isValid, parse, parseISO } from "date-fns";
 import { DialogRegistrarPagoCompra } from "@/components/shared/cierreDiario/ui/dialogRegistrarPagoCompra";
+import { useReactToPrint } from "react-to-print";
+import FacturaPendientePDF from "@/components/shared/compras/ui/facturaPendientePDF";
+import FacturaPagadaPDF from "@/components/shared/compras/ui/facturaPagadaPDF";
 
 export default function DetalleCompraPage() {
   useProtectedRoute();
@@ -34,7 +35,8 @@ export default function DetalleCompraPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
   const [abrirDialogPago, setAbrirDialogPago] = useState(false);
-
+  const contentRef = useRef<HTMLDivElement>(null);
+  const handleImprimir = useReactToPrint({ contentRef });
   /* Cargar detalle de la compra */
   useEffect(() => {
     async function fetchCompra() {
@@ -66,8 +68,14 @@ export default function DetalleCompraPage() {
         const detData = await resDet.json();
         console.log("Detalles de compra:", detData);
         // Se asume que el endpoint retorna un array de detalles
-        const detArray = Array.isArray(detData) ? detData : detData.data || [];
-        console.log("Detalles de compra procesados:", detArray);
+        const detArray = (
+          Array.isArray(detData) ? detData : detData.data || []
+        ).map((item: any) => ({
+          ...item,
+          prec_uni_dcom: Number(item.prec_uni_dcom),
+          sub_tot_dcom: Number(item.sub_tot_dcom),
+          cant_dcom: Number(item.cant_dcom),
+        }));
         setDetalleCompra(detArray);
       } catch (err) {
         setError(err as Error);
@@ -129,25 +137,6 @@ export default function DetalleCompraPage() {
       </ModulePageLayout>
     );
   }
-  const handleDescargarOrden = async () => {
-    try {
-      const response = await fetch(
-        `http://localhost:5000/pdf/factura/${purchaseId}`,
-      );
-      if (!response.ok) throw new Error("Error al generar el PDF");
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Factura_${purchaseId}.pdf`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("❌ Error al imprimir la factura:", error);
-      alert("No se pudo generar el PDF. Inténtalo más tarde.");
-    }
-  };
 
   return (
     <ModulePageLayout
@@ -173,7 +162,7 @@ export default function DetalleCompraPage() {
             </h1>
             <span
               className={`ml-5 rounded px-2 py-1 text-sm ${
-                compra.estado_comp == "Pendiente"
+                compra.estado_comp == "pendiente"
                   ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
                   : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
               }`}
@@ -183,16 +172,16 @@ export default function DetalleCompraPage() {
 
             <span
               className={`ml-3 rounded px-2 py-1 text-sm ${
-                compra.estado_pag_comp === "pendiente"
+                compra.estado_comp === "pendiente"
                   ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
                   : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
               }`}
             >
-              {compra.estado_pag_comp}
+              {compra.estado_comp}
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <Button
               className="border-border text-[12px] font-semibold"
               variant="secondary"
@@ -208,7 +197,14 @@ export default function DetalleCompraPage() {
             >
               <ArrowDownToLine className="h-4 w-4" /> Descargar
             </Button>
-          </div>
+          </div> */}
+          <Button
+            className="border-border text-[12px] font-semibold"
+            variant="secondary"
+            onClick={() => handleImprimir()}
+          >
+            <ArrowDownToLine className="h-4 w-4" /> Descargar
+          </Button>
         </div>
 
         <p className="text-sm text-gray-500 dark:text-gray-300">
@@ -263,11 +259,11 @@ export default function DetalleCompraPage() {
                           <span className="text-xs text-gray-500 dark:text-gray-400">
                             {item.fech_ven_prod_dcom
                               ? (() => {
-                                  const parsed = parse(
-                                    item.fech_ven_prod_dcom,
-                                    "dd/MM/yyyy",
-                                    new Date(),
-                                  );
+                                  const parsed =
+                                    typeof item.fech_ven_prod_dcom === "string"
+                                      ? parseISO(item.fech_ven_prod_dcom)
+                                      : new Date(item.fech_ven_prod_dcom);
+
                                   return isValid(parsed)
                                     ? `Vence: ${format(parsed, "dd/MM/yyyy")}`
                                     : "Fecha inválida";
@@ -365,11 +361,6 @@ export default function DetalleCompraPage() {
                       }}
                     />
                   )}
-
-                  {/* Si el estado de la factura de es pagada coloca el boton ver factura */}
-                  {compra.estado_pag_comp.toLowerCase() === "pagada" && (
-                    <Button className="text-xs">Ver factura</Button>
-                  )}
                 </div>
               </div>
             </div>
@@ -441,6 +432,48 @@ export default function DetalleCompraPage() {
                 )}
               </div>
             </div>
+            {/* Card de Validación de Pago */}
+            {compra.estado_pag_comp.toLowerCase() === "pagada" && (
+              <div className="rounded-md border border-border bg-white p-4 shadow-sm dark:bg-[#1a1a1a]">
+                <h3 className="mb-2 text-base font-semibold text-gray-800 dark:text-white">
+                  Validación del Pago
+                </h3>
+
+                {compra.form_pag_comp === "efectivo" ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-300">
+                    {compra.obs_pago_efec_comp ||
+                      "No se registró ninguna observación."}
+                  </p>
+                ) : (
+                  <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">N° de Comprobante:</span>
+                      <span>
+                        {compra.num_tra_comprob_comp || "No disponible"}
+                      </span>
+                    </div>
+
+                    {compra.comprob_tran_comp ? (
+                      <a
+                        href={compra.comprob_tran_comp}
+                        download={`comprobante-${compra.id_comp}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 rounded bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-800/40"
+                      >
+                        <Paperclip className="h-4 w-4" />
+                        Descargar Comprobante
+                      </a>
+                    ) : (
+                      <p className="text-sm text-gray-400">
+                        No se subió comprobante
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Informacion adicional */}
             <div className="rounded-md border border-border bg-white p-4 shadow-sm dark:bg-[#1a1a1a]">
               <h3 className="mb-2 text-base font-semibold text-gray-800 dark:text-white">
@@ -525,6 +558,21 @@ export default function DetalleCompraPage() {
             </div>
           </div>
         </div>
+      </div>
+      <div className="hidden">
+        {compra.estado_pag_comp.toLowerCase() === "pendiente" ? (
+          <FacturaPendientePDF
+            compra={compra}
+            detalle={detalleCompra}
+            printRef={contentRef}
+          />
+        ) : (
+          <FacturaPagadaPDF
+            compra={compra}
+            detalle={detalleCompra}
+            printRef={contentRef}
+          />
+        )}
       </div>
     </ModulePageLayout>
   );

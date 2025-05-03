@@ -34,6 +34,12 @@ import { TicketPreview } from "@/components/shared/ventas/ui/ticketPreview";
 import { IVentaDetalle } from "@/lib/types";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Page() {
   const [abrirCrear, setAbrirCrear] = useState(false);
@@ -57,6 +63,7 @@ export default function Page() {
   const contentRef = useRef<HTMLDivElement>(null);
   const reactToPrintFn = useReactToPrint({ contentRef });
   const [imagenCargada, setImagenCargada] = useState(false);
+  const [labelQuickRange, setLabelQuickRange] = useState("Hoy");
 
   const coloresUsuario = [
     "bg-emerald-500",
@@ -111,6 +118,7 @@ export default function Page() {
       from: startOfDay(new Date()),
       to: endOfDay(new Date()),
     });
+    setLabelQuickRange("Hoy");
   };
 
   /* Mostrar el comprobante de la transferencia */
@@ -151,6 +159,23 @@ export default function Page() {
   if (loading) return <p className="px-6 py-4">Cargando ventas...</p>;
   if (error) return <p className="px-6 py-4 text-red-500">Error: {error}</p>;
 
+  const handleQuickRange = (rango: "hoy" | "ayer" | "mes") => {
+    const hoy = new Date();
+    const ayer = new Date();
+    ayer.setDate(hoy.getDate() - 1);
+
+    if (rango === "hoy") {
+      setDateRange({ from: startOfDay(hoy), to: endOfDay(hoy) });
+      setLabelQuickRange("Hoy");
+    } else if (rango === "ayer") {
+      setDateRange({ from: startOfDay(ayer), to: endOfDay(ayer) });
+      setLabelQuickRange("Ayer");
+    } else if (rango === "mes") {
+      const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+      setDateRange({ from: startOfDay(inicioMes), to: endOfDay(hoy) });
+      setLabelQuickRange("Este mes");
+    }
+  };
   return (
     <>
       <Toaster position="top-right" />
@@ -177,8 +202,35 @@ export default function Page() {
                 </label>
                 <DateRangeFilter value={dateRange} onChange={setDateRange} />
               </div>
+              <div className="flex flex-col gap-1">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="text-[12px]">
+                      {labelQuickRange}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="border-border">
+                    <DropdownMenuItem onClick={() => handleQuickRange("hoy")}>
+                      Hoy
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickRange("ayer")}>
+                      Ayer
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickRange("mes")}>
+                      Este mes
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
 
-              {/* Filtro por tipo de pago */}
+              {/* Separador visual */}
+              <div className="hidden h-9 w-px bg-border md:block" />
+            </div>
+            {/* Limpiar Filtros */}
+
+            {/* Botón Exportar (lado derecho) */}
+            <div className="flex flex-wrap items-end gap-4">
+              {/* Tipo de pago */}
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
                   Tipo de pago
@@ -186,7 +238,7 @@ export default function Page() {
                 <ComboboxPago value={tipoPago} onChange={setTipoPago} />
               </div>
 
-              {/* Estado de la orden */}
+              {/* Estado de orden */}
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
                   Estado de orden
@@ -196,11 +248,7 @@ export default function Page() {
                   onChange={setFiltroEstado}
                 />
               </div>
-            </div>
-            {/* Limpiar Filtros */}
 
-            {/* Botón Exportar (lado derecho) */}
-            <div className="flex gap-4">
               {/* Búsqueda */}
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -214,6 +262,8 @@ export default function Page() {
                   onChange={(e) => setConsultaBusqueda(e.target.value)}
                 />
               </div>
+
+              {/* Limpiar filtros */}
               <Button
                 variant="secondary"
                 className="text-[12px] font-semibold"
@@ -223,6 +273,7 @@ export default function Page() {
                 Limpiar filtros
               </Button>
 
+              {/* Exportar */}
               <Button variant="secondary" className="text-[12px] font-semibold">
                 <CloudDownload className="h-4 w-4" /> Exportar
               </Button>

@@ -290,7 +290,7 @@ export function CreateProveedorForm({
 
         {/* Botón alineado al final */}
         <div className="col-span-full flex justify-end pt-2">
-          <Button type="submit" className="text-black">
+          <Button type="submit" >
             Crear Proveedor
           </Button>
         </div>

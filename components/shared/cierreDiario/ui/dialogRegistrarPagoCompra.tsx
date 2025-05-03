@@ -8,6 +8,8 @@ import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { GeneralDialog } from "../../varios/dialogGen";
 import { SERVICIOS_COMPRAS } from "@/services/compras.service";
+import Image from "next/image";
+import { uploadImage } from "@/firebase/subirImage";
 
 interface DialogRegistrarPagoProps {
   idCompra: number;
@@ -32,19 +34,31 @@ export const DialogRegistrarPagoCompra: React.FC<DialogRegistrarPagoProps> = ({
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const handleCancelar = () => {
+    setNumeroComprobante("");
+    setObservacion("");
+    setImagen(null);
+    setPreview(null);
+    onOpenChange(false);
+  };
+
+  const subirComprobante = async (
+    file: File,
+    idCompra: number,
+  ): Promise<string> => {
+    const fecha = new Date().toISOString().split("T")[0];
+    const nombreArchivo = `compra_${idCompra}_${fecha}`;
+    const url = await uploadImage(file, "pagos-compras", nombreArchivo);
+    return url;
+  };
+
   const handleRegistrarPago = async () => {
     try {
       setLoading(true);
 
       let urlComprobante = null;
       if (formaPago === "transferencia" && imagen) {
-        const fecha = new Date().toISOString().split("T")[0];
-        const nombre = `${fecha}-${idCompra}`;
-        urlComprobante = await subirComprobante(
-          imagen,
-          "pagos-compras",
-          nombre,
-        );
+        urlComprobante = await subirComprobante(imagen, idCompra);
       }
 
       const response = await fetch(SERVICIOS_COMPRAS.registrarPago(idCompra), {
@@ -70,25 +84,6 @@ export const DialogRegistrarPagoCompra: React.FC<DialogRegistrarPagoProps> = ({
     } finally {
       setLoading(false);
     }
-  };
-
-  const subirComprobante = async (
-    file: File,
-    carpeta: string,
-    nombre: string,
-  ): Promise<string> => {
-    const formData = new FormData();
-    formData.append("archivo", file);
-    formData.append("carpeta", carpeta);
-    formData.append("nombre", nombre);
-
-    const response = await fetch("http://localhost:5000/upload", {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await response.json();
-    return data.url;
   };
 
   return (
@@ -128,10 +123,12 @@ export const DialogRegistrarPagoCompra: React.FC<DialogRegistrarPagoProps> = ({
               }}
             />
             {preview && (
-              <img
+              <Image
                 src={preview}
+                width={60}
+                height={60}
                 alt="Comprobante"
-                className="mt-2 h-[200px] w-full rounded border object-contain"
+                className="mt-2 h-[200px] w-full rounded border-border object-contain"
               />
             )}
           </>
@@ -148,18 +145,23 @@ export const DialogRegistrarPagoCompra: React.FC<DialogRegistrarPagoProps> = ({
             />
           </>
         )}
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button variant="secondary" onClick={handleCancelar}>
+            Cancelar
+          </Button>
 
-        <Button
-          type="button"
-          className="w-full text-sm"
-          disabled={
-            loading ||
-            (formaPago === "transferencia" && (!numeroComprobante || !imagen))
-          }
-          onClick={handleRegistrarPago}
-        >
-          {loading ? "Guardando..." : "Confirmar Pago"}
-        </Button>
+          <Button
+            type="button"
+            className="text-sm"
+            disabled={
+              loading ||
+              (formaPago === "transferencia" && (!numeroComprobante || !imagen))
+            }
+            onClick={handleRegistrarPago}
+          >
+            {loading ? "Guardando..." : "Confirmar Pago"}
+          </Button>
+        </div>
       </div>
     </GeneralDialog>
   );

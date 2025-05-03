@@ -518,7 +518,7 @@ export default function NuevaCompraPage() {
       observ_comp: formData.observ_comp,
     };
 
-    setCompraPreview(compra); // solo para mostrar en el modal
+    setCompraPreview(compra);
     setOpenFactura(true);
   };
 
@@ -639,7 +639,7 @@ export default function NuevaCompraPage() {
               <table className="w-full table-auto text-sm">
                 <thead className="sticky top-0 z-10 bg-white shadow-sm dark:bg-black">
                   <tr>
-                    <th className="p-2">Producto</th>
+                    <th className="p-2 text-start">Producto</th>
                     <th className="p-2">Cantidad</th>
                     <th className="p-2">Precio Unitario</th>
                     <th className="p-2">Subtotal</th>
@@ -657,8 +657,8 @@ export default function NuevaCompraPage() {
                       className="border border-border text-center"
                     >
                       <td className="p-2">
-                        <div className="flex items-center justify-center gap-3">
-                          {item.prod_dcom.img_prod && (
+                        <div className="flex items-center gap-3">
+                          <div className="flex-shrink-0">
                             <Image
                               src={item.prod_dcom.img_prod}
                               alt={item.prod_dcom.nom_prod}
@@ -666,9 +666,9 @@ export default function NuevaCompraPage() {
                               height={40}
                               className="h-10 w-10 rounded-md object-cover"
                             />
-                          )}
-                          <div className="flex flex-col">
-                            <span className="font-medium">
+                          </div>
+                          <div className="flex flex-col justify-center text-left leading-tight">
+                            <span className="text-sm font-medium">
                               {item.prod_dcom.nom_prod}
                             </span>
                             <span className="text-xs text-muted-foreground">
@@ -677,6 +677,7 @@ export default function NuevaCompraPage() {
                           </div>
                         </div>
                       </td>
+
                       <td className="p-2">{item.cant_dcom}</td>
                       <td className="p-2">${item.prec_uni_dcom.toFixed(2)}</td>
                       <td className="p-2">

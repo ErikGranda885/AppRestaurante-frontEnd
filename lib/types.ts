@@ -67,7 +67,11 @@ export interface ICompra {
   tipo_doc_comp: string;
   num_doc_comp: string;
   form_pag_comp: string;
+  fech_pag_comp?: string;
   fech_venc_comp: string;
+  obs_pago_efec_comp?: string;
+  num_tra_comprob_comp?: string;
+  comprob_tran_comp?: string;
 }
 
 export interface ICierreDiario {
@@ -126,7 +130,6 @@ export interface IResumenDelDia {
   totalGastos: number;
   totalComprasPagadas: number;
 }
-
 
 export type IProductEdit = Omit<IProduct, "cate_prod"> & {
   cate_prod: number;

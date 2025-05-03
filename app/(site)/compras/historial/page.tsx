@@ -46,6 +46,8 @@ export default function Page() {
     to: endOfDay(new Date()),
   });
   const [labelQuickRange, setLabelQuickRange] = useState("Hoy");
+  const [filtroPendientesPago, setFiltroPendientesPago] = useState(false);
+
   useProtectedRoute();
   const router = useRouter();
 
@@ -124,7 +126,9 @@ export default function Page() {
         compra.estado_comp
           .toLowerCase()
           .includes(consultaBusqueda.toLowerCase())) &&
-      filtrarPorFecha(compra),
+      filtrarPorFecha(compra) &&
+      (!filtroPendientesPago ||
+        compra.estado_pag_comp.toLowerCase() === "pendiente"),
   );
 
   const comprasColumnas = [
@@ -174,7 +178,7 @@ export default function Page() {
       cell: ({ cell }: any) => {
         const estado = cell.getValue().toLowerCase();
         let colorClass = "";
-        if (estado === "pagado") colorClass = "bg-green-100 text-green-700";
+        if (estado === "completado") colorClass = "bg-green-100 text-green-700";
         else if (estado === "pendiente")
           colorClass = "bg-yellow-100 text-yellow-700";
         else colorClass = "bg-gray-100 text-gray-700";
@@ -284,7 +288,7 @@ export default function Page() {
                       {labelQuickRange}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent>
+                  <DropdownMenuContent className="border-border">
                     <DropdownMenuItem onClick={() => handleQuickRange("hoy")}>
                       Hoy
                     </DropdownMenuItem>
@@ -334,6 +338,7 @@ export default function Page() {
         <div className="mx-4 h-full w-auto rounded-lg bg-[hsl(var(--card))]">
           <div className="flex flex-col gap-4 pt-4">
             <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:justify-between">
+              {/* Volumen total de compras */}
               <div className="flex-1">
                 <MetricCard
                   titulo="Volumen Total de Compras"
@@ -345,6 +350,7 @@ export default function Page() {
                   onClick={() => {}}
                 />
               </div>
+              {/* Numero de compras */}
               <div className="flex-1">
                 <MetricCard
                   titulo="Número de Compras"
@@ -356,6 +362,7 @@ export default function Page() {
                   onClick={() => {}}
                 />
               </div>
+              {/* Items promedio de compras */}
               <div className="flex-1">
                 <MetricCard
                   titulo="Ítems Promedio por Compra"
@@ -365,6 +372,25 @@ export default function Page() {
                   iconColor="text-purple-400"
                   badgeColorClass="bg-purple-100 dark:bg-purple-800/30 text-purple-500 dark:text-purple-400"
                   onClick={() => {}}
+                />
+              </div>
+
+              <div className="flex-1">
+                <MetricCard
+                  titulo="Pendientes de pago"
+                  valor={compras
+                    .filter(
+                      (c) => c.estado_pag_comp.toLowerCase() === "pendiente",
+                    )
+                    .length.toString()}
+                  porcentaje=""
+                  periodo="Total"
+                  iconColor="text-yellow-400"
+                  badgeColorClass="bg-yellow-100 dark:bg-yellow-800/30 text-yellow-500 dark:text-yellow-400"
+                  onClick={() => setFiltroPendientesPago((prev) => !prev)}
+                  className={
+                    filtroPendientesPago ? "ring-2 ring-yellow-400" : ""
+                  }
                 />
               </div>
             </div>

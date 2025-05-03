@@ -96,16 +96,17 @@ export const data = {
         { title: "Gestión de Proveedores", url: "/compras/proveedores" },
       ],
     },
-    {
-      title: "Cierre Diario",
-      url: "/cierre-diario",
-      icon: CalendarCheck,
-      submenu: false,
-    },
+
     {
       title: "Gastos Indirectos",
       url: "/gastos-indirectos",
       icon: Receipt,
+      submenu: false,
+    },
+    {
+      title: "Cierre Diario",
+      url: "/cierre-diario",
+      icon: CalendarCheck,
       submenu: false,
     },
   ],

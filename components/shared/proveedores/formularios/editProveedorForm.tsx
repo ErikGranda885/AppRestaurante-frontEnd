@@ -249,10 +249,8 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
         />
 
         {/* Botón de guardar */}
-        <div className="flex justify-end pt-4">
-          <Button type="submit" className="text-black">
-            Guardar Cambios
-          </Button>
+        <div className="flex pt-4  col-start-2 justify-end">
+          <Button type="submit">Guardar Cambios</Button>
         </div>
       </form>
     </Form>
