@@ -502,18 +502,18 @@ export default function PaginaCierreDia() {
                         key={index}
                         className="grid grid-cols-3 items-center gap-4 border border-x-transparent border-b-border border-t-transparent py-2 text-sm"
                       >
-                        <span>{compra.proveedor}</span>
+                        <span>{compra.prov_comp?.nom_prov || "-"}</span>
                         <span className="text-xs text-muted-foreground">
-                          {new Date(compra.fecha).toLocaleDateString("es-EC", {
+                          {new Date(
+                            compra.fech_pag_comp || compra.fech_comp,
+                          ).toLocaleDateString("es-EC", {
                             day: "2-digit",
                             month: "short",
                             year: "numeric",
                           })}
                         </span>
-                        <span
-                          className={`text-right font-semibold ${compra.monto >= 0 ? "" : "text-red-600"}`}
-                        >
-                          ${formatoMoneda(compra.monto)}
+                        <span className="text-right font-semibold">
+                          ${formatoMoneda(Number(compra.tot_comp))}
                         </span>
                       </div>
                     ))

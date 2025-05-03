@@ -27,7 +27,7 @@ import {
   AlertTriangle,
   MoreHorizontal,
 } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
 
 import { useRouter } from "next/navigation";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
@@ -39,8 +39,50 @@ import { useListaCierres } from "@/hooks/cierresDiarios/useListaCierres";
 import { useResumenCierres } from "@/hooks/cierresDiarios/useResumenCierres";
 import { ColumnDef, Row } from "@tanstack/react-table";
 import { ToastError } from "@/components/shared/toast/toastError";
+import { DateRangeFilter } from "@/components/shared/ventas/ui/dateRangeFilter";
+import { DateRange } from "react-day-picker";
+import {
+  endOfMonth,
+  endOfToday,
+  endOfYesterday,
+  startOfMonth,
+  startOfToday,
+  startOfYesterday,
+} from "date-fns";
 
 export default function Page() {
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: startOfToday(),
+    to: endOfToday(),
+  });
+  const [labelQuickRange, setLabelQuickRange] = useState("Hoy");
+
+  const handleQuickRange = (opcion: "hoy" | "ayer" | "mes") => {
+    switch (opcion) {
+      case "hoy":
+        setDateRange({
+          from: startOfToday(),
+          to: endOfToday(),
+        });
+        setLabelQuickRange("Hoy");
+        break;
+      case "ayer":
+        setDateRange({
+          from: startOfYesterday(),
+          to: endOfYesterday(),
+        });
+        setLabelQuickRange("Ayer");
+        break;
+      case "mes":
+        setDateRange({
+          from: startOfMonth(new Date()),
+          to: endOfMonth(new Date()),
+        });
+        setLabelQuickRange("Este mes");
+        break;
+    }
+  };
+
   useProtectedRoute();
   const router = useRouter();
   const [abrirCrear, setAbrirCrear] = React.useState(false);
@@ -140,7 +182,8 @@ export default function Page() {
     },
   ];
 
-  useCargarCierres({ estadoSeleccionado, setCierres });
+  useCargarCierres({ estadoSeleccionado, setCierres, dateRange });
+
   function hayCierresAnterioresPendientes(
     lista: ICierreDiario[],
     seleccionado: ICierreDiario,
@@ -166,23 +209,38 @@ export default function Page() {
         </p>
 
         <div className="pt-4" />
-        <div className="mb-5 flex items-center justify-between">
-          <GeneralDialog
-            open={abrirCrear}
-            onOpenChange={setAbrirCrear}
-            triggerText={
-              <>
-                <Plus className="h-4 w-4 font-light" /> Registrar nuevo cierre
-              </>
-            }
-            title="Registrar Nuevo Cierre Diario"
-            description="Completa la información para registrar el cierre diario."
-            submitText="Guardar"
-          >
-            {/* Aquí irá tu formulario de registrar cierre */}
-          </GeneralDialog>
+        <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          {/* Filtros de fechas y rangos rápidos */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Filtro por rango de fechas */}
+            <DateRangeFilter value={dateRange} onChange={setDateRange} />
 
-          <div className="flex items-center gap-3">
+            {/* Dropdown de fechas rápidas */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="text-[12px]">
+                  {labelQuickRange}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => handleQuickRange("hoy")}>
+                  Hoy
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleQuickRange("ayer")}>
+                  Ayer
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleQuickRange("mes")}>
+                  Este mes
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Separador visual */}
+            <div className="hidden h-6 w-px bg-border md:block" />
+          </div>
+
+          {/* Barra de búsqueda y botones */}
+          <div className="flex flex-wrap items-center gap-3">
             <div className="relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                 <Search className="h-4 w-4 text-gray-500" />
