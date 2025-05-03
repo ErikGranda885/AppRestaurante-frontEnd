@@ -422,7 +422,7 @@ export function CreateUserForm({
                   >
                     Cancelar
                   </Button>
-                  <Button type="submit" className="text-black">
+                  <Button type="submit" >
                     Crear
                   </Button>
                 </div>

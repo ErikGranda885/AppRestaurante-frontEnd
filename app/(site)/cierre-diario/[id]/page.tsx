@@ -30,6 +30,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { DialogNumeracionEfectivo } from "@/components/shared/cierreDiario/ui/dialogNumeracionEfectivo";
+import { SERVICIOS_CIERRES } from "@/services/cierreDiario.service";
+import { uploadImage } from "@/firebase/subirImage";
+import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
+
+function formatoMoneda(valor: any): string {
+  return typeof valor === "number" && !isNaN(valor) ? valor.toFixed(2) : "0.00";
+}
 
 export default function PaginaCierreDia() {
   const router = useRouter();
@@ -40,6 +47,7 @@ export default function PaginaCierreDia() {
   const [valorDeposito, setValorDeposito] = useState("");
   const [openDialogNumeracion, setOpenDialogNumeracion] = useState(false);
   const [totalEfectivo, setTotalEfectivo] = useState(0);
+  const [abrirConfirmacionCerrar, setAbrirConfirmacionCerrar] = useState(false);
 
   useProtectedRoute();
 
@@ -117,6 +125,71 @@ export default function PaginaCierreDia() {
     return <div className="p-6">Cargando...</div>;
   }
 
+  const cerrarDia = async () => {
+    if (!cierreSeleccionado || !file || !numeroComprobante) return;
+
+    try {
+      const fecha = new Date(cierreSeleccionado.fech_cier)
+        .toISOString()
+        .split("T")[0];
+      const nombrePersonalizado = `${fecha}-${numeroComprobante}`;
+      const carpeta = "cierres-diarios";
+
+      const urlComprobante = await uploadImage(
+        file,
+        carpeta,
+        nombrePersonalizado,
+      );
+
+      await fetch(
+        SERVICIOS_CIERRES.registrarDeposito(cierreSeleccionado.id_cier),
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            tot_dep_cier: totalEfectivo,
+            comp_dep_cier: urlComprobante,
+          }),
+        },
+      );
+
+      ToastSuccess({ message: "Cierre diario guardado correctamente" });
+      localStorage.removeItem("totalEfectivo");
+      setFile(null);
+      setPreviewUrl(null);
+      setNumeroComprobante("");
+      router.push("/cierre-diario");
+    } catch (error) {
+      console.error("❌ Error al cerrar día:", error);
+    }
+  };
+
+  const guardarDeposito = () => {
+    if (!file) return;
+
+    const MAX_SIZE_MB = 5;
+    const sizeInMB = file.size / (1024 * 1024);
+    const isImage = file.type.startsWith("image/");
+
+    if (!isImage) {
+      ToastSuccess({ message: "❌ El archivo debe ser una imagen." });
+      return;
+    }
+
+    if (sizeInMB > MAX_SIZE_MB) {
+      ToastSuccess({
+        message: `❌ La imagen debe pesar menos de ${MAX_SIZE_MB} MB.`,
+      });
+      return;
+    }
+
+    ToastSuccess({
+      message: "Comprobante de depósito cargado correctamente",
+    });
+  };
+
   return (
     <ModulePageLayout
       breadcrumbLinkTitle="Dashboard"
@@ -148,13 +221,16 @@ export default function PaginaCierreDia() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              className="w-[150px] border-border text-[12px] font-semibold"
-              variant="primary"
-              disabled={totalEfectivo === 0}
-            >
-              <Save className="h-4 w-4" /> Cerrar Día
-            </Button>
+            {cierreSeleccionado.esta_cier !== "cerrado" && (
+              <Button
+                className="w-[150px] border-border text-[12px] font-semibold"
+                variant="primary"
+                disabled={totalEfectivo === 0 || !file || !numeroComprobante}
+                onClick={() => setAbrirConfirmacionCerrar(true)}
+              >
+                <Save className="h-4 w-4" /> Cerrar Día
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -176,25 +252,49 @@ export default function PaginaCierreDia() {
                 <ResumenItem
                   label="Total Ventas"
                   value={cierreSeleccionado.tot_vent_cier}
-                  ocultar={totalEfectivo === 0}
+                  ocultar={
+                    totalEfectivo === 0 &&
+                    cierreSeleccionado.esta_cier !== "cerrado"
+                  }
                 />
+
                 <ResumenItem
-                  label="Total a Depositar"
-                  value={totalEfectivo}
-                  ocultar={totalEfectivo === 0}
+                  label={
+                    cierreSeleccionado.esta_cier === "cerrado"
+                      ? "Valor Depositado"
+                      : "Valor a Depositar"
+                  }
+                  value={
+                    cierreSeleccionado.esta_cier === "cerrado"
+                      ? cierreSeleccionado.tot_dep_cier
+                      : totalEfectivo
+                  }
+                  ocultar={
+                    totalEfectivo === 0 &&
+                    cierreSeleccionado.esta_cier !== "cerrado"
+                  }
+                  resaltado={cierreSeleccionado.esta_cier === "cerrado"}
                 />
               </div>
-
-              {/* Detalle General */}
+              {/* Detalle Gneral */}
               <div className="space-y-2">
                 <p className="text-xs font-semibold uppercase text-muted-foreground">
                   Detalle General
                 </p>
                 {[
-                  { label: "Total efectivo registrado", value: totalEfectivo },
+                  {
+                    label: "Total efectivo registrado",
+                    value:
+                      cierreSeleccionado.esta_cier === "cerrado"
+                        ? cierreSeleccionado.tot_dep_cier
+                        : totalEfectivo,
+                  },
                   {
                     label: "Total transferencias registradas",
-                    value: totalTransferencias,
+                    value:
+                      cierreSeleccionado.esta_cier === "cerrado"
+                        ? 0
+                        : totalTransferencias,
                   },
                   {
                     label: "Total facturas canceladas",
@@ -204,23 +304,52 @@ export default function PaginaCierreDia() {
                     label: "Total gastos",
                     value: cierreSeleccionado.tot_gas_cier ?? 0,
                   },
-                  {
-                    label: "Diferencia",
-                    value: diferenciaCalculada,
-                  },
                 ].map((item, index) => (
                   <div
                     key={index}
                     className="flex justify-between text-xs font-medium"
                   >
                     <span>{item.label}</span>
-                    <span>
-                      {totalEfectivo === 0
-                        ? "$*.**"
-                        : `$${Number(item.value ?? 0).toFixed(2)}`}
-                    </span>
+                    <span>{`$${formatoMoneda(item.value)}`}</span>
                   </div>
                 ))}
+
+                {/* Diferencia con validación visual */}
+                <div className="flex items-center justify-between text-xs font-medium">
+                  <span>Diferencia</span>
+                  <span
+                    className={`font-bold ${
+                      Number(
+                        cierreSeleccionado.esta_cier === "cerrado"
+                          ? cierreSeleccionado.dif_cier
+                          : diferenciaCalculada,
+                      ) === 0
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    {`$${formatoMoneda(
+                      cierreSeleccionado.esta_cier === "cerrado"
+                        ? cierreSeleccionado.dif_cier
+                        : diferenciaCalculada,
+                    )}`}
+                  </span>
+                </div>
+
+                {/* Estado del cierre */}
+                {cierreSeleccionado.esta_cier === "cerrado" && (
+                  <div
+                    className={`mt-2 rounded-md px-3 py-2 text-center text-xs font-semibold ${
+                      Number(cierreSeleccionado.dif_cier) === 0
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {Number(cierreSeleccionado.dif_cier) === 0
+                      ? "✔️ Cierre cuadrado correctamente"
+                      : "❌ El cierre presenta una diferencia"}
+                  </div>
+                )}
               </div>
 
               {/* Banco */}
@@ -331,7 +460,7 @@ export default function PaginaCierreDia() {
                         <span
                           className={`text-right font-semibold ${Number(gasto.mont_gas) >= 0 ? "" : "text-red-600"}`}
                         >
-                          ${Number(gasto.mont_gas).toFixed(2)}
+                          ${formatoMoneda(gasto.mont_gas)}
                         </span>
                       </div>
                     ))
@@ -382,11 +511,9 @@ export default function PaginaCierreDia() {
                           })}
                         </span>
                         <span
-                          className={`text-right font-semibold ${
-                            compra.monto >= 0 ? "" : "text-red-600"
-                          }`}
+                          className={`text-right font-semibold ${compra.monto >= 0 ? "" : "text-red-600"}`}
                         >
-                          ${compra.monto.toFixed(2)}
+                          ${formatoMoneda(compra.monto)}
                         </span>
                       </div>
                     ))
@@ -433,11 +560,9 @@ export default function PaginaCierreDia() {
                       <span>{venta.tip_pag_vent}</span>
                       <span>{venta.est_vent}</span>
                       <span
-                        className={`text-right font-semibold ${
-                          venta.tot_vent >= 0 ? "" : "text-red-600"
-                        }`}
+                        className={`text-right font-semibold ${venta.tot_vent >= 0 ? "" : "text-red-600"}`}
                       >
-                        ${Number(venta.tot_vent ?? 0).toFixed(2)}
+                        ${formatoMoneda(venta.tot_vent)}
                       </span>
                     </div>
                   ))
@@ -464,31 +589,21 @@ export default function PaginaCierreDia() {
 
           <CardContent className="space-y-4">
             {/* Número de comprobante y valor */}
-            <div className="flex justify-between gap-6">
-              <div className="flex-1 space-y-1">
-                <label className="text-xs font-semibold text-muted-foreground">
-                  Número de Comprobante
-                </label>
-                <Input
-                  type="text"
-                  placeholder="Ej: 1234567890"
-                  value={numeroComprobante}
-                  onChange={(e) => setNumeroComprobante(e.target.value)}
-                />
+            {cierreSeleccionado?.esta_cier !== "cerrado" && (
+              <div className="flex justify-between gap-6">
+                <div className="flex-1 space-y-1">
+                  <label className="text-xs font-semibold text-muted-foreground">
+                    Número de Comprobante
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Ej: 1234567890"
+                    value={numeroComprobante}
+                    onChange={(e) => setNumeroComprobante(e.target.value)}
+                  />
+                </div>
               </div>
-
-              <div className="flex-1 space-y-1">
-                <label className="text-xs font-semibold text-muted-foreground">
-                  Valor del Depósito
-                </label>
-                <Input
-                  type="number"
-                  placeholder="Ej: 150.00"
-                  value={valorDeposito}
-                  onChange={(e) => setValorDeposito(e.target.value)}
-                />
-              </div>
-            </div>
+            )}
 
             {/* Imagen del comprobante */}
             <div className="space-y-1">
@@ -496,91 +611,149 @@ export default function PaginaCierreDia() {
                 Imagen del Comprobante
               </label>
 
-              <label
-                className="relative flex w-full flex-col items-center justify-center rounded-md border-2 border-dashed p-6 text-center hover:cursor-pointer hover:border-secondary dark:bg-[#1a1a1a]"
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  e.currentTarget.classList.add("border-secondary"); // opcional: highlight visual
-                }}
-                onDragLeave={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  e.currentTarget.classList.remove("border-secondary"); // opcional: quitar highlight
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  const file = e.dataTransfer.files[0];
-                  if (file && file.type.startsWith("image/")) {
-                    setPreviewUrl(URL.createObjectURL(file));
-                    setFile(file);
-                    ToastSuccess({
-                      message: "¡Imagen cargada exitosamente!",
-                    });
-                  }
-                }}
-              >
-                {previewUrl ? (
-                  <div
-                    className="relative h-[300px] w-full overflow-hidden rounded-md bg-cover bg-center"
-                    style={{ backgroundImage: `url(${previewUrl})` }}
-                    onMouseMove={(e) => {
-                      const { left, top, width, height } =
-                        e.currentTarget.getBoundingClientRect();
-                      const x = ((e.clientX - left) / width) * 100;
-                      const y = ((e.clientY - top) / height) * 100;
-                      e.currentTarget.style.backgroundPosition = `${x}% ${y}%`;
-                      e.currentTarget.style.backgroundSize = "200%";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundPosition = "center";
-                      e.currentTarget.style.backgroundSize = "contain";
-                    }}
-                  />
-                ) : (
-                  <div className="flex h-[300px] items-center">
-                    <div className="flex flex-col items-center justify-center">
-                      <Receipt className="mb-2 w-8 text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground">
-                        Arrastra o haz click para seleccionar
-                      </p>
+              {cierreSeleccionado?.esta_cier === "cerrado" ? (
+                <div
+                  className="group relative h-[400px] w-full overflow-hidden rounded-md border-2 border-border bg-white dark:bg-[#1a1a1a]"
+                  onMouseMove={(e) => {
+                    const container = e.currentTarget;
+                    const img = container.querySelector(
+                      "img",
+                    ) as HTMLImageElement;
+                    const rect = container.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    img.style.transformOrigin = `${x}% ${y}%`;
+                    img.style.transform = "scale(2)";
+                  }}
+                  onMouseLeave={(e) => {
+                    const img = e.currentTarget.querySelector(
+                      "img",
+                    ) as HTMLImageElement;
+                    img.style.transformOrigin = "center";
+                    img.style.transform = "scale(1)";
+                  }}
+                >
+                  {cierreSeleccionado.comp_dep_cier ? (
+                    <Image
+                      src={cierreSeleccionado.comp_dep_cier}
+                      alt="Comprobante de depósito"
+                      fill
+                      sizes="100%"
+                      className="object-contain p-2 transition-transform duration-300 ease-in-out"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
+                      Sin comprobante disponible
                     </div>
-                  </div>
-                )}
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const selectedFile = e.target.files?.[0];
-                    if (selectedFile) {
-                      setPreviewUrl(URL.createObjectURL(selectedFile));
-                      setFile(selectedFile);
+                  )}
+                </div>
+              ) : (
+                <label
+                  className="relative flex w-full flex-col items-center justify-center rounded-md border-2 border-dashed p-6 text-center hover:cursor-pointer hover:border-secondary dark:bg-[#1a1a1a]"
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.currentTarget.classList.add("border-secondary");
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.currentTarget.classList.remove("border-secondary");
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const file = e.dataTransfer.files[0];
+                    if (file && file.type.startsWith("image/")) {
+                      setPreviewUrl(URL.createObjectURL(file));
+                      setFile(file);
+                      ToastSuccess({
+                        message: "¡Imagen cargada exitosamente!",
+                      });
                     }
                   }}
-                  className="absolute inset-0 cursor-pointer opacity-0"
-                />
-              </label>
+                >
+                  {previewUrl ? (
+                    <div
+                      className="relative h-[300px] w-full overflow-hidden rounded-md bg-cover bg-center"
+                      style={{ backgroundImage: `url(${previewUrl})` }}
+                      onMouseMove={(e) => {
+                        const { left, top, width, height } =
+                          e.currentTarget.getBoundingClientRect();
+                        const x = ((e.clientX - left) / width) * 100;
+                        const y = ((e.clientY - top) / height) * 100;
+                        e.currentTarget.style.backgroundPosition = `${x}% ${y}%`;
+                        e.currentTarget.style.backgroundSize = "200%";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundPosition = "center";
+                        e.currentTarget.style.backgroundSize = "contain";
+                      }}
+                    />
+                  ) : (
+                    <div className="flex h-[300px] items-center justify-center">
+                      <div className="flex flex-col items-center justify-center">
+                        <Receipt className="mb-2 w-8 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">
+                          Arrastra o haz click para seleccionar
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const selectedFile = e.target.files?.[0];
+                      if (selectedFile) {
+                        setPreviewUrl(URL.createObjectURL(selectedFile));
+                        setFile(selectedFile);
+                      }
+                    }}
+                    className="absolute inset-0 cursor-pointer opacity-0"
+                  />
+                </label>
+              )}
             </div>
 
             {/* Botón guardar */}
-            <Button
-              variant="secondary"
-              className="w-full text-[12px] font-semibold"
-              disabled={totalEfectivo === 0}
-            >
-              Guardar Depósito
-            </Button>
+            {cierreSeleccionado.esta_cier !== "cerrado" && (
+              <Button
+                variant="secondary"
+                className="w-full text-[12px] font-semibold"
+                disabled={!file || !numeroComprobante}
+                onClick={guardarDeposito}
+              >
+                Guardar Depósito
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      <DialogNumeracionEfectivo
-        open={openDialogNumeracion}
-        onOpenChange={(open) => setOpenDialogNumeracion(open)}
-        onGuardar={(total) => {
-          setTotalEfectivo(total);
-          localStorage.setItem("totalEfectivo", total.toString());
+      {cierreSeleccionado.esta_cier !== "cerrado" && (
+        <DialogNumeracionEfectivo
+          open={openDialogNumeracion}
+          onOpenChange={(open) => setOpenDialogNumeracion(open)}
+          onGuardar={(total) => {
+            setTotalEfectivo(total);
+            localStorage.setItem("totalEfectivo", total.toString());
+          }}
+        />
+      )}
+
+      <ModalModEstado
+        abierto={abrirConfirmacionCerrar}
+        onCambioAbierto={setAbrirConfirmacionCerrar}
+        tipoAccion="activar"
+        nombreElemento={`del ${fechaCierre}`}
+        tituloPersonalizado="¿Confirmar cierre del día?"
+        descripcionPersonalizada="Al cerrar el día se registrará todos los datos y no se podrá modificar los datos."
+        textoConfirmar="Cerrar día"
+        textoCancelar="Cancelar"
+        onConfirmar={async () => {
+          setAbrirConfirmacionCerrar(false);
+          await cerrarDia();
         }}
       />
     </ModulePageLayout>
@@ -591,18 +764,33 @@ function ResumenItem({
   label,
   value,
   ocultar = false,
+  resaltado = false,
 }: {
   label: string;
   value: number | undefined;
   ocultar?: boolean;
+  resaltado?: boolean;
 }) {
+  // Validación segura del valor
+  const valorSeguro = formatoMoneda(value);
+
   return (
     <div className="space-y-1">
-      <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <div
+        className={`text-xs font-medium uppercase tracking-wide ${
+          resaltado ? "" : "text-muted-foreground"
+        }`}
+      >
         {label}
       </div>
-      <div className="text-4xl font-bold text-gray-900 dark:text-white">
-        {ocultar ? "$*.**" : `$${Number(value ?? 0).toFixed(2)}`}
+      <div
+        className={`text-4xl font-bold ${
+          resaltado
+            ? "text-green-700 dark:text-green-300"
+            : "text-gray-900 dark:text-white"
+        }`}
+      >
+        {ocultar ? "$*.**" : `$${valorSeguro}`}
       </div>
     </div>
   );

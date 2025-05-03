@@ -478,7 +478,6 @@ export function BulkUploadCategoryDialog({
             </Button>
             <Button
               onClick={handleUpload}
-              className="text-black"
               disabled={loading || previewData.length === 0}
             >
               {loading ? "Cargando..." : "Guardar Categorías"}

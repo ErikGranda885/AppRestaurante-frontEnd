@@ -16,7 +16,6 @@ import { CampoSelectUnidad } from "../ui/campoSelectUnidad";
 import { CampoSelectTipo } from "../ui/campoTipo";
 import { eliminarImagen } from "@/firebase/eliminarImage";
 
-// Ref para almacenar el nombre inicial del producto (para omitir validación asíncrona si no cambia)
 const initialProductNameRef = { current: "" };
 
 const EsquemaFormulario = z
@@ -95,8 +94,9 @@ export function EditProductForm({
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>(
-    initialData.img_prod,
+    initialData.img_prod || "/imagenes/producto_defecto.webp",
   );
+
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageSelect = () => {
@@ -118,15 +118,16 @@ export function EditProductForm({
   };
 
   const onSubmit = async (values: EditProductFormValues) => {
-    let imageUrl = imagePreview;
+    let imageUrl = imagePreview || "/imagenes/producto_defecto.webp";
 
     try {
       if (imageFile) {
-        // Si había imagen anterior y no es la imagen por defecto, elimínala
-        const defaultImage =
-          "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/productos%2Fproduct-default.jpg?alt=media&token=c3e03102-01ac-4891-802a-40aff8502b45";
+        // Validar si la imagen anterior es una URL de Firebase
+        const esImagenFirebase =
+          initialData.img_prod &&
+          initialData.img_prod.includes("firebasestorage.googleapis.com");
 
-        if (initialData.img_prod && initialData.img_prod !== defaultImage) {
+        if (esImagenFirebase) {
           await eliminarImagen(initialData.img_prod);
         }
 
@@ -153,10 +154,12 @@ export function EditProductForm({
           body: JSON.stringify(payload),
         },
       );
+
       if (!res.ok) {
         const errorResponse = await res.json();
         throw new Error(errorResponse.message || `Error: ${res.status}`);
       }
+
       const data = await res.json();
       onSuccess(data);
       ToastSuccess({ message: "Producto actualizado correctamente" });
@@ -213,7 +216,7 @@ export function EditProductForm({
         <div className="col-span-1 flex h-full items-center justify-center">
           <ZonaImagen
             imageFile={imageFile}
-            imagePreview={imagePreview || ""}
+            imagePreview={imagePreview || "/imagenes/producto_defecto.webp"}
             setImageFile={setImageFile}
             setImagePreview={setImagePreview}
             imageInputRef={imageInputRef}
@@ -222,6 +225,7 @@ export function EditProductForm({
             handleDragOver={handleDragOver}
           />
         </div>
+
         {/* Botón de envío */}
         <div className="col-span-2 mt-4 flex justify-end gap-4">
           <Button type="submit">Guardar Cambios</Button>

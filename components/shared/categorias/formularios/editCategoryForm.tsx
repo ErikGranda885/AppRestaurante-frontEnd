@@ -153,9 +153,7 @@ export function EditCategoryForm({
         />
 
         <div className="flex justify-end pt-4">
-          <Button type="submit" className="text-black">
-            Guardar cambios
-          </Button>
+          <Button type="submit">Guardar cambios</Button>
         </div>
       </form>
     </Form>

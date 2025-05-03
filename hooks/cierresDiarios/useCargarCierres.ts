@@ -13,14 +13,17 @@ export function useCargarCierres({ estadoSeleccionado, setCierres }: Props) {
       try {
         let datos: ICierreDiario[] = [];
 
-        if (estadoSeleccionado === "cerrado") {
-          const res = await fetch(SERVICIOS_CIERRES.listarCerrados);
-          datos = await res.json();
-        } else if (estadoSeleccionado === "pendientes") {
-          const res = await fetch(SERVICIOS_CIERRES.listarPendientes);
-          datos = await res.json();
-        } else if (estadoSeleccionado === "por cerrar") {
+        if (estadoSeleccionado === "por cerrar") {
           const res = await fetch(SERVICIOS_CIERRES.listarPorCerrar);
+          datos = await res.json();
+        } else {
+          const estadoBackend =
+            estadoSeleccionado === "pendientes"
+              ? "pendiente"
+              : estadoSeleccionado;
+          const res = await fetch(
+            `${SERVICIOS_CIERRES.listarCierres}?estado=${estadoBackend}`,
+          );
           datos = await res.json();
         }
 

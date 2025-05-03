@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -21,9 +21,6 @@ export type Option = {
   label: string;
 };
 
-// Esquema del formulario
-// Se define "categoria" como opcional y se usa superRefine para validar que, si el tipo de producto no es "insumo",
-// se requiera que el campo categoría tenga contenido (comparación insensible a mayúsculas).
 const EsquemaFormulario = z
   .object({
     nombre: z
@@ -143,8 +140,7 @@ export function FormProducts({
         `producto_${data.nombre.replace(/\s+/g, "_").toLowerCase()}`, // nombre personalizado
       );
     } else {
-      imageUrl =
-        "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/productos%2Fproduct-default.jpg?alt=media&token=a06d2373-fd9a-4fa5-a715-3c9ab7ae546d";
+      imageUrl = "/imagenes/producto_defecto.webp";
     }
 
     const payload = {
@@ -232,10 +228,10 @@ export function FormProducts({
         </div>
         {/* Botón de envío */}
         <div className="col-span-2 mt-4 flex justify-end gap-4">
-          <Button type="button" onClick={() => form.reset()}>
+          <Button variant={"secondary"} onClick={() => form.reset()}>
             Limpiar
           </Button>
-          <Button className="hover:/80 text-black" type="submit">
+          <Button className="hover:/80" type="submit">
             Crear Producto
           </Button>
         </div>

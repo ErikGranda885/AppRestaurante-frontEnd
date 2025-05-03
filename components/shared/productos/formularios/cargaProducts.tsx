@@ -181,8 +181,7 @@ export function BulkUploadProductDialog({
 
     setLoading(true);
     try {
-      const defaultImageUrl =
-        "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/productos%2Fproduct-default.jpg?alt=media";
+      const defaultImageUrl = "/imagenes/producto_defecto.webp";
 
       const errores: string[] = [];
 

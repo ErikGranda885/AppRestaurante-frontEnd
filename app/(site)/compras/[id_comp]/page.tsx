@@ -20,6 +20,7 @@ import { ICompra, IDetCompra } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { format, isValid, parse } from "date-fns";
+import { DialogRegistrarPagoCompra } from "@/components/shared/cierreDiario/ui/dialogRegistrarPagoCompra";
 
 export default function DetalleCompraPage() {
   useProtectedRoute();
@@ -32,6 +33,8 @@ export default function DetalleCompraPage() {
   const [esEditadoObservacion, setEsEditadoObservacion] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
+  const [abrirDialogPago, setAbrirDialogPago] = useState(false);
+
   /* Cargar detalle de la compra */
   useEffect(() => {
     async function fetchCompra() {
@@ -349,8 +352,20 @@ export default function DetalleCompraPage() {
                 <div className="flex justify-end">
                   {/* Si el estado de la factura de es pendiente coloca el boton regstrar */}
                   {compra.estado_pag_comp.toLowerCase() === "pendiente" && (
-                    <Button className="text-xs">Registrar pago</Button>
+                    <DialogRegistrarPagoCompra
+                      open={abrirDialogPago}
+                      onOpenChange={setAbrirDialogPago}
+                      idCompra={compra.id_comp}
+                      formaPago={
+                        compra.form_pag_comp as "efectivo" | "transferencia"
+                      }
+                      onPagoExitoso={() => {
+                        setAbrirDialogPago(false);
+                        setCompra({ ...compra, estado_pag_comp: "pagada" });
+                      }}
+                    />
                   )}
+
                   {/* Si el estado de la factura de es pagada coloca el boton ver factura */}
                   {compra.estado_pag_comp.toLowerCase() === "pagada" && (
                     <Button className="text-xs">Ver factura</Button>
