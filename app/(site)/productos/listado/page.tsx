@@ -285,7 +285,7 @@ export default function PaginaProductos() {
   return (
     <>
       <ModulePageLayout
-        breadcrumbLinkTitle="Inventario"
+        breadcrumbLinkTitle="Productos"
         breadcrumbPageTitle="Gestión de Productos"
         submenu={true}
         isLoading={false}

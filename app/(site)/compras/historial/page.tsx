@@ -286,8 +286,8 @@ export default function Page() {
   return (
     <ModulePageLayout
       breadcrumbLinkTitle="Compras"
-      breadcrumbPageTitle=""
-      submenu={false}
+      breadcrumbPageTitle="Historial de compras"
+      submenu={true}
       isLoading={loadingData}
     >
       <div className="flex h-full w-full flex-col">

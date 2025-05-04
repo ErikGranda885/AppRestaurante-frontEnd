@@ -98,7 +98,7 @@ export const data = {
     },
 
     {
-      title: "Gastos Indirectos",
+      title: "Gastos",
       url: "/gastos-indirectos",
       icon: Receipt,
       submenu: false,
