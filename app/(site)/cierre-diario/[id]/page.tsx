@@ -297,7 +297,7 @@ export default function PaginaCierreDia() {
                         : totalTransferencias,
                   },
                   {
-                    label: "Total facturas canceladas",
+                    label: "Total compras realizadas",
                     value: cierreSeleccionado.tot_compras_pag_cier ?? 0,
                   },
                   {
@@ -478,14 +478,13 @@ export default function PaginaCierreDia() {
               <CardHeader>
                 <CardTitle>
                   <div className="flex flex-wrap items-center">
-                    <ShoppingCart className="mr-2 h-4 w-4" /> Facturas
-                    Canceladas
+                    <ShoppingCart className="mr-2 h-4 w-4" /> Compras del día
                   </div>
                 </CardTitle>
               </CardHeader>
 
               {/* Scroll interno */}
-              <ScrollArea className="h-[110px]">
+              <ScrollArea className="h-[150px]">
                 <CardContent className="space-y-2">
                   {/* Encabezados de la tabla */}
                   <div className="grid grid-cols-3 gap-4 border-border pb-2 text-xs font-semibold text-muted-foreground">

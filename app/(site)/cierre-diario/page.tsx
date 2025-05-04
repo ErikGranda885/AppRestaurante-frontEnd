@@ -42,12 +42,17 @@ import { ToastError } from "@/components/shared/toast/toastError";
 import { DateRangeFilter } from "@/components/shared/ventas/ui/dateRangeFilter";
 import { DateRange } from "react-day-picker";
 import {
+  endOfDay,
   endOfMonth,
   endOfToday,
+  endOfYear,
   endOfYesterday,
+  startOfDay,
   startOfMonth,
   startOfToday,
+  startOfYear,
   startOfYesterday,
+  subDays,
 } from "date-fns";
 
 export default function Page() {
@@ -57,30 +62,40 @@ export default function Page() {
   });
   const [labelQuickRange, setLabelQuickRange] = useState("Hoy");
 
-  const handleQuickRange = (opcion: "hoy" | "ayer" | "mes") => {
-    switch (opcion) {
-      case "hoy":
-        setDateRange({
-          from: startOfToday(),
-          to: endOfToday(),
-        });
-        setLabelQuickRange("Hoy");
-        break;
-      case "ayer":
-        setDateRange({
-          from: startOfYesterday(),
-          to: endOfYesterday(),
-        });
-        setLabelQuickRange("Ayer");
-        break;
-      case "mes":
-        setDateRange({
-          from: startOfMonth(new Date()),
-          to: endOfMonth(new Date()),
-        });
-        setLabelQuickRange("Este mes");
-        break;
+  const handleQuickRange = (option: "hoy" | "ayer" | "mes" | "año") => {
+    let newRange: DateRange | null = null;
+
+    if (option === "hoy") {
+      newRange = {
+        from: startOfDay(new Date()),
+        to: endOfDay(new Date()),
+      };
+      setLabelQuickRange("Hoy");
+    } else if (option === "ayer") {
+      const ayer = subDays(new Date(), 1);
+      newRange = {
+        from: startOfDay(ayer),
+        to: endOfDay(ayer),
+      };
+      setLabelQuickRange("Ayer");
+    } else if (option === "mes") {
+      newRange = {
+        from: startOfMonth(new Date()),
+        to: endOfMonth(new Date()),
+      };
+      setLabelQuickRange("Este mes");
+    } else if (option === "año") {
+      newRange = {
+        from: startOfYear(new Date()),
+        to: endOfYear(new Date()),
+      };
+      setLabelQuickRange("Este año");
+    } else {
+      // Si la opción no es válida, no hace nada
+      return;
     }
+
+    setDateRange(newRange);
   };
 
   useProtectedRoute();
@@ -218,11 +233,11 @@ export default function Page() {
             {/* Dropdown de fechas rápidas */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="text-[12px]">
+                <Button variant="outline" className="text-[12px] dark:bg-[#222224]">
                   {labelQuickRange}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent className="border-border">
                 <DropdownMenuItem onClick={() => handleQuickRange("hoy")}>
                   Hoy
                 </DropdownMenuItem>
@@ -231,6 +246,9 @@ export default function Page() {
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleQuickRange("mes")}>
                   Este mes
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleQuickRange("año")}>
+                  Este año
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -275,7 +293,7 @@ export default function Page() {
             <div className="absolute right-4 top-4">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="icon" variant="ghost" className="h-6 w-6 p-0">
+                  <Button size="icon" variant="ghost" className="h-6 w-6 p-0 ">
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -419,7 +437,7 @@ function MetricCard({
           </CardTitle>
           <div className="mt-2 flex items-center gap-5">
             <span
-              className={`text-3xl font-extrabold ${difference ? (Number(value) >= 0 ? "" : "text-red-600") : "text-gray-800 dark:text-white"}`}
+              className={`text-3xl font-extrabold ${difference ? (Number(value) >= 0 ? "" : "error-text") : "text-gray-800 dark:text-white"}`}
             >
               {isNumber
                 ? Number(value ?? 0)

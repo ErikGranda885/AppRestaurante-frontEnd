@@ -20,6 +20,8 @@ import {
   subDays,
   startOfMonth,
   endOfMonth,
+  startOfYear,
+  endOfYear,
 } from "date-fns";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -91,8 +93,8 @@ export default function Page() {
     return fechaCompra >= desde && fechaCompra <= hasta;
   };
 
-  const handleQuickRange = (option: "hoy" | "ayer" | "mes") => {
-    let newRange: DateRange;
+  const handleQuickRange = (option: "hoy" | "ayer" | "mes" | "año") => {
+    let newRange: DateRange | null = null;
 
     if (option === "hoy") {
       newRange = {
@@ -107,12 +109,21 @@ export default function Page() {
         to: endOfDay(ayer),
       };
       setLabelQuickRange("Ayer");
-    } else {
+    } else if (option === "mes") {
       newRange = {
         from: startOfMonth(new Date()),
         to: endOfMonth(new Date()),
       };
       setLabelQuickRange("Este mes");
+    } else if (option === "año") {
+      newRange = {
+        from: startOfYear(new Date()),
+        to: endOfYear(new Date()),
+      };
+      setLabelQuickRange("Este año");
+    } else {
+      // Si la opción no es válida, no hace nada
+      return;
     }
 
     setDateRange(newRange);
@@ -284,7 +295,7 @@ export default function Page() {
                 {/* dropdown de fechas */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="text-[12px]">
+                    <Button variant="outline" className="text-[12px] dark:bg-[#222224]">
                       {labelQuickRange}
                     </Button>
                   </DropdownMenuTrigger>
@@ -298,9 +309,12 @@ export default function Page() {
                     <DropdownMenuItem onClick={() => handleQuickRange("mes")}>
                       Este mes
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickRange("año")}>
+                      Este Año
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                {/* separator */}
+                
                 {/* Separador visual entre filtros y buscador */}
                 <Separator orientation="vertical" className="h-6" />
                 {/* Buscador */}
@@ -335,13 +349,13 @@ export default function Page() {
           </div>
         </div>
 
-        <div className="mx-4 h-full w-auto rounded-lg bg-[hsl(var(--card))]">
+        <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#111315]">
           <div className="flex flex-col gap-4 pt-4">
-            <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:justify-between">
+            <div className="flex flex-col gap-4 px-6 pt-6 md:flex-row md:justify-between">
               {/* Volumen total de compras */}
               <div className="flex-1">
                 <MetricCard
-                  titulo="Volumen Total de Compras"
+                  titulo="Total en Compras"
                   valor={`$ ${volumenTotal.toFixed(2)}`}
                   porcentaje=""
                   periodo="Total"
@@ -396,7 +410,7 @@ export default function Page() {
             </div>
           </div>
 
-          <div className="pb-4">
+          <div className="px-6 pb-4">
             <DataTable<ICompra>
               data={comprasFiltradas}
               columns={comprasColumnas}

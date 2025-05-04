@@ -28,7 +28,17 @@ import { ColumnDef } from "@tanstack/react-table";
 import { IGasto } from "@/lib/types";
 import { CreateGastoForm } from "@/components/shared/gastos/formularios/createGastoForm";
 import { EditGastoForm } from "@/components/shared/gastos/formularios/editGastoForm";
-import { format, parse } from "date-fns";
+import {
+  endOfDay,
+  endOfMonth,
+  endOfYear,
+  format,
+  parse,
+  startOfDay,
+  startOfMonth,
+  startOfYear,
+  subDays,
+} from "date-fns";
 import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
 import {
   DropdownMenu,
@@ -40,6 +50,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { ToastError } from "@/components/shared/toast/toastError";
+import { Separator } from "@/components/ui/separator";
+import { DateRangeFilter } from "@/components/shared/ventas/ui/dateRangeFilter";
+import { DateRange } from "react-day-picker";
 export type TipoAccion = "activar" | "inactivar" | "eliminar";
 
 type AccionGasto = {
@@ -56,6 +69,11 @@ export default function Page() {
   const [estadoSeleccionado, setEstadoSeleccionado] = useState<string>("");
   const [gastos, setGastos] = useState<IGasto[]>([]);
   const [busqueda, setBusqueda] = useState<string>("");
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: startOfDay(new Date()),
+    to: endOfDay(new Date()),
+  });
+  const [labelQuickRange, setLabelQuickRange] = useState("Hoy");
 
   useProtectedRoute();
 
@@ -63,6 +81,42 @@ export default function Page() {
   useEffect(() => {
     listarGastos();
   }, []);
+
+  const handleQuickRange = (option: "hoy" | "ayer" | "mes" | "año") => {
+    let newRange: DateRange | null = null;
+
+    if (option === "hoy") {
+      newRange = {
+        from: startOfDay(new Date()),
+        to: endOfDay(new Date()),
+      };
+      setLabelQuickRange("Hoy");
+    } else if (option === "ayer") {
+      const ayer = subDays(new Date(), 1);
+      newRange = {
+        from: startOfDay(ayer),
+        to: endOfDay(ayer),
+      };
+      setLabelQuickRange("Ayer");
+    } else if (option === "mes") {
+      newRange = {
+        from: startOfMonth(new Date()),
+        to: endOfMonth(new Date()),
+      };
+      setLabelQuickRange("Este mes");
+    } else if (option === "año") {
+      newRange = {
+        from: startOfYear(new Date()),
+        to: endOfYear(new Date()),
+      };
+      setLabelQuickRange("Este año");
+    } else {
+      // Si la opción no es válida, no hace nada
+      return;
+    }
+
+    setDateRange(newRange);
+  };
 
   async function listarGastos() {
     try {
@@ -75,42 +129,6 @@ export default function Page() {
     } catch (error) {
       console.error("Error al listar gastos", error);
     }
-  }
-
-  // Agrega esta función debajo de tu listarGastos
-  function filtrarGastosPorEstado(): IGasto[] {
-    const hoy = new Date();
-    const fechaHoy = format(hoy, "yyyy-MM-dd");
-
-    const ayer = new Date();
-    ayer.setDate(hoy.getDate() - 1);
-    const fechaAyer = format(ayer, "yyyy-MM-dd");
-
-    const primerDiaEsteMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-    const primerDiaMesAnterior = new Date(
-      hoy.getFullYear(),
-      hoy.getMonth() - 1,
-      1,
-    );
-    const ultimoDiaMesAnterior = new Date(hoy.getFullYear(), hoy.getMonth(), 0); // Día 0 del mes actual = último día del anterior
-
-    return gastos.filter((gasto) => {
-      if (!gasto.fech_gas) return false;
-      const fechaGasto = gasto.fech_gas.split(" ")[0];
-
-      if (estadoSeleccionado === "hoy") {
-        return fechaGasto === format(hoy, "yyyy-MM-dd");
-      } else if (estadoSeleccionado === "ayer") {
-        return fechaGasto === format(ayer, "yyyy-MM-dd");
-      } else if (estadoSeleccionado === "esteMes") {
-        const fecha = new Date(gasto.fech_gas);
-        return fecha >= primerDiaEsteMes && fecha <= hoy;
-      } else if (estadoSeleccionado === "mesAnterior") {
-        const fecha = new Date(gasto.fech_gas);
-        return fecha >= primerDiaMesAnterior && fecha <= ultimoDiaMesAnterior;
-      }
-      return true; // Si no hay estado seleccionado, mostrar todos
-    });
   }
 
   async function eliminarGasto(id: number) {
@@ -140,51 +158,25 @@ export default function Page() {
   }
 
   const gastosFiltrados = useMemo(() => {
-    const hoy = new Date();
-    const fechaHoy = format(hoy, "yyyy-MM-dd");
+    return gastos
+      .filter((gasto) => {
+        if (!gasto.fech_gas || !dateRange?.from || !dateRange?.to) return false;
 
-    const ayer = new Date();
-    ayer.setDate(hoy.getDate() - 1);
-    const fechaAyer = format(ayer, "yyyy-MM-dd");
-
-    const primerDiaEsteMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-    const primerDiaMesAnterior = new Date(
-      hoy.getFullYear(),
-      hoy.getMonth() - 1,
-      1,
-    );
-    const ultimoDiaMesAnterior = new Date(hoy.getFullYear(), hoy.getMonth(), 0);
-
-    const gastosFiltradosPorEstado = gastos.filter((gasto) => {
-      if (!gasto.fech_gas) return false;
-
-      // Convertir la fecha tipo "27/04/2025 17:06:16" en un objeto Date
-      const fechaParseada = parse(
-        gasto.fech_gas,
-        "dd/MM/yyyy HH:mm:ss",
-        new Date(),
-      );
-      const fechaFormateada = format(fechaParseada, "yyyy-MM-dd");
-
-      if (estadoSeleccionado === "hoy") {
-        return fechaFormateada === fechaHoy;
-      } else if (estadoSeleccionado === "ayer") {
-        return fechaFormateada === fechaAyer;
-      } else if (estadoSeleccionado === "esteMes") {
-        return fechaParseada >= primerDiaEsteMes && fechaParseada <= hoy;
-      } else if (estadoSeleccionado === "mesAnterior") {
-        return (
-          fechaParseada >= primerDiaMesAnterior &&
-          fechaParseada <= ultimoDiaMesAnterior
+        const fechaParseada = parse(
+          gasto.fech_gas,
+          "dd/MM/yyyy HH:mm:ss",
+          new Date(),
         );
-      }
-      return true;
-    });
 
-    return gastosFiltradosPorEstado.filter((gasto) =>
-      gasto.desc_gas.toLowerCase().includes(busqueda.toLowerCase()),
-    );
-  }, [estadoSeleccionado, gastos, busqueda]);
+        return (
+          fechaParseada >= startOfDay(dateRange.from) &&
+          fechaParseada <= endOfDay(dateRange.to)
+        );
+      })
+      .filter((gasto) =>
+        gasto.desc_gas.toLowerCase().includes(busqueda.toLowerCase()),
+      );
+  }, [gastos, dateRange, busqueda]);
 
   const totalGastado = useMemo(() => {
     return gastosFiltrados
@@ -316,6 +308,34 @@ export default function Page() {
           </GeneralDialog>
 
           <div className="flex items-center gap-3">
+            {/* Filtro de fechas */}
+            <DateRangeFilter value={dateRange} onChange={setDateRange} />
+
+            {/* dropdown de fechas */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="text-[12px] dark:bg-[#222224]">
+                  {labelQuickRange}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="border-border ">
+                <DropdownMenuItem onClick={() => handleQuickRange("hoy")}>
+                  Hoy
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleQuickRange("ayer")}>
+                  Ayer
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleQuickRange("mes")}>
+                  Este mes
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleQuickRange("año")}>
+                  Este Año
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Separador visual entre filtros y buscador */}
+            <Separator orientation="vertical" className="h-6" />
             <div className="relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                 <Search className="h-4 w-4 text-gray-500" />
@@ -344,146 +364,118 @@ export default function Page() {
           </div>
         </div>
       </div>
-
-      {/* Tarjetas estadísticas */}
-      <div className="flex flex-col gap-4 px-6 pt-6 md:flex-row md:justify-between">
-        {/* Total Gastado */}
-        <Card
-          onClick={() => manejarClickTarjeta("")}
-          className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
-            estadoSeleccionado === "" ? "ring-2 ring-secondary" : ""
-          } group`}
-        >
-          <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
-            <div className="flex-1">
-              <CardTitle className="text-sm font-light text-secondary-foreground">
-                Total Gastado
-              </CardTitle>
-              <div className="mt-2 flex items-center gap-5">
-                <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
-                  $
-                  {gastosFiltrados
-                    .reduce(
-                      (acc, gasto) => acc + Number(gasto.mont_gas || 0),
-                      0,
-                    )
-                    .toFixed(2)}
-                </span>
+      <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#111315]">
+        {/* Tarjetas estadísticas */}
+        <div className="flex flex-col gap-4 px-6 pt-6 md:flex-row md:justify-between">
+          {/* Total Gastado */}
+          <Card
+            onClick={() => manejarClickTarjeta("")}
+            className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
+              estadoSeleccionado === "" ? "ring-2 ring-secondary" : ""
+            } group`}
+          >
+            <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
+              <div className="flex-1">
+                <CardTitle className="text-sm font-light text-secondary-foreground">
+                  Total Gastado
+                </CardTitle>
+                <div className="mt-2 flex items-center gap-5">
+                  <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
+                    $
+                    {gastosFiltrados
+                      .reduce(
+                        (acc, gasto) => acc + Number(gasto.mont_gas || 0),
+                        0,
+                      )
+                      .toFixed(2)}
+                  </span>
+                </div>
+                <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                  {estadoSeleccionado === "hoy"
+                    ? "Gastos de Hoy"
+                    : estadoSeleccionado === "ayer"
+                      ? "Gastos de Ayer"
+                      : estadoSeleccionado === "esteMes"
+                        ? "Gastos de Este Mes"
+                        : estadoSeleccionado === "mesAnterior"
+                          ? "Gastos de Mes Anterior"
+                          : "Total General"}
+                </CardDescription>
               </div>
-              <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
-                {estadoSeleccionado === "hoy"
-                  ? "Gastos de Hoy"
-                  : estadoSeleccionado === "ayer"
-                    ? "Gastos de Ayer"
-                    : estadoSeleccionado === "esteMes"
-                      ? "Gastos de Este Mes"
-                      : estadoSeleccionado === "mesAnterior"
-                        ? "Gastos de Mes Anterior"
-                        : "Total General"}
-              </CardDescription>
-            </div>
-            <TrendingUpIcon className="h-7 w-7" />
-          </CardHeader>
-        </Card>
+              <TrendingUpIcon className="h-7 w-7" />
+            </CardHeader>
+          </Card>
 
-        {/* Gastos de Hoy */}
-        <Card
-          className={`bg-blanco relative flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
-            ["hoy", "ayer", "esteMes", "mesAnterior"].includes(
-              estadoSeleccionado,
-            )
-              ? "ring-2 ring-secondary"
-              : ""
-          } group`}
-        >
-          {/* Botón Dropdown */}
-          <div className="absolute right-4 top-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="icon" variant="ghost" className="h-6 w-6 p-0">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="border-border">
-                <DropdownMenuItem onClick={() => manejarClickTarjeta("hoy")}>
-                  Hoy
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => manejarClickTarjeta("ayer")}>
-                  Ayer
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => manejarClickTarjeta("esteMes")}
-                >
-                  Este Mes
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => manejarClickTarjeta("mesAnterior")}
-                >
-                  Mes Anterior
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
-            <div className="flex-1">
-              <CardTitle className="text-sm font-light text-secondary-foreground">
-                Total Filtrado
-              </CardTitle>
-              <div className="mt-2 flex items-center gap-5">
-                <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
-                  $
-                  {gastosFiltrados
-                    .reduce(
-                      (acc, gasto) => acc + Number(gasto.mont_gas || 0),
-                      0,
-                    )
-                    .toFixed(2)}
-                </span>
+          {/* Gastos de Hoy */}
+          <Card
+            className={`bg-blanco relative flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
+              ["hoy", "ayer", "esteMes", "mesAnterior"].includes(
+                estadoSeleccionado,
+              )
+                ? "ring-2 ring-secondary"
+                : ""
+            } group`}
+          >
+            <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
+              <div className="flex-1">
+                <CardTitle className="text-sm font-light text-secondary-foreground">
+                  Total Filtrado
+                </CardTitle>
+                <div className="mt-2 flex items-center gap-5">
+                  <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
+                    $
+                    {gastosFiltrados
+                      .reduce(
+                        (acc, gasto) => acc + Number(gasto.mont_gas || 0),
+                        0,
+                      )
+                      .toFixed(2)}
+                  </span>
+                </div>
+                <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                  {estadoSeleccionado
+                    ? `Filtrando: ${estadoSeleccionado}`
+                    : "Todos los gastos"}
+                </CardDescription>
               </div>
-              <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
-                {estadoSeleccionado
-                  ? `Filtrando: ${estadoSeleccionado}`
-                  : "Todos los gastos"}
-              </CardDescription>
-            </div>
-            <CalendarDays className="h-7 w-7" />
-          </CardHeader>
-        </Card>
+              <CalendarDays className="h-7 w-7" />
+            </CardHeader>
+          </Card>
 
-        {/* Número de Gastos */}
-        <Card
-          onClick={() => manejarClickTarjeta("numero")}
-          className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
-            estadoSeleccionado === "numero" ? "ring-2 ring-secondary" : ""
-          } group`}
-        >
-          <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
-            <div className="flex-1">
-              <CardTitle className="text-sm font-light text-secondary-foreground">
-                Número de Gastos
-              </CardTitle>
-              <div className="mt-2 flex items-center gap-5">
-                <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
-                  {gastosFiltrados.length}
-                </span>
+          {/* Número de Gastos */}
+          <Card
+            onClick={() => manejarClickTarjeta("numero")}
+            className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
+              estadoSeleccionado === "numero" ? "ring-2 ring-secondary" : ""
+            } group`}
+          >
+            <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
+              <div className="flex-1">
+                <CardTitle className="text-sm font-light text-secondary-foreground">
+                  Número de Gastos
+                </CardTitle>
+                <div className="mt-2 flex items-center gap-5">
+                  <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
+                    {gastosFiltrados.length}
+                  </span>
+                </div>
+                <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                  Registrados
+                </CardDescription>
               </div>
-              <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
-                Registrados
-              </CardDescription>
-            </div>
-            <ReceiptText className="h-7 w-7" />
-          </CardHeader>
-        </Card>
-      </div>
+              <ReceiptText className="h-7 w-7" />
+            </CardHeader>
+          </Card>
+        </div>
 
-      {/* Tabla */}
-      <div className="px-6">
-        <DataTable
-          data={gastosFiltrados}
-          columns={columnas}
-          onRowClick={(row) => console.log("Ver gasto:", row)}
-        />
+        {/* Tabla */}
+        <div className="px-6">
+          <DataTable
+            data={gastosFiltrados}
+            columns={columnas}
+            onRowClick={(row) => console.log("Ver gasto:", row)}
+          />
+        </div>
       </div>
 
       {gastoEditar && (

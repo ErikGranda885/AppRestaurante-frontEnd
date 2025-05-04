@@ -41,7 +41,7 @@ export function ComboboxEstado({ value, onChange }: ComboboxEstadoProps) {
         <Button
           variant="outline"
           role="combobox"
-          className="w-[200px] justify-between"
+          className="w-[130px] justify-between dark:bg-[#222224]"
         >
           {selectedLabel}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />

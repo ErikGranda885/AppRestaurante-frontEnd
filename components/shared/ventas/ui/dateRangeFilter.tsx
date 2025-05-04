@@ -35,7 +35,7 @@ export function DateRangeFilter({
             id="date"
             variant="outline"
             className={cn(
-              "w-[300px] justify-start text-[12px] font-semibold",
+              "w-[300px] justify-start text-[12px] font-semibold dark:bg-[#222224]",
               "focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0",
               !value && "text-muted-foreground",
             )}
@@ -57,11 +57,12 @@ export function DateRangeFilter({
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-auto border border-border p-0"
+          className="w-auto border border-border p-0 "
           align="start"
         >
           <Calendar
             initialFocus
+            className="dark:bg-[#222224]"
             mode="range"
             defaultMonth={value.from}
             selected={value}

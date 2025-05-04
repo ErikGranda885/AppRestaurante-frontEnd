@@ -27,7 +27,16 @@ import {
 import { DateRangeFilter } from "@/components/shared/ventas/ui/dateRangeFilter";
 import { DateRange } from "react-day-picker";
 import { Combobox } from "@/components/shared/varios/combobox";
-import { endOfDay, isWithinInterval, startOfDay } from "date-fns";
+import {
+  endOfDay,
+  endOfMonth,
+  endOfYear,
+  isWithinInterval,
+  startOfDay,
+  startOfMonth,
+  startOfYear,
+  subDays,
+} from "date-fns";
 import { ComboboxPago } from "@/components/shared/ventas/ui/comboboxPago";
 import { ComboboxEstado } from "@/components/shared/ventas/ui/comboboxEstado";
 import { TicketPreview } from "@/components/shared/ventas/ui/ticketPreview";
@@ -159,22 +168,39 @@ export default function Page() {
   if (loading) return <p className="px-6 py-4">Cargando ventas...</p>;
   if (error) return <p className="px-6 py-4 text-red-500">Error: {error}</p>;
 
-  const handleQuickRange = (rango: "hoy" | "ayer" | "mes") => {
-    const hoy = new Date();
-    const ayer = new Date();
-    ayer.setDate(hoy.getDate() - 1);
+  const handleQuickRange = (option: "hoy" | "ayer" | "mes" | "año") => {
+    let newRange: DateRange | null = null;
 
-    if (rango === "hoy") {
-      setDateRange({ from: startOfDay(hoy), to: endOfDay(hoy) });
+    if (option === "hoy") {
+      newRange = {
+        from: startOfDay(new Date()),
+        to: endOfDay(new Date()),
+      };
       setLabelQuickRange("Hoy");
-    } else if (rango === "ayer") {
-      setDateRange({ from: startOfDay(ayer), to: endOfDay(ayer) });
+    } else if (option === "ayer") {
+      const ayer = subDays(new Date(), 1);
+      newRange = {
+        from: startOfDay(ayer),
+        to: endOfDay(ayer),
+      };
       setLabelQuickRange("Ayer");
-    } else if (rango === "mes") {
-      const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-      setDateRange({ from: startOfDay(inicioMes), to: endOfDay(hoy) });
+    } else if (option === "mes") {
+      newRange = {
+        from: startOfMonth(new Date()),
+        to: endOfMonth(new Date()),
+      };
       setLabelQuickRange("Este mes");
+    } else if (option === "año") {
+      newRange = {
+        from: startOfYear(new Date()),
+        to: endOfYear(new Date()),
+      };
+      setLabelQuickRange("Este año");
+    } else {
+      return;
     }
+
+    setDateRange(newRange);
   };
   return (
     <>
@@ -205,7 +231,7 @@ export default function Page() {
               <div className="flex flex-col gap-1">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="text-[12px]">
+                    <Button variant="outline" className="text-[12px] dark:bg-[#222224]">
                       {labelQuickRange}
                     </Button>
                   </DropdownMenuTrigger>
@@ -218,6 +244,9 @@ export default function Page() {
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleQuickRange("mes")}>
                       Este mes
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickRange("año")}>
+                      Este año
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -257,7 +286,7 @@ export default function Page() {
                 <Input
                   type="text"
                   placeholder="Buscar orden por usuario"
-                  className="w-[250px] border border-border pl-10 text-[12px]"
+                  className="w-[250px] border border-border pl-10 text-[12px] dark:bg-[#222224]"
                   value={consultaBusqueda}
                   onChange={(e) => setConsultaBusqueda(e.target.value)}
                 />

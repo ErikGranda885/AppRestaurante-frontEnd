@@ -4,13 +4,12 @@ import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { Button } from "@/components/ui/button";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import {
-  ArrowDownToLine,
   ArrowLeft,
   Mail,
   MapPinned,
   Paperclip,
-  Pencil,
   Phone,
+  Printer,
   User,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
@@ -30,7 +29,6 @@ export default function DetalleCompraPage() {
   const purchaseId = Number(id_comp);
   const [compra, setCompra] = useState<ICompra | null>(null);
   const [detalleCompra, setDetalleCompra] = useState<IDetCompra[]>([]);
-  const [esEditado, setEsEditado] = useState(false);
   const [esEditadoObservacion, setEsEditadoObservacion] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
@@ -103,11 +101,6 @@ export default function DetalleCompraPage() {
       setCompra((prev) => prev && { ...prev, observ_comp: value });
     } else {
     }
-  };
-
-  /* Guardar observaciones */
-  const handleGuardarObservacion = () => {
-    setEsEditado(false);
   };
 
   if (loading) {
@@ -203,7 +196,7 @@ export default function DetalleCompraPage() {
             variant="secondary"
             onClick={() => handleImprimir()}
           >
-            <ArrowDownToLine className="h-4 w-4" /> Descargar
+            <Printer className="h-4 w-4" /> Imprimir
           </Button>
         </div>
 
@@ -380,56 +373,14 @@ export default function DetalleCompraPage() {
           <div className="space-y-4">
             <div className="rounded-md border border-border bg-white p-4 shadow-sm dark:bg-[#1a1a1a]">
               <div className="flex flex-col gap-1">
-                <div className="flex items-center justify-between">
+                <div className="">
                   <h3 className="mb-2 text-base font-semibold text-gray-800 dark:text-white">
                     Observaciones
                   </h3>
-                  <Button
-                    variant="ghost"
-                    className="text-xs"
-                    onClick={() => setEsEditadoObservacion((prev) => !prev)}
-                    disabled={!esEditado}
-                  >
-                    <Pencil
-                      className={`h-4 w-4 ${
-                        esEditadoObservacion
-                          ? "text-black dark:text-white"
-                          : "text-[#9ba0a0]"
-                      }`}
-                    />
-                  </Button>
+                  <div className="text-sm text-gray-500 dark:text-gray-300">
+                    {compra.observ_comp || ""}
+                  </div>
                 </div>
-                {esEditadoObservacion ? (
-                  <>
-                    <>
-                      <textarea
-                        className="max-h-40 w-full resize-none overflow-y-auto break-all rounded-md border-none px-2 py-1 text-sm text-gray-800 focus:outline-none focus:ring-0 dark:bg-[#1a1a1a] dark:text-white"
-                        value={compra.observ_comp || ""}
-                        onChange={handleCambioObservacion}
-                      />
-                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        {compra.observ_comp?.trim().split(/\s+/).filter(Boolean)
-                          .length || 0}{" "}
-                        / 50 palabras
-                      </p>
-                    </>
-
-                    <div className="flex justify-end">
-                      {esEditadoObservacion && (
-                        <Button
-                          className="mt-2 text-xs"
-                          onClick={handleGuardarObservacion}
-                        >
-                          Guardar
-                        </Button>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <p className="max-h-40 overflow-y-auto break-all text-sm text-gray-500 dark:text-gray-300">
-                    {compra.observ_comp || "Sin observaciones."}
-                  </p>
-                )}
               </div>
             </div>
             {/* Card de Validación de Pago */}
