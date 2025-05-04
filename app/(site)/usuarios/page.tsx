@@ -471,7 +471,7 @@ export default function PaginaUsuarios() {
             </div>
           </div>
         </div>
-        <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#111315] ">
+        <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#111315]">
           {/* Tarjetas de métricas */}
           <div className="flex flex-col gap-4 px-6 pt-6 md:flex-row md:justify-between">
             {/* Tarjeta: Usuarios Totales */}

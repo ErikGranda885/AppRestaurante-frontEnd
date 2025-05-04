@@ -35,6 +35,11 @@ export function NavUser({
     localStorage.removeItem("user_name");
     localStorage.removeItem("user_email");
     localStorage.removeItem("user_avatar");
+    localStorage.removeItem("cierreSeleccionado");
+    localStorage.removeItem("totalEfectivo");
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("usuarioActual");
+
     router.push("/login");
   };
 

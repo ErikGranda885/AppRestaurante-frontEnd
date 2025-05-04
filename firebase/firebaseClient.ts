@@ -1,4 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
 // Configuración de Firebase
@@ -16,3 +17,5 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 // Exporta storage inicializado
 export const storage = getStorage(app);
+export const auth = getAuth(app);
+export const provider = new GoogleAuthProvider();

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { loginConGoogle } from "@/firebase/loginConGoogle";
 
 export function LoginForm({
   className,
@@ -155,7 +156,50 @@ export function LoginForm({
             </span>
           </div>
 
-          <Button variant="outline" className="w-full">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={async () => {
+              try {
+                const usuario = await loginConGoogle();
+
+                // 🔁 Llama a tu backend para registrar/verificar el usuario
+                const response = await fetch(
+                  "http://localhost:5000/usuarios/google",
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      email: usuario.correo,
+                      nombre: usuario.nombre,
+                      foto: usuario.foto,
+                    }),
+                  },
+                );
+
+                const data = await response.json();
+
+                // ✅ Guarda en localStorage como en el login normal
+                localStorage.setItem(
+                  "usuarioActual",
+                  JSON.stringify(data.usuario),
+                );
+                localStorage.setItem("token", data.token);
+                localStorage.setItem("user_name", data.usuario.nom_usu);
+                localStorage.setItem("user_email", data.usuario.email_usu);
+                localStorage.setItem(
+                  "user_avatar",
+                  data.usuario.foto_usu || "",
+                );
+                localStorage.setItem("showWelcomeToast", "true");
+
+                router.push("/dashboard");
+              } catch (err) {
+                console.error("Error al iniciar sesión con Google:", err);
+                setGeneralError("Error al iniciar sesión con Google");
+              }
+            }}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="18"
