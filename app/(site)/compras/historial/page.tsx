@@ -8,7 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { ICompra, IDetCompra } from "@/lib/types";
-import { CloudDownload, Plus, Search, Upload } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle,
+  CloudDownload,
+  Plus,
+  Search,
+  Upload,
+} from "lucide-react";
 import React, { useEffect, useState } from "react";
 import {
   format,
@@ -36,6 +43,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function Page() {
   const [abrirCrear, setAbrirCrear] = useState(false);
@@ -49,6 +62,10 @@ export default function Page() {
   });
   const [labelQuickRange, setLabelQuickRange] = useState("Hoy");
   const [filtroPendientesPago, setFiltroPendientesPago] = useState(false);
+  const pendientesPago = compras.filter(
+    (c) => c.estado_pag_comp.toLowerCase() === "pendiente",
+  );
+  const totalPendientesPago = pendientesPago.length;
 
   useProtectedRoute();
   const router = useRouter();
@@ -295,7 +312,10 @@ export default function Page() {
                 {/* dropdown de fechas */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="text-[12px] dark:bg-[#222224]">
+                    <Button
+                      variant="outline"
+                      className="text-[12px] dark:bg-[#222224]"
+                    >
                       {labelQuickRange}
                     </Button>
                   </DropdownMenuTrigger>
@@ -314,7 +334,7 @@ export default function Page() {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                
+
                 {/* Separador visual entre filtros y buscador */}
                 <Separator orientation="vertical" className="h-6" />
                 {/* Buscador */}
@@ -373,7 +393,7 @@ export default function Page() {
                   periodo="Total"
                   iconColor="text-blue-400"
                   badgeColorClass="bg-blue-100 dark:bg-blue-800/30 text-blue-500 dark:text-blue-400"
-                  onClick={() => {}}
+                  onClick={() => setFiltroPendientesPago(false)}
                 />
               </div>
               {/* Items promedio de compras */}
@@ -390,22 +410,50 @@ export default function Page() {
               </div>
 
               <div className="flex-1">
-                <MetricCard
-                  titulo="Pendientes de pago"
-                  valor={compras
-                    .filter(
-                      (c) => c.estado_pag_comp.toLowerCase() === "pendiente",
-                    )
-                    .length.toString()}
-                  porcentaje=""
-                  periodo="Total"
-                  iconColor="text-yellow-400"
-                  badgeColorClass="bg-yellow-100 dark:bg-yellow-800/30 text-yellow-500 dark:text-yellow-400"
+                <div
                   onClick={() => setFiltroPendientesPago((prev) => !prev)}
-                  className={
-                    filtroPendientesPago ? "ring-2 ring-yellow-400" : ""
-                  }
-                />
+                  className={`bg-blanco group flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a]`}
+                >
+                  <div className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
+                    <div className="flex-1">
+                      <h3 className="text-sm font-light text-secondary-foreground">
+                        Pendientes de pago
+                      </h3>
+                      <div className="mt-2 flex items-center gap-5">
+                        <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
+                          {totalPendientesPago}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                        Total
+                      </p>
+                    </div>
+
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
+                            {totalPendientesPago > 0 ? (
+                              <div className="relative">
+                                <AlertTriangle className="h-6 w-6 text-yellow-500 transition-transform group-hover:scale-110" />
+                                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white shadow-md">
+                                  {totalPendientesPago}
+                                </span>
+                              </div>
+                            ) : (
+                              <CheckCircle className="h-6 w-6 text-green-500 transition-transform group-hover:scale-110" />
+                            )}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs">
+                          {totalPendientesPago > 0
+                            ? `${totalPendientesPago} compras pendientes de pago`
+                            : "No hay pendientes de pago"}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

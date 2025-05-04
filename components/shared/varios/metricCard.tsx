@@ -18,6 +18,7 @@ export interface MetricCardProps {
   customRightContent?: React.ReactNode;
   onClick?: () => void;
   className?: string;
+  
 }
 
 export const MetricCard: React.FC<MetricCardProps> = ({

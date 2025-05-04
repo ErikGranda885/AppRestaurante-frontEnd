@@ -26,6 +26,7 @@ import {
   ReceiptText,
   AlertTriangle,
   MoreHorizontal,
+  CheckCircle,
 } from "lucide-react";
 import React, { useState } from "react";
 
@@ -104,6 +105,9 @@ export default function Page() {
   const [estadoSeleccionado, setEstadoSeleccionado] =
     React.useState<string>("por cerrar");
   const [cierres, setCierres] = React.useState<ICierreDiario[]>([]);
+  const cantidadPendientes = cierres.filter(
+    (c) => c.esta_cier.toLowerCase() === "pendiente",
+  ).length;
 
   const fechaActual = new Date().toLocaleDateString("en-CA"); // en hora local
 
@@ -233,7 +237,10 @@ export default function Page() {
             {/* Dropdown de fechas rápidas */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="text-[12px] dark:bg-[#222224]">
+                <Button
+                  variant="outline"
+                  className="text-[12px] dark:bg-[#222224]"
+                >
                   {labelQuickRange}
                 </Button>
               </DropdownMenuTrigger>
@@ -293,7 +300,7 @@ export default function Page() {
             <div className="absolute right-4 top-4">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="icon" variant="ghost" className="h-6 w-6 p-0 ">
+                  <Button size="icon" variant="ghost" className="h-6 w-6 p-0">
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -344,8 +351,32 @@ export default function Page() {
                         : "Estado no seleccionado"}
                 </CardDescription>
               </div>
-              <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
-                <AlertTriangle className="h-7 w-7 text-yellow-500 transition-transform duration-300 group-hover:scale-110" />
+              <div
+                className="mt-4 flex flex-shrink-0 items-center justify-center transition-all duration-300 sm:mt-0"
+                onClick={() => {
+                  if (cantidadPendientes > 0) {
+                    setEstadoSeleccionado("pendientes");
+                  }
+                }}
+              >
+                {cantidadPendientes > 0 ? (
+                  <div
+                    className="group relative cursor-pointer transition-transform duration-300 hover:scale-105"
+                    title={`Tienes ${cantidadPendientes > 9 ? "9+" : cantidadPendientes} cierres pendientes`}
+                  >
+                    <AlertTriangle className="h-7 w-7 animate-pulse text-yellow-500" />
+                    <span className="absolute -right-1 -top-1 flex h-4 w-4 animate-bounce items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
+                      {cantidadPendientes > 9 ? "9+" : cantidadPendientes}
+                    </span>
+                  </div>
+                ) : (
+                  <div
+                    className="group cursor-default transition-opacity duration-300"
+                    title="Todos los cierres están al día"
+                  >
+                    <CheckCircle className="h-7 w-7 text-green-500 opacity-90 transition-opacity duration-300 group-hover:opacity-100" />
+                  </div>
+                )}
               </div>
             </CardHeader>
           </Card>
