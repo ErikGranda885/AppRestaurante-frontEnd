@@ -16,6 +16,7 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function NavMain({
   items,
@@ -32,6 +33,11 @@ export function NavMain({
     }[];
   }[];
 }) {
+  const pathname = usePathname();
+
+  // Verifica si está activa
+  const isActive = (url: string) => pathname.startsWith(url);
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Operaciones</SidebarGroupLabel>
@@ -41,14 +47,16 @@ export function NavMain({
             <Collapsible
               key={item.title}
               asChild
-              defaultOpen={item.isActive}
+              defaultOpen={item.items.some((sub) => isActive(sub.url))}
               className="group/collapsible"
             >
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton
                     tooltip={item.title}
-                    className="hover:bg-secondary"
+                    className={` ${
+                      isActive(item.url) ? "bg-primary text-white dark:text-black" : ""
+                    }`}
                   >
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
@@ -62,7 +70,11 @@ export function NavMain({
                         <SidebarMenuSubButton asChild>
                           <Link
                             href={subItem.url}
-                            className="hover:bg-secondary"
+                            className={` ${
+                              isActive(subItem.url)
+                                ? "bg-primary text-white dark:text-black"
+                                : ""
+                            }`}
                           >
                             <span>{subItem.title}</span>
                           </Link>
@@ -76,7 +88,12 @@ export function NavMain({
           ) : (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild tooltip={item.title}>
-                <Link href={item.url} className="hover:bg-secondary">
+                <Link
+                  href={item.url}
+                  className={` ${
+                    isActive(item.url) ? "bg-primary text-white dark:text-black" : ""
+                  }`}
+                >
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
                 </Link>
