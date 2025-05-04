@@ -47,7 +47,7 @@ export const CampoFecha: React.FC<CampoFechaProps> = ({
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal",
+                    "w-full justify-start text-left font-normal dark:bg-[#222224]",
                     !field.value && "text-muted-foreground",
                   )}
                 >
@@ -60,6 +60,7 @@ export const CampoFecha: React.FC<CampoFechaProps> = ({
               <PopoverContent className="w-auto p-0 border border-border" align="start">
                 <Calendar
                   mode="single"
+                  className="dark:bg-[#222224]"
                   selected={field.value}
                   onSelect={(date) => {
                     field.onChange(date);

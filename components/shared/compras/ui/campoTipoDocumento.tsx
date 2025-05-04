@@ -42,7 +42,7 @@ export const CampoTipoDocumento: React.FC<CampoTipoDocumentoProps> = ({
             <Select value={field.value || ""} onValueChange={field.onChange}>
               <SelectTrigger
                 className={cn(
-                  "w-full justify-between font-normal",
+                  "w-full justify-between font-normal dark:bg-[#222224]",
                   error ? "border-2 border-[#f31260]" : "",
                 )}
               >

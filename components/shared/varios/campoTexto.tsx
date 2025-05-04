@@ -26,7 +26,7 @@ export const CampoTexto: React.FC<CampoTextoProps> = ({
       name={name}
       render={({ field, fieldState: { error } }) => (
         <FormItem>
-          <FormLabel className="text-black dark:text-white">{label}</FormLabel>
+          <FormLabel className="text-black dark:text-white ">{label}</FormLabel>
           <FormControl>
             <Input
               type="text"
@@ -35,7 +35,7 @@ export const CampoTexto: React.FC<CampoTextoProps> = ({
               placeholder={placeholder}
               className={`${
                 error ? "border-2 border-[#f31260]" : ""
-              } w-full rounded-md`}
+              } w-full rounded-md dark:bg-[#222224]`}
             />
           </FormControl>
           <FormMessage className="error-text" />

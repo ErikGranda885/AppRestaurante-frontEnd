@@ -64,7 +64,7 @@ export const CampoProveedor: React.FC<CampoProveedorProps> = ({
                   role="combobox"
                   aria-expanded={open}
                   className={cn(
-                    "w-full justify-between font-normal",
+                    "w-full justify-between font-normal dark:bg-[#222224]",
                     error ? "border-2 border-[#f31260]" : "",
                   )}
                 >

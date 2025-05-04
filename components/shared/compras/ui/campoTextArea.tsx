@@ -30,7 +30,7 @@ export const CampoTextArea: React.FC<CampoTextAreaProps> = ({
             id={name}
             placeholder={placeholder || "Ingrese su texto aquí..."}
             className={cn(
-              " w-full resize-none",
+              " w-full resize-none dark:bg-[#222224]",
               error ? "border-2 border-[#f31260]" : "",
             )}
             {...field}

@@ -59,7 +59,7 @@ export const CampoNumero: React.FC<CampoNumeroProps> = ({
               }}
               className={`${
                 error ? "border-2 border-[#f31260]" : ""
-              } w-full rounded-md`}
+              } w-full rounded-md dark:bg-[#222224]`}
             />
           </FormControl>
           <FormMessage className="error-text" />
