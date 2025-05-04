@@ -72,7 +72,7 @@ export function NavMain({
                             href={subItem.url}
                             className={` ${
                               isActive(subItem.url)
-                                ? "bg-muted text-white "
+                                ? "bg-muted text-black dark:text-white "
                                 : ""
                             }`}
                           >

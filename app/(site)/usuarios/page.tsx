@@ -225,6 +225,7 @@ export default function PaginaUsuarios() {
       header: "Usuario",
       cell: ({ row }) => {
         const nombre = row.getValue("usuario") as string;
+        const inicial = nombre.charAt(0).toUpperCase();
         const imagen = row.original.img_usu as string;
 
         return (
@@ -240,12 +241,7 @@ export default function PaginaUsuarios() {
                 className="object-cover"
               />
             </div>
-            <span
-              className="max-w-[150px] truncate font-medium capitalize"
-              title={nombre}
-            >
-              {nombre}
-            </span>
+            <span className="font-medium capitalize">{inicial}. Usuario</span>
           </div>
         );
       },
@@ -261,9 +257,16 @@ export default function PaginaUsuarios() {
           Correo
         </Button>
       ),
-      cell: ({ row }) => (
-        <div className="lowercase">{row.getValue("correo")}</div>
-      ),
+      cell: ({ row }) => {
+        const correo = row.getValue("correo") as string;
+        const [usuario, dominio] = correo.split("@");
+        const correoProtegido =
+          usuario.length > 1
+            ? `${usuario[0]}*****@${dominio}`
+            : `*****@${dominio}`;
+
+        return <div className="lowercase">{correoProtegido}</div>;
+      },
     },
     {
       accessorKey: "rolNombre",
