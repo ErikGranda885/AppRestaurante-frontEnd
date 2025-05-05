@@ -49,6 +49,7 @@ import { SERVICIOS } from "@/services/usuarios.service";
 import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
 import { BulkUploadUsersDialog } from "@/components/shared/usuarios/formularios/cargaUsers";
 import Image from "next/image";
+import { parse } from "date-fns";
 // Importa el componente de diálogo generalizado para confirmar acciones
 
 // Tipo de dato para los usuarios
@@ -60,6 +61,8 @@ export type DataUsers = {
   rol: string;
   rolNombre: string;
   img_usu?: string;
+  fechaCreacion?: Date;
+  fechaActualizacion?: Date;
 };
 
 // Tipo para definir la acción a confirmar (activar o inactivar)
@@ -76,6 +79,33 @@ export default function PaginaUsuarios() {
   // Estados
   const [rolOpciones, setRolOpciones] = React.useState<IRol[]>([]);
   const [usuarios, setUsuarios] = React.useState<DataUsers[]>([]);
+  const ahora = new Date();
+  const mesActual = ahora.getMonth();
+  const anioActual = ahora.getFullYear();
+
+  const nuevosEsteMes = usuarios.filter(
+    (u) =>
+      u.fechaCreacion &&
+      u.fechaCreacion.getMonth() === mesActual &&
+      u.fechaCreacion.getFullYear() === anioActual,
+  ).length;
+
+  const inactivosEsteMes = usuarios.filter(
+    (u) =>
+      u.estado?.toLowerCase() === "inactivo" &&
+      u.fechaActualizacion &&
+      u.fechaActualizacion.getMonth() === mesActual &&
+      u.fechaActualizacion.getFullYear() === anioActual,
+  ).length;
+
+  const activosEsteMes = usuarios.filter(
+    (u) =>
+      u.estado?.toLowerCase() === "activo" &&
+      u.fechaActualizacion &&
+      u.fechaActualizacion.getMonth() === mesActual &&
+      u.fechaActualizacion.getFullYear() === anioActual,
+  ).length;
+
   const [abrirCargaMasiva, setAbrirCargaMasiva] = React.useState(false);
   const [estadoSeleccionado, setEstadoSeleccionado] =
     React.useState<string>("");
@@ -109,6 +139,16 @@ export default function PaginaUsuarios() {
           rol: item.rol_usu.id_rol.toString(),
           rolNombre: item.rol_usu.nom_rol,
           img_usu: item.img_usu || "",
+          fechaCreacion: parse(
+            item.crea_en_usu,
+            "dd-MM-yyyy HH:mm:ss",
+            new Date(),
+          ),
+          fechaActualizacion: parse(
+            item.act_en_usu,
+            "dd-MM-yyyy HH:mm:ss",
+            new Date(),
+          ),
         }));
         setUsuarios(transformados);
       })
@@ -433,6 +473,16 @@ export default function PaginaUsuarios() {
                     rol: rolData.id_rol.toString(),
                     rolNombre: rolData.nom_rol,
                     img_usu: data.usuario.img_usu || "",
+                    fechaCreacion: parse(
+                      data.usuario.crea_en_usu,
+                      "dd-MM-yyyy HH:mm:ss",
+                      new Date(),
+                    ),
+                    fechaActualizacion: parse(
+                      data.usuario.act_en_usu,
+                      "dd-MM-yyyy HH:mm:ss",
+                      new Date(),
+                    ),
                   };
                   setUsuarios((prev) => [...prev, usuarioCreado]);
                   setAbrirCrear(false);
@@ -494,7 +544,9 @@ export default function PaginaUsuarios() {
                       {usuarios.length}
                     </span>
                     <span className="inline-block rounded-md bg-secondary px-2 py-1 text-sm font-bold dark:bg-green-800/30">
-                      +12%
+                      {activosEsteMes > 0
+                        ? `+${activosEsteMes} nuevos usuarios`
+                        : activosEsteMes}
                     </span>
                   </div>
                   <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
@@ -529,7 +581,7 @@ export default function PaginaUsuarios() {
                       }
                     </span>
                     <span className="inline-block rounded-md bg-green-100 px-2 py-1 text-sm font-bold text-green-500 dark:bg-green-800/30 dark:text-green-400">
-                      +12%
+                      {nuevosEsteMes > 0 ? `+${nuevosEsteMes}` : nuevosEsteMes}
                     </span>
                   </div>
                   <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
@@ -564,7 +616,9 @@ export default function PaginaUsuarios() {
                       }
                     </span>
                     <span className="inline-block rounded-md bg-red-100 px-2 py-1 text-sm font-bold dark:bg-red-800/30">
-                      -8%
+                      {inactivosEsteMes > 0
+                        ? `-${inactivosEsteMes}`
+                        : inactivosEsteMes}
                     </span>
                   </div>
                   <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
@@ -660,6 +714,16 @@ export default function PaginaUsuarios() {
                           data.usuario.rol_usu.toString(),
                       )?.nom_rol || data.usuario.rol_usu.toString(),
                     img_usu: data.usuario.img_usu || "",
+                    fechaCreacion: parse(
+                      data.usuario.crea_en_usu,
+                      "dd-MM-yyyy HH:mm:ss",
+                      new Date(),
+                    ),
+                    fechaActualizacion: parse(
+                      data.usuario.act_en_usu,
+                      "dd-MM-yyyy HH:mm:ss",
+                      new Date(),
+                    ),
                   };
                   setUsuarios((prev) =>
                     prev.map((u) =>
