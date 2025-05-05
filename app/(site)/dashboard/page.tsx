@@ -1,19 +1,17 @@
 "use client";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
-import { ModalInactividad } from "@/components/shared/varios/modalInactivar";
-import { useInactividadLogOut } from "@/hooks/auth/InactividadLogOut";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  TrendingUp,
   ShoppingCart,
   Wallet,
   AlertTriangle,
   CircleDollarSign,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { HoraActual } from "@/components/shared/dashboard/ui/horaActual";
 
 export default function Dashboard() {
   useProtectedRoute();
@@ -75,20 +73,7 @@ export default function Dashboard() {
             </div>
             {/* Hora dinamica */}
             <div className="col-span-2 text-right text-sm">
-              <p className="text-2xl font-semibold">
-                {horaActual.toLocaleTimeString("es-EC", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                })}
-              </p>
-              <p>
-                {horaActual.toLocaleDateString("es-EC", {
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </p>
+              <HoraActual />
             </div>
             {/* Tarjetas métricas con grid */}
             <div className="col-span-9 grid">
@@ -287,14 +272,11 @@ export default function Dashboard() {
                   </CardContent>
                 </Card>
                 {/* Graficas */}
-                <div className="flex h-[435px] flex-1 flex-col gap-4 min-w-[350px]">
-
+                <div className="flex h-[435px] min-w-[350px] flex-1 flex-col gap-4">
                   {/* Ventas por categoria */}
                   <Card className="h-1/2 w-full rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
                     <CardHeader className="pb-2">
-                      <div className="flex items-center justify-between py-5">
-                        
-                      </div>
+                      <div className="flex items-center justify-between py-5"></div>
                     </CardHeader>
 
                     <CardContent className="space-y-4 pt-1"></CardContent>
