@@ -20,7 +20,7 @@ export function HoraActual() {
 
   return (
     <div className="text-right text-sm text-muted-foreground">
-      <p className="text-2xl font-semibold text-white">
+      <p className="text-2xl font-semibold">
         {horaActual.toLocaleTimeString("es-EC", {
           hour: "2-digit",
           minute: "2-digit",

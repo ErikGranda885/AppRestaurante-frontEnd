@@ -9,9 +9,12 @@ import {
   Wallet,
   AlertTriangle,
   CircleDollarSign,
+  ArrowUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HoraActual } from "@/components/shared/dashboard/ui/horaActual";
+import { GraficoVentasPorCategoria } from "@/components/shared/dashboard/ui/graficoVentasPorCategoria";
+import { GraficoVentasPorPeriodo } from "@/components/shared/dashboard/ui/graficoVentasPorPeriodo";
 
 export default function Dashboard() {
   useProtectedRoute();
@@ -61,7 +64,7 @@ export default function Dashboard() {
         submenu={false}
         isLoading={false}
       >
-        <div className="space-y-6 px-4 py-3">
+        <div className="space-y-6 px-4">
           {/* Encabezado con grid */}
           <div className="grid grid-cols-12 items-start justify-between gap-4">
             {/* Saludo */}
@@ -88,7 +91,10 @@ export default function Dashboard() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-2xl font-bold">$526.00</p>
-                    <p className="text-sm text-green-400">+3.2% más que ayer</p>
+                    <div className="mt-1 flex gap-1 text-green-400">
+                      <ArrowUp className="h-5 w-5" />
+                      <p className="text-sm">3.2% más que ayer</p>
+                    </div>
                   </CardContent>
                 </Card>
                 {/* Compras realizadas */}
@@ -101,7 +107,7 @@ export default function Dashboard() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-2xl font-bold">$210.00</p>
-                    <p className="text-sm text-yellow-400">+2.1% vs ayer</p>
+                    <p className="text-sm text-yellow-400">5 pedidos</p>
                   </CardContent>
                 </Card>
                 {/* Gastos totales */}
@@ -114,7 +120,7 @@ export default function Dashboard() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-2xl font-bold">$90.00</p>
-                    <p className="text-sm text-red-400">+1.5% vs ayer</p>
+                    <p className="text-sm text-red-400">12 pagos</p>
                   </CardContent>
                 </Card>
                 {/* Diferencia de caja */}
@@ -133,7 +139,7 @@ export default function Dashboard() {
               </div>
             </div>
             {/* Nueva card */}
-            <div className="col-span-3 col-start-10 row-span-5 row-start-1 grid h-[650px]">
+            <div className="col-span-3 col-start-10 row-span-3 row-start-1 grid h-[670px]">
               <Card className="w-full border border-border dark:bg-[#1e1e1e] dark:text-white">
                 <CardHeader className="flex-row items-center justify-between">
                   <CardTitle> </CardTitle>
@@ -143,7 +149,7 @@ export default function Dashboard() {
             </div>
             {/* Cards a ampliar en alto */}
             <div className="col-span-9 row-start-3 grid">
-              <div className="flex h-[435px] w-full justify-between gap-4">
+              <div className="flex h-full w-full justify-between gap-4">
                 {/* Productos populares */}
                 <Card className="h-full w-[280px] rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
                   <CardHeader className="pb-2">
@@ -207,7 +213,7 @@ export default function Dashboard() {
                 </Card>
 
                 {/* Productos Por caducar */}
-                <Card className="h-full w-[280px] rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
+                <Card className="h-[455px] w-[280px] rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between py-5">
                       <CardTitle className="text-md font-semibold">
@@ -271,22 +277,12 @@ export default function Dashboard() {
                     ))}
                   </CardContent>
                 </Card>
-                {/* Graficas */}
+                {/* GRAFICOS */}
                 <div className="flex h-[435px] min-w-[350px] flex-1 flex-col gap-4">
-                  {/* Ventas por categoria */}
-                  <Card className="h-1/2 w-full rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center justify-between py-5"></div>
-                    </CardHeader>
-
-                    <CardContent className="space-y-4 pt-1"></CardContent>
-                  </Card>
-                  {/* Grafica por forma de pago */}
-                  <Card className="h-1/2 w-full rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
-                    <CardHeader className="pb-2"></CardHeader>
-
-                    <CardContent className="space-y-4 pt-1"></CardContent>
-                  </Card>
+                  {/* Ventas por categoría */}
+                  <GraficoVentasPorCategoria />
+                  {/* Gráfica de ventas por período */}
+                  <GraficoVentasPorPeriodo />
                 </div>
               </div>
             </div>
