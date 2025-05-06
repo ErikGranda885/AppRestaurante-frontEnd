@@ -18,43 +18,31 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-const datosCrudos = [
-  { nombre: "Bebidas", vendido: 340 },
-  { nombre: "Entradas", vendido: 220 },
-  { nombre: "Platos Fuertes", vendido: 530 },
-  { nombre: "Postres", vendido: 150 },
-  { nombre: "Postres", vendido: 150 },
-  { nombre: "Platos Fuertes", vendido: 530 },
-  { nombre: "Comida rápida", vendido: 1000 },
-];
+import { useVentasPorCategoria } from "@/hooks/dashboard/useVentasPorCategoria";
 
-// Agrupar automáticamente por categoría
-const datosAgrupados = Object.values(
-  datosCrudos.reduce(
-    (acc, curr) => {
-      if (!acc[curr.nombre]) {
-        acc[curr.nombre] = { nombre: curr.nombre, vendido: 0 };
-      }
-      acc[curr.nombre].vendido += curr.vendido;
-      return acc;
-    },
-    {} as Record<string, { nombre: string; vendido: number }>,
-  ),
-);
-
-// Paleta de colores (expandible)
 const colores = [
-  "#3eab78",
-  "#eab308",
-  "#ef4444",
-  "#6366f1",
-  "#06b6d4",
-  "#f97316",
-  "#8b5cf6",
-  "#22c55e",
+  "#3eab78", "#eab308", "#ef4444", "#6366f1",
+  "#06b6d4", "#f97316", "#8b5cf6", "#22c55e",
 ];
+
+// Función para abreviar y formatear el número
+const formatearDinero = (valor: number) => {
+  if (valor >= 1_000_000) return `$${(valor / 1_000_000).toFixed(1)}M`;
+  if (valor >= 1_000) return `$${(valor / 1_000).toFixed(1)}k`;
+  return `$${valor.toFixed(2)}`;
+};
 
 export function GraficoVentasPorCategoria() {
+  const { datos, loading } = useVentasPorCategoria();
+
+  // Asegurar que los datos tengan la estructura correcta
+  const datosFormateados = Array.isArray(datos)
+    ? datos.map((item) => ({
+        nombre: item.categoria,
+        vendido: Number(item.total),
+      }))
+    : [];
+
   return (
     <Card className="h-1/2 w-full border border-border dark:bg-[#1e1e1e] dark:text-white">
       <CardHeader className="pt-5">
@@ -64,25 +52,37 @@ export function GraficoVentasPorCategoria() {
         </CardDescription>
       </CardHeader>
       <CardContent className="h-[180px] px-5">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={datosAgrupados}
-            margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-            className="dark:text-black"
-          >
-            <XAxis dataKey="nombre" stroke="#888888" />
-            <YAxis stroke="#888888" />
-            <Tooltip />
-            <Bar dataKey="vendido" radius={[4, 4, 0, 0]}>
-              {datosAgrupados.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={colores[index % colores.length]}
-                />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+        {loading ? (
+          <p className="text-muted-foreground text-sm">Cargando datos...</p>
+        ) : datosFormateados.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No hay datos para mostrar.</p>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={datosFormateados}
+              margin={{ top: 10, right: 10, left: -11, bottom: 0 }}
+              className="dark:text-black"
+            >
+              <XAxis dataKey="nombre" stroke="#888888" />
+              <YAxis
+                stroke="#888888"
+                tickFormatter={(valor) => formatearDinero(valor)}
+              />
+              <Tooltip
+                formatter={(valor: number) => formatearDinero(valor)}
+                labelClassName="text-xs"
+              />
+              <Bar dataKey="vendido" radius={[4, 4, 0, 0]}>
+                {datosFormateados.map((entry, index) => (
+                  <Cell
+                    key={`cell-${entry.nombre}-${index}`}
+                    fill={colores[index % colores.length]}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </CardContent>
     </Card>
   );

@@ -198,12 +198,11 @@ export default function Dashboard() {
           <div className="col-span-9 row-start-3 grid">
             <div className="flex h-full w-full justify-between gap-4">
               {/* Productos populares */}
-              {/* Productos populares */}
               <Card className="h-full w-[280px] rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between py-5">
                     <CardTitle className="text-md font-semibold">
-                      Productos Populares
+                      Productos más vendidos
                     </CardTitle>
                     <span className="cursor-pointer text-xs font-medium text-blue-500 hover:underline">
                       Ver Todos
@@ -260,7 +259,7 @@ export default function Dashboard() {
                       />
                       <div className="flex flex-col">
                         <p
-                          className="max-w-[180px] truncate text-sm font-medium text-white"
+                          className="max-w-[180px] truncate text-sm font-medium"
                           title={prod.name}
                         >
                           {prod.name}
