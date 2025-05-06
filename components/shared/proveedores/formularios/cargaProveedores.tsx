@@ -251,9 +251,10 @@ export function BulkUploadProveedoresDialog({
                 Descarga y llena la plantilla con los datos de los proveedores.
               </li>
               <li>
-                Campos requeridos:  <strong className="dark:text-primary">
-                nom_prov, email_prov, cont_prov, tel_prov,
-                ruc_prov, direc_prov
+                Campos requeridos:{" "}
+                <strong className="dark:text-primary">
+                  nom_prov, email_prov, cont_prov, tel_prov, ruc_prov,
+                  direc_prov
                 </strong>
               </li>
               <li>
@@ -289,7 +290,7 @@ export function BulkUploadProveedoresDialog({
           </div>
 
           {previewData.length > 0 && (
-            <div className="max-h-[300px] overflow-auto border border-border">
+            <div className="max-h-[300px] max-w-[680px] overflow-auto border border-border">
               <table className="min-w-full border-collapse">
                 <thead className="bg-muted">
                   <tr>
@@ -329,10 +330,7 @@ export function BulkUploadProveedoresDialog({
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
-          <Button
-            onClick={handleUpload}
-            disabled={loading}
-          >
+          <Button onClick={handleUpload} disabled={loading}>
             {loading ? "Cargando..." : "Guardar Proveedores"}
           </Button>
         </DialogFooter>

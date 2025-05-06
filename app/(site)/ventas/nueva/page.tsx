@@ -46,6 +46,9 @@ export default function Page() {
   useProtectedRoute();
 
   // Estados para productos, orden y filtros
+  const user = JSON.parse(localStorage.getItem("usuarioActual") || "{}");
+  const idUsuario = user.id_usu ?? 0;
+
   const [products, setProducts] = useState<IExtendedProduct[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("Todos");
@@ -326,7 +329,7 @@ export default function Page() {
         fech_vent: new Date().toISOString(),
         est_vent: "Sin cerrar",
         tip_pag_vent: metodoPago,
-        usu_vent: parseInt(localStorage.getItem("user_id") || "0"),
+        usu_vent: idUsuario,
         comprobante_num_vent:
           metodoPago === "transferencia" ? comprobanteNumero : null,
         comprobante_img_vent: metodoPago === "transferencia" ? urlImg : null,
