@@ -19,55 +19,38 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useVentasPorPeriodo } from "@/hooks/dashboard/useVentaPorPeriodo";
 
-const datosMensuales = [
-  { periodo: "Enero", ventas: 1200 },
-  { periodo: "Febrero", ventas: 980 },
-  { periodo: "Marzo", ventas: 1450 },
-  { periodo: "Abril", ventas: 800 },
-  { periodo: "Mayo", ventas: 1600 },
-];
-
-const datosSemanales = [
-  { periodo: "Semana 1", ventas: 320 },
-  { periodo: "Semana 2", ventas: 450 },
-  { periodo: "Semana 3", ventas: 290 },
-  { periodo: "Semana 4", ventas: 510 },
-];
-
-const datosDiarios = [
-  { periodo: "Lun", ventas: 120 },
-  { periodo: "Mar", ventas: 150 },
-  { periodo: "Mié", ventas: 180 },
-  { periodo: "Jue", ventas: 90 },
-  { periodo: "Vie", ventas: 200 },
-  { periodo: "Sáb", ventas: 220 },
-  { periodo: "Dom", ventas: 160 },
-];
+// Formateador para valores monetarios con $ y k/m
+function formatCurrency(value: number): string {
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}m`;
+  if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}k`;
+  return `$${value.toFixed(2)}`;
+}
 
 export function GraficoVentasPorPeriodo() {
   const [tab, setTab] = useState("mes");
+  const { datos, loading } = useVentasPorPeriodo();
 
   const obtenerDatos = () => {
     switch (tab) {
       case "mes":
-        return datosMensuales;
+        return datos.mensual;
       case "semana":
-        return datosSemanales;
+        return datos.semanal;
       case "dia":
-        return datosDiarios;
+        return datos.diario;
       default:
         return [];
     }
   };
 
-  const datos = obtenerDatos();
+  const datosFiltrados = obtenerDatos();
 
   return (
     <Tabs value={tab} onValueChange={setTab} className="w-full">
-      <Card className="w-full border border-border dark:bg-[#1e1e1e] dark:text-white h-[220px]">
+      <Card className="h-[220px] w-full border border-border dark:bg-[#1e1e1e] dark:text-white">
         <CardHeader className="flex-row items-start justify-between">
           <div className="mt-2">
             <CardTitle>Ventas por Período</CardTitle>
@@ -84,37 +67,46 @@ export function GraficoVentasPorPeriodo() {
 
         <CardContent className="px-4 pb-4">
           <TabsContent value={tab}>
-            <div className=" w-full text-black">
-              {" "}
-              {/* altura mínima asegurada */}
-              <ResponsiveContainer width="100%" height={125}>
-                <LineChart
-                  data={datos}
-                  margin={{ top: 20, right: 15, left: -20, bottom: -12 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="periodo" stroke="#888888" />
-                  <YAxis stroke="#888888" />
-                  <Tooltip  />
-                  <Line
-                    type="monotone"
-                    dataKey="ventas"
-                    stroke="#bcbcbc"
-                    strokeWidth={2}
-                    dot={{ fill: "#3eab78" }}
-                    activeDot={{ r: 6 }}
-                    
+            <div className="w-full text-black">
+              {loading ? (
+                <p className="text-sm text-muted-foreground">
+                  Cargando datos...
+                </p>
+              ) : (
+                <ResponsiveContainer width="100%" height={125}>
+                  <LineChart
+                    data={datosFiltrados}
+                    margin={{ top: 20, right: 15, left: -1, bottom: -12 }}
                   >
-                    <LabelList
-                      dataKey="ventas"
-                      position="top"
-                      offset={10}
-                      className="fill-foreground"
-                      fontSize={12}
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="periodo" stroke="#888888" />
+                    <YAxis stroke="#888888" tickFormatter={formatCurrency} />
+                    <Tooltip
+                      formatter={(value) =>
+                        typeof value === "number"
+                          ? formatCurrency(value)
+                          : value
+                      }
                     />
-                  </Line>
-                </LineChart>
-              </ResponsiveContainer>
+                    <Line
+                      type="monotone"
+                      dataKey="ventas"
+                      stroke="#bcbcbc"
+                      strokeWidth={2}
+                      dot={{ fill: "#3eab78" }}
+                      activeDot={{ r: 6 }}
+                    >
+                      <LabelList
+                        dataKey="ventas"
+                        position="top"
+                        offset={10}
+                        formatter={formatCurrency}
+                        fontSize={12}
+                      />
+                    </Line>
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </TabsContent>
         </CardContent>

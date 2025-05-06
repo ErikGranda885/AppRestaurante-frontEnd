@@ -4,4 +4,5 @@ export const SERVICIOS_DASHBOARD = {
   populares: "http://localhost:5000/productos/populares",
   porCaducar: "http://localhost:5000/inventario/caducar",
   ventasPorCategoria: "http://localhost:5000/ventas/categoria",
+  ventasPorPeriodo: "http://localhost:5000/ventas/periodo",
 };
