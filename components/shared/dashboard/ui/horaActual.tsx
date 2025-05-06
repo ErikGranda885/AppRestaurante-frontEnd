@@ -19,7 +19,7 @@ export function HoraActual() {
   if (!horaActual) return null;
 
   return (
-    <div className="text-right text-sm text-muted-foreground">
+    <div className="text-right text-sm">
       <p className="text-2xl font-semibold">
         {horaActual.toLocaleTimeString("es-EC", {
           hour: "2-digit",

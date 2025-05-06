@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { HoraActual } from "@/components/shared/dashboard/ui/horaActual";
 import { GraficoVentasPorCategoria } from "@/components/shared/dashboard/ui/graficoVentasPorCategoria";
 import { GraficoVentasPorPeriodo } from "@/components/shared/dashboard/ui/graficoVentasPorPeriodo";
+import OrdenesEnProceso from "@/components/shared/dashboard/ui/ordenesProgreso";
 
 export default function Dashboard() {
   useProtectedRoute();
@@ -140,13 +141,9 @@ export default function Dashboard() {
             </div>
             {/* Nueva card */}
             <div className="col-span-3 col-start-10 row-span-3 row-start-1 grid h-[670px]">
-              <Card className="w-full border border-border dark:bg-[#1e1e1e] dark:text-white">
-                <CardHeader className="flex-row items-center justify-between">
-                  <CardTitle> </CardTitle>
-                </CardHeader>
-                <CardContent></CardContent>
-              </Card>
+              <OrdenesEnProceso />
             </div>
+
             {/* Cards a ampliar en alto */}
             <div className="col-span-9 row-start-3 grid">
               <div className="flex h-full w-full justify-between gap-4">
