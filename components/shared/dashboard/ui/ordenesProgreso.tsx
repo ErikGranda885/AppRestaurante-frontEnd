@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Search } from "lucide-react";
 
 const ordenes = [
   {
@@ -226,7 +227,7 @@ export default function OrdenesEnProceso() {
           type="single"
           value={filtro}
           onValueChange={(val: any) => val && setFiltro(val)}
-          className="w-full border border-border rounded-md"
+          className="w-full rounded-md border border-border"
         >
           <ToggleGroupItem
             value="En progreso"
@@ -241,14 +242,16 @@ export default function OrdenesEnProceso() {
             Pago pendiente
           </ToggleGroupItem>
         </ToggleGroup>
-
-        <Input
-          type="text"
-          placeholder="Buscar orden..."
-          className="mt-2 w-full text-sm"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        <div className="relative mt-2">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Buscar orden..."
+            className="w-full pl-10 text-sm border border-border"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
       </CardHeader>
 
       <CardContent className="h-[520px] p-0">

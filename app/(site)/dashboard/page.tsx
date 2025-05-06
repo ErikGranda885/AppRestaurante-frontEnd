@@ -11,7 +11,6 @@ import {
   CircleDollarSign,
   ArrowUp,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { HoraActual } from "@/components/shared/dashboard/ui/horaActual";
 import { GraficoVentasPorCategoria } from "@/components/shared/dashboard/ui/graficoVentasPorCategoria";
 import { GraficoVentasPorPeriodo } from "@/components/shared/dashboard/ui/graficoVentasPorPeriodo";
@@ -19,26 +18,28 @@ import OrdenesEnProceso from "@/components/shared/dashboard/ui/ordenesProgreso";
 
 export default function Dashboard() {
   useProtectedRoute();
-
   const [horaActual, setHoraActual] = useState(new Date());
-  const [userName, setUserName] = useState<string | null>("");
+  const [userName, setUserName] = useState<string | null>(null);
 
   useEffect(() => {
     const showToast = localStorage.getItem("showWelcomeToast");
     const storedUserName = localStorage.getItem("user_name");
-
-    if (showToast === "true" && storedUserName) {
+  
+    if (storedUserName) {
       setUserName(storedUserName);
+    }
+  
+    if (showToast === "true" && storedUserName) {
       ToastSuccess({
         message: `Bienvenido de nuevo ${storedUserName}`,
       });
       localStorage.removeItem("showWelcomeToast");
     }
-
+  
     const intervalo = setInterval(() => {
       setHoraActual(new Date());
     }, 1000);
-
+  
     return () => clearInterval(intervalo);
   }, []);
 
