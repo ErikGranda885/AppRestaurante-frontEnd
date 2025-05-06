@@ -17,6 +17,7 @@ import { useUserData } from "@/hooks/dashboard/useUserData";
 import { useHoraActual } from "@/hooks/dashboard/useHoraActual";
 import { useDashboardMetrics } from "@/hooks/dashboard/useDashboardMetrics";
 import { useProductosDashboard } from "@/hooks/dashboard/useProductosDashboard";
+import Image from "next/image";
 
 export default function Dashboard() {
   useProtectedRoute();
@@ -197,6 +198,7 @@ export default function Dashboard() {
           <div className="col-span-9 row-start-3 grid">
             <div className="flex h-full w-full justify-between gap-4">
               {/* Productos populares */}
+              {/* Productos populares */}
               <Card className="h-full w-[280px] rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between py-5">
@@ -210,15 +212,18 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent className="space-y-4 pt-1">
                   {populares.map((dish, index) => (
-                    <div key={dish.name} className="flex items-center gap-3">
-                      <span className="w-6 text-sm font-semibold text-white">{`0${index + 1}`}</span>
-                      <img
+                    <div key={dish.id} className="flex items-center gap-3">
+                      <span className="w-6 text-sm font-semibold">{`0${index + 1}`}</span>
+                      <Image
                         src={dish.img}
                         alt={dish.name}
-                        className="h-7 w-7 rounded-full object-cover"
+                        width={28}
+                        height={28}
+                        className="rounded-md object-cover"
                       />
+
                       <div className="flex flex-col">
-                        <p className="max-w-[180px] truncate text-sm font-medium text-white">
+                        <p className="max-w-[180px] truncate text-sm font-medium">
                           {dish.name}
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -245,11 +250,13 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent className="space-y-4 pt-1">
                   {caducar.map((prod) => (
-                    <div key={prod.name} className="flex items-center gap-3">
-                      <img
+                    <div key={prod.id} className="flex items-center gap-3">
+                      <Image
                         src={prod.img}
                         alt={prod.name}
-                        className="h-7 w-7 rounded-full object-cover"
+                        width={28}
+                        height={28}
+                        className="rounded-md object-cover"
                       />
                       <div className="flex flex-col">
                         <p

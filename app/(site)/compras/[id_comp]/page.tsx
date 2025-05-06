@@ -21,6 +21,7 @@ import { DialogRegistrarPagoCompra } from "@/components/shared/cierreDiario/ui/d
 import { useReactToPrint } from "react-to-print";
 import FacturaPendientePDF from "@/components/shared/compras/ui/facturaPendientePDF";
 import FacturaPagadaPDF from "@/components/shared/compras/ui/facturaPagadaPDF";
+import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 
 export default function DetalleCompraPage() {
   useProtectedRoute();
@@ -349,8 +350,15 @@ export default function DetalleCompraPage() {
                         compra.form_pag_comp as "efectivo" | "transferencia"
                       }
                       onPagoExitoso={() => {
+                        ToastSuccess({
+                          message: "¡Pago registrado correctamente!",
+                        });
                         setAbrirDialogPago(false);
-                        setCompra({ ...compra, estado_pag_comp: "pagada" });
+
+                        // Redirigir después de 1.5 segundos
+                        setTimeout(() => {
+                          router.push("/compras/historial");
+                        });
                       }}
                     />
                   )}
