@@ -1,39 +1,47 @@
-import { SERVICIOS_DASHBOARD } from "@/services/dashboard.service";
 import { useEffect, useState } from "react";
+import { SERVICIOS_DASHBOARD } from "@/services/dashboard.service";
+import { ToastError } from "@/components/shared/toast/toastError";
 
-interface PeriodoVenta {
+interface VentaPeriodo {
   periodo: string;
   ventas: number;
 }
 
-interface VentasPeriodoResponse {
-  mensual: PeriodoVenta[];
-  semanal: PeriodoVenta[];
-  diario: PeriodoVenta[];
+interface DatosPeriodo {
+  mensual: VentaPeriodo[];
+  semanal: VentaPeriodo[];
+  diario: VentaPeriodo[];
 }
 
 export function useVentasPorPeriodo() {
-  const [datos, setDatos] = useState<VentasPeriodoResponse>({
+  const [datos, setDatos] = useState<DatosPeriodo>({
     mensual: [],
     semanal: [],
     diario: [],
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    fetch(SERVICIOS_DASHBOARD.ventasPorPeriodo)
-      .then((res) => {
-        if (!res.ok) throw new Error("Error al obtener los datos");
-        return res.json();
-      })
-      .then((data) => {
+    const cargarDatos = async () => {
+      try {
+        setLoading(true);
+        setError(false);
+
+        const res = await fetch(SERVICIOS_DASHBOARD.ventasPorPeriodo);
+        if (!res.ok) throw new Error("Error en fetch");
+
+        const data = await res.json();
         setDatos(data);
-      })
-      .catch((err) => {
-        console.error("Error al cargar ventas por período:", err);
-      })
-      .finally(() => setLoading(false));
+      } catch (e) {
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    cargarDatos();
   }, []);
 
-  return { datos, loading };
+  return { datos, loading, error };
 }

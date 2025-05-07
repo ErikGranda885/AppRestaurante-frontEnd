@@ -31,7 +31,9 @@ function formatCurrency(value: number): string {
 
 export function GraficoVentasPorPeriodo() {
   const [tab, setTab] = useState("mes");
-  const { datos, loading } = useVentasPorPeriodo();
+  const { datos, loading, error } = useVentasPorPeriodo(); // <- Agregado `error`
+
+  const mostrarSkeleton = loading || error;
 
   const obtenerDatos = () => {
     switch (tab) {
@@ -52,7 +54,7 @@ export function GraficoVentasPorPeriodo() {
     <Tabs value={tab} onValueChange={setTab} className="w-full">
       <Card className="h-[220px] w-full border border-border dark:bg-[#1e1e1e] dark:text-white">
         <CardHeader className="flex-row items-start justify-between">
-          {loading ? (
+          {mostrarSkeleton ? (
             <>
               <div className="mt-2 space-y-2">
                 <Skeleton className="h-4 w-20" />
@@ -60,8 +62,8 @@ export function GraficoVentasPorPeriodo() {
               </div>
               <div className="mt-2 flex gap-2">
                 <Skeleton className="h-8 rounded-md" />
-                <Skeleton className="h-8 rounded-md" />
-                <Skeleton className="h-8 rounded-md" />
+                <Skeleton className="h-8 w-20 rounded-md" />
+                <Skeleton className="h-8 w-20 rounded-md" />
               </div>
             </>
           ) : (
@@ -83,7 +85,7 @@ export function GraficoVentasPorPeriodo() {
 
         <CardContent className="px-4 pb-4">
           <TabsContent value={tab}>
-            {loading ? (
+            {mostrarSkeleton ? (
               <div className="h-[125px] w-full">
                 <Skeleton className="h-full w-full" />
               </div>

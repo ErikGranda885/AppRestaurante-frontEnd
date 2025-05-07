@@ -35,7 +35,14 @@ export default function Dashboard() {
     loading,
     error,
   } = dashboard;
-  const { populares, caducar, loadingPopulares } = useProductosDashboard();
+  const {
+    populares,
+    caducar,
+    loadingPopulares,
+    loadingCaducar,
+    errorPopulares,
+    errorCaducar,
+  } = useProductosDashboard();
   const Skeleton = ({ className }: { className?: string }) => (
     <div className={`animate-pulse rounded bg-muted ${className}`} />
   );
@@ -217,7 +224,7 @@ export default function Dashboard() {
           <div className="col-span-9 row-start-3 grid">
             <div className="flex h-full w-full justify-between gap-4">
               {/* Productos populares */}
-              {loadingPopulares ? (
+              {loadingPopulares || errorPopulares ? (
                 <Card className="h-[455px] w-[280px] animate-pulse rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between py-5">
@@ -285,7 +292,7 @@ export default function Dashboard() {
               )}
 
               {/* Productos por caducar */}
-              {loadingPopulares ? (
+              {loadingCaducar || errorCaducar ? (
                 <Card className="h-[455px] w-[280px] animate-pulse rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between py-5">

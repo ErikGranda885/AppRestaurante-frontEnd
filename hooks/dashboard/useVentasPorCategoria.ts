@@ -1,28 +1,38 @@
 // useVentasPorCategoria.ts
 import { useEffect, useState } from "react";
 import { SERVICIOS_DASHBOARD } from "@/services/dashboard.service";
+import { ToastError } from "@/components/shared/toast/toastError";
 
-interface VentaPorCategoria {
+interface VentaCategoria {
   categoria: string;
-  total: string;
+  total: number;
 }
 
 export function useVentasPorCategoria() {
-  const [datos, setDatos] = useState<VentaPorCategoria[]>([]);
+  const [datos, setDatos] = useState<VentaCategoria[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    fetch(SERVICIOS_DASHBOARD.ventasPorCategoria)
-      .then((res) => res.json())
-      .then((data) => {
+    const cargarDatos = async () => {
+      try {
+        setLoading(true);
+        setError(false);
+
+        const res = await fetch(SERVICIOS_DASHBOARD.ventasPorCategoria);
+        if (!res.ok) throw new Error("Error en fetch");
+
+        const data = await res.json();
         setDatos(data);
+      } catch (e) {
+        setError(true);
+      } finally {
         setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Error al obtener ventas por categoría:", err);
-        setLoading(false);
-      });
+      }
+    };
+
+    cargarDatos();
   }, []);
 
-  return { datos, loading };
+  return { datos, loading, error };
 }

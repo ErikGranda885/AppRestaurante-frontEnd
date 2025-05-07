@@ -6,17 +6,18 @@ import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowRight, Search } from "lucide-react";
+import { ArrowRight, Search, RefreshCw } from "lucide-react";
 import { useVentasDashboard } from "@/hooks/dashboard/useVentasDashboard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ValidarPagoDialog } from "./validarPagoDialog";
 import { SERVICIOS_VENTAS } from "@/services/ventas.service";
 import { ToastSuccess } from "../../toast/toastSuccess";
+import { Button } from "@/components/ui/button"; // Asegúrate de tener este componente
 
 export default function OrdenesEnProceso() {
   const [search, setSearch] = useState("");
   const [filtro, setFiltro] = useState("En progreso");
-  const { ultimasVentas, ventasPendientes, loading, refresh } =
+  const { ultimasVentas, ventasPendientes, loading, error, refresh } =
     useVentasDashboard();
 
   const [ventaSeleccionada, setVentaSeleccionada] = useState<any | null>(null);
@@ -48,9 +49,23 @@ export default function OrdenesEnProceso() {
     }
   };
 
-  if (loading) {
+  if (loading || error) {
     return (
       <Skeleton className="h-full w-full rounded-xl border p-4 dark:bg-[#1e1e1e]" />
+    );
+  }
+  
+
+  if (error) {
+    return (
+      <Card className="h-full w-full border border-border p-6 text-center dark:bg-[#1e1e1e] dark:text-white">
+        <p className="mb-2 text-sm text-muted-foreground">
+          Ocurrió un error al cargar las órdenes.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Por favor, intenta más tarde.
+        </p>
+      </Card>
     );
   }
 

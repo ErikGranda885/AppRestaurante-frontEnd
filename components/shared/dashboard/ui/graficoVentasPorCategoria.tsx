@@ -39,7 +39,7 @@ const formatearDinero = (valor: number) => {
 };
 
 export function GraficoVentasPorCategoria() {
-  const { datos, loading } = useVentasPorCategoria();
+  const { datos, loading, error } = useVentasPorCategoria();
 
   const datosFormateados = Array.isArray(datos)
     ? datos.map((item) => ({
@@ -48,12 +48,14 @@ export function GraficoVentasPorCategoria() {
       }))
     : [];
 
+  const mostrarSkeleton = loading || error;
+
   return (
     <Card className="h-1/2 w-full border border-border dark:bg-[#1e1e1e] dark:text-white">
       <CardHeader className="pt-5">
-        {loading ? (
+        {mostrarSkeleton ? (
           <>
-            <Skeleton className="h-4 w-40 mb-2" />
+            <Skeleton className="mb-2 h-4 w-40" />
             <Skeleton className="h-3 w-60" />
           </>
         ) : (
@@ -67,8 +69,8 @@ export function GraficoVentasPorCategoria() {
       </CardHeader>
 
       <CardContent className="h-[180px] px-5">
-        {loading ? (
-          <div className="h-full w-full flex items-center justify-center">
+        {mostrarSkeleton ? (
+          <div className="flex h-full w-full items-center justify-center">
             <Skeleton className="h-[140px] w-full" />
           </div>
         ) : datosFormateados.length === 0 ? (
