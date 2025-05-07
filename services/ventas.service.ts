@@ -12,7 +12,7 @@ export const SERVICIOS_VENTAS = {
   actualizarVenta: (id: number) => `http://localhost:5000/ventas/${id}`,
 
   // Cambiar estado de una venta
-  actualizarEstado: (id: number) => `http://localhost:5000/ventas/estado/${id}`,
+  actualizarEstado: (id: number) => `http://localhost:5000/ventas/${id}/estado`,
 
   // Filtrar por estado
   filtrarPorEstado: (estado: string) =>

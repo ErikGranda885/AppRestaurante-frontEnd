@@ -350,9 +350,6 @@ export default function DetalleCompraPage() {
                         compra.form_pag_comp as "efectivo" | "transferencia"
                       }
                       onPagoExitoso={() => {
-                        ToastSuccess({
-                          message: "¡Pago registrado correctamente!",
-                        });
                         setAbrirDialogPago(false);
 
                         // Redirigir después de 1.5 segundos

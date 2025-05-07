@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   CircleDollarSign,
   ArrowUp,
+  Check,
 } from "lucide-react";
 import { HoraActual } from "@/components/shared/dashboard/ui/horaActual";
 import { GraficoVentasPorCategoria } from "@/components/shared/dashboard/ui/graficoVentasPorCategoria";
@@ -34,7 +35,7 @@ export default function Dashboard() {
     loading,
     error,
   } = dashboard;
-  const { populares, caducar } = useProductosDashboard();
+  const { populares, caducar, loadingPopulares } = useProductosDashboard();
   const Skeleton = ({ className }: { className?: string }) => (
     <div className={`animate-pulse rounded bg-muted ${className}`} />
   );
@@ -172,17 +173,35 @@ export default function Dashboard() {
               ) : (
                 <Card className="w-full border border-border dark:bg-[#1e1e1e] dark:text-white">
                   <CardHeader className="flex-row items-center justify-between">
-                    <CardTitle>Diferencia de Caja</CardTitle>
-                    <div className="mt-3 rounded-xl bg-[#f97316] p-2">
-                      <AlertTriangle className="h-5 w-5 text-white" />
-                    </div>
+                    <CardTitle>
+                      {diferenciaCaja < 0
+                        ? "Diferencia de Caja"
+                        : diferenciaCaja > 0
+                          ? "Sobrante de Caja"
+                          : "Caja Cuadrada"}
+                    </CardTitle>
+                    {diferenciaCaja === 0 ? (
+                      <div className="mt-3 rounded-xl bg-[#3eab78] p-2 text-white">
+                        <Check className="h-5 w-5" />
+                      </div>
+                    ) : (
+                      <div className="mt-3 rounded-xl bg-[#f97316] p-2">
+                        <AlertTriangle className="h-5 w-5 text-white" />
+                      </div>
+                    )}
                   </CardHeader>
                   <CardContent>
                     <p className="text-2xl font-bold">
-                      {diferenciaCaja < 0 ? "-" : ""}$
-                      {Math.abs(diferenciaCaja).toFixed(2)}
+                      {diferenciaCaja < 0 ? "-" : diferenciaCaja > 0 ? "+" : ""}
+                      ${Math.abs(diferenciaCaja).toFixed(2)}
                     </p>
-                    <p className="text-sm text-orange-400">Revisar cierre</p>
+                    <p className="text-sm text-orange-400">
+                      {diferenciaCaja < 0
+                        ? "Revisar cierre"
+                        : diferenciaCaja > 0
+                          ? "Diferencia detectada"
+                          : "Todo está en orden"}
+                    </p>
                   </CardContent>
                 </Card>
               )}
@@ -198,83 +217,141 @@ export default function Dashboard() {
           <div className="col-span-9 row-start-3 grid">
             <div className="flex h-full w-full justify-between gap-4">
               {/* Productos populares */}
-              <Card className="h-full w-[280px] rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between py-5">
-                    <CardTitle className="text-md font-semibold">
-                      Productos más vendidos
-                    </CardTitle>
-                    <span className="cursor-pointer text-xs font-medium text-blue-500 hover:underline">
-                      Ver Todos
-                    </span>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4 pt-1">
-                  {populares.map((dish, index) => (
-                    <div key={dish.id} className="flex items-center gap-3">
-                      <span className="w-6 text-sm font-semibold">{`0${index + 1}`}</span>
-                      <Image
-                        src={dish.img}
-                        alt={dish.name}
-                        width={28}
-                        height={28}
-                        className="rounded-md object-cover"
-                      />
-
-                      <div className="flex flex-col">
-                        <p className="max-w-[180px] truncate text-sm font-medium">
-                          {dish.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Orders:{" "}
-                          <span className="font-semibold">{dish.orders}</span>
-                        </p>
-                      </div>
+              {loadingPopulares ? (
+                <Card className="h-[455px] w-[280px] animate-pulse rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between py-5">
+                      <Skeleton className="h-4 w-40" />
+                      <Skeleton className="h-4 w-14" />
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <Skeleton className="h-6 w-6 rounded" />
+                        <Skeleton className="h-7 w-7 rounded-md" />
+                        <div className="flex flex-col space-y-1">
+                          <Skeleton className="h-4 w-40" />
+                          <Skeleton className="h-3 w-28" />
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="h-full w-[280px] rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between py-5">
+                      <CardTitle className="text-md font-semibold">
+                        Productos más vendidos
+                      </CardTitle>
+                      <span className="cursor-pointer text-xs font-medium text-blue-500 hover:underline">
+                        Ver Todos
+                      </span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {populares.length === 0 ? (
+                      <p className="text-start text-sm text-muted-foreground">
+                        No hay productos populares disponibles.
+                      </p>
+                    ) : (
+                      populares.map((dish, index) => (
+                        <div key={dish.id} className="flex items-center gap-3">
+                          <span className="w-6 text-sm font-semibold">{`0${index + 1}`}</span>
+                          <Image
+                            src={dish.img}
+                            alt={dish.name}
+                            width={28}
+                            height={28}
+                            className="rounded-md object-cover"
+                          />
+                          <div className="flex flex-col">
+                            <p className="max-w-[180px] truncate text-sm font-medium">
+                              {dish.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Orders:{" "}
+                              <span className="font-semibold">
+                                {dish.orders}
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Productos por caducar */}
-              <Card className="h-[455px] w-[280px] rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between py-5">
-                    <CardTitle className="text-md font-semibold">
-                      Productos por Caducar
-                    </CardTitle>
-                    <span className="cursor-pointer text-xs font-medium text-blue-500 hover:underline">
-                      Ver Todos
-                    </span>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4 pt-1">
-                  {caducar.map((prod) => (
-                    <div key={prod.id} className="flex items-center gap-3">
-                      <Image
-                        src={prod.img}
-                        alt={prod.name}
-                        width={28}
-                        height={28}
-                        className="rounded-md object-cover"
-                      />
-                      <div className="flex flex-col">
-                        <p
-                          className="max-w-[180px] truncate text-sm font-medium"
-                          title={prod.name}
-                        >
-                          {prod.name}
-                        </p>
-                        <p className="text-xs text-red-400">
-                          Vence en:{" "}
-                          <span className="font-semibold">
-                            {prod.expiresIn}
-                          </span>
-                        </p>
-                      </div>
+              {loadingPopulares ? (
+                <Card className="h-[455px] w-[280px] animate-pulse rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between py-5">
+                      <Skeleton className="h-4 w-40" />
+                      <Skeleton className="h-4 w-14" />
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
+                  </CardHeader>
+                  <CardContent className="space-y-4 pt-1">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <Skeleton className="h-7 w-7 rounded-md" />
+                        <div className="flex flex-col space-y-1">
+                          <Skeleton className="h-4 w-40" />
+                          <Skeleton className="h-3 w-28" />
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="h-[455px] w-[280px] rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between py-5">
+                      <CardTitle className="text-md font-semibold">
+                        Productos por Caducar
+                      </CardTitle>
+                      <span className="cursor-pointer text-xs font-medium text-blue-500 hover:underline">
+                        Ver Todos
+                      </span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4 pt-1">
+                    {caducar.length === 0 ? (
+                      <p className="text-start text-sm text-muted-foreground">
+                        No hay productos por caducar.
+                      </p>
+                    ) : (
+                      caducar.map((prod) => (
+                        <div key={prod.id} className="flex items-center gap-3">
+                          <Image
+                            src={prod.img}
+                            alt={prod.name}
+                            width={28}
+                            height={28}
+                            className="rounded-md object-cover"
+                          />
+                          <div className="flex flex-col">
+                            <p
+                              className="max-w-[180px] truncate text-sm font-medium"
+                              title={prod.name}
+                            >
+                              {prod.name}
+                            </p>
+                            <p className="text-xs text-red-400">
+                              Vence en:{" "}
+                              <span className="font-semibold">
+                                {prod.expiresIn}
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Gráficos */}
               <div className="flex h-[435px] min-w-[350px] flex-1 flex-col gap-4">

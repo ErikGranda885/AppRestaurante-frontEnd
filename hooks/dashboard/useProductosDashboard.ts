@@ -18,40 +18,45 @@ interface ProductoCaducar {
 export function useProductosDashboard() {
   const [populares, setPopulares] = useState<ProductoPopular[]>([]);
   const [caducar, setCaducar] = useState<ProductoCaducar[]>([]);
+  const [loadingPopulares, setLoadingPopulares] = useState(true);
 
   useEffect(() => {
-    // Cargar productos populares
-    fetch(SERVICIOS_DASHBOARD.populares)
-      .then((res) => res.json())
-      .then((data) => {
-        const formateados = data.map((item: any, index: number) => ({
-          id: item.id ?? index,
-          name: item.name,
-          img: item.img,
-          orders: Number(item.orders),
-        }));
-        setPopulares(formateados);
-      })
-      .catch((err) =>
-        console.error("Error al cargar productos populares:", err)
-      );
+    const cargarDatos = async () => {
+      try {
+        // Productos populares
+        const resPopulares = await fetch(SERVICIOS_DASHBOARD.populares);
+        const dataPopulares = await resPopulares.json();
+        const formateadosPopulares = dataPopulares.map(
+          (item: any, index: number) => ({
+            id: item.id ?? index,
+            name: item.name,
+            img: item.img,
+            orders: Number(item.orders),
+          }),
+        );
+        setPopulares(formateadosPopulares);
 
-    // Cargar productos por caducar
-    fetch(SERVICIOS_DASHBOARD.porCaducar)
-      .then((res) => res.json())
-      .then((data) => {
-        const formateados = data.map((prod: any, index: number) => ({
-          id: prod.id ?? index,
-          name: prod.name,
-          img: prod.img,
-          expiresIn: prod.expiresIn,
-        }));
-        setCaducar(formateados);
-      })
-      .catch((err) =>
-        console.error("Error al cargar productos por caducar:", err)
-      );
+        // Productos por caducar
+        const resCaducar = await fetch(SERVICIOS_DASHBOARD.porCaducar);
+        const dataCaducar = await resCaducar.json();
+        const formateadosCaducar = dataCaducar.map(
+          (prod: any, index: number) => ({
+            id: prod.id ?? index,
+            name: prod.name,
+            img: prod.img,
+            expiresIn: prod.expiresIn,
+          }),
+        );
+        setCaducar(formateadosCaducar);
+      } catch (error) {
+        console.error("Error al cargar productos del dashboard:", error);
+      } finally {
+        setLoadingPopulares(false);
+      }
+    };
+
+    cargarDatos();
   }, []);
 
-  return { populares, caducar };
+  return { populares, caducar, loadingPopulares };
 }

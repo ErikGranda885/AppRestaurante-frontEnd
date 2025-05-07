@@ -327,7 +327,7 @@ export default function Page() {
       const salePayload = {
         tot_vent: total,
         fech_vent: new Date().toISOString(),
-        est_vent: "Sin cerrar",
+        est_vent: metodoPago === "transferencia" ? "Por validar" : "Sin cerrar",
         tip_pag_vent: metodoPago,
         usu_vent: idUsuario,
         comprobante_num_vent:

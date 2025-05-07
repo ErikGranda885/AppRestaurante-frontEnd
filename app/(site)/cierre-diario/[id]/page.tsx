@@ -35,7 +35,9 @@ import { uploadImage } from "@/firebase/subirImage";
 import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
 
 function formatoMoneda(valor: any): string {
-  return typeof valor === "number" && !isNaN(valor) ? valor.toFixed(2) : "0.00";
+  return typeof valor === "number"
+    ? valor.toFixed(2)
+    : Number(valor || 0).toFixed(2);
 }
 
 export default function PaginaCierreDia() {
@@ -71,6 +73,7 @@ export default function PaginaCierreDia() {
       const parsed = JSON.parse(cierreData) as ICierreDiario;
       if (parsed.id_cier.toString() === id) {
         setCierreSeleccionado(parsed);
+        console.log("📦 Cierre seleccionado:", parsed); // 👈 Aquí
       } else {
         router.push("/cierre-diario");
       }
@@ -104,11 +107,16 @@ export default function PaginaCierreDia() {
 
   const totalTransferencias = Array.isArray(movimientos.ventas)
     ? movimientos.ventas
-        .filter(
-          (venta: any) =>
-            venta?.tip_pag_vent?.toLowerCase() === "transferencia",
-        )
-        .reduce((acc: number, venta: any) => acc + (venta.tot_vent ?? 0), 0)
+        .filter((venta: any) => {
+          return (
+            typeof venta.tip_pag_vent === "string" &&
+            venta.tip_pag_vent.toLowerCase() === "transferencia"
+          );
+        })
+        .reduce((acc: number, venta: any) => {
+          const total = parseFloat(venta.tot_vent);
+          return acc + (!isNaN(total) ? total : 0);
+        }, 0)
     : 0;
 
   const totalFacturasCanceladas = cierreSeleccionado?.tot_compras_pag_cier ?? 0;
