@@ -27,6 +27,7 @@ import {
   AlertTriangle,
   MoreHorizontal,
   CheckCircle,
+  Clock,
 } from "lucide-react";
 import React, { useState } from "react";
 
@@ -103,13 +104,27 @@ export default function Page() {
   const router = useRouter();
   const [abrirCrear, setAbrirCrear] = React.useState(false);
   const [estadoSeleccionado, setEstadoSeleccionado] =
-    React.useState<string>("por cerrar");
+    React.useState<string>("");
   const [cierres, setCierres] = React.useState<ICierreDiario[]>([]);
   const cantidadPendientes = cierres.filter(
     (c) => c.esta_cier.toLowerCase() === "pendiente",
   ).length;
 
   const fechaActual = new Date().toLocaleDateString("en-CA"); // en hora local
+
+  const cierreActual = cierres.find((c) => c.fech_cier === fechaActual);
+  const estadoActual = cierreActual?.esta_cier?.toLowerCase() ?? "sin datos";
+  const hayPendientesAnteriores = cierres.some(
+    (c) =>
+      c.esta_cier.toLowerCase() === "pendiente" &&
+      new Date(c.fech_cier) < new Date(fechaActual),
+  );
+  const primerCierrePendiente = cierres
+    .filter((c) => c.esta_cier.toLowerCase() === "pendiente")
+    .sort(
+      (a, b) =>
+        new Date(a.fech_cier).getTime() - new Date(b.fech_cier).getTime(),
+    )[0];
 
   const { resumenPendiente } = useResumenPendiente(
     fechaActual,
@@ -201,7 +216,11 @@ export default function Page() {
     },
   ];
 
-  useCargarCierres({ estadoSeleccionado, setCierres, dateRange });
+  useCargarCierres({
+    estadoSeleccionado,
+    setCierres,
+    dateRange: estadoSeleccionado === "Cerrado" ? dateRange : undefined,
+  });
 
   function hayCierresAnterioresPendientes(
     lista: ICierreDiario[],
@@ -232,36 +251,40 @@ export default function Page() {
           {/* Filtros de fechas y rangos rápidos */}
           <div className="flex flex-wrap items-center gap-3">
             {/* Filtro por rango de fechas */}
-            <DateRangeFilter value={dateRange} onChange={setDateRange} />
+            {estadoSeleccionado === "cerrado" && (
+              <>
+                {/* Filtro por rango de fechas */}
+                <DateRangeFilter value={dateRange} onChange={setDateRange} />
 
-            {/* Dropdown de fechas rápidas */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="text-[12px] dark:bg-[#222224]"
-                >
-                  {labelQuickRange}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="border-border">
-                <DropdownMenuItem onClick={() => handleQuickRange("hoy")}>
-                  Hoy
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleQuickRange("ayer")}>
-                  Ayer
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleQuickRange("mes")}>
-                  Este mes
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleQuickRange("año")}>
-                  Este año
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Separador visual */}
-            <div className="hidden h-6 w-px bg-border md:block" />
+                {/* Dropdown de fechas rápidas */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="text-[12px] dark:bg-[#222224]"
+                    >
+                      {labelQuickRange}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="border-border">
+                    <DropdownMenuItem onClick={() => handleQuickRange("hoy")}>
+                      Hoy
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickRange("ayer")}>
+                      Ayer
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickRange("mes")}>
+                      Este mes
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickRange("año")}>
+                      Este año
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                {/* Separador visual */}
+                <div className="hidden h-6 w-px bg-border md:block" />
+              </>
+            )}
           </div>
 
           {/* Barra de búsqueda y botones */}
@@ -342,40 +365,42 @@ export default function Page() {
                   )}
                 </div>
                 <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
-                  {estadoSeleccionado === "por cerrar"
-                    ? "Cierre automático pendiente de activación"
-                    : estadoSeleccionado === "pendientes"
-                      ? "Pendiente de validación"
-                      : estadoSeleccionado === "cerrado"
-                        ? "Cierres completados"
-                        : "Estado no seleccionado"}
+                  {estadoActual === "cerrado" && "Cierre completado"}
+                  {estadoActual === "pendiente" && "Pendiente de validación"}
+                  {estadoActual === "por cerrar" &&
+                    (hayPendientesAnteriores
+                      ? "No se puede cerrar hasta validar pendientes anteriores"
+                      : "Día listo para cerrar")}
+                  {estadoActual === "sin datos" &&
+                    "No hay cierre registrado para hoy"}
                 </CardDescription>
               </div>
               <div
                 className="mt-4 flex flex-shrink-0 items-center justify-center transition-all duration-300 sm:mt-0"
                 onClick={() => {
-                  if (cantidadPendientes > 0) {
+                  if (primerCierrePendiente) {
+                    localStorage.setItem(
+                      "cierreSeleccionado",
+                      JSON.stringify(primerCierrePendiente),
+                    );
                     setEstadoSeleccionado("pendientes");
                   }
                 }}
               >
-                {cantidadPendientes > 0 ? (
+                {hayPendientesAnteriores ? (
                   <div
                     className="group relative cursor-pointer transition-transform duration-300 hover:scale-105"
-                    title={`Tienes ${cantidadPendientes > 9 ? "9+" : cantidadPendientes} cierres pendientes`}
+                    title={`Tienes cierres pendientes desde el ${new Date(
+                      primerCierrePendiente?.fech_cier || "",
+                    ).toLocaleDateString("es-EC")}`}
                   >
                     <AlertTriangle className="h-7 w-7 animate-pulse text-yellow-500" />
                     <span className="absolute -right-1 -top-1 flex h-4 w-4 animate-bounce items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
-                      {cantidadPendientes > 9 ? "9+" : cantidadPendientes}
+                      !
                     </span>
                   </div>
                 ) : (
-                  <div
-                    className="group cursor-default transition-opacity duration-300"
-                    title="Todos los cierres están al día"
-                  >
-                    <CheckCircle className="h-7 w-7 text-green-500 opacity-90 transition-opacity duration-300 group-hover:opacity-100" />
-                  </div>
+                  <CheckCircle className="h-7 w-7 text-green-500 opacity-90 transition-opacity duration-300 group-hover:opacity-100" />
                 )}
               </div>
             </CardHeader>

@@ -51,10 +51,9 @@ export default function OrdenesEnProceso() {
 
   if (loading || error) {
     return (
-      <Skeleton className="h-full w-full rounded-xl border p-4 dark:bg-[#1e1e1e]" />
+      <Skeleton className="h-full w-full rounded-xl border border-border p-4 dark:bg-[#1e1e1e]" />
     );
   }
-  
 
   if (error) {
     return (
