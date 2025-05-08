@@ -434,9 +434,12 @@ export default function Page() {
                         <TooltipTrigger asChild>
                           <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
                             {totalPendientesPago > 0 ? (
-                              <div className="relative">
-                                <AlertTriangle className="h-6 w-6 text-yellow-500 transition-transform group-hover:scale-110" />
-                                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white shadow-md">
+                              <div
+                                className="group relative cursor-pointer transition-transform duration-300 hover:scale-110"
+                                title={`${totalPendientesPago} compras pendientes de pago`}
+                              >
+                                <AlertTriangle className="h-7 w-7 animate-pulse text-yellow-500" />
+                                <span className="absolute -right-1 -top-1 flex h-4 w-4 animate-bounce items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
                                   {totalPendientesPago}
                                 </span>
                               </div>

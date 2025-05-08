@@ -26,7 +26,6 @@ export default function Dashboard() {
   const { userName } = useUserData();
   const { horaActual } = useHoraActual();
   const fechaActual = new Date().toLocaleDateString("en-CA");
-  const dashboard = useDashboardMetrics(fechaActual);
   const {
     totalGanado,
     comprasRealizadas,
@@ -34,7 +33,9 @@ export default function Dashboard() {
     diferenciaCaja,
     loading,
     error,
-  } = dashboard;
+    refreshDashboard, // ✅ NUEVO
+  } = useDashboardMetrics(fechaActual);
+
   const {
     populares,
     caducar,
@@ -217,7 +218,7 @@ export default function Dashboard() {
 
           {/* Órdenes en progreso */}
           <div className="col-span-3 col-start-10 row-span-3 row-start-1 grid h-[670px]">
-            <OrdenesEnProceso />
+            <OrdenesEnProceso onRefreshDashboard={refreshDashboard} />
           </div>
 
           {/* Productos y gráficos */}

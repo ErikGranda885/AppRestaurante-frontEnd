@@ -51,7 +51,7 @@ export function useDashboardMetrics(fecha: string) {
       // Reintentar después de 10 segundos si hay error
       setTimeout(() => {
         fetchMetrics();
-      }, 10000); // 10 segundos
+      }, 10000);
     } finally {
       setLoading(false);
     }
@@ -65,5 +65,6 @@ export function useDashboardMetrics(fecha: string) {
     ...metrics,
     loading,
     error,
+    refreshDashboard: fetchMetrics, // ✅ aquí se expone la función
   };
 }

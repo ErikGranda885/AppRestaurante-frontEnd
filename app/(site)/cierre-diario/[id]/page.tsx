@@ -105,7 +105,7 @@ export default function PaginaCierreDia() {
     console.log("movimientos recibidos:", movimientos);
   }, [fechaCierre, movimientos]);
 
-  const totalTransferencias = Array.isArray(movimientos.ventas)
+  const totalTransferenciasSistema = Array.isArray(movimientos.ventas)
     ? movimientos.ventas
         .filter((venta: any) => {
           return (
@@ -119,15 +119,22 @@ export default function PaginaCierreDia() {
         }, 0)
     : 0;
 
+  const totalEfectivoSistema = Array.isArray(movimientos.ventas)
+    ? movimientos.ventas
+        .filter((venta: any) => {
+          return (
+            typeof venta.tip_pag_vent === "string" &&
+            venta.tip_pag_vent.toLowerCase() === "efectivo"
+          );
+        })
+        .reduce((acc: number, venta: any) => {
+          const total = parseFloat(venta.tot_vent);
+          return acc + (!isNaN(total) ? total : 0);
+        }, 0)
+    : 0;
+
   const totalFacturasCanceladas = cierreSeleccionado?.tot_compras_pag_cier ?? 0;
   const totalGastos = cierreSeleccionado?.tot_gas_cier ?? 0;
-
-  const diferenciaCalculada =
-    Number(cierreSeleccionado?.tot_vent_cier ?? 0) -
-    (Number(totalEfectivo) +
-      Number(totalTransferencias) +
-      Number(totalGastos) +
-      Number(totalFacturasCanceladas));
 
   if (!cierreSeleccionado || isLoadingMovimientos) {
     return <div className="p-6">Cargando...</div>;
@@ -197,6 +204,15 @@ export default function PaginaCierreDia() {
       message: "Comprobante de depósito cargado correctamente",
     });
   };
+  const totalSistema =
+    Number(totalEfectivoSistema ?? 0) + Number(totalTransferenciasSistema ?? 0);
+
+  const totalCajero =
+    Number(totalEfectivo ?? 0) +
+    Number(totalFacturasCanceladas ?? 0) +
+    Number(totalGastos ?? 0);
+
+  const diferenciaCalculada = totalSistema - totalCajero;
 
   return (
     <ModulePageLayout
@@ -285,44 +301,55 @@ export default function PaginaCierreDia() {
                 />
               </div>
               {/* Detalle Gneral */}
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase text-muted-foreground">
-                  Detalle General
-                </p>
-                {[
-                  {
-                    label: "Total efectivo registrado",
-                    value:
-                      cierreSeleccionado.esta_cier === "cerrado"
-                        ? cierreSeleccionado.tot_dep_cier
-                        : totalEfectivo,
-                  },
-                  {
-                    label: "Total transferencias registradas",
-                    value:
-                      cierreSeleccionado.esta_cier === "cerrado"
-                        ? 0
-                        : totalTransferencias,
-                  },
-                  {
-                    label: "Total compras realizadas",
-                    value: cierreSeleccionado.tot_compras_pag_cier ?? 0,
-                  },
-                  {
-                    label: "Total gastos",
-                    value: cierreSeleccionado.tot_gas_cier ?? 0,
-                  },
-                ].map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex justify-between text-xs font-medium"
-                  >
-                    <span>{item.label}</span>
-                    <span>{`$${formatoMoneda(item.value)}`}</span>
+              <div className="space-y-1">
+                {/* Detalle del sistema */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">
+                    Detalle del sistema
+                  </p>
+                  <div className="flex justify-between text-xs font-medium">
+                    <span>Ventas por efectivo</span>
+                    <span>${formatoMoneda(totalEfectivoSistema)}</span>
                   </div>
-                ))}
+                  <div className="flex justify-between text-xs font-medium">
+                    <span>Ventas por transferencia</span>
+                    <span>${formatoMoneda(totalTransferenciasSistema)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span>Total sistema</span>
+                    <span>
+                      $
+                      {formatoMoneda(
+                        totalEfectivoSistema + totalTransferenciasSistema,
+                      )}
+                    </span>
+                  </div>
+                </div>
 
-                {/* Diferencia con validación visual */}
+                {/* Detalle del cajero */}
+                <div className="space-y-2 pt-4">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">
+                    Detalle del cajero
+                  </p>
+                  <div className="flex justify-between text-xs font-medium">
+                    <span>Efectivo registrado</span>
+                    <span>${formatoMoneda(totalEfectivo)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs font-medium">
+                    <span>Compras realizadas</span>
+                    <span>${formatoMoneda(totalFacturasCanceladas)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs font-medium">
+                    <span>Gastos registrados</span>
+                    <span>${formatoMoneda(totalGastos)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span>Total cajero</span>
+                    <span>${formatoMoneda(totalCajero)}</span>
+                  </div>
+                </div>
+
+                {/* Diferencia */}
                 <div className="flex items-center justify-between text-xs font-medium">
                   <span>Diferencia</span>
                   <span
@@ -336,11 +363,12 @@ export default function PaginaCierreDia() {
                         : "text-red-600"
                     }`}
                   >
-                    {`$${formatoMoneda(
+                    $
+                    {formatoMoneda(
                       cierreSeleccionado.esta_cier === "cerrado"
                         ? cierreSeleccionado.dif_cier
                         : diferenciaCalculada,
-                    )}`}
+                    )}
                   </span>
                 </div>
 
@@ -361,7 +389,7 @@ export default function PaginaCierreDia() {
               </div>
 
               {/* Banco */}
-              <div className="space-y-2">
+              <div className="">
                 <p className="text-xs font-semibold uppercase text-muted-foreground">
                   Seleccionar Banco
                 </p>
@@ -620,7 +648,7 @@ export default function PaginaCierreDia() {
 
               {cierreSeleccionado?.esta_cier === "cerrado" ? (
                 <div
-                  className="group relative h-[400px] w-full overflow-hidden rounded-md border-2 border-border bg-white dark:bg-[#1a1a1a]"
+                  className="group relative h-[500px] w-full overflow-hidden rounded-md border-2 border-border bg-white dark:bg-[#1a1a1a]"
                   onMouseMove={(e) => {
                     const container = e.currentTarget;
                     const img = container.querySelector(
@@ -791,7 +819,7 @@ function ResumenItem({
         {label}
       </div>
       <div
-        className={`text-4xl font-bold ${
+        className={`text-end text-3xl font-bold ${
           resaltado
             ? "text-green-700 dark:text-green-300"
             : "text-gray-900 dark:text-white"

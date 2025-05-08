@@ -6,15 +6,19 @@ import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowRight, Search, RefreshCw } from "lucide-react";
+import { ArrowRight, Search, AlertTriangle } from "lucide-react";
 import { useVentasDashboard } from "@/hooks/dashboard/useVentasDashboard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ValidarPagoDialog } from "./validarPagoDialog";
 import { SERVICIOS_VENTAS } from "@/services/ventas.service";
 import { ToastSuccess } from "../../toast/toastSuccess";
-import { Button } from "@/components/ui/button"; // Asegúrate de tener este componente
+import { Button } from "@/components/ui/button";
 
-export default function OrdenesEnProceso() {
+interface Props {
+  onRefreshDashboard?: () => void;
+}
+
+export default function OrdenesEnProceso({ onRefreshDashboard }: Props) {
   const [search, setSearch] = useState("");
   const [filtro, setFiltro] = useState("En progreso");
   const { ultimasVentas, ventasPendientes, loading, error, refresh } =
@@ -38,12 +42,15 @@ export default function OrdenesEnProceso() {
       });
 
       if (!response.ok) throw new Error("Error al actualizar estado");
+
       ToastSuccess({
         message: "Pago validado exitosamente",
       });
+
       setOpenDialog(false);
       setVentaSeleccionada(null);
-      await refresh(); // recarga inteligente
+      await refresh(); // recarga las órdenes
+      onRefreshDashboard?.(); // ✅ recarga las métricas del dashboard
     } catch (err) {
       console.error("Error al aceptar pago:", err);
     }
@@ -75,7 +82,7 @@ export default function OrdenesEnProceso() {
           <ToggleGroup
             type="single"
             value={filtro}
-            onValueChange={(val: any) => val && setFiltro(val)}
+            onValueChange={(val) => val && setFiltro(val)}
             className="w-full rounded-md border border-border"
           >
             <ToggleGroupItem
@@ -84,11 +91,24 @@ export default function OrdenesEnProceso() {
             >
               En progreso
             </ToggleGroupItem>
+
             <ToggleGroupItem
               value="Pendiente"
-              className="h-14 w-1/2 rounded-r-lg text-sm data-[state=on]:bg-muted data-[state=on]:text-black dark:data-[state=on]:text-white"
+              className="relative flex h-14 w-1/2 items-center justify-center rounded-r-lg text-sm data-[state=on]:bg-muted data-[state=on]:text-black dark:data-[state=on]:text-white"
             >
-              Pagos pendientes
+              <span>Pagos pendientes</span>
+
+              {ventasPendientes.length > 0 && (
+                <div
+                  className="group relative ml-2 cursor-pointer transition-transform duration-300 hover:scale-110"
+                  title={`Tienes ${ventasPendientes.length} pago(s) pendiente(s) de validar`}
+                >
+                  <AlertTriangle className="h-5 w-5 animate-pulse text-yellow-500" />
+                  <span className="absolute -right-1 -top-1 flex h-4 w-4 animate-bounce items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
+                    !
+                  </span>
+                </div>
+              )}
             </ToggleGroupItem>
           </ToggleGroup>
 
@@ -111,9 +131,9 @@ export default function OrdenesEnProceso() {
                 Sin resultados
               </p>
             ) : (
-              ordenesFiltradas.map((orden: any, index: any) => (
+              ordenesFiltradas.map((orden: any) => (
                 <div
-                  key={index}
+                  key={orden.id_vent}
                   className="mt-1 flex items-center justify-between rounded-lg bg-muted px-3 py-2 transition hover:bg-muted/70"
                 >
                   <div className="flex items-center gap-3">
