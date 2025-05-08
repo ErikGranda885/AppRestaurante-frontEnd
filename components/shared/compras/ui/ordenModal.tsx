@@ -17,7 +17,7 @@ interface FacturaModalProps {
   compra: ICompra;
   detalle: IDetCompra[];
   onConfirm: () => void;
-  printRef?: React.RefObject<HTMLDivElement | null>; // ✅ acepta el null
+  printRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 const FacturaModal: React.FC<FacturaModalProps> = ({

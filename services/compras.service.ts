@@ -6,7 +6,7 @@ export const SERVICIOS_COMPRAS = {
 
   // Detalles de una compra
   obtenerDetalleCompra: (id: number) =>
-    `http://localhost:5000/detCompras/${id}`,
+    `http://localhost:5000/dets-compras/${id}`,
 
   // Descargar PDF de la compra
   descargarFactura: (id: number) => `http://localhost:5000/pdf/factura/${id}`,

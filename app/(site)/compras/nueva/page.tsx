@@ -256,24 +256,33 @@ export default function NuevaCompraPage() {
           est_lote_dcom: item.est_lote_dcom,
         };
 
-        const resDetalle = await fetch("http://localhost:5000/detCompras", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(detalle),
-        });
+        try {
+          const resDetalle = await fetch("http://localhost:5000/dets-compras", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(detalle),
+          });
 
-        if (!resDetalle.ok) {
+          if (!resDetalle.ok) {
+            const err = await resDetalle.json();
+            throw new Error(
+              err.message || "Error desconocido al guardar el detalle",
+            );
+          }
+        } catch (error: any) {
           await fetch(`http://localhost:5000/compras/${idCompra}`, {
             method: "DELETE",
           });
 
-          throw new Error(
-            `Error al registrar el detalle del producto ${item.prod_dcom.nom_prod}. Se ha cancelado la compra.`,
-          );
+          ToastError({
+            message: `Detalle no registrado (${item.prod_dcom.nom_prod}): ${error.message}`,
+          });
+
+          throw new Error("Se canceló la compra por error en el detalle.");
         }
       }
 
-      setOpenFactura(false); // ✅ cerrar modal solo si todo fue exitoso
+      setOpenFactura(false);
       ToastSuccess({ message: "Compra registrada exitosamente" });
       router.push("/compras/historial");
     } catch (error: any) {
@@ -281,19 +290,6 @@ export default function NuevaCompraPage() {
         message: error.message || "Error al registrar la compra",
       });
     }
-  };
-
-  const validarDiaCerrado = async (fecha: string) => {
-    const response = await fetch(
-      `http://localhost:5000/cierres/validar-dia/${fecha}`,
-    );
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Error al validar el día");
-    }
-
-    const data = await response.json();
-    return data.estaCerrado as boolean;
   };
 
   /* Ttoal de productos */
@@ -358,38 +354,12 @@ export default function NuevaCompraPage() {
     };
 
     try {
-      // ✅ Intentamos registrar la compra directamente
-      const res = await fetch("http://localhost:5000/compras", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...compra,
-          prov_comp: compra.prov_comp.id_prov,
-          usu_comp: compra.usu_comp.id_usu,
-          id_comp: undefined,
-          crea_en_comp: undefined,
-          act_en_comp: undefined,
-        }),
-      });
-
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Error al registrar la compra.");
-      }
-
-      const compraRegistrada = await res.json();
-
-      // ✅ Previsualización solo si la compra fue registrada
-      setCompraPreview({
-        ...compra,
-        id_comp: compraRegistrada.id_comp,
-      });
-      setOpenFactura(true);
+      // ⚠️ Solo guardamos datos en memoria (no registramos aún)
+      setCompraPreview({ ...compra });
+      setOpenFactura(true); // muestra el modal de previsualización
     } catch (error: any) {
       ToastError({
-        message:
-          error.message ||
-          "Ocurrió un error inesperado al registrar la compra.",
+        message: error.message || "Error al preparar la compra.",
       });
     }
   };

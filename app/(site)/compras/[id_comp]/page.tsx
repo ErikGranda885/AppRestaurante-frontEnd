@@ -58,7 +58,7 @@ export default function DetalleCompraPage() {
         // Para los detalles de compra usamos la URL especificada
         console.log("ID de compra:", purchaseId);
         const resDet = await fetch(
-          `http://localhost:5000/detCompras/${purchaseId}`,
+          `http://localhost:5000/dets-compras/${purchaseId}`,
         );
 
         if (!resDet.ok) {

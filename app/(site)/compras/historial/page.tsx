@@ -81,7 +81,7 @@ export default function Page() {
           : comprasData.data;
         setCompras(comprasArray || []);
 
-        const resDetCompras = await fetch("http://localhost:5000/detCompras");
+        const resDetCompras = await fetch("http://localhost:5000/dets-compras");
         const detComprasData = await resDetCompras.json();
         const detComprasArray = Array.isArray(detComprasData)
           ? detComprasData
