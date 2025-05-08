@@ -153,8 +153,9 @@ export default function OrdenesEnProceso({ onRefreshDashboard }: Props) {
                   <div className="flex flex-col items-end text-xs">
                     {filtro === "Pendiente" ? (
                       <>
-                        <Badge
-                          className="flex cursor-pointer items-center gap-1 bg-yellow-500 text-xs text-white hover:bg-yellow-500"
+                        <Button
+                          variant="primary"
+                          className="h-1 w-auto p-3 text-[11px] font-semibold transition-colors duration-200"
                           onClick={() => {
                             setVentaSeleccionada({
                               id_vent: orden.id_vent,
@@ -165,7 +166,8 @@ export default function OrdenesEnProceso({ onRefreshDashboard }: Props) {
                           }}
                         >
                           Validar pago <ArrowRight className="h-4 w-4" />
-                        </Badge>
+                        </Button>
+
                         <span className="mt-1 text-muted-foreground">
                           Pendiente
                         </span>

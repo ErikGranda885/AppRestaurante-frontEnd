@@ -33,6 +33,9 @@ import { DialogNumeracionEfectivo } from "@/components/shared/cierreDiario/ui/di
 import { SERVICIOS_CIERRES } from "@/services/cierreDiario.service";
 import { uploadImage } from "@/firebase/subirImage";
 import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
+import { ToastError } from "@/components/shared/toast/toastError";
+import { SERVICIOS_VENTAS } from "@/services/ventas.service";
+import { ValidarPagoDialog } from "@/components/shared/dashboard/ui/validarPagoDialog";
 
 function formatoMoneda(valor: any): string {
   return typeof valor === "number"
@@ -50,6 +53,9 @@ export default function PaginaCierreDia() {
   const [openDialogNumeracion, setOpenDialogNumeracion] = useState(false);
   const [totalEfectivo, setTotalEfectivo] = useState(0);
   const [abrirConfirmacionCerrar, setAbrirConfirmacionCerrar] = useState(false);
+  const [ventaSeleccionada, setVentaSeleccionada] = useState<any | null>(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [ventas, setVentas] = useState<any[]>([]);
 
   useProtectedRoute();
 
@@ -105,6 +111,12 @@ export default function PaginaCierreDia() {
     console.log("movimientos recibidos:", movimientos);
   }, [fechaCierre, movimientos]);
 
+  useEffect(() => {
+    if (movimientos?.ventas) {
+      setVentas(movimientos.ventas);
+    }
+  }, [movimientos]);
+
   const totalTransferenciasSistema = Array.isArray(movimientos.ventas)
     ? movimientos.ventas
         .filter((venta: any) => {
@@ -156,7 +168,7 @@ export default function PaginaCierreDia() {
         nombrePersonalizado,
       );
 
-      await fetch(
+      const res = await fetch(
         SERVICIOS_CIERRES.registrarDeposito(cierreSeleccionado.id_cier),
         {
           method: "PATCH",
@@ -170,14 +182,23 @@ export default function PaginaCierreDia() {
         },
       );
 
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Error desconocido al cerrar el día");
+      }
+
       ToastSuccess({ message: "Cierre diario guardado correctamente" });
       localStorage.removeItem("totalEfectivo");
       setFile(null);
       setPreviewUrl(null);
       setNumeroComprobante("");
       router.push("/cierre-diario");
-    } catch (error) {
-      console.error("❌ Error al cerrar día:", error);
+    } catch (error: any) {
+      ToastError({
+        message:
+          error.message ||
+          "No se pudo cerrar el día. Verifica si hay transferencias pendientes por validar.",
+      });
     }
   };
 
@@ -466,7 +487,7 @@ export default function PaginaCierreDia() {
             <Card className="h-[230px] flex-1 border border-border dark:bg-[#1a1a1a]">
               <CardHeader>
                 <CardTitle>
-                  <div className="flex flex-wrap items-center">
+                  <div className="mt-4 flex flex-wrap items-center">
                     <ReceiptText className="mr-2 h-4 w-4" /> Gastos del día
                   </div>
                 </CardTitle>
@@ -513,7 +534,7 @@ export default function PaginaCierreDia() {
             <Card className="flex-1 border border-border dark:bg-[#1a1a1a]">
               <CardHeader>
                 <CardTitle>
-                  <div className="flex flex-wrap items-center">
+                  <div className="mt-4 flex flex-wrap items-center">
                     <ShoppingCart className="mr-2 h-4 w-4" /> Compras del día
                   </div>
                 </CardTitle>
@@ -566,7 +587,7 @@ export default function PaginaCierreDia() {
           <Card className="flex-1 border border-border dark:bg-[#1a1a1a]">
             <CardHeader>
               <CardTitle>
-                <div className="flex flex-wrap items-center">
+                <div className="mt-4 flex flex-wrap items-center">
                   <Weight className="mr-2 h-4 w-4" /> Ventas del Día
                 </div>
               </CardTitle>
@@ -584,18 +605,53 @@ export default function PaginaCierreDia() {
                 </div>
 
                 {/* Contenido dinámico */}
-                {Array.isArray(movimientos.ventas) &&
-                movimientos.ventas.length > 0 ? (
-                  movimientos.ventas.map((venta: any, index: number) => (
+                {Array.isArray(ventas) && ventas.length > 0 ? (
+                  ventas.map((venta: any, index: number) => (
                     <div
                       key={index}
                       className="grid grid-cols-4 items-center gap-4 border border-x-transparent border-b-border border-t-transparent py-2 text-sm"
                     >
                       <span>{venta.id_vent}</span>
                       <span>{venta.tip_pag_vent}</span>
-                      <span>{venta.est_vent}</span>
+
+                      <span>
+                        {venta.tip_pag_vent?.toLowerCase() ===
+                          "transferencia" &&
+                        venta.est_vent?.trim().toLowerCase() ===
+                          "por validar" ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-blue-500 text-[11px] font-semibold text-blue-600 transition-colors duration-200 hover:bg-blue-50 hover:text-blue-700"
+                            onClick={() => {
+                              setVentaSeleccionada({
+                                id_vent: venta.id_vent,
+                                comprobante: venta.comprobante_num_vent,
+                                imagen: venta.comprobante_img_vent,
+                              });
+                              setOpenDialog(true);
+                            }}
+                          >
+                            Validar pago
+                          </Button>
+                        ) : venta.tip_pag_vent?.toLowerCase() ===
+                            "transferencia" &&
+                          venta.est_vent?.trim().toLowerCase() !==
+                            "por validar" ? (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-1 text-[11px] font-medium text-green-700">
+                            ✔ Validado
+                          </span>
+                        ) : (
+                          <span className="text-[13px] font-medium capitalize text-muted-foreground">
+                            {venta.est_vent}
+                          </span>
+                        )}
+                      </span>
+
                       <span
-                        className={`text-right font-semibold ${venta.tot_vent >= 0 ? "" : "text-red-600"}`}
+                        className={`text-right font-semibold ${
+                          venta.tot_vent >= 0 ? "" : "text-red-600"
+                        }`}
                       >
                         ${formatoMoneda(venta.tot_vent)}
                       </span>
@@ -616,7 +672,7 @@ export default function PaginaCierreDia() {
         <Card className="w-[410px] border border-border dark:bg-[#1a1a1a]">
           <CardHeader>
             <CardTitle>
-              <div className="flex flex-wrap items-center">
+              <div className="mt-4 flex flex-wrap items-center">
                 <Receipt className="mr-2 h-4 w-4" /> Registrar Depósito
               </div>
             </CardTitle>
@@ -791,6 +847,33 @@ export default function PaginaCierreDia() {
           await cerrarDia();
         }}
       />
+      {ventaSeleccionada && (
+        <ValidarPagoDialog
+          open={openDialog}
+          onClose={() => setOpenDialog(false)}
+          venta={ventaSeleccionada}
+          onConfirm={async (id_vent: number) => {
+            await fetch(SERVICIOS_VENTAS.actualizarEstado(id_vent), {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ est_vent: "Cerrada" }),
+            });
+
+            ToastSuccess({ message: "Pago validado correctamente" });
+            setOpenDialog(false);
+            setVentaSeleccionada(null);
+
+            // Actualiza solo esa venta en el estado
+            setVentas((prev) =>
+              prev.map((venta) =>
+                venta.id_vent === id_vent
+                  ? { ...venta, est_vent: "Cerrada" }
+                  : venta,
+              ),
+            );
+          }}
+        />
+      )}
     </ModulePageLayout>
   );
 }
