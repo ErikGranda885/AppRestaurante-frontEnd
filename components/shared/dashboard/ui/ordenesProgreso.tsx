@@ -134,7 +134,7 @@ export default function OrdenesEnProceso() {
                     {filtro === "Pendiente" ? (
                       <>
                         <Badge
-                          className="flex cursor-pointer items-center gap-1 bg-yellow-500 text-xs text-white hover:bg-yellow-600"
+                          className="flex cursor-pointer items-center gap-1 bg-yellow-500 text-xs text-white hover:bg-yellow-500"
                           onClick={() => {
                             setVentaSeleccionada({
                               id_vent: orden.id_vent,
