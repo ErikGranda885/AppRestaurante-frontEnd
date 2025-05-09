@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   FormField,
@@ -36,6 +36,7 @@ import { FormProducts } from "@/components/shared/productos/formularios/createPr
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 
 import { Control, FieldValues, Path, UseFormSetValue } from "react-hook-form";
+import { Plus } from "lucide-react";
 
 export interface ProductoOption {
   value: string;
@@ -47,7 +48,7 @@ export interface ProductoOption {
 interface CampoProductoProps<T extends FieldValues> {
   control: Control<T>;
   setValue: UseFormSetValue<T>;
-  name: Path<T>; // ✅ este es el cambio clave
+  name: Path<T>;
   label: string;
   options: ProductoOption[];
   setOptions?: React.Dispatch<React.SetStateAction<ProductoOption[]>>;
@@ -64,6 +65,17 @@ export function CampoProducto<T extends FieldValues>({
   const [open, setOpen] = useState(false);
   const [crearModalAbierto, setCrearModalAbierto] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const crearBtnRef = useRef<HTMLButtonElement>(null);
+
+  // ✨ Enfoca el botón "Crear nuevo producto" cuando no hay resultados
+  useEffect(() => {
+    if (open && options.length === 0) {
+      const timer = setTimeout(() => {
+        crearBtnRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [open, options]);
 
   return (
     <>
@@ -103,44 +115,70 @@ export function CampoProducto<T extends FieldValues>({
                       className="h-9"
                     />
                     <CommandList>
-                      <CommandEmpty>No se encontró producto.</CommandEmpty>
-                      <CommandGroup heading="Productos">
-                        {options.map((option) => (
+                      {options.length > 0 ? (
+                        <>
+                          <CommandGroup heading="Productos">
+                            {options.map((option) => (
+                              <CommandItem
+                                key={option.value}
+                                value={`${option.nombre} ${option.cod_prod}`}
+                                onSelect={() => {
+                                  field.onChange(option.value);
+                                  setOpen(false);
+                                }}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <Image
+                                    src={option.img_prod}
+                                    alt={option.nombre}
+                                    width={40}
+                                    height={40}
+                                    className="rounded object-cover"
+                                  />
+                                  <div>
+                                    <p className="font-medium">
+                                      {option.nombre}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                      Código: {option.cod_prod}
+                                    </p>
+                                  </div>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+
+                          {/* Mostrar crear producto cuando sí hay productos */}
                           <CommandItem
-                            key={option.value}
-                            value={`${option.nombre} ${option.cod_prod}`}
+                            className="cursor-pointer border border-border py-2"
                             onSelect={() => {
-                              field.onChange(option.value);
+                              setCrearModalAbierto(true);
                               setOpen(false);
                             }}
                           >
-                            <div className="flex items-center gap-3">
-                              <Image
-                                src={option.img_prod}
-                                alt={option.nombre}
-                                width={40}
-                                height={40}
-                                className="rounded object-cover"
-                              />
-                              <div>
-                                <p className="font-medium">{option.nombre}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  Código: {option.cod_prod}
-                                </p>
-                              </div>
-                            </div>
+                            <Plus className="h-4 w-4" /> Crear nuevo producto
                           </CommandItem>
-                        ))}
-                      </CommandGroup>
+                        </>
+                      ) : null}
 
-                      <CommandItem
-                        onSelect={() => {
-                          setCrearModalAbierto(true);
-                          setOpen(false);
-                        }}
-                      >
-                        ➕ Crear nuevo producto
-                      </CommandItem>
+                      {/* Mostrar cuando NO hay coincidencias */}
+                      <CommandEmpty className="flex flex-col items-start gap-2 p-3">
+                        <p className="text-sm text-muted-foreground">
+                          No se encontró producto.
+                        </p>
+                        <Button
+                          ref={crearBtnRef}
+                          variant="outline"
+                          className="mt-1 w-full text-sm"
+                          onClick={() => {
+                            setCrearModalAbierto(true);
+                            setOpen(false);
+                          }}
+                        >
+                          <Plus className="h-4 w-4" />
+                          Crear nuevo producto
+                        </Button>
+                      </CommandEmpty>
                     </CommandList>
                   </Command>
                 </PopoverContent>
@@ -175,12 +213,11 @@ export function CampoProducto<T extends FieldValues>({
               }
 
               setValue(name, nuevo.value as any);
-
               setCrearModalAbierto(false);
 
               setTimeout(() => {
                 triggerRef.current?.focus();
-                setOpen(true); // abrir el dropdown opcionalmente
+                setOpen(false);
               }, 100);
             }}
           />
