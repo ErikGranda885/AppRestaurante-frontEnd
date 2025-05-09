@@ -1,36 +1,18 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, FormProvider } from "react-hook-form";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
-import {
-  ICompra,
-  IDetCompra,
-  IProduct,
-  IProveedor,
-  IUsuario,
-} from "@/lib/types";
-import {
-  CampoProveedor,
-  ProveedorOption,
-} from "@/components/shared/compras/ui/campoProveedor";
+import { ICompra, IDetCompra, IProduct, IUsuario } from "@/lib/types";
+import { CampoProveedor } from "@/components/shared/compras/ui/campoProveedor";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { Button } from "@/components/ui/button";
-import { SERVICIOS_PROVEEDORES } from "@/services/proveedores.service";
 import { CampoTipoDocumento } from "@/components/shared/compras/ui/campoTipoDocumento";
 import { CampoFormaPago } from "@/components/shared/compras/ui/campoFormaPago";
 import { CampoTexto } from "@/components/shared/varios/campoTexto";
 import { CampoTextArea } from "@/components/shared/compras/ui/campoTextArea";
-import {
-  ArrowLeft,
-  Box,
-  ShoppingBag,
-  Trash2,
-  Upload,
-  User,
-} from "lucide-react";
+import { ArrowLeft, Box, ShoppingBag, Trash2 } from "lucide-react";
 import { CampoProducto } from "@/components/shared/compras/ui/campoProducto";
-import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
 import { CampoNumero } from "@/components/shared/varios/campoNumero";
 import { CampoFecha } from "@/components/shared/compras/ui/campoFecha";
 import Image from "next/image";
@@ -44,6 +26,10 @@ import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { format } from "date-fns";
 import { useReactToPrint } from "react-to-print";
 import { GeneralDialog } from "@/components/shared/varios/dialogGen";
+import { useProveedores } from "@/hooks/compras/useProveedores";
+import { useProductos } from "@/hooks/compras/useProductos";
+import { useUsuarioActual } from "@/hooks/compras/useUsuarioActual";
+import { useUltimoIdCompra } from "@/hooks/compras/useUltimoIdCompra";
 export interface ProductoOption {
   value: string;
   nombre: string;
@@ -64,15 +50,13 @@ const schema = z.object({
 
 export default function NuevaCompraPage() {
   const router = useRouter();
+  const proveedores = useProveedores();
+  const productosOptions = useProductos();
+  const usuarioActual = useUsuarioActual();
+  const ultimoIdCompra = useUltimoIdCompra();
   const [productos, setProductos] = useState<IDetCompra[]>([]);
-  const [proveedores, setProveedores] = useState<ProveedorOption[]>([]);
-  const [productosOptions, setProductosOptions] = useState<ProductoOption[]>(
-    [],
-  );
   const [openFactura, setOpenFactura] = useState(false);
   const [compraPreview, setCompraPreview] = useState<any | null>(null);
-  const [usuarioActual, setUsuarioActual] = useState<IUsuario | null>(null);
-  const [ultimoIdCompra, setUltimoIdCompra] = useState<number>(0);
   const DIAS_UMBRAL_POR_VENCER = 30;
   const contentRef = useRef<HTMLDivElement>(null);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
@@ -97,65 +81,6 @@ export default function NuevaCompraPage() {
 
   const handleImprimir = useReactToPrint({ contentRef });
 
-  const verResumen = () => {
-    const formValues = methods.getValues();
-
-    if (!formValues.proveedor || productos.length === 0) {
-      ToastError({
-        message: "Completa el formulario y agrega al menos un producto",
-      });
-      return;
-    }
-
-    const proveedorSeleccionado = proveedores.find(
-      (p) => p.value === formValues.proveedor,
-    );
-
-    if (!proveedorSeleccionado) {
-      ToastError({ message: "Proveedor no válido" });
-      return;
-    }
-
-    if (!usuarioActual) {
-      ToastError({ message: "No se pudo cargar el usuario actual" });
-      return;
-    }
-    const tipoDocumentoSeleccionado = TIPO_DOCUMENTO_OPTIONS.find(
-      (doc: any) => doc.value === formValues.tipo_doc_comp,
-    );
-
-    const compraReal: ICompra = {
-      id_comp: ultimoIdCompra + 1,
-      tot_comp: productos.reduce((acc, p) => acc + p.sub_tot_dcom, 0),
-      prov_comp: {
-        id_prov: Number(formValues.proveedor),
-        nom_prov: proveedorSeleccionado?.nombre || "Proveedor",
-        cont_prov: proveedorSeleccionado?.contacto || "Desconocido",
-        tel_prov: proveedorSeleccionado?.telefono || "0000000000",
-        direc_prov:
-          proveedorSeleccionado?.direccion || "Dirección no especificada",
-        email_prov: proveedorSeleccionado?.correo || "proveedor@email.com",
-        ruc_prov: proveedorSeleccionado?.ruc || "0000000000000",
-        img_prov: proveedorSeleccionado?.imagen || "",
-        est_prov: "activo",
-      },
-      usu_comp: usuarioActual,
-      tipo_doc_comp: tipoDocumentoSeleccionado?.label || "Factura",
-      num_doc_comp: formValues.num_doc_comp || "0001-001-0000001",
-      form_pag_comp: formValues.forma_pago_comp || "efectivo",
-      fech_venc_comp: new Date().toISOString(),
-      fech_comp: new Date().toISOString(),
-      estado_comp: "pendiente",
-      estado_pag_comp: "pendiente",
-      crea_en_comp: new Date(),
-      act_en_comp: new Date(),
-      observ_comp: formValues.observ_comp || "",
-    };
-
-    setCompraPreview(compraReal);
-    setOpenFactura(true);
-  };
-
   const handleConfirmarYImprimir = async () => {
     setOpenConfirmDialog(true);
   };
@@ -169,111 +94,6 @@ export default function NuevaCompraPage() {
     }
 
     await handleConfirmarCompra();
-  };
-
-  /* Cargar Proveedores */
-  useEffect(() => {
-    fetch(SERVICIOS_PROVEEDORES.proveedores)
-      .then((res) => {
-        if (!res.ok) throw new Error("Error al cargar proveedores");
-        return res.json();
-      })
-      .then((data: IProveedor[]) => {
-        const activos = data.filter(
-          (prov) => prov.est_prov?.toLowerCase() === "activo",
-        );
-
-        const opciones: ProveedorOption[] = activos.map((prov) => ({
-          value: prov.id_prov.toString(),
-          label: `${prov.nom_prov} - ${prov.ruc_prov}`,
-          nombre: prov.nom_prov,
-          ruc: prov.ruc_prov,
-          contacto: prov.cont_prov,
-          telefono: prov.tel_prov,
-          direccion: prov.direc_prov,
-          correo: prov.email_prov,
-          imagen: prov.img_prov,
-        }));
-
-        setProveedores(opciones);
-      })
-      .catch((err) => {
-        console.error("Error al cargar proveedores:", err);
-        ToastError({ message: "Error al cargar proveedores" + err.message });
-      });
-  }, []);
-
-  /* Cargar Productos */
-  useEffect(() => {
-    fetch(SERVICIOS_PRODUCTOS.productos)
-      .then((res) => {
-        if (!res.ok) throw new Error("Error al cargar productos");
-        return res.json();
-      })
-      .then((data: IProduct[]) => {
-        const activos = data.filter(
-          (prod) => prod.est_prod?.toLowerCase() === "activo",
-        );
-
-        const opciones: ProductoOption[] = activos.map((prod) => ({
-          value: prod.id_prod.toString(),
-          nombre: prod.nom_prod,
-          cod_prod: prod.id_prod,
-          img_prod: prod.img_prod,
-        }));
-
-        setProductosOptions(opciones);
-      })
-      .catch((err) => {
-        console.error("Error al cargar productos:", err);
-        ToastError({ message: "Error al cargar productos: " + err.message });
-      });
-  }, []);
-
-  /* Cargar usuario */
-  useEffect(() => {
-    const storedUser = localStorage.getItem("usuarioActual");
-    if (storedUser) {
-      setUsuarioActual(JSON.parse(storedUser));
-    }
-  }, []);
-  /* Cargar compras */
-  useEffect(() => {
-    fetch("http://localhost:5000/compras")
-      .then((res) => {
-        if (!res.ok) throw new Error("Error al cargar compras");
-        return res.json();
-      })
-      .then((data: ICompra[]) => {
-        if (data.length > 0) {
-          const maxId = Math.max(...data.map((c) => c.id_comp));
-          setUltimoIdCompra(maxId);
-        } else {
-          setUltimoIdCompra(0);
-        }
-      })
-      .catch((err) => {
-        console.error("Error al obtener el último ID de compra:", err);
-      });
-  }, []);
-  /* Registrar Compra */
-  const registrarCompra = async () => {
-    if (!compraPreview) return;
-
-    const res = await fetch("http://localhost:5000/compras", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(compraPreview),
-    });
-
-    if (res.ok) {
-      // Aquí puedes hacer redirección, limpiar formulario o mostrar éxito
-      setOpenFactura(false);
-      setCompraPreview(null);
-      router.push("/compras/historial"); // Ejemplo: redirige al listado
-    } else {
-      ToastError({ message: "Error al crear la compra" });
-    }
   };
 
   function calcularEstadoLote(
@@ -399,7 +219,6 @@ export default function NuevaCompraPage() {
     if (!compraPreview) return;
 
     try {
-      // Paso 1: Registrar la compra
       const resCompra = await fetch("http://localhost:5000/compras", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -413,12 +232,14 @@ export default function NuevaCompraPage() {
         }),
       });
 
-      if (!resCompra.ok) throw new Error("Error al registrar la compra");
+      if (!resCompra.ok) {
+        const errorData = await resCompra.json();
+        throw new Error(errorData.message || "Error al registrar la compra");
+      }
 
       const compraGuardada = await resCompra.json();
       const idCompra = compraGuardada.id_comp;
 
-      // Paso 2: Registrar cada detalle individualmente
       for (const item of productos) {
         const detalle = {
           comp_dcom: idCompra,
@@ -442,7 +263,6 @@ export default function NuevaCompraPage() {
         });
 
         if (!resDetalle.ok) {
-          // Si falla, eliminar la compra ya registrada (rollback manual)
           await fetch(`http://localhost:5000/compras/${idCompra}`, {
             method: "DELETE",
           });
@@ -453,8 +273,7 @@ export default function NuevaCompraPage() {
         }
       }
 
-      // Si todo fue exitoso
-      setOpenFactura(false);
+      setOpenFactura(false); // ✅ cerrar modal solo si todo fue exitoso
       ToastSuccess({ message: "Compra registrada exitosamente" });
       router.push("/compras/historial");
     } catch (error: any) {
@@ -464,13 +283,31 @@ export default function NuevaCompraPage() {
     }
   };
 
+  const validarDiaCerrado = async (fecha: string) => {
+    const response = await fetch(
+      `http://localhost:5000/cierres/validar-dia/${fecha}`,
+    );
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Error al validar el día");
+    }
+
+    const data = await response.json();
+    return data.estaCerrado as boolean;
+  };
+
   /* Ttoal de productos */
   const totalCompra = productos.reduce(
     (acc, item) => acc + item.prec_uni_dcom * item.cant_dcom,
     0,
   );
 
-  const onSubmit = (formData: any) => {
+  const onSubmit = async (formData: any) => {
+    if (!usuarioActual) {
+      ToastError({ message: "No se encontró usuario válido." });
+      return;
+    }
+
     const proveedorSeleccionado = proveedores.find(
       (p) => p.value === formData.proveedor,
     );
@@ -479,8 +316,10 @@ export default function NuevaCompraPage() {
       (doc) => doc.value === formData.tipo_doc_comp,
     );
 
-    if (!proveedorSeleccionado || !usuarioActual) {
-      ToastError({ message: "Datos incompletos para la compra" });
+    if (!proveedorSeleccionado || productos.length === 0) {
+      ToastError({
+        message: "Complete el formulario y agregue al menos un producto.",
+      });
       return;
     }
 
@@ -505,7 +344,7 @@ export default function NuevaCompraPage() {
         id_usu: usuarioActual.id_usu,
         nom_usu: usuarioActual.nom_usu,
         email_usu: usuarioActual.email_usu,
-      } as IUsuario, // puedes adaptar según tu tipo
+      } as IUsuario,
       tipo_doc_comp: tipoDocumentoSeleccionado?.label || "Factura",
       num_doc_comp: formData.num_doc_comp,
       form_pag_comp: formData.forma_pago_comp,
@@ -518,8 +357,41 @@ export default function NuevaCompraPage() {
       observ_comp: formData.observ_comp,
     };
 
-    setCompraPreview(compra);
-    setOpenFactura(true);
+    try {
+      // ✅ Intentamos registrar la compra directamente
+      const res = await fetch("http://localhost:5000/compras", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...compra,
+          prov_comp: compra.prov_comp.id_prov,
+          usu_comp: compra.usu_comp.id_usu,
+          id_comp: undefined,
+          crea_en_comp: undefined,
+          act_en_comp: undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Error al registrar la compra.");
+      }
+
+      const compraRegistrada = await res.json();
+
+      // ✅ Previsualización solo si la compra fue registrada
+      setCompraPreview({
+        ...compra,
+        id_comp: compraRegistrada.id_comp,
+      });
+      setOpenFactura(true);
+    } catch (error: any) {
+      ToastError({
+        message:
+          error.message ||
+          "Ocurrió un error inesperado al registrar la compra.",
+      });
+    }
   };
 
   return (

@@ -50,11 +50,12 @@ export function useGastos() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error("Error al crear gasto");
+      const data = await res.json();
 
-      const gastoCreado = await res.json();
-      setGastos((prev) => [...prev, gastoCreado]);
-      return gastoCreado;
+      if (!res.ok) throw new Error(data.message || "Error al crear gasto");
+
+      setGastos((prev) => [...prev, data]);
+      return data;
     } catch (err) {
       throw err;
     }
