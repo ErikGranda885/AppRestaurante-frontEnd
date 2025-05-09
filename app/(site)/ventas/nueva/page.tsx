@@ -3,6 +3,7 @@ import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { ModalPagoEfectivo } from "@/components/shared/compras/ui/modalPagoEfe";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
+import ComprobanteCamara from "@/components/shared/ventas/ui/comprobanteCamara";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -63,6 +64,7 @@ export default function Page() {
   const [mostrarEfectivoModal, setMostarEfectivoModal] = useState(false);
   const [efectivoRecibido, setEfectivoRecibido] = useState<number | null>(null);
   const [efectivoCambio, setEfectivoCambio] = useState<number>(0);
+  const [fotoTomada, setFotoTomada] = useState<string | null>(null);
 
   const [comprobanteNumero, setComprobanteNumero] = useState("");
   const [comprobanteImagen, setComprobanteImagen] = useState<File | null>(null);
@@ -75,6 +77,7 @@ export default function Page() {
   const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [tempName, setTempName] = useState(customerName);
   const [tempTable, setTempTable] = useState(tableInfo);
+  const detenerCamaraRef = useRef<() => void>(() => {});
 
   // Funciones para editar información del cliente
   const handleOpenCustomerForm = () => {
@@ -873,8 +876,8 @@ export default function Page() {
             <DialogHeader>
               <DialogTitle>Información de transferencia</DialogTitle>
               <DialogDescription>
-                Ingresa el número de comprobante y sube la imagen
-                correspondiente.
+                Ingresa el número de comprobante y captura una foto con la
+                cámara.
               </DialogDescription>
             </DialogHeader>
 
@@ -893,31 +896,14 @@ export default function Page() {
 
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Imagen del comprobante
+                  Foto del comprobante
                 </label>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      setComprobanteImagen(e.target.files[0]);
-                    }
-                  }}
-                />
 
-                {/* ✅ Previsualización de imagen */}
-                {comprobanteImagen && (
-                  <div className="mt-3 rounded border border-border p-2">
-                    <p className="mb-2 text-sm text-gray-700 dark:text-gray-300">
-                      Previsualización:
-                    </p>
-                    <img
-                      src={URL.createObjectURL(comprobanteImagen)}
-                      alt="Previsualización del comprobante"
-                      className="max-h-48 w-auto rounded-md border border-border object-contain"
-                    />
-                  </div>
-                )}
+                <ComprobanteCamara
+                  onFotoTomada={(file) => setComprobanteImagen(file)}
+                  imagenActual={comprobanteImagen}
+                  activarCamara={showDialogComprobante}
+                />
               </div>
             </div>
 
@@ -974,7 +960,16 @@ export default function Page() {
       {showConfirmDialog && (
         <Dialog
           open={showConfirmDialog}
-          onOpenChange={(open) => setShowConfirmDialog(open)}
+          onOpenChange={(open) => {
+            setShowDialogComprobante(open);
+            if (!open) {
+              detenerCamaraRef.current?.();
+              setFotoTomada(null);
+              setComprobanteImagen(null);
+              setComprobanteNumero("");
+              setMetodoPago("efectivo");
+            }
+          }}
         >
           <DialogContent className="w-[400px] max-w-none border-border">
             <DialogHeader>
