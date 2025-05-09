@@ -46,8 +46,7 @@ export default function Page() {
   useProtectedRoute();
 
   // Estados para productos, orden y filtros
-  const user = JSON.parse(localStorage.getItem("usuarioActual") || "{}");
-  const idUsuario = user.id_usu ?? 0;
+  const [idUsuario, setIdUsuario] = useState<number>(0);
 
   const [products, setProducts] = useState<IExtendedProduct[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
@@ -132,6 +131,13 @@ export default function Page() {
       }
     }
     fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const user = JSON.parse(localStorage.getItem("usuarioActual") || "{}");
+      setIdUsuario(user.id_usu ?? 0);
+    }
   }, []);
 
   // Filtrar productos según categoría y búsqueda
@@ -323,7 +329,6 @@ export default function Page() {
         );
       }
 
-      // 1. Crear la venta inicialmente sin comprobante
       const salePayload = {
         tot_vent: total,
         fech_vent: new Date().toISOString(),
@@ -343,12 +348,18 @@ export default function Page() {
         body: JSON.stringify(salePayload),
       });
 
-      if (!saleResponse.ok) throw new Error("Error al crear la venta");
+      if (!saleResponse.ok) {
+        const errorData = await saleResponse.json();
+        ToastError({
+          message: errorData.message || "Error al crear la venta.",
+        });
+        return;
+      }
 
       const saleData = await saleResponse.json();
       const id_vent = saleData.venta.id_vent;
 
-      // 3. Crear detalles de venta
+      // Crear detalles de venta
       for (const item of orderItems) {
         const producto = products.find((p) => p.id_prod === item.productId);
         if (!producto) continue;
@@ -375,7 +386,7 @@ export default function Page() {
         }
       }
 
-      // 4. Consumir stock
+      // Consumir stock
       for (const item of orderItems) {
         const consumoResponse = await fetch(
           SERVICIOS_INVENTARIO.consumirPorLote,
@@ -407,7 +418,8 @@ export default function Page() {
     } catch (error: any) {
       console.error(error);
       ToastError({
-        message: "Error al guardar la orden: " + error.message,
+        message:
+          error?.message || "Ocurrió un error inesperado al guardar la orden.",
       });
     }
   };

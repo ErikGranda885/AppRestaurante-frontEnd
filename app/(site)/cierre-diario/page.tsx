@@ -57,6 +57,17 @@ import {
   subDays,
 } from "date-fns";
 
+function hayCierresAnterioresPendientes(
+  lista: ICierreDiario[],
+  seleccionado: ICierreDiario,
+): boolean {
+  return lista.some(
+    (cierre) =>
+      cierre.esta_cier?.toLowerCase() === "pendiente" &&
+      new Date(cierre.fech_cier) < new Date(seleccionado.fech_cier),
+  );
+}
+
 export default function Page() {
   const [dateRange, setDateRange] = useState<DateRange>({
     from: startOfToday(),
@@ -103,22 +114,29 @@ export default function Page() {
   useProtectedRoute();
   const router = useRouter();
   const [abrirCrear, setAbrirCrear] = React.useState(false);
-  const [estadoSeleccionado, setEstadoSeleccionado] =
-    React.useState<string>("");
+  const [estadoSeleccionado, setEstadoSeleccionado] = useState<string>("");
+
   const [cierres, setCierres] = React.useState<ICierreDiario[]>([]);
   const cantidadPendientes = cierres.filter(
     (c) => c.esta_cier.toLowerCase() === "pendiente",
   ).length;
 
-  const fechaActual = new Date().toLocaleDateString("en-CA"); // en hora local
+  const fechaActual = new Date();
+  fechaActual.setMinutes(
+    fechaActual.getMinutes() - fechaActual.getTimezoneOffset(),
+  );
+  const fechaActualStr = fechaActual.toISOString().split("T")[0]; // YYYY-MM-DD real
 
-  const cierreActual = cierres.find((c) => c.fech_cier === fechaActual);
-  const estadoActual = cierreActual?.esta_cier?.toLowerCase() ?? "sin datos";
+  const cierreActual = cierres.find((c) => c.fech_cier === fechaActualStr);
   const hayPendientesAnteriores = cierres.some(
     (c) =>
       c.esta_cier.toLowerCase() === "pendiente" &&
       new Date(c.fech_cier) < new Date(fechaActual),
   );
+  const estadoActual = hayPendientesAnteriores
+    ? "pendiente"
+    : (cierreActual?.esta_cier?.toLowerCase() ?? "sin datos");
+
   const primerCierrePendiente = cierres
     .filter((c) => c.esta_cier.toLowerCase() === "pendiente")
     .sort(
@@ -127,7 +145,7 @@ export default function Page() {
     )[0];
 
   const { resumenPendiente } = useResumenPendiente(
-    fechaActual,
+    fechaActualStr,
     estadoSeleccionado,
     cierres,
   );
@@ -135,7 +153,7 @@ export default function Page() {
   const lista = useListaCierres(
     cierres,
     resumenPendiente,
-    fechaActual,
+    fechaActualStr,
     estadoSeleccionado,
   );
   const { totalDisponible, totalDepositado, diferenciaTotal, numeroCierres } =
@@ -148,7 +166,7 @@ export default function Page() {
         const fechaCierre = new Date(getValue() as string)
           .toISOString()
           .split("T")[0];
-        const esHoy = fechaCierre === fechaActual;
+        const esHoy = fechaCierre === fechaActualStr;
         return esHoy
           ? "Hoy"
           : new Date(getValue() as string).toLocaleDateString("es-ES", {
@@ -221,17 +239,6 @@ export default function Page() {
     setCierres,
     dateRange: estadoSeleccionado === "Cerrado" ? dateRange : undefined,
   });
-
-  function hayCierresAnterioresPendientes(
-    lista: ICierreDiario[],
-    seleccionado: ICierreDiario,
-  ): boolean {
-    return lista.some(
-      (cierre) =>
-        cierre.esta_cier.toLowerCase() === "pendiente" &&
-        new Date(cierre.fech_cier) < new Date(seleccionado.fech_cier),
-    );
-  }
 
   return (
     <ModulePageLayout
@@ -356,7 +363,7 @@ export default function Page() {
                 <div className="mt-2 flex items-center gap-5">
                   {resumenPendiente ? (
                     <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
-                      ${Number(resumenPendiente.totalVentas ?? 0).toFixed(2)}
+                      ${Number(cierreActual?.tot_vent_cier ?? 0).toFixed(2)}
                     </span>
                   ) : (
                     <span className="text-sm text-gray-400 dark:text-gray-500">
@@ -438,7 +445,7 @@ export default function Page() {
               data={lista}
               columns={cierresColumnas}
               onRowClick={(row) => {
-                if (hayCierresAnterioresPendientes(lista, row)) {
+                if (hayCierresAnterioresPendientes(cierres, row)) {
                   ToastError({
                     message:
                       "No puedes cerrar este día porque existen cierres anteriores pendientes.",
