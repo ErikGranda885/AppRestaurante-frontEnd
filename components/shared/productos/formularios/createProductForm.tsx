@@ -231,7 +231,11 @@ export function FormProducts({
           <Button variant={"secondary"} onClick={() => form.reset()}>
             Limpiar
           </Button>
-          <Button className="hover:/80" type="submit">
+          <Button
+            className="hover:/80"
+            type="button"
+            onClick={() => form.handleSubmit(onSubmit)()}
+          >
             Crear Producto
           </Button>
         </div>
