@@ -35,5 +35,8 @@ export function useProductos() {
       });
   }, []);
 
-  return productosOptions;
+  return {
+    productosOptions,
+    setProductosOptions,
+  };
 }

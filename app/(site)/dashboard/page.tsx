@@ -253,9 +253,9 @@ export default function Dashboard() {
                       <CardTitle className="text-md font-semibold">
                         Productos más vendidos
                       </CardTitle>
-                      <span className="cursor-pointer text-xs font-medium text-blue-500 hover:underline">
+                      {/* <span className="cursor-pointer text-xs font-medium text-blue-500 hover:underline">
                         Ver Todos
-                      </span>
+                      </span> */}
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -320,9 +320,9 @@ export default function Dashboard() {
                       <CardTitle className="text-md font-semibold">
                         Productos por Caducar
                       </CardTitle>
-                      <span className="cursor-pointer text-xs font-medium text-blue-500 hover:underline">
+                      {/* <span className="cursor-pointer text-xs font-medium text-blue-500 hover:underline">
                         Ver Todos
-                      </span>
+                      </span> */}
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4 pt-1">

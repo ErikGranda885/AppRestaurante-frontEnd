@@ -51,7 +51,7 @@ const schema = z.object({
 export default function NuevaCompraPage() {
   const router = useRouter();
   const proveedores = useProveedores();
-  const productosOptions = useProductos();
+  const { productosOptions, setProductosOptions } = useProductos();
   const usuarioActual = useUsuarioActual();
   const ultimoIdCompra = useUltimoIdCompra();
   const [productos, setProductos] = useState<IDetCompra[]>([]);
@@ -441,9 +441,11 @@ export default function NuevaCompraPage() {
               <div className="min-w-[220px] flex-1">
                 <CampoProducto
                   control={control}
+                  setValue={setValue} // ✅ esto es lo que está faltando
                   name="producto"
                   label="Producto"
                   options={productosOptions}
+                  setOptions={setProductosOptions}
                 />
               </div>
 
