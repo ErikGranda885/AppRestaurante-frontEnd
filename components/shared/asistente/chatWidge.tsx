@@ -1,6 +1,7 @@
 "use client";
+
 import { useEffect, useRef, useState } from "react";
-import { X, Mic, MicOff, Send } from "lucide-react";
+import { X, Mic, MicOff, Send, Bot } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
@@ -13,6 +14,7 @@ declare global {
 
 interface ChatWidgetProps {
   onClose: () => void;
+  cerrando: boolean;
 }
 
 interface Mensaje {
@@ -20,21 +22,20 @@ interface Mensaje {
   texto: string;
 }
 
-export function ChatWidget({ onClose }: ChatWidgetProps) {
+export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
   const [mensajes, setMensajes] = useState<Mensaje[]>([
     {
       tipo: "asistente",
       texto:
-        "👋 ¡Hola soy KAI tu asistente virtual 😎!  ¿En qué puedo ayudarte hoy?",
+        "👋 ¡Hola soy KAI tu asistente virtual 😎! ¿En qué puedo ayudarte hoy?",
     },
   ]);
   const [escuchando, setEscuchando] = useState(false);
-  const [cerrando, setCerrando] = useState(false);
   const [inputTexto, setInputTexto] = useState("");
   const reconocimientoRef = useRef<any>(null);
 
   useEffect(() => {
-    iniciarReconocimiento(); // auto inicia al abrir
+    iniciarReconocimiento();
     return () => reconocimientoRef.current?.stop?.();
   }, []);
 
@@ -91,20 +92,17 @@ export function ChatWidget({ onClose }: ChatWidgetProps) {
       const idx = actual.findIndex(
         (m) => m.tipo === "usuario" && m.texto.endsWith("..."),
       );
-
       if (idx >= 0) {
         actual[idx].texto = texto + "...";
       } else {
         actual.push({ tipo: "usuario", texto: texto + "..." });
       }
-
       return actual;
     });
   };
 
   const procesarComando = (texto: string) => {
     let respuesta = "";
-
     if (texto.includes("coca cola")) {
       respuesta = "✅ Hay 5 unidades de Coca Cola.";
     } else if (texto.includes("registrar")) {
@@ -113,19 +111,13 @@ export function ChatWidget({ onClose }: ChatWidgetProps) {
       respuesta = "👋 Hasta luego.";
       hablar(respuesta);
       setMensajes((prev) => [...prev, { tipo: "asistente", texto: respuesta }]);
-      setTimeout(() => cerrarConAnimacion(), 2000);
+      setTimeout(() => onClose(), 2000);
       return;
     } else {
       respuesta = "❌ Lo siento, no entendí ese comando.";
     }
-
     setMensajes((prev) => [...prev, { tipo: "asistente", texto: respuesta }]);
     hablar(respuesta);
-  };
-
-  const cerrarConAnimacion = () => {
-    setCerrando(true);
-    setTimeout(() => onClose(), 250);
   };
 
   const manejarEnvioManual = () => {
@@ -143,30 +135,36 @@ export function ChatWidget({ onClose }: ChatWidgetProps) {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.95 }}
           transition={{ duration: 0.25 }}
-          className="flex h-[500px] w-80 flex-col overflow-hidden rounded-xl border border-border bg-white shadow-2xl"
+          className="flex h-[500px] w-[340px] flex-col overflow-hidden rounded-2xl border border-neutral-300 bg-white shadow-xl dark:border-neutral-800 dark:bg-[#1c1c1e]"
         >
-          {/* Encabezado */}
-          <div className="relative rounded-t-xl bg-[#121212] px-4 py-2 text-white">
-            <span className="font-semibold">Asistente Virtual</span>
+          {/* Header */}
+          <div className="relative flex items-center justify-between bg-neutral-100 px-4 py-2 dark:bg-neutral-900">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white dark:bg-[#121212] dark:text-white">
+                <Bot className="h-5 w-5" />
+              </div>
+              <span className="text-sm font-semibold text-black dark:text-white">
+                KAI (Asistente Virtual)
+              </span>
+            </div>
             <Button
-              variant={"ghost"}
-              onClick={cerrarConAnimacion}
-              className="absolute right-2 text-white transition hover:text-gray-200"
-              title="Cerrar"
+              variant="ghost"
+              onClick={onClose}
+              className="text-black dark:text-white"
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
 
           {/* Mensajes */}
-          <div className="flex-1 space-y-2 overflow-y-auto bg-gray-50 p-3">
+          <div className="flex-1 space-y-2 overflow-y-auto p-3">
             {mensajes.map((msg, i) => (
               <div
                 key={i}
-                className={`max-w-[80%] rounded-xl px-3 py-2 text-sm shadow ${
+                className={`max-w-[80%] px-3 py-2 text-sm shadow ${
                   msg.tipo === "usuario"
-                    ? "ml-auto self-end bg-pink-100 text-right text-pink-900"
-                    : "mr-auto self-start border bg-white text-gray-700"
+                    ? "ml-auto self-end rounded-xl bg-pink-500 text-white shadow-md dark:bg-pink-600"
+                    : "mr-auto self-start rounded-xl bg-neutral-200 text-black shadow-sm dark:bg-neutral-800 dark:text-neutral-200"
                 }`}
               >
                 {msg.texto}
@@ -174,29 +172,27 @@ export function ChatWidget({ onClose }: ChatWidgetProps) {
             ))}
           </div>
 
-          {/* Input de texto + micrófono */}
-          <div className="flex items-center gap-2 border-t bg-white p-2">
+          {/* Input + botones */}
+          <div className="flex items-center gap-2 border-t border-neutral-200 bg-neutral-100 p-2 dark:border-neutral-800 dark:bg-neutral-900">
             <input
               type="text"
               value={inputTexto}
               onChange={(e) => setInputTexto(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && manejarEnvioManual()}
               placeholder="Escribe un mensaje..."
-              className="flex-1 rounded-md border px-3 py-1 text-sm focus:outline-none"
+              className="flex-1 rounded-xl border border-neutral-300 bg-neutral-50 px-3 py-1 text-sm text-black placeholder-neutral-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-400"
             />
             <button
               onClick={manejarEnvioManual}
-              className="rounded bg-pink-600 p-2 text-white hover:bg-pink-700"
-              title="Enviar"
+              className="rounded-xl bg-neutral-200 p-2 text-black hover:bg-neutral-300 dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-700"
             >
               <Send className="h-4 w-4" />
             </button>
             <button
               onClick={toggleGrabacion}
-              className={`rounded p-2 text-white ${
+              className={`rounded-xl p-2 text-white ${
                 escuchando ? "bg-green-600" : "bg-blue-600"
               } hover:opacity-90`}
-              title={escuchando ? "Detener grabación" : "Iniciar grabación"}
             >
               {escuchando ? (
                 <MicOff className="h-4 w-4" />

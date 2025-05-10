@@ -82,7 +82,7 @@ export const data = {
       items: [
         { title: "Gestión de categorias", url: "/productos/categorias" },
         { title: "Gestión de productos", url: "/productos/listado" },
-        { title: "Gestión de combos", url: "/productos/combos" },
+        /* { title: "Gestión de combos", url: "/productos/combos" }, */
         { title: "Reportes", url: "/productos/reportes" },
       ],
     },
@@ -111,12 +111,12 @@ export const data = {
     },
   ],
   adminModules: [
-    {
+    /* {
       title: "Asistente de voz",
       url: "/asistente-voz",
       icon: Bot,
       submenu: false,
-    },
+    }, */
     { title: "Usuarios", url: "/usuarios", icon: User, submenu: false },
     {
       title: "Configuraciones",
