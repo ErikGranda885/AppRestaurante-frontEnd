@@ -1,5 +1,6 @@
 "use client";
-import React from "react";
+
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { ICompra, IDetCompra } from "@/lib/types";
 
@@ -15,6 +16,26 @@ const FacturaPagadaPDF: React.FC<FacturaPagadaPDFProps> = ({
   printRef,
 }) => {
   const total = detalle.reduce((acc, p) => acc + Number(p.sub_tot_dcom), 0);
+
+  const [logo, setLogo] = useState("/imagenes/logo.png");
+
+  useEffect(() => {
+    const empresaLS = localStorage.getItem("empresa_actual");
+    if (empresaLS && empresaLS !== "null") {
+      try {
+        const empresa = JSON.parse(empresaLS);
+        if (empresa.logo_emp) {
+          setLogo(
+            empresa.logo_emp.startsWith("http")
+              ? empresa.logo_emp
+              : "/imagenes/logo.png",
+          );
+        }
+      } catch (error) {
+        console.error("Error al obtener empresa_actual:", error);
+      }
+    }
+  }, []);
 
   return (
     <div
@@ -37,13 +58,15 @@ const FacturaPagadaPDF: React.FC<FacturaPagadaPDFProps> = ({
               : "No disponible"}
           </p>
         </div>
-        <Image
-          src="/imagenes/logo.png"
-          alt="Logo"
-          width={80}
-          height={40}
-          className="object-contain"
-        />
+        <div className="relative h-10 w-20">
+          <Image
+            src={logo}
+            alt="Logo Empresa"
+            fill
+            className="object-contain"
+            onError={() => setLogo("/imagenes/logo.png")}
+          />
+        </div>
       </div>
 
       {/* Información de Emisor y Proveedor */}

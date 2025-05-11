@@ -1,5 +1,6 @@
 "use client";
-import React from "react";
+
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { ICompra, IDetCompra } from "@/lib/types";
 
@@ -14,6 +15,26 @@ const FacturaPendientePDF: React.FC<FacturaPendientePDFProps> = ({
   detalle,
   printRef,
 }) => {
+  const [logo, setLogo] = useState("/imagenes/logo.png");
+
+  useEffect(() => {
+    const empresaLS = localStorage.getItem("empresa_actual");
+    if (empresaLS && empresaLS !== "null") {
+      try {
+        const empresa = JSON.parse(empresaLS);
+        if (empresa.logo_emp) {
+          setLogo(
+            empresa.logo_emp.startsWith("http")
+              ? empresa.logo_emp
+              : "/imagenes/logo.png",
+          );
+        }
+      } catch (error) {
+        console.error("Error al obtener empresa_actual:", error);
+      }
+    }
+  }, []);
+
   return (
     <div
       ref={printRef}
@@ -26,7 +47,7 @@ const FacturaPendientePDF: React.FC<FacturaPendientePDFProps> = ({
         </h1>
       </div>
 
-      {/* ✅ Contenido principal (z-10 para que esté sobre la marca de agua) */}
+      {/* ✅ Contenido principal */}
       <div className="relative z-10">
         <div className="mb-6 flex items-center justify-between">
           <div>
@@ -37,13 +58,15 @@ const FacturaPendientePDF: React.FC<FacturaPendientePDFProps> = ({
               Fecha: {new Date(compra.fech_comp).toLocaleDateString()}
             </p>
           </div>
-          <Image
-            src="/imagenes/logo.png"
-            alt="Logo"
-            width={70}
-            height={40}
-            className="object-contain"
-          />
+          <div className="relative h-10 w-20">
+            <Image
+              src={logo}
+              alt="Logo Empresa"
+              fill
+              className="object-contain"
+              onError={() => setLogo("/imagenes/logo.png")}
+            />
+          </div>
         </div>
 
         <div className="mb-6 grid grid-cols-2 gap-6 border p-4 text-sm">

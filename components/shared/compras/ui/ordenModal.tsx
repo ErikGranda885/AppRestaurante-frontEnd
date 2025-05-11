@@ -1,5 +1,6 @@
 "use client";
-import React from "react";
+
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,26 @@ const FacturaModal: React.FC<FacturaModalProps> = ({
   onConfirm,
   printRef,
 }) => {
+  const [logo, setLogo] = useState("/imagenes/logo.png");
+
+  useEffect(() => {
+    const empresaLS = localStorage.getItem("empresa_actual");
+    if (empresaLS && empresaLS !== "null") {
+      try {
+        const empresa = JSON.parse(empresaLS);
+        if (empresa.logo_emp) {
+          setLogo(
+            empresa.logo_emp.startsWith("http")
+              ? empresa.logo_emp
+              : "/imagenes/logo.png"
+          );
+        }
+      } catch (error) {
+        console.error("Error al obtener empresa_actual:", error);
+      }
+    }
+  }, []);
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto rounded-md bg-white p-8 text-black shadow-xl print:max-w-[100%] print:overflow-visible print:rounded-none print:p-0 print:shadow-none">
@@ -51,13 +72,15 @@ const FacturaModal: React.FC<FacturaModalProps> = ({
                 Fecha: {new Date(compra.fech_comp).toLocaleDateString()}
               </p>
             </div>
-            <Image
-              src="/imagenes/logo.png"
-              alt="Logo"
-              width={70}
-              height={40}
-              className="object-contain"
-            />
+            <div className="relative h-10 w-20">
+              <Image
+                src={logo}
+                alt="Logo Empresa"
+                fill
+                className="object-contain"
+                onError={() => setLogo("/imagenes/logo.png")}
+              />
+            </div>
           </div>
 
           <div className="mb-6 grid grid-cols-2 gap-6 border p-4 text-sm">
@@ -91,7 +114,9 @@ const FacturaModal: React.FC<FacturaModalProps> = ({
                   <tr key={item.id_dcom}>
                     <td className="border p-2">{index + 1}</td>
                     <td className="border p-2">{item.prod_dcom.nom_prod}</td>
-                    <td className="border p-2 text-center">{item.cant_dcom}</td>
+                    <td className="border p-2 text-center">
+                      {item.cant_dcom}
+                    </td>
                     <td className="border p-2 text-center">
                       ${item.prec_uni_dcom.toFixed(2)}
                     </td>
@@ -109,7 +134,9 @@ const FacturaModal: React.FC<FacturaModalProps> = ({
               <span>Total:</span>
               <span className="font-semibold">
                 $
-                {detalle.reduce((acc, p) => acc + p.sub_tot_dcom, 0).toFixed(2)}
+                {detalle
+                  .reduce((acc, p) => acc + p.sub_tot_dcom, 0)
+                  .toFixed(2)}
               </span>
             </div>
             <div className="flex justify-between">
@@ -124,7 +151,9 @@ const FacturaModal: React.FC<FacturaModalProps> = ({
               <span>Total Final:</span>
               <span>
                 $
-                {detalle.reduce((acc, p) => acc + p.sub_tot_dcom, 0).toFixed(2)}
+                {detalle
+                  .reduce((acc, p) => acc + p.sub_tot_dcom, 0)
+                  .toFixed(2)}
               </span>
             </div>
           </div>

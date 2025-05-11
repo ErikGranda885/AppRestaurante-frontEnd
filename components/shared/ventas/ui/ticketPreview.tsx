@@ -1,22 +1,53 @@
-import { EMPRESA } from "@/app/(site)/configuraciones/infoEmpresa";
+"use client";
+
+import { useEffect, useState } from "react";
 
 interface TicketPreviewProps {
   venta: any;
 }
 
+interface EmpresaLocal {
+  nom_emp: string;
+  dir_emp: string;
+  tel_emp: string;
+  ruc_emp: string;
+}
+
 export function TicketPreview({ venta }: TicketPreviewProps) {
+  const [empresa, setEmpresa] = useState<EmpresaLocal>({
+    nom_emp: "Mi Restaurante",
+    dir_emp: "Dirección no configurada",
+    tel_emp: "---",
+    ruc_emp: "---",
+  });
+
+  useEffect(() => {
+    const empresaLS = localStorage.getItem("empresa_actual");
+    if (empresaLS && empresaLS !== "null") {
+      try {
+        const empresaData = JSON.parse(empresaLS);
+        setEmpresa({
+          nom_emp: empresaData.nom_emp ?? "Mi Restaurante",
+          dir_emp: empresaData.dir_emp ?? "Dirección no configurada",
+          tel_emp: empresaData.tel_emp ?? "---",
+          ruc_emp: empresaData.ruc_emp ?? "---",
+        });
+      } catch (error) {
+        console.error("Error al obtener empresa_actual:", error);
+      }
+    }
+  }, []);
+
   return (
     <div className="ticket w-[300px] rounded-b-[20px] bg-white p-4 font-mono text-[10px] text-black shadow-md dark:bg-white">
       {/* Cabecera */}
       <div className="text-center text-[11px]">
-        <h2 className="text-base font-bold uppercase">
-          {EMPRESA.nombreRestaurante}
-        </h2>
+        <h2 className="text-base font-bold uppercase">{empresa.nom_emp}</h2>
         <p className="leading-4">
-          {EMPRESA.direccion} <br />
-          Tel: {EMPRESA.telefono}
+          {empresa.dir_emp} <br />
+          Tel: {empresa.tel_emp}
         </p>
-        <p className="pt-1 text-[10px]">RUC: {EMPRESA.ruc}</p>
+        <p className="pt-1 text-[10px]">RUC: {empresa.ruc_emp}</p>
       </div>
 
       {/* Info */}
@@ -25,7 +56,6 @@ export function TicketPreview({ venta }: TicketPreviewProps) {
         <div>Fecha: {new Date(venta.fecha).toLocaleDateString()}</div>
         <div>Hora: {new Date(venta.fecha).toLocaleTimeString()}</div>
         <div>Tipo de pago: {venta.tipoPago}</div>
-
         <div>Empleado: {venta.cliente.nom_usu}</div>
       </div>
 
