@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { ICompra, IDetCompra } from "@/lib/types";
+import { SERVICIOS_CONFIGURACIONES } from "@/services/configuraciones.service";
 
 interface FacturaPagadaPDFProps {
   compra: ICompra;
@@ -18,6 +19,7 @@ const FacturaPagadaPDF: React.FC<FacturaPagadaPDFProps> = ({
   const total = detalle.reduce((acc, p) => acc + Number(p.sub_tot_dcom), 0);
 
   const [logo, setLogo] = useState("/imagenes/logo.png");
+  const [mostrarLogo, setMostrarLogo] = useState(false);
 
   useEffect(() => {
     const empresaLS = localStorage.getItem("empresa_actual");
@@ -34,6 +36,31 @@ const FacturaPagadaPDF: React.FC<FacturaPagadaPDFProps> = ({
       } catch (error) {
         console.error("Error al obtener empresa_actual:", error);
       }
+    }
+
+    // ✅ consultar si se debe mostrar el logo en facturas
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : "";
+
+    if (token) {
+      fetch(
+        SERVICIOS_CONFIGURACIONES.obtenerPorClave("incluir_logo_facturas"),
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.configuracion?.valor_conf === "true") {
+            setMostrarLogo(true);
+          }
+        })
+        .catch((err) => {
+          console.error(
+            "Error al obtener configuración incluir_logo_facturas",
+            err,
+          );
+        });
     }
   }, []);
 
@@ -58,15 +85,17 @@ const FacturaPagadaPDF: React.FC<FacturaPagadaPDFProps> = ({
               : "No disponible"}
           </p>
         </div>
-        <div className="relative h-10 w-20">
-          <Image
-            src={logo}
-            alt="Logo Empresa"
-            fill
-            className="object-contain"
-            onError={() => setLogo("/imagenes/logo.png")}
-          />
-        </div>
+        {mostrarLogo && (
+          <div className="relative h-10 w-20">
+            <Image
+              src={logo}
+              alt="Logo Empresa"
+              fill
+              className="object-contain"
+              onError={() => setLogo("/imagenes/logo.png")}
+            />
+          </div>
+        )}
       </div>
 
       {/* Información de Emisor y Proveedor */}

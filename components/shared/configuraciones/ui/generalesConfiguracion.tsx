@@ -12,6 +12,7 @@ import { CloudUpload } from "lucide-react";
 import { useEmpresa } from "@/hooks/configuraciones/generales/useEmpresa";
 import { ToastSuccess } from "../../toast/toastSuccess";
 import { ToastError } from "../../toast/toastError";
+import { useConfiguracionesBranding } from "@/hooks/configuraciones/generales/useConfiguracionesBranding";
 
 export function GeneralesConfiguracion() {
   const { empresa, loading, saveEmpresa } = useEmpresa();
@@ -24,9 +25,9 @@ export function GeneralesConfiguracion() {
     telefono_negocio: "",
     email_negocio: "",
     logo_negocio: "",
-    incluir_logo_reportes: false,
-    incluir_logo_facturas: false,
   });
+  const { logoReportes, setLogoReportes, logoFacturas, setLogoFacturas } =
+    useConfiguracionesBranding();
 
   useEffect(() => {
     if (empresa) {
@@ -37,18 +38,12 @@ export function GeneralesConfiguracion() {
         telefono_negocio: empresa.tel_emp,
         email_negocio: empresa.corre_emp,
         logo_negocio: empresa.logo_emp,
-        incluir_logo_reportes: false,
-        incluir_logo_facturas: false,
       });
       setLogoFile(null); // ✅ limpia file al cargar empresa
     }
   }, [empresa]);
 
   const handleInputChange = (key: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleSwitchChange = (key: string, value: boolean) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -73,8 +68,6 @@ export function GeneralesConfiguracion() {
         telefono_negocio: empresa.tel_emp,
         email_negocio: empresa.corre_emp,
         logo_negocio: empresa.logo_emp,
-        incluir_logo_reportes: false,
-        incluir_logo_facturas: false,
       });
       setLogoFile(null); // ✅ también limpia file al cancelar
     }
@@ -265,12 +258,7 @@ export function GeneralesConfiguracion() {
                 Mostrar el logo en todos los reportes del sistema.
               </p>
             </div>
-            <Switch
-              checked={formData.incluir_logo_reportes}
-              onCheckedChange={(checked) =>
-                handleSwitchChange("incluir_logo_reportes", checked)
-              }
-            />
+            <Switch checked={logoReportes} onCheckedChange={setLogoReportes} />
           </div>
 
           <div className="flex items-center justify-between">
@@ -280,12 +268,7 @@ export function GeneralesConfiguracion() {
                 Mostrar el logo en los comprobantes de compra y venta.
               </p>
             </div>
-            <Switch
-              checked={formData.incluir_logo_facturas}
-              onCheckedChange={(checked) =>
-                handleSwitchChange("incluir_logo_facturas", checked)
-              }
-            />
+            <Switch checked={logoFacturas} onCheckedChange={setLogoFacturas} />
           </div>
         </div>
       </Card>

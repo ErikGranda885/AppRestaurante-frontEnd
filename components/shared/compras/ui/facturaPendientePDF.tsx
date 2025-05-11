@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { ICompra, IDetCompra } from "@/lib/types";
+import { useConfiguracionesBranding } from "@/hooks/configuraciones/generales/useConfiguracionesBranding";
 
 interface FacturaPendientePDFProps {
   compra: ICompra;
@@ -16,6 +17,7 @@ const FacturaPendientePDF: React.FC<FacturaPendientePDFProps> = ({
   printRef,
 }) => {
   const [logo, setLogo] = useState("/imagenes/logo.png");
+  const { logoFacturas } = useConfiguracionesBranding(); // ✅ INTEGRADO
 
   useEffect(() => {
     const empresaLS = localStorage.getItem("empresa_actual");
@@ -40,14 +42,14 @@ const FacturaPendientePDF: React.FC<FacturaPendientePDFProps> = ({
       ref={printRef}
       className="relative w-full bg-white px-10 pb-12 pt-8 text-sm text-black"
     >
-      {/* ✅ Marca de agua */}
+      {/* Marca de agua */}
       <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center opacity-10 print:opacity-20">
         <h1 className="rotate-[-30deg] text-5xl font-bold text-red-600">
           ❌ Copia no válida sin pago
         </h1>
       </div>
 
-      {/* ✅ Contenido principal */}
+      {/* Contenido principal */}
       <div className="relative z-10">
         <div className="mb-6 flex items-center justify-between">
           <div>
@@ -58,15 +60,19 @@ const FacturaPendientePDF: React.FC<FacturaPendientePDFProps> = ({
               Fecha: {new Date(compra.fech_comp).toLocaleDateString()}
             </p>
           </div>
-          <div className="relative h-10 w-20">
-            <Image
-              src={logo}
-              alt="Logo Empresa"
-              fill
-              className="object-contain"
-              onError={() => setLogo("/imagenes/logo.png")}
-            />
-          </div>
+
+          {/* ✅ Solo mostrar logo si está activado en configuraciones */}
+          {logoFacturas && (
+            <div className="relative h-10 w-20">
+              <Image
+                src={logo}
+                alt="Logo Empresa"
+                fill
+                className="object-contain"
+                onError={() => setLogo("/imagenes/logo.png")}
+              />
+            </div>
+          )}
         </div>
 
         <div className="mb-6 grid grid-cols-2 gap-6 border p-4 text-sm">

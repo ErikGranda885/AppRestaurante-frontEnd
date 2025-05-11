@@ -21,7 +21,6 @@ import { DialogRegistrarPagoCompra } from "@/components/shared/cierreDiario/ui/d
 import { useReactToPrint } from "react-to-print";
 import FacturaPendientePDF from "@/components/shared/compras/ui/facturaPendientePDF";
 import FacturaPagadaPDF from "@/components/shared/compras/ui/facturaPagadaPDF";
-import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 
 export default function DetalleCompraPage() {
   useProtectedRoute();
@@ -89,19 +88,6 @@ export default function DetalleCompraPage() {
   /* Regresar al listado de compras */
   const handleGoBack = () => {
     router.back();
-  };
-  const handleCambioObservacion = (
-    e: React.ChangeEvent<HTMLTextAreaElement>,
-  ) => {
-    const value = e.target.value;
-
-    const palabras = value.trim().split(/\s+/).filter(Boolean);
-    const cantidadActual = palabras.length;
-
-    if (cantidadActual <= 50) {
-      setCompra((prev) => prev && { ...prev, observ_comp: value });
-    } else {
-    }
   };
 
   if (loading) {

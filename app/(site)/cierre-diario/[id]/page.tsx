@@ -248,7 +248,8 @@ export default function PaginaCierreDia() {
           <ArrowLeft
             className="h-8 w-8 cursor-pointer"
             onClick={() => router.back()}
-          />
+          />{" "}
+          <span className="font-semibold">Regresar a los cierres diarios</span>
         </div>
 
         <div className="mb-1 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">

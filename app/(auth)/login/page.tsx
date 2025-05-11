@@ -30,7 +30,7 @@ export default function LoginPage() {
       {/* Panel Izquierdo: Logo y formulario */}
       <div className="flex max-w-full flex-1 flex-col border border-border md:max-w-[500px]">
         {/* Formulario centrado */}
-        <div className="mt-[15%] flex flex-1 justify-center">
+        <div className="mt-[5%] flex flex-1 justify-center">
           <div className="w-full max-w-xs">
             {/* ✅ Logo arriba */}
             <div className="flex justify-center p-4 md:p-6">
