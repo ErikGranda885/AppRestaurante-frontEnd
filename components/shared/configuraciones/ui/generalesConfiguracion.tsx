@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,18 +9,40 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CloudUpload } from "lucide-react";
+import { useEmpresa } from "@/hooks/configuraciones/generales/useEmpresa";
+import { ToastSuccess } from "../../toast/toastSuccess";
+import { ToastError } from "../../toast/toastError";
 
 export function GeneralesConfiguracion() {
+  const { empresa, loading, saveEmpresa } = useEmpresa();
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+
   const [formData, setFormData] = useState({
-    nombre_negocio: "Shawarma La Estación",
-    ruc_negocio: "0000000000001",
-    direccion_negocio: "Latacunga, Ecuador",
-    telefono_negocio: "0990000000",
-    email_negocio: "correo@shawarma.com",
+    nombre_negocio: "",
+    ruc_negocio: "",
+    direccion_negocio: "",
+    telefono_negocio: "",
+    email_negocio: "",
     logo_negocio: "",
     incluir_logo_reportes: false,
     incluir_logo_facturas: false,
   });
+
+  useEffect(() => {
+    if (empresa) {
+      setFormData({
+        nombre_negocio: empresa.nom_emp,
+        ruc_negocio: empresa.ruc_emp,
+        direccion_negocio: empresa.dir_emp,
+        telefono_negocio: empresa.tel_emp,
+        email_negocio: empresa.corre_emp,
+        logo_negocio: empresa.logo_emp,
+        incluir_logo_reportes: false,
+        incluir_logo_facturas: false,
+      });
+      setLogoFile(null); // ✅ limpia file al cargar empresa
+    }
+  }, [empresa]);
 
   const handleInputChange = (key: string, value: string) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -31,6 +53,7 @@ export function GeneralesConfiguracion() {
   };
 
   const handleFileChange = (file: File) => {
+    setLogoFile(file);
     const reader = new FileReader();
     reader.onloadend = () => {
       setFormData((prev) => ({
@@ -41,8 +64,50 @@ export function GeneralesConfiguracion() {
     reader.readAsDataURL(file);
   };
 
-  const handleCancel = () => {};
-  const handleSave = () => {};
+  const handleCancel = () => {
+    if (empresa) {
+      setFormData({
+        nombre_negocio: empresa.nom_emp,
+        ruc_negocio: empresa.ruc_emp,
+        direccion_negocio: empresa.dir_emp,
+        telefono_negocio: empresa.tel_emp,
+        email_negocio: empresa.corre_emp,
+        logo_negocio: empresa.logo_emp,
+        incluir_logo_reportes: false,
+        incluir_logo_facturas: false,
+      });
+      setLogoFile(null); // ✅ también limpia file al cancelar
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      await saveEmpresa(
+        {
+          nom_emp: formData.nombre_negocio,
+          ruc_emp: formData.ruc_negocio,
+          dir_emp: formData.direccion_negocio,
+          tel_emp: formData.telefono_negocio,
+          corre_emp: formData.email_negocio,
+          logo_emp: logoFile ? "" : (empresa?.logo_emp ?? ""),
+        },
+        logoFile ?? undefined,
+        empresa?.id_emp,
+      );
+
+      ToastSuccess({
+        message: "Empresa actualizada correctamente",
+      });
+
+      setLogoFile(null); // ✅ limpia file después de guardar
+    } catch (error) {
+      ToastError({
+        message: "Error al actualizar la empresa",
+      });
+    }
+  };
+
+  if (loading) return <div>Cargando información de empresa...</div>;
 
   return (
     <div className="space-y-8">
@@ -66,7 +131,7 @@ export function GeneralesConfiguracion() {
         <div>
           <h2 className="text-2xl font-bold">{formData.nombre_negocio}</h2>
           <p className="text-sm text-muted-foreground">
-            shawarmalaestacion.com
+            {formData.email_negocio}
           </p>
         </div>
 
@@ -170,7 +235,7 @@ export function GeneralesConfiguracion() {
             <span className="text-xs text-muted-foreground">
               o arrastra y suelta
               <br />
-              SVG, PNG, JPG or GIF (máx. 800x400px)
+              SVG, PNG, JPG o GIF (máx. 800x400px)
             </span>
             <input
               id="logo-upload"

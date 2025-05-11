@@ -1,4 +1,4 @@
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "./firebaseClient";
 
 export async function uploadImage(
@@ -7,11 +7,10 @@ export async function uploadImage(
   nombrePersonalizado?: string,
 ): Promise<string> {
   try {
-    const timestamp = Date.now();
     const extension = file.name.split(".").pop();
     const nombreArchivo = nombrePersonalizado
-      ? `${nombrePersonalizado}-${timestamp}.${extension}`
-      : `${file.name.split(".")[0]}-${timestamp}.${extension}`;
+      ? `${nombrePersonalizado}.${extension}`
+      : file.name;
 
     const storageRef = ref(storage, `${carpeta}/${nombreArchivo}`);
     await uploadBytes(storageRef, file);

@@ -1,13 +1,10 @@
 "use client";
 import * as React from "react";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import {
-  AudioWaveform,
-  Bot,
   Box,
   CalendarCheck,
-  Command,
-  GalleryVerticalEnd,
   House,
   Receipt,
   Settings,
@@ -30,44 +27,19 @@ import {
 } from "@/components/ui/sidebar";
 import { NavAdmin } from "./nav-admin";
 
-// Data base para el Sidebar; el usuario se actualizará dinámicamente.
 export const data = {
   user: {
     name: "",
     email: "",
     avatar: "",
   },
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
   navMain: [
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: House,
-      submenu: false,
-      isActive: true,
-    },
+    { title: "Dashboard", url: "/dashboard", icon: House, submenu: false },
     {
       title: "Ventas",
       url: "/ventas",
       icon: ShoppingBag,
       submenu: true,
-      isActive: true,
       items: [
         { title: "Nueva venta", url: "/ventas/nueva" },
         { title: "Historial de ventas", url: "/ventas/historial" },
@@ -82,7 +54,6 @@ export const data = {
       items: [
         { title: "Gestión de categorias", url: "/productos/categorias" },
         { title: "Gestión de productos", url: "/productos/listado" },
-        /* { title: "Gestión de combos", url: "/productos/combos" }, */
         { title: "Reportes", url: "/productos/reportes" },
       ],
     },
@@ -96,7 +67,6 @@ export const data = {
         { title: "Gestión de Proveedores", url: "/compras/proveedores" },
       ],
     },
-
     {
       title: "Gastos",
       url: "/gastos-indirectos",
@@ -111,12 +81,6 @@ export const data = {
     },
   ],
   adminModules: [
-    /* {
-      title: "Asistente de voz",
-      url: "/asistente-voz",
-      icon: Bot,
-      submenu: false,
-    }, */
     { title: "Usuarios", url: "/usuarios", icon: User, submenu: false },
     {
       title: "Configuraciones",
@@ -129,24 +93,42 @@ export const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [userData, setUserData] = useState(data.user);
+  const [empresaData, setEmpresaData] = useState({
+    nombre: "Shawarma la estación",
+    logo: "/imagenes/logo.png",
+  });
 
-  // Función para actualizar userData desde localStorage
   const updateUserData = () => {
     const name = localStorage.getItem("user_name") || "";
     const email = localStorage.getItem("user_email") || "";
     const avatar = localStorage.getItem("user_avatar") || "";
     setUserData({ name, email, avatar });
+
+    // ✅ Obtener datos de empresa
+    const empresaLS = localStorage.getItem("empresa_actual");
+    if (empresaLS && empresaLS !== "null") {
+      try {
+        const empresa = JSON.parse(empresaLS);
+        setEmpresaData({
+          nombre: empresa.nom_emp || "Mi Empresa",
+          logo: empresa.logo_emp || "/imagenes/logo.png",
+        });
+      } catch (error) {
+        console.error("Error parsing empresa_actual:", error);
+      }
+    }
   };
 
   useEffect(() => {
-    // Actualiza al montar el componente
     updateUserData();
 
-    // Escucha el evento personalizado
+    // ✅ Escuchar cambios de usuario y empresa
     window.addEventListener("userNameUpdated", updateUserData);
+    window.addEventListener("empresaUpdated", updateUserData); // 👈 añadido
 
     return () => {
       window.removeEventListener("userNameUpdated", updateUserData);
+      window.removeEventListener("empresaUpdated", updateUserData); // 👈 añadido
     };
   }, []);
 
@@ -161,12 +143,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <a href="#">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <img src="/imagenes/logo.png" alt="Logo" />
+                <div className="relative flex aspect-square size-8 items-center justify-center rounded-lg">
+                  <Image
+                    src={empresaData.logo}
+                    alt="Logo Empresa"
+                    fill
+                    className="rounded-md object-contain"
+                  />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">
-                    Shawarma la estación
+                    {empresaData.nombre}
                   </span>
                   <span className="truncate text-xs">Administración</span>
                 </div>
@@ -175,13 +162,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+
       <SidebarContent>
         <NavMain items={data.navMain} />
         <NavAdmin items={data.adminModules} />
       </SidebarContent>
+
       <SidebarFooter>
         <NavUser user={userData} />
       </SidebarFooter>
+
       <SidebarRail />
     </Sidebar>
   );
