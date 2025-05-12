@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,23 +9,31 @@ import { Card } from "@/components/ui/card";
 import { CheckCircle2 } from "lucide-react";
 import clsx from "clsx";
 
+import { ToastSuccess } from "../../toast/toastSuccess";
+import { useConfiguracionAplicacion } from "@/hooks/configuraciones/generales/useConfiguracionesAplicacion";
+
 export function AplicacionConfiguracion() {
-  const [formData, setFormData] = useState({
-    modo_mantenimiento: false,
-    version_app: "1.0.0",
-    color_tema: "system", // system | light | dark
-  });
+  const {
+    modoMantenimiento,
+    setModoMantenimiento,
+    versionApp,
+    setVersionApp,
+    colorTema,
+    setColorTema,
+    loading,
+  } = useConfiguracionAplicacion();
 
-  const handleInputChange = (key: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
+  const handleCancel = () => {
+    ToastSuccess({
+      message: "Cambios descartados (no implementado)",
+    });
   };
 
-  const handleSwitchChange = (key: string, value: boolean) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
+  const handleSave = () => {
+    ToastSuccess({
+      message: "Configuraciones guardadas correctamente",
+    });
   };
-
-  const handleCancel = () => {};
-  const handleSave = () => {};
 
   return (
     <div className="space-y-10 pt-4">
@@ -42,10 +49,9 @@ export function AplicacionConfiguracion() {
             <div>
               <Label>Versión actual de la aplicación</Label>
               <Input
-                value={formData.version_app}
-                onChange={(e) =>
-                  handleInputChange("version_app", e.target.value)
-                }
+                value={versionApp}
+                onChange={(e) => setVersionApp(e.target.value)}
+                disabled={loading}
               />
             </div>
 
@@ -71,14 +77,13 @@ export function AplicacionConfiguracion() {
                 ].map((option) => (
                   <div
                     key={option.value}
-                    onClick={() =>
-                      handleInputChange("color_tema", option.value)
-                    }
+                    onClick={() => setColorTema(option.value)}
                     className={clsx(
                       "relative cursor-pointer rounded-lg border-border bg-card p-2 shadow-md transition hover:ring-2 hover:ring-primary/50",
-                      formData.color_tema === option.value
+                      colorTema === option.value
                         ? "ring-2 ring-primary"
                         : "border-border",
+                      loading && "pointer-events-none opacity-50",
                     )}
                   >
                     <div className="aspect-video w-full overflow-hidden rounded-md">
@@ -93,7 +98,7 @@ export function AplicacionConfiguracion() {
                     <p className="mt-2 text-center text-sm font-medium text-muted-foreground">
                       {option.label}
                     </p>
-                    {formData.color_tema === option.value && (
+                    {colorTema === option.value && (
                       <CheckCircle2 className="absolute right-2 top-2 h-5 w-5 text-primary" />
                     )}
                   </div>
@@ -115,23 +120,14 @@ export function AplicacionConfiguracion() {
                 </p>
               </div>
               <Switch
-                checked={formData.modo_mantenimiento}
-                onCheckedChange={(checked) =>
-                  handleSwitchChange("modo_mantenimiento", checked)
-                }
+                checked={modoMantenimiento}
+                onCheckedChange={(checked) => setModoMantenimiento(checked)}
+                disabled={loading}
               />
             </div>
           </div>
         </div>
       </Card>
-
-      {/* Botones acción */}
-      <div className="mt-8 flex items-center justify-end space-x-4">
-        <Button variant="outline" onClick={handleCancel}>
-          Cancelar
-        </Button>
-        <Button onClick={handleSave}>Guardar</Button>
-      </div>
     </div>
   );
 }
