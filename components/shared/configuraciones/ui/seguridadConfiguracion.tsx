@@ -1,30 +1,24 @@
 "use client";
 
-import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useConfiguracionesSeguridad } from "@/hooks/configuraciones/generales/useConfiguracionesSeguridad";
 
 export function SeguridadConfiguracion() {
-  const [formData, setFormData] = useState({
-    activar_google_login: false,
-    longitud_minima_password: 8,
-    bloquear_usuario_por_intentos: false,
-    max_intentos_login: 5,
-  });
-
-  const handleInputChange = (key: string, value: number) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleSwitchChange = (key: string, value: boolean) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleCancel = () => {};
-  const handleSave = () => {};
+  const {
+    activarGoogleLogin,
+    setActivarGoogleLogin,
+    longitudMinimaPassword,
+    setLongitudMinimaPassword,
+    bloquearUsuarioPorIntentos,
+    setBloquearUsuarioPorIntentos,
+    maxIntentosLogin,
+    setMaxIntentosLogin,
+    loading,
+  } = useConfiguracionesSeguridad();
 
   return (
     <div className="space-y-10 pt-4">
@@ -41,13 +35,11 @@ export function SeguridadConfiguracion() {
               <Label>Longitud mínima de contraseña</Label>
               <Input
                 type="number"
-                value={formData.longitud_minima_password}
+                value={longitudMinimaPassword}
                 onChange={(e) =>
-                  handleInputChange(
-                    "longitud_minima_password",
-                    parseInt(e.target.value),
-                  )
+                  setLongitudMinimaPassword(parseInt(e.target.value) || 0)
                 }
+                disabled={loading}
               />
             </div>
 
@@ -55,13 +47,11 @@ export function SeguridadConfiguracion() {
               <Label>Máximo de intentos de login</Label>
               <Input
                 type="number"
-                value={formData.max_intentos_login}
+                value={maxIntentosLogin}
                 onChange={(e) =>
-                  handleInputChange(
-                    "max_intentos_login",
-                    parseInt(e.target.value),
-                  )
+                  setMaxIntentosLogin(parseInt(e.target.value) || 0)
                 }
+                disabled={loading}
               />
             </div>
           </div>
@@ -77,10 +67,9 @@ export function SeguridadConfiguracion() {
                 </p>
               </div>
               <Switch
-                checked={formData.activar_google_login}
-                onCheckedChange={(checked) =>
-                  handleSwitchChange("activar_google_login", checked)
-                }
+                checked={activarGoogleLogin}
+                onCheckedChange={(checked) => setActivarGoogleLogin(checked)}
+                disabled={loading}
               />
             </div>
 
@@ -95,23 +84,16 @@ export function SeguridadConfiguracion() {
                 </p>
               </div>
               <Switch
-                checked={formData.bloquear_usuario_por_intentos}
+                checked={bloquearUsuarioPorIntentos}
                 onCheckedChange={(checked) =>
-                  handleSwitchChange("bloquear_usuario_por_intentos", checked)
+                  setBloquearUsuarioPorIntentos(checked)
                 }
+                disabled={loading}
               />
             </div>
           </div>
         </div>
       </Card>
-
-      {/* Botones acción */}
-      <div className="mt-8 flex items-center justify-end space-x-4">
-        <Button variant="outline" onClick={handleCancel}>
-          Cancelar
-        </Button>
-        <Button onClick={handleSave}>Guardar</Button>
-      </div>
     </div>
   );
 }
