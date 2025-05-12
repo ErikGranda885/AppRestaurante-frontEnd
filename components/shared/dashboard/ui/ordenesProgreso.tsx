@@ -13,12 +13,16 @@ import { ValidarPagoDialog } from "./validarPagoDialog";
 import { SERVICIOS_VENTAS } from "@/services/ventas.service";
 import { ToastSuccess } from "../../toast/toastSuccess";
 import { Button } from "@/components/ui/button";
+import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
+import { safePrice } from "@/utils/format";
 
 interface Props {
   onRefreshDashboard?: () => void;
 }
 
 export default function OrdenesEnProceso({ onRefreshDashboard }: Props) {
+  const { ventasConfig } = useConfiguracionesVentas();
+
   const [search, setSearch] = useState("");
   const [filtro, setFiltro] = useState("En progreso");
   const { ultimasVentas, ventasPendientes, loading, error, refresh } =
@@ -145,7 +149,10 @@ export default function OrdenesEnProceso({ onRefreshDashboard }: Props) {
                         {orden.usuario}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        ${orden.total ? Number(orden.total).toFixed(2) : "0.00"}
+                        {safePrice(
+                          Number(orden.total ?? 0),
+                          ventasConfig.moneda,
+                        )}
                       </span>
                     </div>
                   </div>

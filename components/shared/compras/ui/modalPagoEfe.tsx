@@ -9,6 +9,7 @@ import { safePrice } from "@/utils/format";
 import { format } from "date-fns";
 import { useState, useEffect, useRef } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 
 interface ModalPagoEfectivoProps {
   open: boolean;
@@ -36,6 +37,7 @@ export function ModalPagoEfectivo({
   const teclas = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ","];
   const [inputEfectivo, setInputEfectivo] = useState<string>("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const { ventasConfig } = useConfiguracionesVentas();
 
   const botonesRapidos = [5, 10, 20, 50, 100];
 
@@ -94,7 +96,9 @@ export function ModalPagoEfectivo({
                   <span className="truncate">
                     {item.name} x{item.qty}
                   </span>
-                  <span>${safePrice(item.qty * item.price)}</span>
+                  <span>
+                    {safePrice(item.qty * item.price, ventasConfig.moneda)}
+                  </span>
                 </div>
               ))}
             </ScrollArea>
@@ -105,30 +109,32 @@ export function ModalPagoEfectivo({
                   Items ({orderItems.reduce((sum, item) => sum + item.qty, 0)})
                 </span>
                 <span>
-                  $
                   {safePrice(
                     orderItems.reduce(
                       (sum, item) => sum + item.qty * item.price,
                       0,
                     ),
+                    ventasConfig.moneda,
                   )}
                 </span>
               </div>
               <div className="flex justify-between text-gray-600 dark:text-[#8c8c8c]">
-                <span>Tax (15%)</span>
-                <span>${safePrice(total * 0.15)}</span>
+                <span>IVA ({ventasConfig.porcentaje_iva ?? 12}%)</span>
+                <span>{safePrice(total * 0.15, ventasConfig.moneda)}</span>
               </div>
               <div className="flex justify-between border-t pt-2 text-base font-bold text-black dark:text-white">
                 <span>Total</span>
-                <span>${safePrice(total)}</span>
+                <span>{safePrice(total, ventasConfig.moneda)}</span>
               </div>
               <div className="flex justify-between pt-2 text-gray-800 dark:text-gray-300">
                 <span>Recibido</span>
-                <span>${safePrice(efectivoRecibido ?? 0)}</span>
+                <span>
+                  {safePrice(efectivoRecibido ?? 0, ventasConfig.moneda)}
+                </span>
               </div>
               <div className="flex justify-between font-semibold text-green-600 dark:text-green-400">
                 <span>Cambio</span>
-                <span>${safePrice(calcularCambio())}</span>
+                <span>{safePrice(calcularCambio(), ventasConfig.moneda)}</span>
               </div>
             </div>
           </div>
@@ -165,7 +171,7 @@ export function ModalPagoEfectivo({
             />
 
             <div className="mb-2 text-center text-5xl font-bold">
-              ${safePrice(efectivoRecibido ?? 0)}
+              {safePrice(efectivoRecibido ?? 0, ventasConfig.moneda)}
             </div>
 
             <div className="mb-4 grid grid-cols-5 gap-2">
@@ -178,7 +184,7 @@ export function ModalPagoEfectivo({
                     setInputEfectivo(val.toString());
                   }}
                 >
-                  ${val}
+                  {safePrice(val, ventasConfig.moneda)}
                 </Button>
               ))}
             </div>

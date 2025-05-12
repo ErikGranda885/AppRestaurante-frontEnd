@@ -22,14 +22,14 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useVentasPorPeriodo } from "@/hooks/dashboard/useVentaPorPeriodo";
-
-function formatCurrency(value: number): string {
-  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}m`;
-  if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}k`;
-  return `$${value.toFixed(2)}`;
-}
+import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
+import { safePrice } from "@/utils/format";
 
 export function GraficoVentasPorPeriodo() {
+  const { ventasConfig } = useConfiguracionesVentas();
+  function formatCurrency(value: number): string {
+    return safePrice(value, ventasConfig.moneda);
+  }
   const [tab, setTab] = useState("mes");
   const { datos, loading, error } = useVentasPorPeriodo(); // <- Agregado `error`
 

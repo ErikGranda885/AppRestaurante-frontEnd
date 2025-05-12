@@ -5,14 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  CloudDownload,
-  Plus,
-  Printer,
-  Search,
-  Upload,
-  XCircle,
-} from "lucide-react";
+import { CloudDownload, Printer, Search, XCircle } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { GeneralDialog } from "@/components/shared/varios/dialogGen";
@@ -26,7 +19,6 @@ import {
 } from "@/components/ui/card";
 import { DateRangeFilter } from "@/components/shared/ventas/ui/dateRangeFilter";
 import { DateRange } from "react-day-picker";
-import { Combobox } from "@/components/shared/varios/combobox";
 import {
   endOfDay,
   endOfMonth,
@@ -49,8 +41,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
+import { safePrice } from "@/utils/format";
 
 export default function Page() {
+  const { ventasConfig } = useConfiguracionesVentas();
   const [abrirCrear, setAbrirCrear] = useState(false);
   const [consultaBusqueda, setConsultaBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("Todos");
@@ -231,7 +226,10 @@ export default function Page() {
               <div className="flex flex-col gap-1">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="text-[12px] dark:bg-[#222224]">
+                    <Button
+                      variant="outline"
+                      className="text-[12px] dark:bg-[#222224]"
+                    >
                       {labelQuickRange}
                     </Button>
                   </DropdownMenuTrigger>
@@ -391,7 +389,10 @@ export default function Page() {
                           <span className="truncate">{prod.nombre}</span>
                           <span className="text-center">{prod.cantidad}</span>
                           <span className="text-right">
-                            ${Number(prod.subtotal ?? 0).toFixed(2)}
+                            {safePrice(
+                              Number(prod.subtotal ?? 0),
+                              ventasConfig.moneda,
+                            )}
                           </span>
                         </div>
                       ))}
@@ -407,7 +408,12 @@ export default function Page() {
                     <div className="px-6">
                       <div className="flex justify-between border-t border-dashed border-gray-300 pt-2 text-sm font-bold">
                         <span>Total</span>
-                        <span>${Number(venta.total ?? 0).toFixed(2)}</span>
+                        <span>
+                          {safePrice(
+                            Number(venta.total ?? 0),
+                            ventasConfig.moneda,
+                          )}
+                        </span>
                       </div>
                     </div>
 

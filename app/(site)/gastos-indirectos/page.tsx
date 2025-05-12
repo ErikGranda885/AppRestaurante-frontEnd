@@ -53,6 +53,8 @@ import { ToastError } from "@/components/shared/toast/toastError";
 import { Separator } from "@/components/ui/separator";
 import { DateRangeFilter } from "@/components/shared/ventas/ui/dateRangeFilter";
 import { DateRange } from "react-day-picker";
+import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
+import { safePrice } from "@/utils/format";
 export type TipoAccion = "activar" | "inactivar" | "eliminar";
 
 type AccionGasto = {
@@ -62,6 +64,7 @@ type AccionGasto = {
 };
 
 export default function Page() {
+  const { ventasConfig } = useConfiguracionesVentas();
   const [abrirCrear, setAbrirCrear] = useState(false);
   const [gastoEditar, setGastoEditar] = useState<IGasto | null>(null);
   const [abrirEditar, setAbrirEditar] = useState(false);
@@ -209,7 +212,7 @@ export default function Page() {
       header: "Monto",
       cell: (info) => (
         <span className="font-semibold">
-          ${Number(info.getValue()).toFixed(2)}
+          {safePrice(Number(info.getValue()), ventasConfig.moneda)}
         </span>
       ),
     },
@@ -314,11 +317,14 @@ export default function Page() {
             {/* dropdown de fechas */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="text-[12px] dark:bg-[#222224]">
+                <Button
+                  variant="outline"
+                  className="text-[12px] dark:bg-[#222224]"
+                >
                   {labelQuickRange}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="border-border ">
+              <DropdownMenuContent className="border-border">
                 <DropdownMenuItem onClick={() => handleQuickRange("hoy")}>
                   Hoy
                 </DropdownMenuItem>
@@ -381,13 +387,13 @@ export default function Page() {
                 </CardTitle>
                 <div className="mt-2 flex items-center gap-5">
                   <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
-                    $
-                    {gastosFiltrados
-                      .reduce(
+                    {safePrice(
+                      gastosFiltrados.reduce(
                         (acc, gasto) => acc + Number(gasto.mont_gas || 0),
                         0,
-                      )
-                      .toFixed(2)}
+                      ),
+                      ventasConfig.moneda,
+                    )}
                   </span>
                 </div>
                 <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
@@ -423,13 +429,13 @@ export default function Page() {
                 </CardTitle>
                 <div className="mt-2 flex items-center gap-5">
                   <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
-                    $
-                    {gastosFiltrados
-                      .reduce(
+                    {safePrice(
+                      gastosFiltrados.reduce(
                         (acc, gasto) => acc + Number(gasto.mont_gas || 0),
                         0,
-                      )
-                      .toFixed(2)}
+                      ),
+                      ventasConfig.moneda,
+                    )}
                   </span>
                 </div>
                 <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">

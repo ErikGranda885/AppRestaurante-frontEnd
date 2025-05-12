@@ -1,32 +1,55 @@
 "use client";
 
-import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
+import { ToastSuccess } from "../../toast/toastSuccess";
 
 export function VentasConfiguracion() {
-  const [formData, setFormData] = useState({
-    porcentaje_iva: 12,
-    moneda: "USD",
-    minimo_stock_alerta: 5,
-    mostrar_stock_negativo: false,
-    permitir_venta_sin_cierre: false,
-    habilitar_qr_pago_inmediato: false,
-  });
+  const { ventasConfig, setVentasConfig, updateConfiguracion, loading } =
+    useConfiguracionesVentas();
 
   const handleInputChange = (key: string, value: string | number) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
+    setVentasConfig((prev: any) => ({ ...prev, [key]: value }));
   };
 
   const handleSwitchChange = (key: string, value: boolean) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
+    setVentasConfig((prev: any) => ({ ...prev, [key]: value }));
   };
 
-  const handleCancel = () => {};
-  const handleSave = () => {};
+  const handleCancel = () => {
+    window.location.reload();
+  };
+
+  const handleSave = async () => {
+    await updateConfiguracion("porcentaje_iva", ventasConfig.porcentaje_iva);
+    await updateConfiguracion("moneda", ventasConfig.moneda);
+    await updateConfiguracion(
+      "minimo_stock_alerta",
+      ventasConfig.minimo_stock_alerta,
+    );
+    await updateConfiguracion(
+      "permitir_venta_sin_cierre",
+      ventasConfig.permitir_venta_sin_cierre,
+    );
+    await updateConfiguracion(
+      "mostrar_stock_negativo",
+      ventasConfig.mostrar_stock_negativo,
+    );
+    await updateConfiguracion(
+      "habilitar_qr_pago_inmediato",
+      ventasConfig.habilitar_qr_pago_inmediato,
+    );
+
+    ToastSuccess({
+      message: "Configuración de ventas guardada correctamente.",
+    });
+  };
+
+  if (loading) return <div>Cargando configuración de ventas...</div>;
 
   return (
     <div className="space-y-8">
@@ -36,15 +59,13 @@ export function VentasConfiguracion() {
           Personaliza las opciones y reglas para las ventas del restaurante.
         </p>
 
-        {/* Grid 2 columnas */}
         <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Inputs izquierda */}
           <div className="flex flex-col justify-between space-y-4">
             <div>
               <Label>Porcentaje de IVA (%)</Label>
               <Input
                 type="number"
-                value={formData.porcentaje_iva}
+                value={ventasConfig.porcentaje_iva}
                 onChange={(e) =>
                   handleInputChange(
                     "porcentaje_iva",
@@ -57,7 +78,7 @@ export function VentasConfiguracion() {
             <div>
               <Label>Moneda</Label>
               <select
-                value={formData.moneda}
+                value={ventasConfig.moneda}
                 onChange={(e) => handleInputChange("moneda", e.target.value)}
                 className="mt-1 block w-full rounded-md border border-input bg-background p-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               >
@@ -73,7 +94,7 @@ export function VentasConfiguracion() {
               <Label>Mínimo de stock para alerta</Label>
               <Input
                 type="number"
-                value={formData.minimo_stock_alerta}
+                value={ventasConfig.minimo_stock_alerta}
                 onChange={(e) =>
                   handleInputChange(
                     "minimo_stock_alerta",
@@ -84,8 +105,7 @@ export function VentasConfiguracion() {
             </div>
           </div>
 
-          {/* Switches derecha (alineado vertical) */}
-          <div className="flex flex-col justify-between space-y-6 pt-2">
+          {/* <div className="flex flex-col justify-between space-y-6 pt-2">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">
@@ -97,7 +117,7 @@ export function VentasConfiguracion() {
                 </p>
               </div>
               <Switch
-                checked={formData.permitir_venta_sin_cierre}
+                checked={ventasConfig.permitir_venta_sin_cierre}
                 onCheckedChange={(checked) =>
                   handleSwitchChange("permitir_venta_sin_cierre", checked)
                 }
@@ -113,7 +133,7 @@ export function VentasConfiguracion() {
                 </p>
               </div>
               <Switch
-                checked={formData.mostrar_stock_negativo}
+                checked={ventasConfig.mostrar_stock_negativo}
                 onCheckedChange={(checked) =>
                   handleSwitchChange("mostrar_stock_negativo", checked)
                 }
@@ -131,17 +151,16 @@ export function VentasConfiguracion() {
                 </p>
               </div>
               <Switch
-                checked={formData.habilitar_qr_pago_inmediato}
+                checked={ventasConfig.habilitar_qr_pago_inmediato}
                 onCheckedChange={(checked) =>
                   handleSwitchChange("habilitar_qr_pago_inmediato", checked)
                 }
               />
             </div>
-          </div>
+          </div> */}
         </div>
       </Card>
 
-      {/* Botones acción */}
       <div className="mt-6 flex items-center justify-end space-x-4">
         <Button variant="outline" onClick={handleCancel}>
           Cancelar

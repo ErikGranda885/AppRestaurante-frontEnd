@@ -16,14 +16,17 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { ICompra, IDetCompra } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { format, isValid, parse, parseISO } from "date-fns";
+import { format, isValid,  parseISO } from "date-fns";
 import { DialogRegistrarPagoCompra } from "@/components/shared/cierreDiario/ui/dialogRegistrarPagoCompra";
 import { useReactToPrint } from "react-to-print";
 import FacturaPendientePDF from "@/components/shared/compras/ui/facturaPendientePDF";
 import FacturaPagadaPDF from "@/components/shared/compras/ui/facturaPagadaPDF";
+import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
+import { safePrice } from "@/utils/format";
 
 export default function DetalleCompraPage() {
   useProtectedRoute();
+  const { ventasConfig } = useConfiguracionesVentas();
   const router = useRouter();
   const { id_comp } = useParams();
   const purchaseId = Number(id_comp);
@@ -264,19 +267,16 @@ export default function DetalleCompraPage() {
                         <div className="ml-auto flex flex-col items-end gap-1">
                           {/* Cantidad x Precio unitario */}
                           <p className="text-sm text-gray-600 dark:text-gray-300">
-                            {item.cant_dcom} x $
-                            {parseFloat(
-                              item.prec_uni_dcom as unknown as string,
-                            ).toFixed(2)}
+                            {item.cant_dcom} x{" "}
+                            {safePrice(item.prec_uni_dcom, ventasConfig.moneda)}
                           </p>
 
                           {/* Subtotal (ej. 3 x 500 = 1500) */}
                           <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                            $
-                            {parseFloat(
-                              (item.cant_dcom *
-                                item.prec_uni_dcom) as unknown as string,
-                            ).toFixed(2)}
+                            {safePrice(
+                              item.cant_dcom * item.prec_uni_dcom,
+                              ventasConfig.moneda,
+                            )}
                           </p>
 
                           {/* Botones de acción */}
@@ -310,7 +310,12 @@ export default function DetalleCompraPage() {
               <div className="space-y-1 text-sm text-gray-700 dark:text-gray-200">
                 <div className="flex items-center justify-between">
                   <span>Valor total:</span>
-                  <span>${Number(compra.tot_comp ?? 0).toFixed(2)}</span>
+                  <span>
+                    {safePrice(
+                      Number(compra.tot_comp ?? 0),
+                      ventasConfig.moneda,
+                    )}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Estado de pago:</span>

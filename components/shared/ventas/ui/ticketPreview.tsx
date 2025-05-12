@@ -1,5 +1,7 @@
 "use client";
 
+import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
+import { safePrice } from "@/utils/format";
 import { useEffect, useState } from "react";
 
 interface TicketPreviewProps {
@@ -14,6 +16,8 @@ interface EmpresaLocal {
 }
 
 export function TicketPreview({ venta }: TicketPreviewProps) {
+  const { ventasConfig } = useConfiguracionesVentas();
+
   const [empresa, setEmpresa] = useState<EmpresaLocal>({
     nom_emp: "Mi Restaurante",
     dir_emp: "Dirección no configurada",
@@ -72,10 +76,10 @@ export function TicketPreview({ venta }: TicketPreviewProps) {
             <span className="w-8">{prod.cantidad}</span>
             <span className="flex-1 truncate">{prod.nombre}</span>
             <span className="w-10 text-right">
-              ${(prod.subtotal / prod.cantidad).toFixed(2)}
+              {safePrice(prod.subtotal / prod.cantidad, ventasConfig.moneda)}
             </span>
             <span className="w-12 text-right">
-              ${Number(prod.subtotal ?? 0).toFixed(2)}
+              {safePrice(Number(prod.subtotal ?? 0), ventasConfig.moneda)}
             </span>
           </div>
         ))}
@@ -86,26 +90,41 @@ export function TicketPreview({ venta }: TicketPreviewProps) {
         <div className="flex justify-between">
           <span>Subtotal</span>
           <span>
-            $
-            {venta.productos
-              .reduce((acc: number, p: any) => acc + Number(p.subtotal ?? 0), 0)
-              .toFixed(2)}
+            {safePrice(
+              venta.productos.reduce(
+                (acc: number, p: any) => acc + Number(p.subtotal ?? 0),
+                0,
+              ),
+              ventasConfig.moneda,
+            )}
           </span>
         </div>
         <div className="flex justify-between text-base font-bold">
           <span>Total</span>
-          <span>${Number(venta.total ?? 0).toFixed(2)}</span>
+          <span>
+            {safePrice(Number(venta.total ?? 0), ventasConfig.moneda)}
+          </span>
         </div>
 
         {venta.tipoPago === "efectivo" && (
           <>
             <div className="flex justify-between">
               <span>Pago</span>
-              <span>${Number(venta.efectivoRecibido ?? 0).toFixed(2)}</span>
+              <span>
+                {safePrice(
+                  Number(venta.efectivoRecibido ?? 0),
+                  ventasConfig.moneda,
+                )}
+              </span>
             </div>
             <div className="flex justify-between">
               <span>Cambio</span>
-              <span>${Number(venta.efectivoCambio ?? 0).toFixed(2)}</span>
+              <span>
+                {safePrice(
+                  Number(venta.efectivoCambio ?? 0),
+                  ventasConfig.moneda,
+                )}
+              </span>
             </div>
           </>
         )}

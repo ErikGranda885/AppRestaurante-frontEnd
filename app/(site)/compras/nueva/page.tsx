@@ -30,6 +30,8 @@ import { useProveedores } from "@/hooks/compras/useProveedores";
 import { useProductos } from "@/hooks/compras/useProductos";
 import { useUsuarioActual } from "@/hooks/compras/useUsuarioActual";
 import { useUltimoIdCompra } from "@/hooks/compras/useUltimoIdCompra";
+import { safePrice } from "@/utils/format";
+import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 export interface ProductoOption {
   value: string;
   nombre: string;
@@ -49,6 +51,7 @@ const schema = z.object({
 });
 
 export default function NuevaCompraPage() {
+  const { ventasConfig } = useConfiguracionesVentas();
   const router = useRouter();
   const proveedores = useProveedores();
   const { productosOptions, setProductosOptions } = useProductos();
@@ -523,10 +526,16 @@ export default function NuevaCompraPage() {
                       </td>
 
                       <td className="p-2">{item.cant_dcom}</td>
-                      <td className="p-2">${item.prec_uni_dcom.toFixed(2)}</td>
                       <td className="p-2">
-                        ${(item.prec_uni_dcom * item.cant_dcom).toFixed(2)}
+                        {safePrice(item.prec_uni_dcom, ventasConfig.moneda)}
                       </td>
+                      <td className="p-2">
+                        {safePrice(
+                          item.prec_uni_dcom * item.cant_dcom,
+                          ventasConfig.moneda,
+                        )}
+                      </td>
+
                       <td className="p-2">
                         {item.fech_ven_prod_dcom
                           ? new Date(
@@ -557,7 +566,7 @@ export default function NuevaCompraPage() {
               <p className="text-sm font-semibold">
                 Total:{" "}
                 <span className="text-base text-foreground">
-                  ${totalCompra.toFixed(2)}
+                  {safePrice(totalCompra, ventasConfig.moneda)}
                 </span>
               </p>
             </div>

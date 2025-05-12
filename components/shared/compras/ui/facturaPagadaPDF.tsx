@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { ICompra, IDetCompra } from "@/lib/types";
 import { SERVICIOS_CONFIGURACIONES } from "@/services/configuraciones.service";
+import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
+import { safePrice } from "@/utils/format";
 
 interface FacturaPagadaPDFProps {
   compra: ICompra;
@@ -16,8 +18,8 @@ const FacturaPagadaPDF: React.FC<FacturaPagadaPDFProps> = ({
   detalle,
   printRef,
 }) => {
+  const { ventasConfig } = useConfiguracionesVentas();
   const total = detalle.reduce((acc, p) => acc + Number(p.sub_tot_dcom), 0);
-
   const [logo, setLogo] = useState("/imagenes/logo.png");
   const [mostrarLogo, setMostrarLogo] = useState(false);
 
@@ -134,10 +136,13 @@ const FacturaPagadaPDF: React.FC<FacturaPagadaPDFProps> = ({
               <td className="border p-2">{item.prod_dcom.nom_prod}</td>
               <td className="border p-2 text-center">{item.cant_dcom}</td>
               <td className="border p-2 text-center">
-                ${Number(item.prec_uni_dcom).toFixed(2)}
+                {safePrice(Number(item.prec_uni_dcom), ventasConfig.moneda)}
               </td>
               <td className="border p-2 text-center">
-                ${(item.cant_dcom * Number(item.prec_uni_dcom)).toFixed(2)}
+                {safePrice(
+                  item.cant_dcom * Number(item.prec_uni_dcom),
+                  ventasConfig.moneda,
+                )}
               </td>
             </tr>
           ))}
@@ -148,19 +153,21 @@ const FacturaPagadaPDF: React.FC<FacturaPagadaPDFProps> = ({
       <div className="ml-auto w-full max-w-sm rounded-md border p-4 text-sm">
         <div className="flex justify-between">
           <span>Total:</span>
-          <span className="font-semibold">${total.toFixed(2)}</span>
+          <span className="font-semibold">
+            {safePrice(total, ventasConfig.moneda)}
+          </span>
         </div>
         <div className="flex justify-between">
           <span>Descuento:</span>
-          <span>$0.00</span>
+          <span>{safePrice(0, ventasConfig.moneda)}</span>
         </div>
         <div className="flex justify-between">
           <span>Impuesto:</span>
-          <span>$0.00</span>
+          <span>{safePrice(0, ventasConfig.moneda)}</span>
         </div>
         <div className="flex justify-between border-t pt-2 font-semibold">
           <span>Total Final:</span>
-          <span>${total.toFixed(2)}</span>
+          <span>{safePrice(total, ventasConfig.moneda)}</span>
         </div>
       </div>
 

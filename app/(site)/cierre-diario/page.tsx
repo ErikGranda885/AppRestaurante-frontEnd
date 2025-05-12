@@ -56,6 +56,8 @@ import {
   startOfYesterday,
   subDays,
 } from "date-fns";
+import { safePrice } from "@/utils/format";
+import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 
 function hayCierresAnterioresPendientes(
   lista: ICierreDiario[],
@@ -110,17 +112,11 @@ export default function Page() {
 
     setDateRange(newRange);
   };
-
   useProtectedRoute();
+  const { ventasConfig } = useConfiguracionesVentas();
   const router = useRouter();
-  const [abrirCrear, setAbrirCrear] = React.useState(false);
   const [estadoSeleccionado, setEstadoSeleccionado] = useState<string>("");
-
   const [cierres, setCierres] = React.useState<ICierreDiario[]>([]);
-  const cantidadPendientes = cierres.filter(
-    (c) => c.esta_cier.toLowerCase() === "pendiente",
-  ).length;
-
   const fechaActual = new Date();
   fechaActual.setMinutes(
     fechaActual.getMinutes() - fechaActual.getTimezoneOffset(),
@@ -179,22 +175,26 @@ export default function Page() {
     {
       accessorKey: "tot_vent_cier",
       header: "Total Ventas",
-      cell: ({ getValue }) => `$${Number(getValue())}`,
+      cell: ({ getValue }) =>
+        safePrice(Number(getValue()), ventasConfig.moneda),
     },
     {
       accessorKey: "tot_gas_cier",
       header: "Total Gastos",
-      cell: ({ getValue }) => `$${Number(getValue())}`,
+      cell: ({ getValue }) =>
+        safePrice(Number(getValue()), ventasConfig.moneda),
     },
     {
       accessorKey: "tot_compras_pag_cier",
       header: "Compras Pagadas",
-      cell: ({ getValue }) => `$${Number(getValue())}`,
+      cell: ({ getValue }) =>
+        safePrice(Number(getValue()), ventasConfig.moneda),
     },
     {
       accessorKey: "tot_dep_cier",
       header: "Depositado",
-      cell: ({ getValue }) => `$${Number(getValue())}`,
+      cell: ({ getValue }) =>
+        safePrice(Number(getValue()), ventasConfig.moneda),
     },
     {
       accessorKey: "dif_cier",
@@ -202,7 +202,9 @@ export default function Page() {
       cell: ({ getValue }) => {
         const value = Number(getValue());
         return (
-          <span className={value === 0 ? "" : "error-text"}>${value}</span>
+          <span className={value === 0 ? "" : "error-text"}>
+            {safePrice(value, ventasConfig.moneda)}
+          </span>
         );
       },
     },
@@ -488,10 +490,14 @@ function MetricCard({
   isNumber?: boolean;
   clickable?: boolean;
 }) {
+  const { ventasConfig } = useConfiguracionesVentas();
+
   return (
     <Card
       onClick={clickable && onClick ? onClick : undefined}
-      className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${selected ? "ring-2 ring-secondary" : ""} group`}
+      className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
+        selected ? "ring-2 ring-secondary" : ""
+      } group`}
     >
       <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
         <div className="flex-1">
@@ -500,11 +506,17 @@ function MetricCard({
           </CardTitle>
           <div className="mt-2 flex items-center gap-5">
             <span
-              className={`text-3xl font-extrabold ${difference ? (Number(value) >= 0 ? "" : "error-text") : "text-gray-800 dark:text-white"}`}
+              className={`text-3xl font-extrabold ${
+                difference
+                  ? Number(value) >= 0
+                    ? ""
+                    : "error-text"
+                  : "text-gray-800 dark:text-white"
+              }`}
             >
               {isNumber
                 ? Number(value ?? 0)
-                : `$${Number(value ?? 0).toFixed(2)}`}
+                : safePrice(Number(value ?? 0), ventasConfig.moneda)}
             </span>
           </div>
           <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">

@@ -11,6 +11,8 @@ import {
 import Image from "next/image";
 import { ICompra, IDetCompra } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { safePrice } from "@/utils/format";
+import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 
 interface FacturaModalProps {
   open: boolean;
@@ -29,6 +31,7 @@ const FacturaModal: React.FC<FacturaModalProps> = ({
   onConfirm,
   printRef,
 }) => {
+  const { ventasConfig } = useConfiguracionesVentas();
   const [logo, setLogo] = useState("/imagenes/logo.png");
 
   useEffect(() => {
@@ -40,7 +43,7 @@ const FacturaModal: React.FC<FacturaModalProps> = ({
           setLogo(
             empresa.logo_emp.startsWith("http")
               ? empresa.logo_emp
-              : "/imagenes/logo.png"
+              : "/imagenes/logo.png",
           );
         }
       } catch (error) {
@@ -114,14 +117,15 @@ const FacturaModal: React.FC<FacturaModalProps> = ({
                   <tr key={item.id_dcom}>
                     <td className="border p-2">{index + 1}</td>
                     <td className="border p-2">{item.prod_dcom.nom_prod}</td>
+                    <td className="border p-2 text-center">{item.cant_dcom}</td>
                     <td className="border p-2 text-center">
-                      {item.cant_dcom}
+                      {safePrice(item.prec_uni_dcom, ventasConfig.moneda)}
                     </td>
                     <td className="border p-2 text-center">
-                      ${item.prec_uni_dcom.toFixed(2)}
-                    </td>
-                    <td className="border p-2 text-center">
-                      ${(item.cant_dcom * item.prec_uni_dcom).toFixed(2)}
+                      {safePrice(
+                        item.cant_dcom * item.prec_uni_dcom,
+                        ventasConfig.moneda,
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -133,27 +137,27 @@ const FacturaModal: React.FC<FacturaModalProps> = ({
             <div className="flex justify-between">
               <span>Total:</span>
               <span className="font-semibold">
-                $
-                {detalle
-                  .reduce((acc, p) => acc + p.sub_tot_dcom, 0)
-                  .toFixed(2)}
+                {safePrice(
+                  detalle.reduce((acc, p) => acc + p.sub_tot_dcom, 0),
+                  ventasConfig.moneda,
+                )}
               </span>
             </div>
             <div className="flex justify-between">
               <span>Descuento:</span>
-              <span>$0.00</span>
+              {safePrice(0, ventasConfig.moneda)}
             </div>
             <div className="flex justify-between">
               <span>Impuesto:</span>
-              <span>$0.00</span>
+              <span>{safePrice(0, ventasConfig.moneda)}</span>
             </div>
             <div className="flex justify-between border-t pt-2 font-semibold">
               <span>Total Final:</span>
               <span>
-                $
-                {detalle
-                  .reduce((acc, p) => acc + p.sub_tot_dcom, 0)
-                  .toFixed(2)}
+                {safePrice(
+                  detalle.reduce((acc, p) => acc + p.sub_tot_dcom, 0),
+                  ventasConfig.moneda,
+                )}
               </span>
             </div>
           </div>

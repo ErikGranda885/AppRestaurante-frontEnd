@@ -20,6 +20,8 @@ import {
 import { ICategory, IProduct } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { getDaysUntilExpiration } from "@/utils/dates";
+import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
+import { safePrice } from "@/utils/format";
 
 // Función de mapeo para adaptar cate_prod a ICategory
 export const mapCategory = (cate: any): ICategory => {
@@ -55,6 +57,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onActivate,
 }) => {
   const daysLeft = getDaysUntilExpiration(product.fecha_vence_proxima);
+  const { ventasConfig } = useConfiguracionesVentas();
 
   // Texto JSX dinámico
   let expirationText: React.ReactNode;
@@ -222,14 +225,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 <span className="text-xs text-muted-foreground">
                   Precio de compra:{" "}
                 </span>
-                ${product.prec_comp_prod ?? "0.00"}
+                {safePrice(product.prec_comp_prod ?? 0, ventasConfig.moneda)}
               </>
             ) : (
               <>
                 <span className="text-xs text-muted-foreground">
                   Precio de venta:{" "}
                 </span>
-                ${product.prec_vent_prod ?? "0.00"}
+                {safePrice(product.prec_vent_prod ?? 0, ventasConfig.moneda)}
               </>
             )}
           </div>

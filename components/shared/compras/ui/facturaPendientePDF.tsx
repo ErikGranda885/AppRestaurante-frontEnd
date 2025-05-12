@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { ICompra, IDetCompra } from "@/lib/types";
 import { useConfiguracionesBranding } from "@/hooks/configuraciones/generales/useConfiguracionesBranding";
+import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
+import { safePrice } from "@/utils/format";
 
 interface FacturaPendientePDFProps {
   compra: ICompra;
@@ -16,6 +18,7 @@ const FacturaPendientePDF: React.FC<FacturaPendientePDFProps> = ({
   detalle,
   printRef,
 }) => {
+  const { ventasConfig } = useConfiguracionesVentas();
   const [logo, setLogo] = useState("/imagenes/logo.png");
   const { logoFacturas } = useConfiguracionesBranding(); // ✅ INTEGRADO
 
@@ -107,10 +110,13 @@ const FacturaPendientePDF: React.FC<FacturaPendientePDFProps> = ({
                 <td className="border p-2">{item.prod_dcom.nom_prod}</td>
                 <td className="border p-2 text-center">{item.cant_dcom}</td>
                 <td className="border p-2 text-center">
-                  ${item.prec_uni_dcom.toFixed(2)}
+                  {safePrice(item.prec_uni_dcom, ventasConfig.moneda)}
                 </td>
                 <td className="border p-2 text-center">
-                  ${(item.cant_dcom * item.prec_uni_dcom).toFixed(2)}
+                  {safePrice(
+                    item.cant_dcom * item.prec_uni_dcom,
+                    ventasConfig.moneda,
+                  )}
                 </td>
               </tr>
             ))}
@@ -121,21 +127,27 @@ const FacturaPendientePDF: React.FC<FacturaPendientePDFProps> = ({
           <div className="flex justify-between">
             <span>Total:</span>
             <span className="font-semibold">
-              ${detalle.reduce((acc, p) => acc + p.sub_tot_dcom, 0).toFixed(2)}
+              {safePrice(
+                detalle.reduce((acc, p) => acc + p.sub_tot_dcom, 0),
+                ventasConfig.moneda,
+              )}
             </span>
           </div>
           <div className="flex justify-between">
             <span>Descuento:</span>
-            <span>$0.00</span>
+            <span>{safePrice(0, ventasConfig.moneda)}</span>
           </div>
           <div className="flex justify-between">
             <span>Impuesto:</span>
-            <span>$0.00</span>
+            <span>{safePrice(0, ventasConfig.moneda)}</span>
           </div>
           <div className="flex justify-between border-t pt-2 font-semibold">
             <span>Total Final:</span>
             <span>
-              ${detalle.reduce((acc, p) => acc + p.sub_tot_dcom, 0).toFixed(2)}
+              {safePrice(
+                detalle.reduce((acc, p) => acc + p.sub_tot_dcom, 0),
+                ventasConfig.moneda,
+              )}
             </span>
           </div>
         </div>

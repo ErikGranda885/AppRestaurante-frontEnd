@@ -36,6 +36,8 @@ import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { SERVICIOS_VENTAS } from "@/services/ventas.service";
 import { ValidarPagoDialog } from "@/components/shared/dashboard/ui/validarPagoDialog";
+import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
+import { safePrice } from "@/utils/format";
 
 function formatoMoneda(valor: any): string {
   return typeof valor === "number"
@@ -44,12 +46,12 @@ function formatoMoneda(valor: any): string {
 }
 
 export default function PaginaCierreDia() {
+  const { ventasConfig } = useConfiguracionesVentas();
   const router = useRouter();
   const { id } = useParams();
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [numeroComprobante, setNumeroComprobante] = useState("");
-  const [valorDeposito, setValorDeposito] = useState("");
   const [openDialogNumeracion, setOpenDialogNumeracion] = useState(false);
   const [totalEfectivo, setTotalEfectivo] = useState(0);
   const [abrirConfirmacionCerrar, setAbrirConfirmacionCerrar] = useState(false);
@@ -331,18 +333,29 @@ export default function PaginaCierreDia() {
                   </p>
                   <div className="flex justify-between text-xs font-medium">
                     <span>Ventas por efectivo</span>
-                    <span>${formatoMoneda(totalEfectivoSistema)}</span>
+                    <span>
+                      {safePrice(
+                        Number(totalEfectivoSistema ?? 0),
+                        ventasConfig.moneda,
+                      )}
+                    </span>
                   </div>
                   <div className="flex justify-between text-xs font-medium">
                     <span>Ventas por transferencia</span>
-                    <span>${formatoMoneda(totalTransferenciasSistema)}</span>
+                    <span>
+                      {safePrice(
+                        Number(totalTransferenciasSistema ?? 0),
+                        ventasConfig.moneda,
+                      )}
+                    </span>
                   </div>
                   <div className="flex justify-between text-xs font-semibold">
                     <span>Total sistema</span>
                     <span>
-                      $
-                      {formatoMoneda(
-                        totalEfectivoSistema + totalTransferenciasSistema,
+                      {safePrice(
+                        Number(totalEfectivoSistema ?? 0) +
+                          Number(totalTransferenciasSistema ?? 0),
+                        ventasConfig.moneda,
                       )}
                     </span>
                   </div>
@@ -355,19 +368,33 @@ export default function PaginaCierreDia() {
                   </p>
                   <div className="flex justify-between text-xs font-medium">
                     <span>Efectivo registrado</span>
-                    <span>${formatoMoneda(totalEfectivo)}</span>
+                    <span>
+                      {safePrice(
+                        Number(totalEfectivo ?? 0),
+                        ventasConfig.moneda,
+                      )}
+                    </span>
                   </div>
                   <div className="flex justify-between text-xs font-medium">
                     <span>Compras realizadas</span>
-                    <span>${formatoMoneda(totalFacturasCanceladas)}</span>
+                    <span>
+                      {safePrice(
+                        Number(totalFacturasCanceladas ?? 0),
+                        ventasConfig.moneda,
+                      )}
+                    </span>
                   </div>
                   <div className="flex justify-between text-xs font-medium">
                     <span>Gastos registrados</span>
-                    <span>${formatoMoneda(totalGastos)}</span>
+                    <span>
+                      {safePrice(Number(totalGastos ?? 0), ventasConfig.moneda)}
+                    </span>
                   </div>
                   <div className="flex justify-between text-xs font-semibold">
                     <span>Total cajero</span>
-                    <span>${formatoMoneda(totalCajero)}</span>
+                    <span>
+                      {safePrice(Number(totalCajero ?? 0), ventasConfig.moneda)}
+                    </span>
                   </div>
                 </div>
 
@@ -385,11 +412,13 @@ export default function PaginaCierreDia() {
                         : "text-red-600"
                     }`}
                   >
-                    $
-                    {formatoMoneda(
-                      cierreSeleccionado.esta_cier === "cerrado"
-                        ? cierreSeleccionado.dif_cier
-                        : diferenciaCalculada,
+                    {safePrice(
+                      Number(
+                        cierreSeleccionado.esta_cier === "cerrado"
+                          ? cierreSeleccionado.dif_cier
+                          : diferenciaCalculada,
+                      ),
+                      ventasConfig.moneda,
                     )}
                   </span>
                 </div>
@@ -518,7 +547,10 @@ export default function PaginaCierreDia() {
                         <span
                           className={`text-right font-semibold ${Number(gasto.mont_gas) >= 0 ? "" : "text-red-600"}`}
                         >
-                          ${formatoMoneda(gasto.mont_gas)}
+                          {safePrice(
+                            Number(gasto.mont_gas ?? 0),
+                            ventasConfig.moneda,
+                          )}
                         </span>
                       </div>
                     ))
@@ -570,7 +602,10 @@ export default function PaginaCierreDia() {
                           })}
                         </span>
                         <span className="text-right font-semibold">
-                          ${formatoMoneda(Number(compra.tot_comp))}
+                          {safePrice(
+                            Number(compra.tot_comp ?? 0),
+                            ventasConfig.moneda,
+                          )}
                         </span>
                       </div>
                     ))
@@ -654,7 +689,10 @@ export default function PaginaCierreDia() {
                           venta.tot_vent >= 0 ? "" : "text-red-600"
                         }`}
                       >
-                        ${formatoMoneda(venta.tot_vent)}
+                        {safePrice(
+                          Number(venta.tot_vent ?? 0),
+                          ventasConfig.moneda,
+                        )}
                       </span>
                     </div>
                   ))
@@ -890,8 +928,8 @@ function ResumenItem({
   ocultar?: boolean;
   resaltado?: boolean;
 }) {
-  // Validación segura del valor
-  const valorSeguro = formatoMoneda(value);
+  const { ventasConfig } = useConfiguracionesVentas();
+  const valorSeguro = safePrice(Number(value ?? 0), ventasConfig.moneda);
 
   return (
     <div className="space-y-1">
@@ -909,7 +947,7 @@ function ResumenItem({
             : "text-gray-900 dark:text-white"
         }`}
       >
-        {ocultar ? "$*.**" : `$${valorSeguro}`}
+        {ocultar ? "$*.**" : valorSeguro}
       </div>
     </div>
   );

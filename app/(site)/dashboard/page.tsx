@@ -19,10 +19,12 @@ import { useHoraActual } from "@/hooks/dashboard/useHoraActual";
 import { useDashboardMetrics } from "@/hooks/dashboard/useDashboardMetrics";
 import { useProductosDashboard } from "@/hooks/dashboard/useProductosDashboard";
 import Image from "next/image";
+import { safePrice } from "@/utils/format";
+import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 
 export default function Dashboard() {
   useProtectedRoute();
-
+  const { ventasConfig } = useConfiguracionesVentas();
   const { userName } = useUserData();
   const { horaActual } = useHoraActual();
   const fechaActual = new Date().toLocaleDateString("en-CA");
@@ -94,7 +96,7 @@ export default function Dashboard() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-2xl font-bold">
-                      ${totalGanado.toFixed(2)}
+                      {safePrice(totalGanado, ventasConfig.moneda)}
                     </p>
                     <div className="mt-1 flex gap-1 text-green-400">
                       <ArrowUp className="h-5 w-5" />
@@ -126,7 +128,7 @@ export default function Dashboard() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-2xl font-bold">
-                      ${comprasRealizadas.valor.toFixed(2)}
+                      {safePrice(comprasRealizadas.valor, ventasConfig.moneda)}
                     </p>
                     <p className="text-sm text-yellow-400">
                       {comprasRealizadas.cantidad} pedidos
@@ -157,7 +159,7 @@ export default function Dashboard() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-2xl font-bold">
-                      ${gastosTotales.valor.toFixed(2)}
+                      {safePrice(gastosTotales.valor, ventasConfig.moneda)}
                     </p>
                     <p className="text-sm text-red-400">
                       {gastosTotales.cantidad} pagos
@@ -201,7 +203,7 @@ export default function Dashboard() {
                   <CardContent>
                     <p className="text-2xl font-bold">
                       {diferenciaCaja < 0 ? "-" : diferenciaCaja > 0 ? "+" : ""}
-                      ${Math.abs(diferenciaCaja).toFixed(2)}
+                      {safePrice(Math.abs(diferenciaCaja), ventasConfig.moneda)}
                     </p>
                     <p className="text-sm text-orange-400">
                       {diferenciaCaja < 0

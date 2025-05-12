@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { uploadImage } from "@/firebase/subirImage";
+import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { ICategory, IProduct } from "@/lib/types";
 import { SERVICIOS_INVENTARIO } from "@/services/inventario.service";
@@ -45,6 +46,7 @@ interface OrderItem {
 // ---------------------
 export default function Page() {
   useProtectedRoute();
+  const { ventasConfig, loading: loadingVentas } = useConfiguracionesVentas();
 
   // Estados para productos, orden y filtros
   const [idUsuario, setIdUsuario] = useState<number>(0);
@@ -174,7 +176,12 @@ export default function Page() {
     incrementLockRef.current = true;
 
     const found = products.find((p) => p.id_prod === productId);
-    if (!found || found.stock_prod <= 0) {
+    if (!found) {
+      incrementLockRef.current = false;
+      return;
+    }
+
+    if (!ventasConfig.mostrar_stock_negativo && found.stock_prod <= 0) {
       incrementLockRef.current = false;
       return;
     }
@@ -271,7 +278,7 @@ export default function Page() {
   }, [orderItems, products]);
 
   // Por ejemplo, si el IVA es del 15%
-  const tax = taxableSubtotal * 0.15; // IVA del 15%
+  const tax = taxableSubtotal * (ventasConfig.porcentaje_iva / 100);
   const discountGlobal = 0;
   const total = subtotal + tax - discountGlobal;
   /* Cargar comprobante si es transferencia */
@@ -309,6 +316,22 @@ export default function Page() {
       return;
     }
 
+    if (loadingVentas) {
+      ToastError({
+        message: "Cargando configuraciones, intenta en un momento.",
+      });
+      return;
+    }
+
+    // ✅ Validación adicional: impedir venta si no se permite sin cierre
+    if (!ventasConfig.permitir_venta_sin_cierre) {
+      ToastError({
+        message:
+          "No se puede registrar una venta porque el día no ha sido cerrado.",
+      });
+      return;
+    }
+
     // Validación para transferencia
     if (
       metodoPago === "transferencia" &&
@@ -332,8 +355,19 @@ export default function Page() {
         );
       }
 
+      // ✅ Calcula total con el IVA configurado
+      const iva = ventasConfig.porcentaje_iva ?? 12;
+      const taxableSubtotal = orderItems.reduce((acc, item) => {
+        const prod = products.find((p) => p.id_prod === item.productId);
+        if (!prod) return acc;
+        return acc + prod.prec_vent_prod * item.quantity;
+      }, 0);
+
+      const taxAmount = taxableSubtotal * (iva / 100);
+      const totalWithTax = taxableSubtotal + taxAmount;
+
       const salePayload = {
-        tot_vent: total,
+        tot_vent: totalWithTax,
         fech_vent: new Date().toISOString(),
         est_vent: metodoPago === "transferencia" ? "Por validar" : "Sin cerrar",
         tip_pag_vent: metodoPago,
@@ -526,7 +560,10 @@ export default function Page() {
                             Stock: {prod.stock_prod}
                           </p>
                           <p className="mt-1 text-sm font-bold text-gray-800 dark:text-gray-100">
-                            $ {safePrice(prod.prec_vent_prod)}
+                            {safePrice(
+                              prod.prec_vent_prod,
+                              ventasConfig.moneda,
+                            )}
                             <span className="text-xs font-normal"> /u</span>
                           </p>
                         </div>
@@ -554,13 +591,9 @@ export default function Page() {
                             </Button>
                           </div>
                           <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                            ${" "}
-                            {(cartQ * prod.prec_vent_prod).toLocaleString(
-                              "id-ID",
-                              {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              },
+                            {safePrice(
+                              cartQ * prod.prec_vent_prod,
+                              ventasConfig.moneda,
                             )}
                           </p>
                         </div>
@@ -673,20 +706,22 @@ export default function Page() {
                               </div>
 
                               <p className="text-xs dark:text-[#ababab]">
-                                c/u ${" "}
-                                {prod.prec_vent_prod.toLocaleString("id-ID", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}
+                                c/u{" "}
+                                {safePrice(
+                                  prod.prec_vent_prod,
+                                  ventasConfig.moneda,
+                                )}
                               </p>
                               <div className="flex items-center justify-between gap-2 pt-1 text-xs">
                                 {/* Total */}
                                 <p className="text-xs font-semibold dark:text-white">
-                                  Total: ${" "}
+                                  Total:{" "}
                                   {safePrice(
                                     item.quantity * prod.prec_vent_prod,
+                                    ventasConfig.moneda,
                                   )}
                                 </p>
+
                                 <div className="flex gap-2">
                                   <button
                                     onClick={() =>
@@ -738,18 +773,22 @@ export default function Page() {
               <div className="mb-2 flex items-center justify-between text-sm text-gray-600">
                 <span className="dark:text-[#ababab]">Subtotal</span>
                 <span className="dark:text-[#f5f5f5]">
-                  $ {safePrice(subtotal)}
+                  {safePrice(subtotal, ventasConfig.moneda)}
                 </span>
               </div>
               <div className="mb-2 flex items-center justify-between text-sm text-gray-600">
-                <span className="dark:text-[#ababab]">Iva (15%)</span>
-                <span className="dark:text-[#f5f5f5]">$ {safePrice(tax)}</span>
+                <span className="dark:text-[#ababab]">
+                  IVA ({ventasConfig.porcentaje_iva}%)
+                </span>
+                <span className="dark:text-[#f5f5f5]">
+                  {safePrice(tax, ventasConfig.moneda)}
+                </span>
               </div>
               <div className="mb-4 h-px w-full bg-gray-200"></div>
               <div className="mb-4 flex items-center justify-between font-bold text-gray-800">
                 <span className="dark:text-[#ababab]">Total</span>
                 <span className="dark:text-[#f5f5f5]">
-                  $ {safePrice(total)}
+                  {safePrice(total, ventasConfig.moneda)}
                 </span>
               </div>
             </div>

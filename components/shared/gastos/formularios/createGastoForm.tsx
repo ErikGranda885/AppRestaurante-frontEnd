@@ -17,6 +17,8 @@ import { Input } from "@/components/ui/input";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { useGastos } from "@/hooks/gastos/useGastos";
+import { safePrice } from "@/utils/format";
+import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 
 // Esquema de validación
 const gastoSchema = z.object({
@@ -37,6 +39,7 @@ export interface CreateGastoFormProps {
 }
 
 export function CreateGastoForm({ onSuccess }: CreateGastoFormProps) {
+    const { ventasConfig } = useConfiguracionesVentas();
   const [montoTexto, setMontoTexto] = React.useState<string>("");
   const form = useForm<GastoFormValues>({
     resolver: zodResolver(gastoSchema),
@@ -122,7 +125,7 @@ export function CreateGastoForm({ onSuccess }: CreateGastoFormProps) {
               <FormControl>
                 <Input
                   type="text"
-                  placeholder="$0.00"
+                  placeholder="0.00"
                   value={
                     montoTexto ||
                     (field.value ? `$${field.value.toFixed(2)}` : "")
@@ -140,7 +143,9 @@ export function CreateGastoForm({ onSuccess }: CreateGastoFormProps) {
                   }}
                   onBlur={() => {
                     if (field.value !== undefined) {
-                      setMontoTexto(`$${field.value.toFixed(2)}`);
+                      setMontoTexto(
+                        safePrice(field.value, ventasConfig.moneda),
+                      );
                     }
                   }}
                   className={`dark:bg-[#09090b] ${

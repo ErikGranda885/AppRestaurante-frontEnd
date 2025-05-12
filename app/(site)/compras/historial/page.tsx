@@ -2,7 +2,6 @@
 
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { DataTable } from "@/components/shared/varios/dataTable";
-import { GeneralDialog } from "@/components/shared/varios/dialogGen";
 import { MetricCard } from "@/components/shared/varios/metricCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,9 +18,6 @@ import {
 import React, { useEffect, useState } from "react";
 import {
   format,
-  isToday,
-  isYesterday,
-  isThisMonth,
   startOfDay,
   endOfDay,
   subDays,
@@ -36,7 +32,6 @@ import { ToastError } from "@/components/shared/toast/toastError";
 import { Separator } from "@/components/ui/separator";
 import { DateRangeFilter } from "@/components/shared/ventas/ui/dateRangeFilter";
 import { DateRange } from "react-day-picker";
-import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,9 +44,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
+import { safePrice } from "@/utils/format";
 
 export default function Page() {
-  const [abrirCrear, setAbrirCrear] = useState(false);
+  const { ventasConfig } = useConfiguracionesVentas();
   const [consultaBusqueda, setConsultaBusqueda] = useState<string>("");
   const [compras, setCompras] = useState<ICompra[]>([]);
   const [detCompras, setDetCompras] = useState<IDetCompra[]>([]);
@@ -181,7 +178,9 @@ export default function Page() {
     {
       header: "Total",
       accessorKey: "tot_comp",
-      cell: ({ cell }: any) => `$ ${parseFloat(cell.getValue()).toFixed(2)}`,
+      cell: ({ cell }: any) => {
+        return safePrice(Number(cell.getValue()), ventasConfig.moneda);
+      },
     },
     {
       header: "Estado de pago",
@@ -376,7 +375,7 @@ export default function Page() {
               <div className="flex-1">
                 <MetricCard
                   titulo="Total en Compras"
-                  valor={`$ ${volumenTotal.toFixed(2)}`}
+                  valor={safePrice(volumenTotal, ventasConfig.moneda)}
                   porcentaje=""
                   periodo="Total"
                   iconColor="text-green-400"

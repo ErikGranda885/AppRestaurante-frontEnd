@@ -20,6 +20,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"; // Asegúrate de importar tu Skeleton
 
 import { useVentasPorCategoria } from "@/hooks/dashboard/useVentasPorCategoria";
+import { safePrice } from "@/utils/format";
+import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 
 const colores = [
   "#3eab78",
@@ -32,14 +34,11 @@ const colores = [
   "#22c55e",
 ];
 
-const formatearDinero = (valor: number) => {
-  if (valor >= 1_000_000) return `$${(valor / 1_000_000).toFixed(1)}M`;
-  if (valor >= 1_000) return `$${(valor / 1_000).toFixed(1)}k`;
-  return `$${valor.toFixed(2)}`;
-};
-
 export function GraficoVentasPorCategoria() {
   const { datos, loading, error } = useVentasPorCategoria();
+  const { ventasConfig } = useConfiguracionesVentas();
+  const formatearDinero = (valor: number) =>
+    safePrice(valor, ventasConfig.moneda);
 
   const datosFormateados = Array.isArray(datos)
     ? datos.map((item) => ({
