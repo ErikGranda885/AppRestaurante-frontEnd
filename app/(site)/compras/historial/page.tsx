@@ -467,6 +467,7 @@ export default function Page() {
               onRowClick={(compra: ICompra) => {
                 router.push(`/compras/${compra.id_comp}`);
               }}
+              enableRowPointer={true}
             />
           </div>
         </div>

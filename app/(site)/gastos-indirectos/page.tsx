@@ -355,12 +355,12 @@ export default function Page() {
               />
             </div>
 
-            <Button
+            {/* <Button
               className="border-border text-[12px] font-semibold"
               variant="secondary"
             >
               <Upload className="h-4 w-4" /> Importar
-            </Button>
+            </Button> */}
             <Button
               className="border-border text-[12px] font-semibold"
               variant="secondary"

@@ -1,8 +1,6 @@
 "use client";
-
-import * as React from "react";
+import { useRef, useState } from "react";
 import * as ExcelJS from "exceljs";
-import toast from "react-hot-toast";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +13,7 @@ import { IProduct } from "@/lib/types";
 import { ToastError } from "../../toast/toastError";
 import { ToastSuccess } from "../../toast/toastSuccess";
 import { Download } from "lucide-react";
+import { DropzoneFile } from "../../varios/dropzoneFile";
 
 interface BulkUploadProductDialogProps {
   categoryOptions: { value: string; label: string }[];
@@ -29,14 +28,12 @@ export function BulkUploadProductDialog({
   onSuccess,
   onClose,
 }: BulkUploadProductDialogProps) {
-  const [file, setFile] = React.useState<File | null>(null);
-  const [previewData, setPreviewData] = React.useState<any[]>([]);
-  const [loading, setLoading] = React.useState(false);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const categoriaMapRef = React.useRef<Record<string, number>>({});
-  const tiposValidosRef = React.useRef<Set<string>>(new Set());
-  const unidadesValidasRef = React.useRef<Set<string>>(new Set());
+  const [file, setFile] = useState<File | null>(null);
+  const [previewData, setPreviewData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const categoriaMapRef = useRef<Record<string, number>>({});
+  const tiposValidosRef = useRef<Set<string>>(new Set());
+  const unidadesValidasRef = useRef<Set<string>>(new Set());
 
   const sanitize = (str: string) =>
     str
@@ -45,19 +42,14 @@ export function BulkUploadProductDialog({
       .trim()
       .toLowerCase();
 
-  const validateRows = (rows: any[]): boolean => {
-    return rows.every((row) =>
-      requiredColumns.every((col) => {
-        const value = row[col];
-        return (
-          value !== undefined && value !== null && String(value).trim() !== ""
-        );
-      }),
+  const validateRows = (rows: any[]): boolean =>
+    rows.every((row) =>
+      requiredColumns.every(
+        (col) => row[col] !== undefined && String(row[col]).trim() !== "",
+      ),
     );
-  };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
+  const handleFileSelect = async (selectedFile: File) => {
     if (!selectedFile) return;
     setFile(selectedFile);
 
@@ -80,97 +72,76 @@ export function BulkUploadProductDialog({
       setPreviewData(cleanData);
     };
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const workbook = new ExcelJS.Workbook();
-        await workbook.xlsx.load(e.target?.result as ArrayBuffer);
+    try {
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(await selectedFile.arrayBuffer());
 
-        const worksheet = workbook.getWorksheet("Productos");
-        const categoriasSheet = workbook.getWorksheet("Categorias");
-        const tiposSheet = workbook.getWorksheet("Tipos");
-        const unidadesSheet = workbook.getWorksheet("Unidades");
+      const worksheet = workbook.getWorksheet("Productos");
+      const categoriasSheet = workbook.getWorksheet("Categorias");
+      const tiposSheet = workbook.getWorksheet("Tipos");
+      const unidadesSheet = workbook.getWorksheet("Unidades");
 
-        // Mapear categorías
-        const categoriaMap: Record<string, number> = {};
-        categoriasSheet?.eachRow({ includeEmpty: false }, (row, index) => {
-          if (index === 1) return;
-          const id = row.getCell(1).value;
-          const nombre = sanitize(String(row.getCell(2).value));
-          categoriaMap[nombre] = Number(id);
+      // Mapear categorías
+      const categoriaMap: Record<string, number> = {};
+      categoriasSheet?.eachRow({ includeEmpty: false }, (row, index) => {
+        if (index === 1) return;
+        const id = row.getCell(1).value;
+        const nombre = sanitize(String(row.getCell(2).value));
+        categoriaMap[nombre] = Number(id);
+      });
+      categoriaMapRef.current = categoriaMap;
+
+      // Tipos válidos
+      const tipos = new Set<string>();
+      tiposSheet?.eachRow({ includeEmpty: false }, (row, index) => {
+        if (index === 1) return;
+        tipos.add(sanitize(String(row.getCell(1).value)));
+      });
+      tiposValidosRef.current = tipos;
+
+      // Unidades válidas
+      const unidades = new Set<string>();
+      unidadesSheet?.eachRow({ includeEmpty: false }, (row, index) => {
+        if (index === 1) return;
+        unidades.add(sanitize(String(row.getCell(1).value)));
+      });
+      unidadesValidasRef.current = unidades;
+
+      let headers = worksheet?.getRow(1).values as any[];
+      if (headers[0] === undefined) headers = headers.slice(1);
+      headers = headers.map((h: any) => sanitize(String(h)));
+
+      if (!validateHeaders(headers)) {
+        ToastError({
+          message:
+            "El archivo XLSX contiene columnas incorrectas o incompletas.",
         });
-        categoriaMapRef.current = categoriaMap;
-
-        // Tipos válidos
-        const tipos = new Set<string>();
-        tiposSheet?.eachRow({ includeEmpty: false }, (row, index) => {
-          if (index === 1) return;
-          tipos.add(sanitize(String(row.getCell(1).value)));
-        });
-        tiposValidosRef.current = tipos;
-
-        // Unidades válidas
-        const unidades = new Set<string>();
-        unidadesSheet?.eachRow({ includeEmpty: false }, (row, index) => {
-          if (index === 1) return;
-          unidades.add(sanitize(String(row.getCell(1).value)));
-        });
-        unidadesValidasRef.current = unidades;
-
-        let headers = worksheet?.getRow(1).values as any[];
-        if (headers[0] === undefined) headers = headers.slice(1);
-        headers = headers.map((h: any) => sanitize(String(h)));
-
-        if (!validateHeaders(headers)) {
-          ToastError({
-            message:
-              "El archivo XLSX contiene columnas incorrectas o incompletas.",
-          });
-          setPreviewData([]);
-          return;
-        }
-
-        const formattedData: any[] = [];
-        worksheet?.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-          if (rowNumber <= 2) return;
-          const rowValues = row.values as any[];
-          const rowData: any = {};
-          headers.forEach((header: string, index: number) => {
-            let value = rowValues[index + 1];
-            if (value instanceof Date) {
-              value = value.toLocaleDateString("es-ES");
-            }
-            rowData[header] = value || "";
-          });
-          formattedData.push(rowData);
-        });
-
-        processParsedData(formattedData);
-      } catch {
-        ToastError({ message: "Error al procesar el archivo XLSX." });
         setPreviewData([]);
+        return;
       }
-    };
 
-    reader.readAsArrayBuffer(selectedFile);
-  };
+      const formattedData: any[] = [];
+      worksheet?.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+        if (rowNumber <= 2) return;
+        const rowValues = row.values as any[];
+        const rowData: any = {};
+        headers.forEach((header: string, index: number) => {
+          let value = rowValues[index + 1];
+          if (value instanceof Date) {
+            value = value.toLocaleDateString("es-ES");
+          }
+          rowData[header] = value || "";
+        });
+        formattedData.push(rowData);
+      });
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const droppedFiles = e.dataTransfer.files;
-    if (droppedFiles && droppedFiles.length > 0) {
-      const event = {
-        target: { files: droppedFiles },
-      } as React.ChangeEvent<HTMLInputElement>;
-      handleFileChange(event);
-      e.dataTransfer.clearData();
+      processParsedData(formattedData);
+    } catch {
+      ToastError({
+        message: "Error al procesar el archivo XLSX, el archivo no es válido.",
+      });
+      setPreviewData([]);
     }
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
   };
 
   const handleUpload = async () => {
@@ -209,9 +180,7 @@ export function BulkUploadProductDialog({
       });
 
       if (errores.length > 0) {
-        ToastError({
-          message: `Los siguientes valores no son válidos:\n${errores.join(", ")}`,
-        });
+        ToastError({ message: `Valores no válidos: ${errores.join(", ")}` });
         setLoading(false);
         return;
       }
@@ -223,9 +192,8 @@ export function BulkUploadProductDialog({
       });
 
       const data = await res.json();
-      if (!res.ok) {
+      if (!res.ok)
         throw new Error(data.message || "Error al registrar productos.");
-      }
 
       onSuccess(data.productos);
       ToastSuccess({
@@ -245,21 +213,19 @@ export function BulkUploadProductDialog({
         <DialogHeader>
           <DialogTitle>Carga Masiva de Productos</DialogTitle>
         </DialogHeader>
+
         <div className="space-y-4">
-          <div className="rounded bg-gray-100 p-4 dark:border-none dark:bg-[#1E1E1E] dark:text-white">
-            <h2 className="mb-2 font-mono dark:text-gray-100">
-              Pasos para la carga masiva:
-            </h2>
-            <ol className="list-inside list-decimal space-y-1 text-sm text-gray-700 dark:text-white">
+          <div className="rounded bg-gray-100 p-4 dark:bg-[#1E1E1E]">
+            <h2 className="mb-2 font-mono dark:text-gray-100">Pasos:</h2>
+            <ol className="list-inside list-decimal space-y-1 text-sm dark:text-white">
               <li>Descarga la plantilla Excel.</li>
               <li>
-                Llena las columnas:{" "}
-                <b>cate_prod, nom_prod, tip_prod, und_prod</b>.
+                Llena: <b>cate_prod, nom_prod, tip_prod, und_prod</b>.
               </li>
-              <li>Guarda el archivo y selecciónalo.</li>
+              <li>Selecciona el archivo o arrástralo aquí.</li>
               <li>Verifica la vista previa.</li>
               <li>
-                Haz clic en <b>Cargar</b> para guardar los productos.
+                Haz clic en <b>Cargar</b>.
               </li>
             </ol>
             <Button
@@ -287,35 +253,22 @@ export function BulkUploadProductDialog({
             </Button>
           </div>
 
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            style={{ display: "none" }}
+          {/* ✅ DropzoneFile aquí */}
+          <DropzoneFile
+            onFileSelect={handleFileSelect}
             accept=".xlsx"
+            text="Arrastra y suelta el archivo CSV/XLSX aquí o haz clic para
+                seleccionarlo."
           />
 
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            className="cursor-pointer rounded-lg border-2 border-dashed p-6 text-center hover:border-gray-400 dark:border-gray-600 dark:text-white"
-          >
-            <p>Haz clic o arrastra un archivo .xlsx aquí</p>
-            {file && (
-              <p className="mt-2 text-sm text-gray-700 dark:text-white">
-                Archivo: {file.name}
-              </p>
-            )}
-          </div>
-
+          {/* ✅ Preview */}
           {previewData.length > 0 && (
-            <div className="mt-4 max-h-64 overflow-x-auto rounded border">
+            <div className="mt-4 max-h-64 overflow-x-auto border">
               <table className="min-w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
                     {requiredColumns.map((col) => (
-                      <th key={col} className="border px-2 py-1 text-left">
+                      <th key={col} className="border px-2 py-1">
                         {col}
                       </th>
                     ))}

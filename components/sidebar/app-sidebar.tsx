@@ -63,8 +63,8 @@ export const data = {
       icon: ShoppingCart,
       submenu: true,
       items: [
-        { title: "Historial de compras", url: "/compras/historial" },
         { title: "Gestión de Proveedores", url: "/compras/proveedores" },
+        { title: "Historial de compras", url: "/compras/historial" },
       ],
     },
     {
@@ -94,8 +94,8 @@ export const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [userData, setUserData] = useState(data.user);
   const [empresaData, setEmpresaData] = useState({
-    nombre: "Shawarma la estación",
-    logo: "/imagenes/logo.png",
+    nombre: "No registrado",
+    logo: "/imagenes/empresaDefecto.webp",
   });
 
   const updateUserData = () => {
@@ -124,11 +124,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     // ✅ Escuchar cambios de usuario y empresa
     window.addEventListener("userNameUpdated", updateUserData);
-    window.addEventListener("empresaUpdated", updateUserData); // 👈 añadido
+    window.addEventListener("empresaUpdated", updateUserData);
 
     return () => {
       window.removeEventListener("userNameUpdated", updateUserData);
-      window.removeEventListener("empresaUpdated", updateUserData); // 👈 añadido
+      window.removeEventListener("empresaUpdated", updateUserData);
     };
   }, []);
 

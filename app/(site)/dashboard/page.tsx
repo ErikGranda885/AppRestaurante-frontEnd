@@ -15,18 +15,19 @@ import { GraficoVentasPorPeriodo } from "@/components/shared/dashboard/ui/grafic
 import OrdenesEnProceso from "@/components/shared/dashboard/ui/ordenesProgreso";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { useUserData } from "@/hooks/dashboard/useUserData";
-import { useHoraActual } from "@/hooks/dashboard/useHoraActual";
 import { useDashboardMetrics } from "@/hooks/dashboard/useDashboardMetrics";
 import { useProductosDashboard } from "@/hooks/dashboard/useProductosDashboard";
 import Image from "next/image";
 import { safePrice } from "@/utils/format";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
+import { useEmpresa } from "@/hooks/configuraciones/generales/useEmpresa";
 
 export default function Dashboard() {
   useProtectedRoute();
   const { ventasConfig } = useConfiguracionesVentas();
   const { userName } = useUserData();
-  const { horaActual } = useHoraActual();
+  const { empresa } = useEmpresa();
+
   const fechaActual = new Date().toLocaleDateString("en-CA");
   const {
     totalGanado,
@@ -63,7 +64,8 @@ export default function Dashboard() {
           <div className="col-span-7">
             <h2 className="text-xl font-semibold">Buen día, {userName} 👋</h2>
             <p className="text-sm text-muted-foreground">
-              Resumen de operaciones del restaurante Shawarma La Estación
+              Resumen de operaciones del restaurante{" "}
+              {empresa?.nom_emp ?? "tu negocio"}
             </p>
           </div>
           {/* Hora dinámica */}

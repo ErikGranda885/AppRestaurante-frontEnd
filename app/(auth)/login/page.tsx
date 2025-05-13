@@ -5,7 +5,7 @@ import Image from "next/image";
 import { LoginForm } from "@/components/auth/login-form";
 
 export default function LoginPage() {
-  const [logo, setLogo] = useState("/imagenes/logo.png");
+  const [logo, setLogo] = useState("/imagenes/empresaDefecto.webp");
 
   useEffect(() => {
     const empresaLS = localStorage.getItem("empresa_actual");
@@ -16,7 +16,7 @@ export default function LoginPage() {
           setLogo(
             empresa.logo_emp.startsWith("http")
               ? empresa.logo_emp
-              : "/imagenes/logo.png",
+              : "/imagenes/empresaDefecto.webp",
           );
         }
       } catch (error) {
@@ -39,7 +39,7 @@ export default function LoginPage() {
                   src={logo}
                   alt="Logo Empresa"
                   fill
-                  className="object-contain"
+                  className="rounded-md object-contain"
                   onError={() => setLogo("/imagenes/logo.png")}
                 />
               </div>

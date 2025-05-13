@@ -145,11 +145,65 @@ export default function Dashboard() {
         </div>
       ),
     },
-    { accessorKey: "cont_prov", header: "Contacto" },
-    { accessorKey: "tel_prov", header: "Teléfono" },
+    {
+      accessorKey: "cont_prov",
+      header: "Contacto",
+      cell: ({ row }) => {
+        const contacto = (row.getValue("cont_prov") as string) ?? "";
+        const contactoProtegido =
+          contacto.length > 1 ? `${contacto[0]}*****` : "*****";
+
+        return <div>{contactoProtegido}</div>;
+      },
+    },
+
+    {
+      accessorKey: "tel_prov",
+      header: "Teléfono",
+      cell: ({ row }) => {
+        const telefono = (row.getValue("tel_prov") as string) ?? "";
+        const longitud = telefono.length;
+        const telefonoProtegido =
+          longitud > 3 ? `*****${telefono.slice(-3)}` : "*****";
+
+        return <div>{telefonoProtegido}</div>;
+      },
+    },
+
     { accessorKey: "direc_prov", header: "Dirección" },
-    { accessorKey: "email_prov", header: "Correo" },
-    { accessorKey: "ruc_prov", header: "RUC" },
+    {
+      accessorKey: "email_prov",
+      header: "Correo",
+      cell: ({ row }) => {
+        const correo = (row.getValue("email_prov") as string) ?? "";
+        let correoProtegido = "";
+
+        if (correo.includes("@")) {
+          const [usuario, dominio] = correo.split("@");
+          correoProtegido =
+            usuario.length > 1
+              ? `${usuario[0]}*****@${dominio}`
+              : `*****@${dominio}`;
+        } else {
+          correoProtegido = "*****";
+        }
+
+        return <div className="lowercase">{correoProtegido}</div>;
+      },
+    },
+
+    {
+      accessorKey: "ruc_prov",
+      header: "RUC",
+      cell: ({ row }) => {
+        const ruc = (row.getValue("ruc_prov") as string) ?? "";
+        const longitud = ruc.length;
+        const rucProtegido = longitud > 4 ? `*****${ruc.slice(-4)}` : "*****";
+
+        return <div>{rucProtegido}</div>;
+      },
+    },
+
     {
       accessorKey: "est_prov",
       header: () => <div className="text-center">Estado</div>,

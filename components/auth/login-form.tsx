@@ -65,6 +65,8 @@ export function LoginForm({
       localStorage.setItem("token", data.token);
       localStorage.setItem("user_name", data.usuario.nom_usu);
       localStorage.setItem("user_id", data.usuario.id_usu);
+      localStorage.setItem("user_email", data.usuario.email_usu);
+      localStorage.setItem("user_avatar", data.usuario.img_usu);
       localStorage.setItem("showWelcomeToast", "true");
 
       setLoading(false);

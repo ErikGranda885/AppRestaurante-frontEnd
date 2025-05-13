@@ -1,8 +1,7 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import Papa from "papaparse";
 import * as ExcelJS from "exceljs";
-import toast from "react-hot-toast";
 import {
   Dialog,
   DialogContent,
@@ -11,9 +10,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Trash2, X, Edit2, Download } from "lucide-react";
+import { Download } from "lucide-react";
 import { ToastError } from "../../toast/toastError";
 import { ToastSuccess } from "../../toast/toastSuccess";
+import { DropzoneFile } from "../../varios/dropzoneFile";
 
 interface BulkUploadProveedoresDialogProps {
   onSuccess: (newProveedores: any[]) => void;
@@ -32,185 +32,115 @@ const requiredColumns = [
 const DEFAULT_IMAGE =
   "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/proveedores%2Fproveedor-defecto.png?alt=media&token=f24083c3-a545-4c7b-8ea9-fb8b1fb684cb";
 
-const renderCell = (value: any): string => {
-  if (value && typeof value === "object" && "text" in value) {
-    return value.text;
-  }
-  return String(value ?? "");
-};
-
-const sanitizeRow = (row: any): any => {
-  const newRow: any = { ...row };
-  for (const key in newRow) {
-    newRow[key] = renderCell(newRow[key]);
-  }
-  return newRow;
-};
-
 export function BulkUploadProveedoresDialog({
   onSuccess,
   onClose,
 }: BulkUploadProveedoresDialogProps) {
-  const [file, setFile] = useState<File | null>(null);
   const [previewData, setPreviewData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const validateHeaders = (headers: string[]): boolean => {
-    const lowerHeaders = headers.map((h) => h.toLowerCase().trim());
-    return requiredColumns.every((col) => lowerHeaders.includes(col));
-  };
-
-  const validateRows = (rows: any[]): boolean => {
-    return rows.every((row) =>
-      requiredColumns.every((col) => {
-        const value = row[col];
-        return (
-          value !== undefined && value !== null && String(value).trim() !== ""
-        );
-      }),
+  const validateHeaders = (headers: string[]) =>
+    requiredColumns.every((col) =>
+      headers.map((h) => h.toLowerCase().trim()).includes(col),
     );
+
+  const validateRows = (rows: any[]) =>
+    rows.every((row) =>
+      requiredColumns.every(
+        (col) => row[col] && String(row[col]).trim() !== "",
+      ),
+    );
+
+  const sanitizeRow = (row: any) => {
+    const newRow: any = { ...row };
+    Object.keys(newRow).forEach((key) => {
+      newRow[key] =
+        typeof newRow[key] === "object" && newRow[key]?.text
+          ? newRow[key].text
+          : String(newRow[key] ?? "");
+    });
+    return newRow;
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (!selectedFile) return;
-    setFile(selectedFile);
+  const handleFileSelect = async (file: File) => {
+    if (!file) return;
 
-    const parseCSV = () => {
-      Papa.parse(selectedFile, {
+    if (file.type === "text/csv" || file.name.toLowerCase().endsWith(".csv")) {
+      Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
         complete: (results) => {
-          const headers = results.meta.fields || [];
-          if (!validateHeaders(headers)) {
-            setPreviewData([]);
-            ToastError({
-              message:
-                "El archivo CSV contiene columnas incompletas o incorrectas.",
-            });
-            return;
-          }
-          if (!validateRows(results.data)) {
-            setPreviewData([]);
-            ToastError({
-              message:
-                "El archivo contiene celdas vacías en campos requeridos.",
-            });
-            return;
-          }
-          const dataConImagen = results.data.map((row) => ({
+          const headers = results.meta.fields ?? [];
+          if (!validateHeaders(headers))
+            return ToastError({ message: "CSV con columnas incorrectas." });
+
+          if (!validateRows(results.data))
+            return ToastError({ message: "Campos requeridos vacíos." });
+
+          const data = results.data.map((row) => ({
             ...sanitizeRow(row),
             img_prov: DEFAULT_IMAGE,
           }));
-          setPreviewData(dataConImagen);
+          setPreviewData(data);
         },
-        error: (error) => {
-          ToastError({ message: "Error al leer el archivo CSV" });
-        },
+        error: () => ToastError({ message: "Error al leer CSV." }),
       });
-    };
+    } else if (
+      file.type ===
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      file.name.toLowerCase().endsWith(".xlsx")
+    ) {
+      try {
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(await file.arrayBuffer());
+        const worksheet = workbook.worksheets[0];
+        if (!worksheet) return ToastError({ message: "XLSX sin hojas." });
 
-    const parseXLSX = () => {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const arrayBuffer = e.target?.result;
-        if (!arrayBuffer) return;
+        let headers = worksheet.getRow(1).values as any[];
+        if (headers[0] === undefined) headers = headers.slice(1);
+        headers = headers.map((h: any) => String(h).toLowerCase().trim());
 
-        try {
-          const workbook = new ExcelJS.Workbook();
-          await workbook.xlsx.load(arrayBuffer as ArrayBuffer);
-          const worksheet = workbook.worksheets[0];
-          let headers = worksheet.getRow(1).values as any[];
-          if (headers[0] === undefined) headers = headers.slice(1);
-          headers = headers.map((h: any) => String(h).toLowerCase().trim());
+        if (!validateHeaders(headers))
+          return ToastError({ message: "XLSX con columnas incorrectas." });
 
-          if (!validateHeaders(headers)) {
-            setPreviewData([]);
-            ToastError({
-              message: "El archivo XLSX tiene columnas incorrectas.",
-            });
-            return;
-          }
-
-          const formattedData: any[] = [];
-          worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-            if (rowNumber === 1) return;
-
-            const rowValues = row.values as any[];
-            const rowData: any = {};
-            headers.forEach((header: string, index: number) => {
-              const rawValue = rowValues[index + 1];
-              rowData[header] = renderCell(rawValue).trim();
-            });
-
-            if (
-              rowData.nom_prov?.toLowerCase().startsWith("ej") ||
-              rowData.nom_prov?.toLowerCase().includes("ejemplo")
-            ) {
-              return;
-            }
-
-            rowData.img_prov = DEFAULT_IMAGE;
-            formattedData.push(rowData);
+        const data: any[] = [];
+        worksheet.eachRow({ includeEmpty: false }, (row, rowNum) => {
+          if (rowNum === 1) return;
+          const rowValues = row.values as any[];
+          const rowData: any = {};
+          headers.forEach((header: string, idx: number) => {
+            const val = rowValues[idx + 1];
+            rowData[header] =
+              typeof val === "object" && val?.text
+                ? val.text
+                : String(val ?? "");
           });
 
-          if (!validateRows(formattedData)) {
-            setPreviewData([]);
-            ToastError({
-              message: "El archivo contiene celdas vacías requeridas.",
-            });
+          if (
+            rowData.nom_prov?.toLowerCase().startsWith("ej") ||
+            rowData.nom_prov?.toLowerCase().includes("ejemplo")
+          )
             return;
-          }
 
-          setPreviewData(formattedData);
-        } catch (error) {
-          ToastError({ message: "Error al leer el archivo XLSX" });
-        }
-      };
-      reader.readAsArrayBuffer(selectedFile);
-    };
+          rowData.img_prov = DEFAULT_IMAGE;
+          data.push(rowData);
+        });
 
-    if (selectedFile.name.endsWith(".csv")) {
-      parseCSV();
-    } else if (selectedFile.name.endsWith(".xlsx")) {
-      parseXLSX();
-    } else {
-      ToastError({ message: "Formato de archivo no soportado." });
-    }
-  };
+        if (!validateRows(data))
+          return ToastError({ message: "Campos requeridos vacíos." });
 
-  const handleDownloadTemplate = async () => {
-    try {
-      const response = await fetch(
-        "http://localhost:5000/proveedores/plantilla",
-        {
-          method: "GET",
-        },
-      );
-      if (!response.ok) {
-        ToastError({ message: "No se pudo descargar la plantilla." });
-        return;
+        setPreviewData(data);
+      } catch {
+        ToastError({ message: "Error al procesar XLSX." });
       }
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "plantilla-proveedores.xlsx";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      ToastError({ message: "Error al descargar la plantilla." });
+    } else {
+      ToastError({ message: "Solo se permiten archivos CSV o XLSX." });
     }
   };
 
   const handleUpload = async () => {
-    if (previewData.length === 0) {
-      ToastError({ message: "No hay datos para cargar." });
-      return;
-    }
+    if (previewData.length === 0)
+      return ToastError({ message: "No hay datos para cargar." });
 
     setLoading(true);
     try {
@@ -223,13 +153,13 @@ export function BulkUploadProveedoresDialog({
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Error en la carga");
 
-      ToastSuccess({
-        message: `Se han cargado ${data.proveedores.length} proveedores.`,
-      });
       onSuccess(data.proveedores);
+      ToastSuccess({
+        message: `Se cargaron ${data.proveedores.length} proveedores.`,
+      });
       onClose();
-    } catch (error: any) {
-      ToastError({ message: `Error al cargar proveedores: ${error.message}` });
+    } catch (err: any) {
+      ToastError({ message: err.message || "Error al cargar proveedores." });
     } finally {
       setLoading(false);
     }
@@ -237,70 +167,53 @@ export function BulkUploadProveedoresDialog({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="dark:border dark:border-border dark:bg-[#09090b] sm:max-w-3xl">
+      <DialogContent className="border-border sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Carga Masiva de Proveedores</DialogTitle>
         </DialogHeader>
+
         <div className="space-y-4">
-          <div className="rounded bg-gray-100 p-4 dark:border-none dark:bg-[#1E1E1E] dark:text-white">
-            <h2 className="mb-2 font-mono dark:text-gray-100">
-              Pasos para la carga masiva:
-            </h2>
-            <ol className="list-inside list-decimal text-sm text-gray-700 dark:text-white">
+          <div className="rounded bg-gray-100 p-4 dark:bg-[#1E1E1E]">
+            <h2 className="mb-2">Pasos:</h2>
+            <ol className="list-inside list-decimal text-sm">
+              <li>Descargar plantilla (Excel).</li>
               <li>
-                Descarga y llena la plantilla con los datos de los proveedores.
+                Completar: nom_prov, email_prov, cont_prov, tel_prov, ruc_prov,
+                direc_prov.
               </li>
-              <li>
-                Campos requeridos:{" "}
-                <strong className="dark:text-primary">
-                  nom_prov, email_prov, cont_prov, tel_prov, ruc_prov,
-                  direc_prov
-                </strong>
-              </li>
-              <li>
-                Selecciona o arrastra el archivo .CSV o .XLSX a continuación.
-              </li>
+              <li>Seleccionar archivo o arrastrarlo.</li>
+              <li>Verificar datos.</li>
+              <li>Guardar Proveedores.</li>
             </ol>
             <Button
               className="mt-3 flex items-center gap-2"
-              onClick={handleDownloadTemplate}
+              onClick={() =>
+                window.open(
+                  "http://localhost:5000/proveedores/plantilla",
+                  "_blank",
+                )
+              }
             >
               <Download className="h-4 w-4" /> Descargar plantilla
             </Button>
           </div>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            style={{ display: "none" }}
-            accept=".csv, .xlsx"
+
+          {/* ✅ Nuevo Dropzone universal */}
+          <DropzoneFile
+            onFileSelect={handleFileSelect}
+            accept=".csv,.xlsx"
+            text="Arrastra o haz clic para cargar CSV/XLSX"
           />
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            className="cursor-pointer rounded border-2 border-dashed p-6 text-center dark:border-border dark:text-white"
-          >
-            <p className="text-gray-500">
-              Haz clic o arrastra el archivo CSV/XLSX aquí
-            </p>
-            {file && (
-              <p className="mt-2 text-sm text-gray-700 dark:text-white">
-                Archivo: {file.name}
-              </p>
-            )}
-          </div>
 
           {previewData.length > 0 && (
-            <div className="max-h-[300px] max-w-[680px] overflow-auto border border-border">
-              <table className="min-w-full border-collapse">
-                <thead className="bg-muted">
+            <div className="max-h-[300px] overflow-auto border">
+              <table className="min-w-full text-sm">
+                <thead>
                   <tr>
                     {Object.keys(previewData[0])
-                      .filter((header) => header.toLowerCase() !== "img_prov")
-                      .map((header, i) => (
-                        <th
-                          key={i}
-                          className="border border-border px-2 py-1 text-xs font-semibold uppercase"
-                        >
+                      .filter((h) => h !== "img_prov")
+                      .map((header) => (
+                        <th key={header} className="border px-2 py-1">
                           {header}
                         </th>
                       ))}
@@ -308,15 +221,12 @@ export function BulkUploadProveedoresDialog({
                 </thead>
                 <tbody>
                   {previewData.map((row, idx) => (
-                    <tr key={idx} className="border border-border text-sm">
+                    <tr key={idx}>
                       {Object.keys(row)
-                        .filter((key) => key.toLowerCase() !== "img_prov")
-                        .map((key, i) => (
-                          <td
-                            key={i}
-                            className="border border-border px-2 py-1"
-                          >
-                            {renderCell(row[key])}
+                        .filter((key) => key !== "img_prov")
+                        .map((key) => (
+                          <td key={key} className="border px-2 py-1">
+                            {row[key]}
                           </td>
                         ))}
                     </tr>
@@ -326,7 +236,8 @@ export function BulkUploadProveedoresDialog({
             </div>
           )}
         </div>
-        <DialogFooter className="mt-4">
+
+        <DialogFooter>
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>

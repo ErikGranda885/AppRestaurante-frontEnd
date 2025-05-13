@@ -308,12 +308,12 @@ export default function Page() {
                 className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
               />
             </div>
-            <Button
+            {/* <Button
               className="border-border text-[12px] font-semibold"
               variant="secondary"
             >
               <Upload className="h-4 w-4" /> Importar
-            </Button>
+            </Button> */}
             <Button
               className="border-border text-[12px] font-semibold"
               variant="secondary"
@@ -458,6 +458,7 @@ export default function Page() {
                 localStorage.setItem("cierreSeleccionado", JSON.stringify(row));
                 router.push(`/cierre-diario/${row.id_cier}`);
               }}
+              enableRowPointer={true}
             />
           ) : (
             <div className="mt-10 flex h-10 items-center justify-center rounded-md border border-dashed border-gray-300 text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">

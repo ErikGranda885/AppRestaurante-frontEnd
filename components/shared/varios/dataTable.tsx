@@ -33,9 +33,15 @@ export interface DataTableProps<T> {
   data: T[];
   columns: ColumnDef<T, any>[];
   onRowClick?: (row: T) => void;
+  enableRowPointer?: boolean;
 }
 
-export function DataTable<T>({ data, columns, onRowClick }: DataTableProps<T>) {
+export function DataTable<T>({
+  data,
+  columns,
+  onRowClick,
+  enableRowPointer,
+}: DataTableProps<T>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -116,7 +122,9 @@ export function DataTable<T>({ data, columns, onRowClick }: DataTableProps<T>) {
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="cursor-pointer border border-secondary "
+                  className={`border border-secondary ${
+                    onRowClick && enableRowPointer ? "cursor-pointer" : ""
+                  }`}
                   onClick={() => onRowClick && onRowClick(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (
