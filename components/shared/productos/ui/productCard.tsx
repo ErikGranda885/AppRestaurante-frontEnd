@@ -22,6 +22,7 @@ import { Card } from "@/components/ui/card";
 import { getDaysUntilExpiration } from "@/utils/dates";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { safePrice } from "@/utils/format";
+import { DEFAULT_PRODUCT_IMAGE_URL } from "@/lib/constants";
 
 // Función de mapeo para adaptar cate_prod a ICategory
 export const mapCategory = (cate: any): ICategory => {
@@ -182,7 +183,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       <div className="relative z-10 flex w-full">
         <div className="relative mr-3 h-20 w-16 flex-shrink-0 overflow-hidden rounded-md">
           <Image
-            src={product.img_prod}
+            src={product.img_prod || DEFAULT_PRODUCT_IMAGE_URL}
             alt={product.nom_prod}
             fill
             className="object-cover"

@@ -15,6 +15,7 @@ import { ToastError } from "../../toast/toastError";
 import { CampoSelectUnidad } from "../ui/campoSelectUnidad";
 import { CampoSelectTipo } from "../ui/campoTipo";
 import { eliminarImagen } from "@/firebase/eliminarImage";
+import { DEFAULT_PRODUCT_IMAGE_URL } from "@/lib/constants";
 
 const initialProductNameRef = { current: "" };
 
@@ -89,12 +90,11 @@ export function EditProductForm({
     },
   });
 
-  // Obtiene el valor actual de "tipo_prod" y lo convierte a minúsculas
   const tipoProducto = form.watch("tipo_prod")?.toLowerCase() || "";
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>(
-    initialData.img_prod || "/imagenes/producto_defecto.webp",
+    initialData.img_prod || DEFAULT_PRODUCT_IMAGE_URL,
   );
 
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -118,11 +118,9 @@ export function EditProductForm({
   };
 
   const onSubmit = async (values: EditProductFormValues) => {
-    let imageUrl = imagePreview || "/imagenes/producto_defecto.webp";
-
+    let imageUrl = DEFAULT_PRODUCT_IMAGE_URL;
     try {
       if (imageFile) {
-        // Validar si la imagen anterior es una URL de Firebase
         const esImagenFirebase =
           initialData.img_prod &&
           initialData.img_prod.includes("firebasestorage.googleapis.com");
@@ -136,6 +134,8 @@ export function EditProductForm({
           "productos",
           `producto_${values.nombre.replace(/\s+/g, "_").toLowerCase()}`,
         );
+      } else if (imagePreview) {
+        imageUrl = imagePreview;
       }
 
       const payload = {
@@ -177,7 +177,6 @@ export function EditProductForm({
         onSubmit={form.handleSubmit(onSubmit)}
         className="grid grid-cols-2 gap-4"
       >
-        {/* Columna izquierda: Campos del formulario */}
         <div className="col-span-1 flex flex-col gap-4 pr-3">
           <div className="grid grid-cols-1 gap-4">
             <CampoTexto
@@ -186,15 +185,12 @@ export function EditProductForm({
               label="Nombre del Producto"
               placeholder="Nombre del producto"
             />
-
             <CampoSelectTipo
               control={form.control}
               name="tipo_prod"
               label="Tipo de Producto"
               placeholder="Seleccione el tipo de producto"
             />
-
-            {/* Se muestra el campo Categoría solo si el valor actual de tipo_prod no es "insumo" */}
             {tipoProducto !== "insumo" && (
               <CampoCategoria
                 control={form.control}
@@ -203,7 +199,6 @@ export function EditProductForm({
                 options={categoryOptions}
               />
             )}
-
             <CampoSelectUnidad
               control={form.control}
               name="undidad_prod"
@@ -212,11 +207,10 @@ export function EditProductForm({
             />
           </div>
         </div>
-        {/* Columna derecha: Zona de imagen */}
         <div className="col-span-1 flex h-full items-center justify-center">
           <ZonaImagen
             imageFile={imageFile}
-            imagePreview={imagePreview || "/imagenes/producto_defecto.webp"}
+            imagePreview={imagePreview || DEFAULT_PRODUCT_IMAGE_URL}
             setImageFile={setImageFile}
             setImagePreview={setImagePreview}
             imageInputRef={imageInputRef}
@@ -225,8 +219,6 @@ export function EditProductForm({
             handleDragOver={handleDragOver}
           />
         </div>
-
-        {/* Botón de envío */}
         <div className="col-span-2 mt-4 flex justify-end gap-4">
           <Button type="submit">Guardar Cambios</Button>
         </div>

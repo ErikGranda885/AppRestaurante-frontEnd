@@ -14,6 +14,7 @@ import { ToastError } from "../../toast/toastError";
 import { ToastSuccess } from "../../toast/toastSuccess";
 import { Download } from "lucide-react";
 import { DropzoneFile } from "../../varios/dropzoneFile";
+import { DEFAULT_PRODUCT_IMAGE_URL } from "@/lib/constants";
 
 interface BulkUploadProductDialogProps {
   categoryOptions: { value: string; label: string }[];
@@ -152,7 +153,7 @@ export function BulkUploadProductDialog({
 
     setLoading(true);
     try {
-      const defaultImageUrl = "/imagenes/producto_defecto.webp";
+      const defaultImageUrl = DEFAULT_PRODUCT_IMAGE_URL;
 
       const errores: string[] = [];
 
@@ -253,7 +254,6 @@ export function BulkUploadProductDialog({
             </Button>
           </div>
 
-          {/* ✅ DropzoneFile aquí */}
           <DropzoneFile
             onFileSelect={handleFileSelect}
             accept=".xlsx"
@@ -261,7 +261,6 @@ export function BulkUploadProductDialog({
                 seleccionarlo."
           />
 
-          {/* ✅ Preview */}
           {previewData.length > 0 && (
             <div className="mt-4 max-h-64 overflow-x-auto border">
               <table className="min-w-full text-sm">

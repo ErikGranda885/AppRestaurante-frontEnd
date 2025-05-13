@@ -15,6 +15,7 @@ import { ToastError } from "../../toast/toastError";
 import { CampoSelectUnidad } from "../ui/campoSelectUnidad";
 import { CampoSelectTipo } from "../ui/campoTipo";
 import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
+import { DEFAULT_PRODUCT_IMAGE_URL } from "@/lib/constants";
 
 export type Option = {
   value: string;
@@ -140,7 +141,7 @@ export function FormProducts({
         `producto_${data.nombre.replace(/\s+/g, "_").toLowerCase()}`, // nombre personalizado
       );
     } else {
-      imageUrl = "/imagenes/producto_defecto.webp";
+      imageUrl = DEFAULT_PRODUCT_IMAGE_URL;
     }
 
     const payload = {

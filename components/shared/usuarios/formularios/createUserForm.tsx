@@ -27,6 +27,7 @@ import { ToastError } from "../../toast/toastError";
 import { ToastSuccess } from "../../toast/toastSuccess";
 import { IRol } from "@/lib/types";
 import { uploadImage } from "@/firebase/subirImage";
+import { DEFAULT_USER_URL } from "@/lib/constants";
 
 // Esquema para el formulario principal de crear usuario
 const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ]+( [A-Za-zÁÉÍÓÚáéíóúÑñ]+)?$/;
@@ -120,8 +121,7 @@ export function CreateUserForm({
           `usuario_${values.usuario.replace(/\s+/g, "_").toLowerCase()}`,
         );
       } else {
-        imageUrl =
-          "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/usuarios%2Fuser-default.webp?alt=media&token=14f267c3-c208-4f2a-88cd-e828147b5f94";
+        imageUrl = DEFAULT_USER_URL;
       }
 
       const payload = {
@@ -342,9 +342,7 @@ export function CreateUserForm({
 
         {/* Botón de envío */}
         <div className="flex justify-end gap-2 pt-4 sm:col-span-2">
-          <Button type="submit" >
-            Crear Usuario
-          </Button>
+          <Button type="submit">Crear Usuario</Button>
         </div>
       </form>
 
@@ -422,9 +420,7 @@ export function CreateUserForm({
                   >
                     Cancelar
                   </Button>
-                  <Button type="submit" >
-                    Crear
-                  </Button>
+                  <Button type="submit">Crear</Button>
                 </div>
               </DialogFooter>
             </form>

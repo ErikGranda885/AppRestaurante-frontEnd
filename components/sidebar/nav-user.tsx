@@ -39,6 +39,7 @@ export function NavUser({
     localStorage.removeItem("totalEfectivo");
     localStorage.removeItem("user_id");
     localStorage.removeItem("usuarioActual");
+    localStorage.removeItem("empresa_actual");
 
     router.push("/login");
   };

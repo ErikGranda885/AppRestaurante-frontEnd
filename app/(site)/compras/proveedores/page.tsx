@@ -41,6 +41,7 @@ import { EditProveedorForm } from "@/components/shared/proveedores/formularios/e
 import { ToastError } from "@/components/shared/toast/toastError";
 import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
 import { BulkUploadProveedoresDialog } from "@/components/shared/proveedores/formularios/cargaProveedores";
+import { DEFAULT_PROVEEDOR_IMAGE_URL } from "@/lib/constants";
 
 export default function Dashboard() {
   useProtectedRoute();
@@ -127,10 +128,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-3">
           <div className="relative h-8 w-8 overflow-hidden rounded-md border border-border bg-white p-[2px]">
             <Image
-              src={
-                row.original.img_prov ||
-                "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/proveedores%2Fproveedor-defecto.png?alt=media&token=91f55bd4-862b-488b-ae86-29c10199a7c8"
-              }
+              src={row.original.img_prov || DEFAULT_PROVEEDOR_IMAGE_URL}
               alt="proveedor"
               fill
               className="object-cover"

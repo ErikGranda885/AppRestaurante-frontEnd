@@ -15,6 +15,7 @@ import { ToastError } from "../../toast/toastError";
 import { ToastSuccess } from "../../toast/toastSuccess";
 import { IRol } from "@/lib/types";
 import { DropzoneFile } from "../../varios/dropzoneFile";
+import { DEFAULT_USER_URL } from "@/lib/constants";
 
 interface BulkUploadUsersDialogProps {
   roleOptions: IRol[];
@@ -183,8 +184,7 @@ export function BulkUploadUsersDialog({
 
     setLoading(true);
     try {
-      const defaultImageUrl =
-        "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/usuarios%2Fuser-default.webp?alt=media&token=14f267c3-c208-4f2a-88cd-e828147b5f94";
+      const defaultImageUrl = DEFAULT_USER_URL;
       const roles = mappedRoleOptionsMemo();
       const processed = previewData.map((row) => {
         let rol = row["rol_usu"];

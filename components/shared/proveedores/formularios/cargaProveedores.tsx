@@ -14,6 +14,7 @@ import { Download } from "lucide-react";
 import { ToastError } from "../../toast/toastError";
 import { ToastSuccess } from "../../toast/toastSuccess";
 import { DropzoneFile } from "../../varios/dropzoneFile";
+import { DEFAULT_PROVEEDOR_IMAGE_URL } from "@/lib/constants"; // ✅ importación nueva
 
 interface BulkUploadProveedoresDialogProps {
   onSuccess: (newProveedores: any[]) => void;
@@ -28,9 +29,6 @@ const requiredColumns = [
   "ruc_prov",
   "direc_prov",
 ];
-
-const DEFAULT_IMAGE =
-  "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/proveedores%2Fproveedor-defecto.png?alt=media&token=f24083c3-a545-4c7b-8ea9-fb8b1fb684cb";
 
 export function BulkUploadProveedoresDialog({
   onSuccess,
@@ -79,7 +77,7 @@ export function BulkUploadProveedoresDialog({
 
           const data = results.data.map((row) => ({
             ...sanitizeRow(row),
-            img_prov: DEFAULT_IMAGE,
+            img_prov: DEFAULT_PROVEEDOR_IMAGE_URL, // ✅ cambio aquí
           }));
           setPreviewData(data);
         },
@@ -122,7 +120,7 @@ export function BulkUploadProveedoresDialog({
           )
             return;
 
-          rowData.img_prov = DEFAULT_IMAGE;
+          rowData.img_prov = DEFAULT_PROVEEDOR_IMAGE_URL; // ✅ cambio aquí
           data.push(rowData);
         });
 
@@ -198,7 +196,6 @@ export function BulkUploadProveedoresDialog({
             </Button>
           </div>
 
-          {/* ✅ Nuevo Dropzone universal */}
           <DropzoneFile
             onFileSelect={handleFileSelect}
             accept=".csv,.xlsx"
@@ -206,8 +203,8 @@ export function BulkUploadProveedoresDialog({
           />
 
           {previewData.length > 0 && (
-            <div className="max-h-[300px] overflow-auto border">
-              <table className="min-w-full text-sm">
+            <div className="max-h-[300px] w-[685px] overflow-auto border">
+              <table className=" text-sm">
                 <thead>
                   <tr>
                     {Object.keys(previewData[0])

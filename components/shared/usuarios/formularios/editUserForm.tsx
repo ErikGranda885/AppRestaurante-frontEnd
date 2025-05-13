@@ -21,6 +21,7 @@ import { ToastSuccess } from "../../toast/toastSuccess";
 import { ToastError } from "../../toast/toastError";
 import { uploadImage } from "@/firebase/subirImage";
 import { eliminarImagen } from "@/firebase/eliminarImage";
+import { DEFAULT_USER_URL } from "@/lib/constants";
 
 const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ]+( [A-Za-zÁÉÍÓÚáéíóúÑñ]+)?$/;
 
@@ -99,8 +100,7 @@ export function EditUserForm({
 
   const onSubmit = async (values: EditUserFormValues) => {
     let imageUrl = imagenPreview || initialData.img_usu;
-    const defaultImage =
-      "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/usuarios%2Fuser-default.webp?alt=media&token=14f267c3-c208-4f2a-88cd-e828147b5f94";
+    const defaultImage = DEFAULT_USER_URL;
 
     try {
       if (imagenArchivo) {
@@ -177,11 +177,7 @@ export function EditUserForm({
             className="relative h-24 w-24 cursor-pointer rounded-full border-2 border-dashed border-gray-300 hover:border-primary dark:border-gray-600"
           >
             <img
-              src={
-                imagenPreview ||
-                initialData.img_usu ||
-                "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/usuarios%2Fuser-default.webp?alt=media&token=14f267c3-c208-4f2a-88cd-e828147b5f94"
-              }
+              src={imagenPreview || initialData.img_usu || DEFAULT_USER_URL}
               alt="Foto usuario"
               className="h-full w-full rounded-full object-cover"
             />

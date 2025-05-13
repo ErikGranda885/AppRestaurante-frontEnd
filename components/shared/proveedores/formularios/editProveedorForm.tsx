@@ -19,8 +19,8 @@ import { uploadImage } from "@/firebase/subirImage";
 import { eliminarImagen } from "@/firebase/eliminarImage";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { ToastError } from "@/components/shared/toast/toastError";
+import { DEFAULT_PROVEEDOR_IMAGE_URL } from "@/lib/constants"; // ✅ nuevo import
 
-// Referencia para mantener el RUC original
 const initialRucRef = { current: "" };
 
 const editProveedorSchema = z.object({
@@ -71,16 +71,15 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
   const seleccionarImagen = () => imagenInputRef.current?.click();
 
   const onSubmit = async (values: EditProveedorFormValues) => {
-    let imageUrl = imagenPreview || initialData.img_prov;
-    const defaultImage =
-      "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/proveedores%2Fproveedor-default.jpg?alt=media";
+    let imageUrl =
+      imagenPreview || initialData.img_prov || DEFAULT_PROVEEDOR_IMAGE_URL;
 
     try {
-      // Si cambia la imagen, eliminar la anterior (excepto si es default)
       if (imagenArchivo) {
+        // Eliminar anterior si no es la default
         if (
           initialData.img_prov &&
-          !initialData.img_prov.includes("proveedor-default")
+          !initialData.img_prov.includes("proveedor_default")
         ) {
           await eliminarImagen(initialData.img_prov);
         }
@@ -91,7 +90,7 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
           `proveedor_${values.nombre.replace(/\s+/g, "_").toLowerCase()}`,
         );
       } else if (!imagenPreview) {
-        imageUrl = defaultImage;
+        imageUrl = DEFAULT_PROVEEDOR_IMAGE_URL;
       }
 
       const payload = {
@@ -129,7 +128,6 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
         onSubmit={form.handleSubmit(onSubmit)}
         className="grid grid-cols-2 gap-6 sm:gap-x-8"
       >
-        {/* Imagen con overlay */}
         <div className="col-span-2 row-start-1 flex justify-center">
           <div
             onClick={seleccionarImagen}
@@ -139,7 +137,7 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
               src={
                 imagenPreview ||
                 initialData.img_prov ||
-                "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/proveedores%2Fproveedor-default.jpg?alt=media"
+                DEFAULT_PROVEEDOR_IMAGE_URL // ✅ cambio aquí
               }
               alt="Foto proveedor"
               className="h-full w-full rounded-full object-cover"
@@ -163,7 +161,6 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
           </div>
         </div>
 
-        {/* Campos */}
         <FormField
           control={form.control}
           name="nombre"
@@ -248,8 +245,7 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
           )}
         />
 
-        {/* Botón de guardar */}
-        <div className="flex pt-4  col-start-2 justify-end">
+        <div className="col-start-2 flex justify-end pt-4">
           <Button type="submit">Guardar Cambios</Button>
         </div>
       </form>

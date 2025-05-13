@@ -26,6 +26,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { NavAdmin } from "./nav-admin";
+import { DEFAULT_EMPRESA_IMAGE_URL } from "@/lib/constants";
 
 export const data = {
   user: {
@@ -95,8 +96,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [userData, setUserData] = useState(data.user);
   const [empresaData, setEmpresaData] = useState({
     nombre: "No registrado",
-    logo: "/imagenes/empresaDefecto.webp",
+    logo: DEFAULT_EMPRESA_IMAGE_URL,
   });
+  const [isMounted, setIsMounted] = useState(false);
 
   const updateUserData = () => {
     const name = localStorage.getItem("user_name") || "";
@@ -104,14 +106,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const avatar = localStorage.getItem("user_avatar") || "";
     setUserData({ name, email, avatar });
 
-    // ✅ Obtener datos de empresa
     const empresaLS = localStorage.getItem("empresa_actual");
     if (empresaLS && empresaLS !== "null") {
       try {
         const empresa = JSON.parse(empresaLS);
         setEmpresaData({
           nombre: empresa.nom_emp || "Mi Empresa",
-          logo: empresa.logo_emp || "/imagenes/logo.png",
+          logo:
+            empresa.logo_emp && empresa.logo_emp !== "null"
+              ? empresa.logo_emp
+              : DEFAULT_EMPRESA_IMAGE_URL,
         });
       } catch (error) {
         console.error("Error parsing empresa_actual:", error);
@@ -121,8 +125,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   useEffect(() => {
     updateUserData();
+    setIsMounted(true);
 
-    // ✅ Escuchar cambios de usuario y empresa
     window.addEventListener("userNameUpdated", updateUserData);
     window.addEventListener("empresaUpdated", updateUserData);
 
@@ -131,6 +135,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       window.removeEventListener("empresaUpdated", updateUserData);
     };
   }, []);
+
+  if (!isMounted) return null;
 
   return (
     <Sidebar

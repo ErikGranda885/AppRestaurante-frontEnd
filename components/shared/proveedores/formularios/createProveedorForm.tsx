@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { uploadImage } from "@/firebase/subirImage";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { ToastError } from "@/components/shared/toast/toastError";
+import { DEFAULT_PROVEEDOR_IMAGE_URL } from "@/lib/constants"; // ✅ IMPORTANTE
 
 const proveedorSchema = z.object({
   nombre: z.string().min(2, "El nombre es obligatorio"),
@@ -63,8 +64,7 @@ export function CreateProveedorForm({
           `proveedor_${values.nombre.replace(/\s+/g, "_").toLowerCase()}`,
         );
       } else {
-        imageUrl =
-          "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/proveedores%2Fproveedor-defecto.png?alt=media&token=91f55bd4-862b-488b-ae86-29c10199a7c8";
+        imageUrl = DEFAULT_PROVEEDOR_IMAGE_URL; // ✅ USO DE CONSTANTE
       }
 
       const payload = {
@@ -110,69 +110,49 @@ export function CreateProveedorForm({
             name="nombre"
             render={({ field, fieldState: { error } }) => (
               <FormItem>
-                <FormLabel className="text-black dark:text-white">
-                  Nombre del proveedor
-                </FormLabel>
+                <FormLabel>Nombre del proveedor</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Ej. Nuva Supermercados"
                     {...field}
-                    className={`pr-10 dark:bg-[#09090b] ${
-                      error
-                        ? "border-2 border-[var(--error-per)]"
-                        : "dark:border-default-700 dark:border"
-                    }`}
+                    className={`pr-10 ${error ? "border-2 border-[var(--error-per)]" : ""}`}
                   />
                 </FormControl>
-                <FormMessage className="error-text" />
+                <FormMessage />
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="contacto"
             render={({ field, fieldState: { error } }) => (
               <FormItem>
-                <FormLabel className="text-black dark:text-white">
-                  Nombre del contacto
-                </FormLabel>
+                <FormLabel>Nombre del contacto</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Ej. María Vargas"
                     {...field}
-                    className={`pr-10 dark:bg-[#09090b] ${
-                      error
-                        ? "border-2 border-[var(--error-per)]"
-                        : "dark:border-default-700 dark:border"
-                    }`}
+                    className={`pr-10 ${error ? "border-2 border-[var(--error-per)]" : ""}`}
                   />
                 </FormControl>
-                <FormMessage className="error-text" />
+                <FormMessage />
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="telefono"
             render={({ field, fieldState: { error } }) => (
               <FormItem>
-                <FormLabel className="text-black dark:text-white">
-                  Teléfono
-                </FormLabel>
+                <FormLabel>Teléfono</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Ej. 0999999999"
                     {...field}
-                    className={`pr-10 dark:bg-[#09090b] ${
-                      error
-                        ? "border-2 border-[var(--error-per)]"
-                        : "dark:border-default-700 dark:border"
-                    }`}
+                    className={`pr-10 ${error ? "border-2 border-[var(--error-per)]" : ""}`}
                   />
                 </FormControl>
-                <FormMessage className="error-text" />
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -185,80 +165,58 @@ export function CreateProveedorForm({
             name="direccion"
             render={({ field, fieldState: { error } }) => (
               <FormItem>
-                <FormLabel className="text-black dark:text-white">
-                  Dirección
-                </FormLabel>
+                <FormLabel>Dirección</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Ej. Av. Amazonas y Río Coca"
                     {...field}
-                    className={`pr-10 dark:bg-[#09090b] ${
-                      error
-                        ? "border-2 border-[var(--error-per)]"
-                        : "dark:border-default-700 dark:border"
-                    }`}
+                    className={`pr-10 ${error ? "border-2 border-[var(--error-per)]" : ""}`}
                   />
                 </FormControl>
-                <FormMessage className="error-text" />
+                <FormMessage />
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="email"
             render={({ field, fieldState: { error } }) => (
               <FormItem>
-                <FormLabel className="text-black dark:text-white">
-                  Correo electrónico
-                </FormLabel>
+                <FormLabel>Correo electrónico</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="proveedor@ejemplo.com"
                     {...field}
-                    className={`pr-10 dark:bg-[#09090b] ${
-                      error
-                        ? "border-2 border-[var(--error-per)]"
-                        : "dark:border-default-700 dark:border"
-                    }`}
+                    className={`pr-10 ${error ? "border-2 border-[var(--error-per)]" : ""}`}
                   />
                 </FormControl>
-                <FormMessage className="error-text" />
+                <FormMessage />
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="ruc"
             render={({ field, fieldState: { error } }) => (
               <FormItem>
-                <FormLabel className="text-black dark:text-white">
-                  RUC
-                </FormLabel>
+                <FormLabel>RUC</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Ej. 1790012345001"
                     {...field}
-                    className={`pr-10 dark:bg-[#09090b] ${
-                      error
-                        ? "border-2 border-[var(--error-per)]"
-                        : "dark:border-default-700 dark:border"
-                    }`}
+                    className={`pr-10 ${error ? "border-2 border-[var(--error-per)]" : ""}`}
                   />
                 </FormControl>
-                <FormMessage className="error-text" />
+                <FormMessage />
               </FormItem>
             )}
           />
         </div>
 
-        {/* Imagen centrada en una fila completa */}
+        {/* Imagen */}
         <div className="col-span-full">
           <FormItem>
-            <FormLabel className="text-black dark:text-white">
-              Imagen del proveedor
-            </FormLabel>
+            <FormLabel>Imagen del proveedor</FormLabel>
             <FormControl>
               <div className="flex items-center gap-4">
                 <Input
@@ -275,24 +233,19 @@ export function CreateProveedorForm({
                 />
               </div>
             </FormControl>
-            <FormMessage className="error-text" />
           </FormItem>
-        </div>
-        <div>
           {imagenPreview && (
             <img
               src={imagenPreview}
               alt="Previsualización"
-              className="h-20 w-20 rounded-full border object-cover"
+              className="mt-2 h-20 w-20 rounded-full border object-cover"
             />
           )}
         </div>
 
-        {/* Botón alineado al final */}
+        {/* Botón */}
         <div className="col-span-full flex justify-end pt-2">
-          <Button type="submit" >
-            Crear Proveedor
-          </Button>
+          <Button type="submit">Crear Proveedor</Button>
         </div>
       </form>
     </Form>

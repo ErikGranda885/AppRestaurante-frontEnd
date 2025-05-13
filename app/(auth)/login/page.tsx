@@ -3,44 +3,71 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { LoginForm } from "@/components/auth/login-form";
+import { DEFAULT_EMPRESA_IMAGE_URL } from "@/lib/constants";
+import { SERVICIOS_EMPRESAS } from "@/services/empresas.service";
 
 export default function LoginPage() {
-  const [logo, setLogo] = useState("/imagenes/empresaDefecto.webp");
+  const [logo, setLogo] = useState(DEFAULT_EMPRESA_IMAGE_URL);
 
   useEffect(() => {
-    const empresaLS = localStorage.getItem("empresa_actual");
-    if (empresaLS && empresaLS !== "null") {
-      try {
-        const empresa = JSON.parse(empresaLS);
-        if (empresa.logo_emp) {
+    const cargarLogoEmpresa = async () => {
+      const empresaLS = localStorage.getItem("empresa_actual");
+      if (empresaLS && empresaLS !== "null") {
+        try {
+          const empresa = JSON.parse(empresaLS);
           setLogo(
-            empresa.logo_emp.startsWith("http")
+            empresa.logo_emp && empresa.logo_emp !== "null"
               ? empresa.logo_emp
-              : "/imagenes/empresaDefecto.webp",
+              : DEFAULT_EMPRESA_IMAGE_URL,
           );
+          return;
+        } catch (error) {
+          console.error("Error al parsear empresa_actual:", error);
         }
-      } catch (error) {
-        console.error("Error al obtener empresa_actual:", error);
       }
-    }
+
+      // 👇 Si no existe en localStorage → obtener de la BD
+      try {
+        const res = await fetch(SERVICIOS_EMPRESAS.obtener);
+        if (!res.ok) throw new Error("Error al obtener empresa");
+        const data = await res.json();
+
+        // 👇 Ajusta según cómo responde tu API:
+        // Si devuelve un array:
+        const empresa = data.empresa;
+
+        const logoBD =
+          empresa?.logo_emp && empresa.logo_emp !== "null"
+            ? empresa.logo_emp
+            : DEFAULT_EMPRESA_IMAGE_URL;
+
+        setLogo(logoBD);
+
+        // ✅ Guardar en localStorage para la próxima vez
+        localStorage.setItem("empresa_actual", JSON.stringify(empresa));
+      } catch (error) {
+        setLogo(DEFAULT_EMPRESA_IMAGE_URL);
+      }
+    };
+
+    cargarLogoEmpresa();
   }, []);
 
   return (
     <div className="flex h-screen w-full">
       {/* Panel Izquierdo: Logo y formulario */}
       <div className="flex max-w-full flex-1 flex-col border border-border md:max-w-[500px]">
-        {/* Formulario centrado */}
         <div className="mt-[5%] flex flex-1 justify-center">
           <div className="w-full max-w-xs">
-            {/* ✅ Logo arriba */}
             <div className="flex justify-center p-4 md:p-6">
               <div className="relative size-28">
                 <Image
+                  key={logo}
                   src={logo}
                   alt="Logo Empresa"
                   fill
                   className="rounded-md object-contain"
-                  onError={() => setLogo("/imagenes/logo.png")}
+                  onError={() => setLogo(DEFAULT_EMPRESA_IMAGE_URL)}
                 />
               </div>
             </div>

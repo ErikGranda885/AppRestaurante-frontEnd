@@ -50,6 +50,7 @@ import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
 import { BulkUploadUsersDialog } from "@/components/shared/usuarios/formularios/cargaUsers";
 import Image from "next/image";
 import { parse } from "date-fns";
+import { DEFAULT_USER_URL } from "@/lib/constants";
 // Importa el componente de diálogo generalizado para confirmar acciones
 
 // Tipo de dato para los usuarios
@@ -272,10 +273,7 @@ export default function PaginaUsuarios() {
           <div className="flex items-center gap-3">
             <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-md border border-border bg-white">
               <Image
-                src={
-                  imagen ||
-                  "https://firebasestorage.googleapis.com/v0/b/dicolaic-app.appspot.com/o/usuarios%2Fuser-default.jpg?alt=media&token=5e06ef7b-f1e0-41cb-9f39-4f1a1ff1e999"
-                }
+                src={imagen || DEFAULT_USER_URL}
                 alt="usuario"
                 fill
                 className="object-cover"
@@ -298,8 +296,9 @@ export default function PaginaUsuarios() {
         </Button>
       ),
       cell: ({ row }) => {
-        const correo = row.getValue("correo") as string;
-        const [usuario, dominio] = correo.split("@");
+        const correo = row.getValue("correo") as string | undefined;
+        const [usuario, dominio] =
+          correo && correo.includes("@") ? correo.split("@") : ["", ""];
         const correoProtegido =
           usuario.length > 1
             ? `${usuario[0]}*****@${dominio}`
@@ -418,9 +417,10 @@ export default function PaginaUsuarios() {
       usuario.estado?.toLowerCase() === estadoSeleccionado.toLowerCase();
     const busqueda = consultaBusqueda.toLowerCase();
     const cumpleBusqueda =
-      usuario.usuario.toLowerCase().includes(busqueda) ||
-      usuario.correo.toLowerCase().includes(busqueda) ||
-      usuario.rolNombre.toLowerCase().includes(busqueda);
+      (usuario.usuario ?? "").toLowerCase().includes(busqueda) ||
+      (usuario.correo ?? "").toLowerCase().includes(busqueda) ||
+      (usuario.rolNombre ?? "").toLowerCase().includes(busqueda);
+
     return cumpleEstado && cumpleBusqueda;
   });
 
