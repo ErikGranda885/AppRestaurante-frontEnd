@@ -8,8 +8,11 @@ import { SERVICIOS_EMPRESAS } from "@/services/empresas.service";
 
 export default function LoginPage() {
   const [logo, setLogo] = useState(DEFAULT_EMPRESA_IMAGE_URL);
+  const [isMounted, setIsMounted] = useState(false); // ✅ NUEVO
 
   useEffect(() => {
+    setIsMounted(true); // ✅ para esperar al cliente
+
     const cargarLogoEmpresa = async () => {
       const empresaLS = localStorage.getItem("empresa_actual");
       if (empresaLS && empresaLS !== "null") {
@@ -32,26 +35,25 @@ export default function LoginPage() {
         if (!res.ok) throw new Error("Error al obtener empresa");
         const data = await res.json();
 
-        // 👇 Ajusta según cómo responde tu API:
-        // Si devuelve un array:
-        const empresa = data.empresa;
-
+        const empresa = data.empresa; // ✅ tu estructura
         const logoBD =
           empresa?.logo_emp && empresa.logo_emp !== "null"
             ? empresa.logo_emp
             : DEFAULT_EMPRESA_IMAGE_URL;
 
         setLogo(logoBD);
-
-        // ✅ Guardar en localStorage para la próxima vez
         localStorage.setItem("empresa_actual", JSON.stringify(empresa));
       } catch (error) {
         setLogo(DEFAULT_EMPRESA_IMAGE_URL);
       }
     };
 
-    cargarLogoEmpresa();
+    if (typeof window !== "undefined") {
+      cargarLogoEmpresa(); // ✅ solo se ejecuta en cliente
+    }
   }, []);
+
+  if (!isMounted) return null; // ✅ evita renderizar hasta montar
 
   return (
     <div className="flex h-screen w-full">

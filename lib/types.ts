@@ -53,6 +53,13 @@ export interface IProduct {
   fecha_vence_proxima?: string;
 }
 
+export interface IReceta {
+  id_rec: number;
+  nom_rec: string;
+  desc_rec: string;
+  prod_rec: IProduct;
+}
+
 export interface ICompra {
   id_comp: number;
   tot_comp: number;
@@ -73,6 +80,15 @@ export interface ICompra {
   num_tra_comprob_comp?: string;
   comprob_tran_comp?: string;
 }
+
+export interface IDetReceta {
+  id_det_rec: number;
+  recet_rec: IReceta;
+  prod_rec: IProduct;
+  cant_rec: number;
+  und_prod_rec: string;
+}
+
 
 export interface ICierreDiario {
   id_cier: number;

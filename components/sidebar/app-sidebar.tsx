@@ -5,6 +5,7 @@ import Image from "next/image";
 import {
   Box,
   CalendarCheck,
+  Factory,
   House,
   Receipt,
   Settings,
@@ -44,7 +45,6 @@ export const data = {
       items: [
         { title: "Nueva venta", url: "/ventas/nueva" },
         { title: "Historial de ventas", url: "/ventas/historial" },
-        { title: "Reportes", url: "/ventas/reportes" },
       ],
     },
     {
@@ -55,7 +55,20 @@ export const data = {
       items: [
         { title: "Gestión de categorias", url: "/productos/categorias" },
         { title: "Gestión de productos", url: "/productos/listado" },
-        { title: "Reportes", url: "/productos/reportes" },
+        { title: "Gestión de recetas", url: "/productos/recetas" },
+      ],
+    },
+    {
+      title: "Producción",
+      url: "/produccion",
+      icon: Factory,
+      submenu: true,
+      items: [
+        { title: "Nueva Transformación", url: "/produccion/nueva" },
+        {
+          title: "Historial de Transformaciones",
+          url: "/produccion/historial",
+        },
       ],
     },
     {
