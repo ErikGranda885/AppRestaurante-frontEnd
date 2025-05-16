@@ -58,6 +58,7 @@ export interface IReceta {
   nom_rec: string;
   desc_rec: string;
   prod_rec: IProduct;
+  ingredientes: IDetReceta[];
 }
 
 export interface ICompra {
@@ -89,6 +90,24 @@ export interface IDetReceta {
   und_prod_rec: string;
 }
 
+export interface IDetRecetaSinReceta {
+  id_det_rec: number;
+  prod_rec: IProduct;
+  cant_rec: number;
+  und_prod_rec: string;
+}
+
+export interface IRecetaForm {
+  nom_rec?: string;
+  desc_rec: string;
+  prod_rec: string; // id del producto final
+  pvp_rec: number;
+  ingredientes: {
+    prod_rec: string; // id del producto insumo
+    cant_rec: number;
+    und_prod_rec: string;
+  }[];
+}
 
 export interface ICierreDiario {
   id_cier: number;

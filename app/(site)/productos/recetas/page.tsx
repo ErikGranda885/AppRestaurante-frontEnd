@@ -14,6 +14,10 @@ import { GeneralDialog } from "@/components/shared/varios/dialogGen";
 import { useRecetas } from "@/hooks/recetas/useRecetas";
 import { useDetalleReceta } from "@/hooks/det_recetas/useDetalleReceta";
 import { FormCrearReceta } from "@/components/shared/recetas/formularios/createRecetaForm";
+import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
+import { mutate } from "swr";
+import { SERVICIOS_RECETAS } from "@/services/recetas.service";
+import { safePrice } from "@/utils/format";
 
 export default function RecetasPage() {
   useProtectedRoute();
@@ -57,11 +61,13 @@ export default function RecetasPage() {
             title="Crear Nueva Receta"
             description="Ingresa la información para crear una nueva receta."
             submitText="Crear Receta"
+            contentClassName="w-full max-w-[95vw] sm:max-w-5xl px-6"
           >
             <FormCrearReceta
               onSuccess={() => {
-                setAbrirCrear(false); // Cerrar el diálogo al guardar
-                // Aquí puedes recargar recetas si ya usas SWR o un hook con mutate()
+                setAbrirCrear(false);
+                ToastSuccess({ message: "Receta creada con éxito" });
+                mutate(SERVICIOS_RECETAS.listar);
               }}
             />
           </GeneralDialog>
@@ -121,12 +127,9 @@ export default function RecetasPage() {
                       </p>
                       <div className="mt-2 flex items-center gap-4 text-sm font-medium">
                         <span>
-                          $
-                          {receta.prod_rec?.prec_vent_prod?.toFixed(2) ??
-                            "0.00"}
+                          {safePrice(receta.prod_rec?.prec_vent_prod)}
                         </span>
-                        <span>{receta.prod_rec?.stock_prod ?? 0} g</span>
-                        <span>{receta.prod_rec?.prec_comp_prod ?? 0} kcal</span>
+                        <span>Tipo: {receta.prod_rec?.tip_prod ?? 0}</span>
                       </div>
                     </div>
                     <div>
@@ -173,13 +176,13 @@ export default function RecetasPage() {
                             {ingredientes.map((ing: any) => (
                               <div
                                 key={ing.id_det_rec}
-                                className="flex justify-start gap-2"
+                                className="flex items-center justify-start gap-2"
                               >
                                 <Image
                                   src={ing.prod_rec.img_prod || "/default.png"}
                                   alt={ing.prod_rec.nom_prod}
-                                  width={24}
-                                  height={24}
+                                  width={44}
+                                  height={44}
                                   className="rounded-full object-cover"
                                 />
                                 <span>
@@ -198,10 +201,8 @@ export default function RecetasPage() {
                       <div className="flex justify-between text-sm">
                         <span>Nombre: {selectedReceta.prod_rec.nom_prod}</span>
                         <span>
-                          Precio: $
-                          {selectedReceta.prod_rec?.prec_vent_prod != null
-                            ? selectedReceta.prod_rec.prec_vent_prod.toFixed(2)
-                            : "0.00"}
+                          Precio:{" "}
+                          {safePrice(selectedReceta.prod_rec?.prec_vent_prod)}
                         </span>
                       </div>
                     </div>

@@ -5,4 +5,6 @@ export const SERVICIOS_PRODUCTOS = {
     `http://localhost:5000/productos/inactivar/${id}`,
   activarProducto: (id: number) =>
     `http://localhost:5000/productos/activar/${id}`,
+  actualizarProducto: (id: number) =>
+    `http://localhost:5000/productos/${id}`,
 };
