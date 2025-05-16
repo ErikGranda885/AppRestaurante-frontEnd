@@ -64,7 +64,10 @@ export const data = {
       icon: Factory,
       submenu: true,
       items: [
-        { title: "Nueva Transformación", url: "/produccion/nueva" },
+        {
+          title: "Gestión de Equivalencias",
+          url: "/produccion/equivalencias",
+        },
         {
           title: "Historial de Transformaciones",
           url: "/produccion/historial",

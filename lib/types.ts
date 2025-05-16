@@ -17,6 +17,14 @@ export interface IProveedor {
   est_prov: string;
 }
 
+export interface IEquivalencia {
+  id_equiv: number;
+  prod_equiv: IProduct;
+  und_prod_equiv: string;
+  cant_equiv: number;
+  est_equiv: string;
+}
+
 export interface IDetalleProductoVenta {
   nombre: string;
   cantidad: number;
