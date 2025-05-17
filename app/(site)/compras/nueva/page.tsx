@@ -257,13 +257,6 @@ export default function NuevaCompraPage() {
           cant_dcom: item.cant_dcom,
           prec_uni_dcom: item.prec_uni_dcom,
           sub_tot_dcom: item.sub_tot_dcom,
-          fech_ven_prod_dcom: item.fech_ven_prod_dcom
-            ? format(new Date(item.fech_ven_prod_dcom), "yyyy-MM-dd")
-            : null,
-          lote_dcom: item.lote_dcom,
-          cant_usada_dcom: item.cant_usada_dcom,
-          cant_disponible_dcom: item.cant_disponible_dcom,
-          est_lote_dcom: item.est_lote_dcom,
         };
 
         try {
