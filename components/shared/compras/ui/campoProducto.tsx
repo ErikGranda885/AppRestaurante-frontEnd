@@ -43,6 +43,7 @@ export interface ProductoOption {
   nombre: string;
   cod_prod: number;
   img_prod: string;
+  tipo?:string
 }
 
 interface CampoProductoProps<T extends FieldValues> {

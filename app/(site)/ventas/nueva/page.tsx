@@ -181,11 +181,6 @@ export default function Page() {
       return;
     }
 
-    if (!ventasConfig.mostrar_stock_negativo && found.stock_prod <= 0) {
-      incrementLockRef.current = false;
-      return;
-    }
-
     setOrderItems((prev) => {
       const idx = prev.findIndex((i) => i.productId === productId);
       if (idx === -1) {
@@ -319,15 +314,6 @@ export default function Page() {
     if (loadingVentas) {
       ToastError({
         message: "Cargando configuraciones, intenta en un momento.",
-      });
-      return;
-    }
-
-    // ✅ Validación adicional: impedir venta si no se permite sin cierre
-    if (!ventasConfig.permitir_venta_sin_cierre) {
-      ToastError({
-        message:
-          "No se puede registrar una venta porque el día no ha sido cerrado.",
       });
       return;
     }

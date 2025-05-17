@@ -32,11 +32,13 @@ import { useUsuarioActual } from "@/hooks/compras/useUsuarioActual";
 import { useUltimoIdCompra } from "@/hooks/compras/useUltimoIdCompra";
 import { safePrice } from "@/utils/format";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
+import { CampoSelectEquivalencia } from "@/components/shared/compras/ui/campoEquivalencias";
 export interface ProductoOption {
   value: string;
   nombre: string;
   cod_prod: number;
   img_prod: string;
+  tipo: string;
 }
 const schema = z.object({
   proveedor: z.string().min(1, "Seleccione un proveedor"),
@@ -48,6 +50,7 @@ const schema = z.object({
   cant_dcom: z.number().nullable().optional(),
   prec_uni_dcom: z.number().nullable().optional(),
   fech_ven_prod_dcom: z.string().nullable().optional(),
+  equivalenciaSeleccionada: z.string().optional(),
 });
 
 export default function NuevaCompraPage() {
@@ -73,10 +76,14 @@ export default function NuevaCompraPage() {
       cant_dcom: 1,
       prec_uni_dcom: 0,
       fech_ven_prod_dcom: null,
+      equivalenciaSeleccionada: "",
     },
     resolver: zodResolver(schema),
   });
   const { control, handleSubmit, watch, setValue } = methods;
+  const producto = productosOptions.find((p) => p.value === watch("producto"));
+  const esInsumo = producto?.tipo === "Insumo";
+
   const productoSeleccionado = watch("producto");
   const cantidad = watch("cant_dcom");
   const precioUnitario = watch("prec_uni_dcom");
@@ -440,43 +447,73 @@ export default function NuevaCompraPage() {
               <h3 className="font-semibold">Detalle de productos</h3>
             </div>
 
-            <div className="flex flex-wrap items-end gap-6">
-              <div className="min-w-[220px] flex-1">
-                <CampoProducto
+            <div className="flex w-full flex-wrap items-end gap-4 xl:flex-nowrap">
+              {(() => {
+                const producto = productosOptions.find(
+                  (p) => p.value === watch("producto"),
+                );
+                const esInsumo = producto?.tipo === "Insumo";
+
+                return (
+                  <>
+                    <div className={esInsumo ? "w-[45%]" : "w-full"}>
+                      <CampoProducto
+                        control={control}
+                        setValue={setValue}
+                        name="producto"
+                        label="Producto"
+                        options={productosOptions}
+                        setOptions={setProductosOptions}
+                      />
+                    </div>
+
+                    {esInsumo && (
+                      <div className="w-[35%]">
+                        <CampoSelectEquivalencia
+                          control={control}
+                          name="equivalenciaSeleccionada"
+                          label="Equivalencia"
+                          productoId={parseInt(producto.value)}
+                        />
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+
+              <div className="w-[120px]">
+                <CampoNumero
                   control={control}
-                  setValue={setValue} // ✅ esto es lo que está faltando
-                  name="producto"
-                  label="Producto"
-                  options={productosOptions}
-                  setOptions={setProductosOptions}
+                  name="cant_dcom"
+                  label="Cantidad"
                 />
               </div>
 
-              <CampoNumero
-                control={control}
-                name="cant_dcom"
-                label="Cantidad"
-              />
+              <div className="w-[150px]">
+                <CampoNumero
+                  control={control}
+                  name="prec_uni_dcom"
+                  label={esInsumo ? "Precio de compra" : "Precio Unitario"}
+                />
+              </div>
 
-              <CampoNumero
-                control={control}
-                name="prec_uni_dcom"
-                label="Precio Unitario"
-              />
+              <div className="w-[200px]">
+                <CampoFecha
+                  control={control}
+                  name="fech_ven_prod_dcom"
+                  label="Fecha de vencimiento"
+                />
+              </div>
 
-              <CampoFecha
-                control={control}
-                name="fech_ven_prod_dcom"
-                label="Fecha de vencimiento"
-              />
-
-              <Button
-                type="button"
-                variant="primary"
-                onClick={agregarDetalleProducto}
-              >
-                + Añadir fila
-              </Button>
+              <div className="mt-4">
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={agregarDetalleProducto}
+                >
+                  + Añadir fila
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -488,7 +525,7 @@ export default function NuevaCompraPage() {
                   <tr>
                     <th className="p-2 text-start">Producto</th>
                     <th className="p-2">Cantidad</th>
-                    <th className="p-2">Precio Unitario</th>
+                    <th className="p-2">Precio</th>
                     <th className="p-2">Subtotal</th>
                     <th className="p-2">Fecha venc.</th>
                     <th className="p-2">Eliminar</th>

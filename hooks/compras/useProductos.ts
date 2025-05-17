@@ -25,6 +25,7 @@ export function useProductos() {
           nombre: prod.nom_prod,
           cod_prod: prod.id_prod,
           img_prod: prod.img_prod,
+          tipo: prod.tip_prod,
         }));
 
         setProductosOptions(opciones);
