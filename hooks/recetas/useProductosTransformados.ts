@@ -4,7 +4,7 @@ import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
 import { ProductoOption } from "@/components/shared/compras/ui/campoProducto";
 import { ToastError } from "@/components/shared/toast/toastError";
 
-export function useProductos() {
+export function useProductosTransformados() {
   const [productosOptions, setProductosOptions] = useState<ProductoOption[]>(
     [],
   );
@@ -16,13 +16,13 @@ export function useProductos() {
         return res.json();
       })
       .then((data: IProduct[]) => {
-        const activos = data.filter(
+        const transformados = data.filter(
           (prod) =>
             prod.est_prod?.toLowerCase() === "activo" &&
-            (prod.tip_prod === "Directo" || prod.tip_prod === "Insumo"),
+            prod.tip_prod === "Transformado",
         );
 
-        const opciones: ProductoOption[] = activos.map((prod) => ({
+        const opciones: ProductoOption[] = transformados.map((prod) => ({
           value: prod.id_prod.toString(),
           nombre: prod.nom_prod,
           cod_prod: prod.id_prod,
@@ -33,7 +33,7 @@ export function useProductos() {
         setProductosOptions(opciones);
       })
       .catch((err) => {
-        console.error("Error al cargar productos:", err);
+        console.error("Error al cargar productos transformados:", err);
         ToastError({ message: "Error al cargar productos: " + err.message });
       });
   }, []);

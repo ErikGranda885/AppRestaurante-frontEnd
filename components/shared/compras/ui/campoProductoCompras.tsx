@@ -42,32 +42,33 @@ export interface ProductoOption {
   nombre: string;
   cod_prod: number;
   img_prod: string;
-  tipo?:string
+  tipo?: string;
 }
 
-interface CampoProductoProps<T extends FieldValues> {
+interface CampoProductoCompraProps<T extends FieldValues> {
   control: Control<T>;
   setValue: UseFormSetValue<T>;
   name: Path<T>;
   label: string;
   options: ProductoOption[];
   setOptions?: React.Dispatch<React.SetStateAction<ProductoOption[]>>;
+  onValidarEquivalencia?: (producto: ProductoOption) => void;
 }
 
-export function CampoProducto<T extends FieldValues>({
+export function CampoProductoCompra<T extends FieldValues>({
   control,
   setValue,
   name,
   label,
   options,
   setOptions,
-}: CampoProductoProps<T>) {
+  onValidarEquivalencia,
+}: CampoProductoCompraProps<T>) {
   const [open, setOpen] = useState(false);
   const [crearModalAbierto, setCrearModalAbierto] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const crearBtnRef = useRef<HTMLButtonElement>(null);
 
-  // ✨ Enfoca el botón "Crear nuevo producto" cuando no hay resultados
   useEffect(() => {
     if (open && options.length === 0) {
       const timer = setTimeout(() => {
@@ -147,8 +148,6 @@ export function CampoProducto<T extends FieldValues>({
                               </CommandItem>
                             ))}
                           </CommandGroup>
-
-                          {/* Mostrar crear producto cuando sí hay productos */}
                           <CommandItem
                             className="cursor-pointer border border-border py-2"
                             onSelect={() => {
@@ -161,7 +160,6 @@ export function CampoProducto<T extends FieldValues>({
                         </>
                       ) : null}
 
-                      {/* Mostrar cuando NO hay coincidencias */}
                       <CommandEmpty className="flex flex-col items-start gap-2 p-3">
                         <p className="text-sm text-muted-foreground">
                           No se encontró producto.
@@ -175,8 +173,7 @@ export function CampoProducto<T extends FieldValues>({
                             setOpen(false);
                           }}
                         >
-                          <Plus className="h-4 w-4" />
-                          Crear nuevo producto
+                          <Plus className="h-4 w-4" /> Crear nuevo producto
                         </Button>
                       </CommandEmpty>
                     </CommandList>
@@ -206,7 +203,7 @@ export function CampoProducto<T extends FieldValues>({
                 nombre: data.producto.nom_prod,
                 cod_prod: data.producto.id_prod,
                 img_prod: data.producto.img_prod,
-                
+                tipo: data.producto.tip_prod,
               };
 
               if (setOptions) {
@@ -215,6 +212,10 @@ export function CampoProducto<T extends FieldValues>({
 
               setValue(name, nuevo.value as any);
               setCrearModalAbierto(false);
+
+              if (onValidarEquivalencia) {
+                onValidarEquivalencia(nuevo);
+              }
 
               setTimeout(() => {
                 triggerRef.current?.focus();

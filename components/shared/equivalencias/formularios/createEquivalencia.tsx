@@ -37,7 +37,8 @@ export function FormEquivalencia({ onSuccess, onClose }: Props) {
     },
   });
 
-  const { productosOptions } = useInsumos();
+  const { productosOptions, setProductosOptions } = useInsumos();
+
   const { handleSubmit, reset, setValue } = methods;
 
   const onSubmit = async (data: FormData) => {
@@ -85,15 +86,16 @@ export function FormEquivalencia({ onSuccess, onClose }: Props) {
           label="Producto insumo"
           control={methods.control}
           options={productosOptions}
-          setOptions={() => {}}
+          setOptions={setProductosOptions} // ✅ Ahora sí se actualizarán las opciones
           setValue={setValue}
         />
+
         <CampoNumero
           name="cant_equiv"
           label="Cantidad de equivalencia"
           control={methods.control}
         />
-        
+
         <CampoSelectUnidad
           name="und_prod_equiv"
           label="Unidad de equivalencia"

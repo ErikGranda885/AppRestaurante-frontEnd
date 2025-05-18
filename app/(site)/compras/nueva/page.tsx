@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, FormProvider } from "react-hook-form";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
@@ -33,6 +33,9 @@ import { useUltimoIdCompra } from "@/hooks/compras/useUltimoIdCompra";
 import { safePrice } from "@/utils/format";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { CampoSelectEquivalencia } from "@/components/shared/compras/ui/campoEquivalencias";
+import { SERVICIOS_EQUIVALENCIAS } from "@/services/equivalencias.service";
+import { validarEquivalenciaActiva } from "@/hooks/compras/validarEquivalenciaActiva";
+import { CampoProductoCompra } from "@/components/shared/compras/ui/campoProductoCompras";
 export interface ProductoOption {
   value: string;
   nombre: string;
@@ -55,6 +58,7 @@ const schema = z.object({
 
 export default function NuevaCompraPage() {
   const { ventasConfig } = useConfiguracionesVentas();
+  const [bloquearAñadirFila, setBloquearAñadirFila] = useState(false);
   const router = useRouter();
   const proveedores = useProveedores();
   const { productosOptions, setProductosOptions } = useProductos();
@@ -88,6 +92,21 @@ export default function NuevaCompraPage() {
   const cantidad = watch("cant_dcom");
   const precioUnitario = watch("prec_uni_dcom");
   const fechaVencimiento = watch("fech_ven_prod_dcom");
+
+  useEffect(() => {
+    const productoSeleccionado = productosOptions.find(
+      (p) => p.value === watch("producto"),
+    );
+
+    if (!productoSeleccionado) return;
+
+    validarEquivalenciaActiva(
+      Number(productoSeleccionado.cod_prod),
+      productoSeleccionado.tipo,
+      setBloquearAñadirFila,
+      (unidad) => setValue("equivalenciaSeleccionada", unidad),
+    );
+  }, [watch("producto"), productosOptions, setValue]);
 
   const handleImprimir = useReactToPrint({ contentRef });
 
@@ -449,14 +468,23 @@ export default function NuevaCompraPage() {
 
                 return (
                   <>
-                    <div className={esInsumo ? "w-[45%]" : "w-full"}>
-                      <CampoProducto
+                    <div className={esInsumo ? "w-[45%]" : "w-[80%]"}>
+                      <CampoProductoCompra
                         control={control}
                         setValue={setValue}
                         name="producto"
                         label="Producto"
                         options={productosOptions}
                         setOptions={setProductosOptions}
+                        onValidarEquivalencia={(producto) =>
+                          validarEquivalenciaActiva(
+                            producto.cod_prod,
+                            producto.tipo ?? "",
+                            setBloquearAñadirFila,
+                            (unidad) =>
+                              setValue("equivalenciaSeleccionada", unidad),
+                          )
+                        }
                       />
                     </div>
 
@@ -503,6 +531,7 @@ export default function NuevaCompraPage() {
                   type="button"
                   variant="primary"
                   onClick={agregarDetalleProducto}
+                  disabled={bloquearAñadirFila}
                 >
                   + Añadir fila
                 </Button>

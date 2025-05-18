@@ -20,31 +20,37 @@ import { useInsumos } from "@/hooks/recetas/useInsumos";
 import { CampoNumero } from "../../varios/campoNumero";
 import { CampoMoneda } from "../ui/campoMoneda";
 import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
+import { useProductosTransformados } from "@/hooks/recetas/useProductosTransformados";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { SERVICIOS_EQUIVALENCIAS } from "@/services/equivalencias.service";
 
 const esquemaReceta = z.object({
   nom_rec: z.string().min(1, "Nombre requerido"),
-  desc_rec: z.string().min(1, "Ingrese la descripción de la receta"),
+  desc_rec: z.string().min(1, "Ingrese la descripcion de la receta"),
   prod_rec: z.string().min(1, "Seleccione un producto final"),
-  pvp_rec: z.number().min(0.01, "PVP inválido"),
+  pvp_rec: z.number().min(0.01, "PVP invalido"),
   ingredientes: z
     .array(
       z.object({
         prod_rec: z.string().min(1, "Seleccione un producto"),
-        cant_rec: z.number().min(0.01, "Cantidad inválida"),
+        cant_rec: z.number().min(0.01, "Cantidad invalida"),
         und_prod_rec: z.string().min(1, "Unidad requerida"),
       }),
     )
     .min(1, "Debe agregar al menos un ingrediente"),
 });
 
-type FormReceta = z.infer<typeof esquemaReceta>;
-
 export function FormCrearReceta({
   onSuccess,
 }: {
   onSuccess: (data: IReceta) => void;
 }) {
-  const form = useForm<FormReceta>({
+  const form = useForm<z.infer<typeof esquemaReceta>>({
     resolver: zodResolver(esquemaReceta),
     defaultValues: {
       nom_rec: "",
@@ -54,41 +60,90 @@ export function FormCrearReceta({
     },
   });
 
-  const { control, setValue, handleSubmit, reset } = form;
+  const { control, setValue, handleSubmit, reset, watch } = form;
   const {
     productosOptions: productosFinales,
     setProductosOptions: setProductosFinales,
-  } = useProductos();
+  } = useProductosTransformados();
   const {
     productosOptions: productosInsumos,
     setProductosOptions: setProductosInsumos,
   } = useInsumos();
   const [loading, setLoading] = useState(false);
+  const [dialogData, setDialogData] = useState<{
+    open: boolean;
+    index: number;
+    equivalencia: any;
+  }>({ open: false, index: -1, equivalencia: null });
+  const [bloquearEnvio, setBloquearEnvio] = useState(false);
 
   const { fields, append, remove } = useFieldArray({
     control,
     name: "ingredientes",
   });
 
-  // ⬇️ Aquí colocas el useEffect
   useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
+    const subscription = watch(async (value, { name }) => {
       if (name === "prod_rec") {
         const seleccionado = productosFinales.find(
           (p) => p.value === value.prod_rec,
         );
-        if (seleccionado) {
-          setValue("nom_rec", seleccionado.nombre); // ← aquí se asigna automáticamente
+        if (seleccionado) setValue("nom_rec", seleccionado.nombre);
+      }
+
+      if (name?.includes("ingredientes") && name.endsWith(".prod_rec")) {
+        const index = parseInt(name.split(".")[1]);
+        const idProd = value.ingredientes?.[index]?.prod_rec;
+
+        if (idProd) {
+          // ✅ Verificar duplicados
+          const duplicado = value.ingredientes?.some(
+            (item, i) => i !== index && item?.prod_rec === idProd,
+          );
+
+          if (duplicado) {
+            setValue(`ingredientes.${index}.prod_rec`, ""); // Limpiar selección
+            ToastError({ message: "Este ingrediente ya ha sido agregado" });
+            return;
+          }
+
+          // ✅ Consultar equivalencia activa
+          try {
+            const res = await fetch(
+              SERVICIOS_EQUIVALENCIAS.activa(Number(idProd)),
+            );
+
+            if (!res.ok) {
+              setBloquearEnvio(true);
+              ToastError({
+                message: "Este producto no tiene una equivalencia registrada",
+              });
+              return;
+            }
+
+            const data = await res.json();
+            if (data) {
+              setBloquearEnvio(false);
+              setValue(
+                `ingredientes.${index}.und_prod_rec`,
+                data.und_prod_equiv,
+              );
+              // No abrir dialog: asignación directa
+            }
+          } catch (error) {
+            console.error("Error al consultar equivalencia", error);
+            setBloquearEnvio(true);
+          }
         }
       }
     });
+
     return () => subscription.unsubscribe();
-  }, [form, productosFinales, setValue]);
+  }, [watch, setValue, productosFinales]);
 
   const onSubmit = async (data: IRecetaForm) => {
     setLoading(true);
     try {
-      // 🔽 MODIFICACIÓN AQUÍ
       const payloadReceta = {
         nom_rec: data.nom_rec,
         desc_rec: data.desc_rec,
@@ -108,15 +163,12 @@ export function FormCrearReceta({
 
       if (!res.ok) throw new Error("Error al crear receta");
 
-      // ✅ Nueva llamada para actualizar el precio del producto
       await fetch(
         SERVICIOS_PRODUCTOS.actualizarProducto(Number(data.prod_rec)),
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            prec_vent_prod: data.pvp_rec,
-          }),
+          body: JSON.stringify({ prec_vent_prod: data.pvp_rec }),
         },
       );
 
@@ -165,7 +217,7 @@ export function FormCrearReceta({
         {/* Columna derecha: Ingredientes con scroll */}
         <div className="flex flex-col gap-4">
           <h3 className="text-sm font-semibold">Ingredientes</h3>
-          <ScrollArea className="max-h-[190px] rounded-md border p-2 pr-4">
+          <ScrollArea className="max-h-[190px] rounded-md border-border p-2 pr-4">
             <table className="w-full text-sm">
               <thead>
                 <tr>
@@ -177,7 +229,7 @@ export function FormCrearReceta({
               </thead>
               <tbody className="divide-y">
                 {fields.map((field, index) => (
-                  <tr key={field.id} className="align-middle">
+                  <tr key={field.id} className="border-border align-middle">
                     <td className="pr-2">
                       <CampoProducto
                         control={control}
@@ -202,6 +254,7 @@ export function FormCrearReceta({
                         name={`ingredientes.${index}.und_prod_rec`}
                         label=""
                         placeholder="Unidad"
+                        disabled
                       />
                     </td>
                     <td className="w-[40px] px-1">
@@ -242,7 +295,7 @@ export function FormCrearReceta({
           >
             Limpiar
           </Button>
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" disabled={loading || bloquearEnvio}>
             {loading ? "Creando..." : "Crear Receta"}
           </Button>
         </div>

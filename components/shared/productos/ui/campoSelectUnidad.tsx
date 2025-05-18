@@ -17,6 +17,7 @@ interface CampoSelectUnidadProps {
   name: string;
   label: string;
   placeholder?: string;
+  disabled?: boolean;
 }
 
 export const CampoSelectUnidad: React.FC<CampoSelectUnidadProps> = ({
@@ -24,6 +25,7 @@ export const CampoSelectUnidad: React.FC<CampoSelectUnidadProps> = ({
   name,
   label,
   placeholder,
+  disabled,
 }) => {
   return (
     <Controller
@@ -32,7 +34,11 @@ export const CampoSelectUnidad: React.FC<CampoSelectUnidadProps> = ({
       render={({ field, fieldState: { error } }) => (
         <div className="flex flex-col">
           <label className="mb-2 text-sm font-medium">{label}</label>
-          <Select value={field.value} onValueChange={field.onChange}>
+          <Select
+            value={field.value}
+            onValueChange={field.onChange}
+            disabled={disabled}
+          >
             <SelectTrigger
               className={cn(
                 "w-full justify-between font-normal",

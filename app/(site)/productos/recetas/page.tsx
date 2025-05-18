@@ -101,7 +101,7 @@ export default function RecetasPage() {
       </div>
       <div className="flex flex-col gap-4 px-6 pt-2">
         {filteredRecetas.length === 0 ? (
-          <div className="flex h-[530px] items-center justify-center rounded-md border text-sm text-muted-foreground">
+          <div className="flex h-[530px] items-center justify-center rounded-md border-border text-sm text-muted-foreground">
             No se encontraron recetas.
           </div>
         ) : (
