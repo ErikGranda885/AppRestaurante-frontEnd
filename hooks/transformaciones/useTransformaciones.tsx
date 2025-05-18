@@ -1,31 +1,27 @@
-import { SERVICIOS_TRANSFORMACIONES } from "@/services/transformaciones.service";
-import { useEffect, useState } from "react";
+"use client";
 
+import useSWR from "swr";
+import { SERVICIOS_TRANSFORMACIONES } from "@/services/transformaciones.service";
+
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error("Error al obtener transformaciones");
+  }
+  const data = await res.json();
+  return data.transformaciones; // Asegúrate de que el backend responde así
+};
 
 export const useTransformaciones = () => {
-  const [transformaciones, setTransformaciones] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { data, error, isLoading, mutate } = useSWR(
+    SERVICIOS_TRANSFORMACIONES.listar,
+    fetcher,
+  );
 
-  useEffect(() => {
-    const fetchTransformaciones = async () => {
-      try {
-        const res = await fetch(SERVICIOS_TRANSFORMACIONES.listar);
-        if (!res.ok) {
-          throw new Error("Error al obtener transformaciones");
-        }
-        const data = await res.json();
-        setTransformaciones(data.transformaciones);
-      } catch (err) {
-        console.error("Error al cargar transformaciones:", err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTransformaciones();
-  }, []);
-
-  return { data: transformaciones, isLoading: loading, error };
+  return {
+    data,
+    isLoading,
+    error,
+    mutate, // por si lo necesitas en algún lugar
+  };
 };

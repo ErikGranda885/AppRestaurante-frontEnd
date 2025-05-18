@@ -12,6 +12,8 @@ import { DataTable } from "@/components/shared/varios/dataTable";
 import { useTransformaciones } from "@/hooks/transformaciones/useTransformaciones";
 import { columnsTransformaciones } from "@/components/shared/transformaciones/ui/columnsTransformaciones";
 import { FormTransformacion } from "@/components/shared/transformaciones/fomularios/create-transformacion";
+import { mutate } from "swr";
+import { SERVICIOS_TRANSFORMACIONES } from "@/services/transformaciones.service";
 
 export default function Page() {
   useProtectedRoute();
@@ -22,6 +24,11 @@ export default function Page() {
   const filtradas = transformaciones?.filter((t: any) =>
     t.rece_trans.nom_rec.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+  const handleSuccess = async () => {
+    await mutate(SERVICIOS_TRANSFORMACIONES.listar);
+    setAbrirCrear(false);
+  };
 
   return (
     <ModulePageLayout
@@ -50,12 +57,8 @@ export default function Page() {
             submitText={null}
           >
             <FormTransformacion
-              onSuccess={() => {
-                setAbrirCrear(false);
-              }}
-              onClose={() => {
-                setAbrirCrear(false);
-              }}
+              onSuccess={handleSuccess}
+              onClose={() => setAbrirCrear(false)}
             />
           </GeneralDialog>
 

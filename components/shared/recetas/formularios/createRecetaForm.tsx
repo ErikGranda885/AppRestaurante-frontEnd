@@ -39,7 +39,7 @@ const esquemaReceta = z.object({
       z.object({
         prod_rec: z.string().min(1, "Seleccione un producto"),
         cant_rec: z.number().min(0.01, "Cantidad invalida"),
-        und_prod_rec: z.string().min(1, "Unidad requerida"),
+        und_prod_rec: z.string(), // validación removida
       }),
     )
     .min(1, "Debe agregar al menos un ingrediente"),
@@ -96,18 +96,16 @@ export function FormCrearReceta({
         const idProd = value.ingredientes?.[index]?.prod_rec;
 
         if (idProd) {
-          // ✅ Verificar duplicados
           const duplicado = value.ingredientes?.some(
             (item, i) => i !== index && item?.prod_rec === idProd,
           );
 
           if (duplicado) {
-            setValue(`ingredientes.${index}.prod_rec`, ""); // Limpiar selección
+            setValue(`ingredientes.${index}.prod_rec`, "");
             ToastError({ message: "Este ingrediente ya ha sido agregado" });
             return;
           }
 
-          // ✅ Consultar equivalencia activa
           try {
             const res = await fetch(
               SERVICIOS_EQUIVALENCIAS.activa(Number(idProd)),
@@ -128,7 +126,6 @@ export function FormCrearReceta({
                 `ingredientes.${index}.und_prod_rec`,
                 data.und_prod_equiv,
               );
-              // No abrir dialog: asignación directa
             }
           } catch (error) {
             console.error("Error al consultar equivalencia", error);
@@ -189,7 +186,6 @@ export function FormCrearReceta({
         onSubmit={handleSubmit(onSubmit)}
         className="grid gap-6 md:grid-cols-[minmax(250px,300px)_1fr]"
       >
-        {/* Columna izquierda */}
         <div className="flex flex-col gap-4">
           <CampoProducto
             control={control}
@@ -214,7 +210,6 @@ export function FormCrearReceta({
           />
         </div>
 
-        {/* Columna derecha: Ingredientes con scroll */}
         <div className="flex flex-col gap-4">
           <h3 className="text-sm font-semibold">Ingredientes</h3>
           <ScrollArea className="max-h-[190px] rounded-md border-border p-2 pr-4">
@@ -285,7 +280,6 @@ export function FormCrearReceta({
           </div>
         </div>
 
-        {/* Botones de acción */}
         <div className="col-span-full mt-4 flex justify-end gap-4">
           <Button
             type="button"
