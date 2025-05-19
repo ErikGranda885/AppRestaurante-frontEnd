@@ -20,7 +20,7 @@ export const SERVICIOS_PRODUCTOS = {
   exportarProductosPDF: (tipo: string) =>
     `http://localhost:5000/productos/reportes/pdf?tipo=${tipo}`,
 
-  // 🔽 Reporte específico: Insumos con equivalencias
+  // 🔽 Reporte específico: Insumos con equivalencias (Excel o PDF)
   exportarReporteInsumos: (desde?: string, hasta?: string) => {
     let url = "http://localhost:5000/productos/reporte-insumos";
     const params = [];
@@ -29,9 +29,26 @@ export const SERVICIOS_PRODUCTOS = {
     return params.length ? `${url}?${params.join("&")}` : url;
   },
 
-  // 🔽 Reporte de Directos y Transformados con rango de fechas
+  exportarReporteInsumosPDF: (desde?: string, hasta?: string) => {
+    let url = "http://localhost:5000/productos/reporte-insumos/pdf";
+    const params = [];
+    if (desde) params.push(`desde=${desde}`);
+    if (hasta) params.push(`hasta=${hasta}`);
+    return params.length ? `${url}?${params.join("&")}` : url;
+  },
+
+  // 🔽 Reporte de Directos y Transformados (Excel o PDF)
   exportarReporteDirectosTransformados: (desde?: string, hasta?: string) => {
     let url = "http://localhost:5000/productos/reporte-directos-transformados";
+    const params = [];
+    if (desde) params.push(`desde=${desde}`);
+    if (hasta) params.push(`hasta=${hasta}`);
+    return params.length ? `${url}?${params.join("&")}` : url;
+  },
+
+  exportarReporteDirectosTransformadosPDF: (desde?: string, hasta?: string) => {
+    let url =
+      "http://localhost:5000/productos/reporte-directos-transformados/pdf";
     const params = [];
     if (desde) params.push(`desde=${desde}`);
     if (hasta) params.push(`hasta=${hasta}`);

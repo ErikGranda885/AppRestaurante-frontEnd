@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { DateRange } from "react-day-picker";
 import { Label } from "@/components/ui/label";
-import { FileSpreadsheet, Download } from "lucide-react";
+import { FileJson2, FileSpreadsheet, FileText, Download } from "lucide-react";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
 import { DateRangeFilter } from "../../ventas/ui/dateRangeFilter";
@@ -22,6 +22,12 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
 
 interface Props {
   open: boolean;
@@ -30,6 +36,7 @@ interface Props {
 
 export function DialogExportarProductos({ open, onOpenChange }: Props) {
   const [tipoReporte, setTipoReporte] = useState("insumos");
+  const [formato, setFormato] = useState<"json" | "excel" | "pdf">("excel");
   const [range, setRange] = useState<DateRange>({
     from: new Date(),
     to: new Date(),
@@ -40,23 +47,33 @@ export function DialogExportarProductos({ open, onOpenChange }: Props) {
     setLoading(true);
     try {
       let url = "";
-
       const desde = range.from?.toISOString().split("T")[0];
       const hasta = range.to?.toISOString().split("T")[0];
-      console.log("Fechas enviadas al backend:");
-      console.log("Desde:", desde);
-      console.log("Hasta:", hasta);
 
-      if (tipoReporte === "insumos") {
-        url = SERVICIOS_PRODUCTOS.exportarReporteInsumos(desde, hasta);
+      console.log("Fechas enviadas al backend:", { desde, hasta });
+
+      if (formato === "excel") {
+        url =
+          tipoReporte === "insumos"
+            ? SERVICIOS_PRODUCTOS.exportarReporteInsumos(desde, hasta)
+            : SERVICIOS_PRODUCTOS.exportarReporteDirectosTransformados(
+                desde,
+                hasta,
+              );
+      } else if (formato === "pdf") {
+        url =
+          tipoReporte === "insumos"
+            ? SERVICIOS_PRODUCTOS.exportarReporteInsumosPDF(desde, hasta)
+            : SERVICIOS_PRODUCTOS.exportarReporteDirectosTransformadosPDF(
+                desde,
+                hasta,
+              );
       } else {
-        url = SERVICIOS_PRODUCTOS.exportarReporteDirectosTransformados(
-          desde,
-          hasta,
-        );
+        url = SERVICIOS_PRODUCTOS.exportarProductosJson(tipoReporte);
       }
 
       const response = await fetch(url);
+
       if (!response.ok) {
         const errorData = await response.json();
         if (response.status === 404) {
@@ -69,13 +86,18 @@ export function DialogExportarProductos({ open, onOpenChange }: Props) {
         return;
       }
 
-      const blob = await response.blob();
+      const blob =
+        formato === "json"
+          ? new Blob([JSON.stringify(await response.json(), null, 2)], {
+              type: "application/json",
+            })
+          : await response.blob();
 
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      const nombreArchivo = `reporte_${tipoReporte}_${
+      const nombreArchivo = `reporte_${tipoReporte}_$${
         desde || "inicio"
-      }_${hasta || "hoy"}.xlsx`;
+      }_$${hasta || "hoy"}.${formato === "excel" ? "xlsx" : formato}`;
       link.download = nombreArchivo;
       link.click();
 
@@ -112,13 +134,54 @@ export function DialogExportarProductos({ open, onOpenChange }: Props) {
             </Select>
           </div>
 
-          {/* Rango visible para ambos tipos */}
-          {["insumos", "transformados"].includes(tipoReporte) && (
+          {/* Rango de fechas */}
+          <div className="space-y-1">
+            <Label className="text-sm">Rango de fechas:</Label>
+            <DateRangeFilter value={range} onChange={setRange} />
+          </div>
+
+          {/* Formato de exportación */}
+          <TooltipProvider>
             <div className="space-y-1">
-              <Label className="text-sm">Rango de fechas:</Label>
-              <DateRangeFilter value={range} onChange={setRange} />
+              <Label className="text-sm">Formato de exportación:</Label>
+              <div className="flex gap-2 pt-1">
+                {(
+                  [
+                    
+                    {
+                      value: "excel",
+                      label: "Excel",
+                      icon: <FileSpreadsheet className="h-4 w-4" />,
+                    },
+                    {
+                      value: "pdf",
+                      label: "PDF",
+                      icon: <FileText className="h-4 w-4" />,
+                    },
+                  ] as const
+                ).map((formatoItem) => (
+                  <Tooltip key={formatoItem.value}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={
+                          formato === formatoItem.value ? "primary" : "outline"
+                        }
+                        className="px-3 py-2 text-xs"
+                        onClick={() => setFormato(formatoItem.value)}
+                        type="button"
+                      >
+                        {formatoItem.icon}
+                        <span className="ml-2">{formatoItem.label}</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs">
+                      Exportar como {formatoItem.label}
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+              </div>
             </div>
-          )}
+          </TooltipProvider>
         </div>
 
         <DialogFooter>
