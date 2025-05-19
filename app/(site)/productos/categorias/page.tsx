@@ -39,6 +39,7 @@ import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { Input } from "@/components/ui/input";
 import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
+import { DialogExportarCategorias } from "@/components/shared/categorias/ui/dialogExportarCategorias";
 
 type AccionCategoria = {
   id_cate: number;
@@ -47,6 +48,7 @@ type AccionCategoria = {
 };
 
 export default function PaginaCategorias() {
+  const [abrirExportar, setAbrirExportar] = React.useState(false);
   const [categorias, setCategorias] = React.useState<ICategory[]>([]);
   const [cargando, setCargando] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -342,6 +344,7 @@ export default function PaginaCategorias() {
                 <Upload className="h-4 w-4" /> Importar
               </Button>
               <Button
+                onClick={() => setAbrirExportar(true)}
                 className="border-border text-[12px] font-semibold"
                 variant="secondary"
               >
@@ -463,6 +466,13 @@ export default function PaginaCategorias() {
           </div>
         </div>
       </ModulePageLayout>
+
+      {abrirExportar && (
+        <DialogExportarCategorias
+          open={abrirExportar}
+          onOpenChange={setAbrirExportar}
+        />
+      )}
 
       {/* Diálogo para editar categoría */}
       {categoriaEditar && (

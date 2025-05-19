@@ -84,18 +84,18 @@ export default function RecetasPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button
+            {/* <Button
               className="border-border text-[12px] font-semibold"
               variant="secondary"
             >
               <Upload className="h-4 w-4" /> Importar
-            </Button>
-            <Button
+            </Button> */}
+            {/* <Button
               className="border-border text-[12px] font-semibold"
               variant="secondary"
             >
               <CloudDownload className="h-4 w-4" /> Exportar
-            </Button>
+            </Button> */}
           </div>
         </div>
       </div>
