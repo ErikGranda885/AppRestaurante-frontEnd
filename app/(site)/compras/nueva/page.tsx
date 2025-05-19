@@ -33,7 +33,6 @@ import { useUltimoIdCompra } from "@/hooks/compras/useUltimoIdCompra";
 import { safePrice } from "@/utils/format";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { CampoSelectEquivalencia } from "@/components/shared/compras/ui/campoEquivalencias";
-import { SERVICIOS_EQUIVALENCIAS } from "@/services/equivalencias.service";
 import { validarEquivalenciaActiva } from "@/hooks/compras/validarEquivalenciaActiva";
 import { CampoProductoCompra } from "@/components/shared/compras/ui/campoProductoCompras";
 export interface ProductoOption {
@@ -276,6 +275,7 @@ export default function NuevaCompraPage() {
           cant_dcom: item.cant_dcom,
           prec_uni_dcom: item.prec_uni_dcom,
           sub_tot_dcom: item.sub_tot_dcom,
+          fech_ven_prod_dcom: item.fech_ven_prod_dcom || null,
         };
 
         try {

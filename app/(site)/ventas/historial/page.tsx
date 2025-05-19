@@ -43,9 +43,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { safePrice } from "@/utils/format";
+import { DialogExportarVentas } from "@/components/shared/ventas/ui/dialogExportarVentas";
 
 export default function Page() {
   const { ventasConfig } = useConfiguracionesVentas();
+  const [dialogExportarOpen, setDialogExportarOpen] = useState(false);
   const [abrirCrear, setAbrirCrear] = useState(false);
   const [consultaBusqueda, setConsultaBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("Todos");
@@ -301,7 +303,11 @@ export default function Page() {
               </Button>
 
               {/* Exportar */}
-              <Button variant="secondary" className="text-[12px] font-semibold">
+              <Button
+                variant="secondary"
+                className="text-[12px] font-semibold"
+                onClick={() => setDialogExportarOpen(true)}
+              >
                 <CloudDownload className="h-4 w-4" /> Exportar
               </Button>
             </div>
@@ -540,6 +546,11 @@ export default function Page() {
             </GeneralDialog>
           )}
         </div>
+        <DialogExportarVentas
+          open={dialogExportarOpen}
+          onOpenChange={setDialogExportarOpen}
+          defaultRange={dateRange}
+        />
       </ModulePageLayout>
     </>
   );
