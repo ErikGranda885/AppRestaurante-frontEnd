@@ -46,6 +46,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
 import { SERVICIOS_INVENTARIO } from "@/services/inventario.service";
+import { useExportarReporteProductos } from "@/hooks/productos/useExportarReporteProductos";
+import { DialogExportarProductos } from "@/components/shared/productos/ui/dialogExportarProductos";
 
 // Tipos y constantes globales
 export type Opcion = {
@@ -176,9 +178,11 @@ function ordenarProductos(
   return ordenados;
 }
 
-// Componente principal de la página
 export default function PaginaProductos() {
+  const [abrirDialogExportar, setAbrirDialogExportar] = useState(false);
+
   // Estados y hooks de la aplicación
+  const exportarReporte = useExportarReporteProductos();
   const [paginaActual, setPaginaActual] = useState(1);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("Activo");
@@ -396,6 +400,7 @@ export default function PaginaProductos() {
               <Button
                 className="border-border text-[12px] font-semibold"
                 variant="secondary"
+                onClick={() => setAbrirDialogExportar(true)}
               >
                 <CloudDownload className="h-4 w-4" /> Exportar
               </Button>
@@ -574,6 +579,10 @@ export default function PaginaProductos() {
             )}
           </div>
         </div>
+        <DialogExportarProductos
+          open={abrirDialogExportar}
+          onOpenChange={setAbrirDialogExportar}
+        />
       </ModulePageLayout>
 
       {/* Diálogo de confirmación general para activar/inactivar */}
