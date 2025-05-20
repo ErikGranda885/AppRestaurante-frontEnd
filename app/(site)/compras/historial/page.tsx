@@ -46,9 +46,12 @@ import {
 } from "@/components/ui/tooltip";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { safePrice } from "@/utils/format";
+import { DialogExportarCompras } from "@/components/shared/compras/ui/dialogExportarCompras";
 
 export default function Page() {
   const { ventasConfig } = useConfiguracionesVentas();
+  const [abrirExportar, setAbrirExportar] = useState(false);
+
   const [consultaBusqueda, setConsultaBusqueda] = useState<string>("");
   const [compras, setCompras] = useState<ICompra[]>([]);
   const [detCompras, setDetCompras] = useState<IDetCompra[]>([]);
@@ -358,6 +361,7 @@ export default function Page() {
                 </Button>
 
                 <Button
+                  onClick={() => setAbrirExportar(true)}
                   className="border-border text-[12px] font-semibold"
                   variant="secondary"
                 >
@@ -472,6 +476,12 @@ export default function Page() {
           </div>
         </div>
       </div>
+      {abrirExportar && (
+        <DialogExportarCompras
+          open={abrirExportar}
+          onOpenChange={setAbrirExportar}
+        />
+      )}
     </ModulePageLayout>
   );
 }

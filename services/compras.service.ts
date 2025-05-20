@@ -14,4 +14,10 @@ export const SERVICIOS_COMPRAS = {
   // Registrar el pago de una compra
   registrarPago: (id: number) =>
     `http://localhost:5000/compras/registrar-pago/${id}`,
+
+  // Exportar reporte de compras en Excel
+  exportarComprasExcel: "http://localhost:5000/compras/reporte/excel",
+
+  // Exportar reporte de compras en PDF
+  exportarComprasPDF: "http://localhost:5000/compras/reporte/pdf",
 };
