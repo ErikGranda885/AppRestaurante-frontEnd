@@ -42,9 +42,11 @@ import { ToastError } from "@/components/shared/toast/toastError";
 import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
 import { BulkUploadProveedoresDialog } from "@/components/shared/proveedores/formularios/cargaProveedores";
 import { DEFAULT_PROVEEDOR_IMAGE_URL } from "@/lib/constants";
+import { DialogExportarProveedores } from "@/components/shared/proveedores/ui/dialogExportarProveedores";
 
 export default function Dashboard() {
   useProtectedRoute();
+  const [abrirExportar, setAbrirExportar] = useState(false);
   const [proveedores, setProveedores] = React.useState<IProveedor[]>([]);
   const [abrirCrear, setAbrirCrear] = React.useState(false);
   const [abrirEditar, setAbrirEditar] = React.useState(false);
@@ -393,6 +395,7 @@ export default function Dashboard() {
                 <Upload className="h-4 w-4" /> Importar
               </Button>
               <Button
+                onClick={() => setAbrirExportar(true)}
                 className="border-border text-[12px] font-semibold"
                 variant="secondary"
               >
@@ -528,6 +531,13 @@ export default function Dashboard() {
               setAbrirCargaMasiva(false);
             }}
             onClose={() => setAbrirCargaMasiva(false)}
+          />
+        )}
+
+        {abrirExportar && (
+          <DialogExportarProveedores
+            open={abrirExportar}
+            onOpenChange={setAbrirExportar}
           />
         )}
       </>
