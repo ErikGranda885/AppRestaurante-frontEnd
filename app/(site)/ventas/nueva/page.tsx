@@ -108,10 +108,12 @@ export default function Page() {
         }
 
         const activeProducts = data.filter(
-          (producto: any) => producto.est_prod === "Activo",
+          (producto: any) =>
+            producto.est_prod === "Activo" &&
+            ["Directo", "Transformado", "Combo"].includes(producto.tip_prod),
         );
+
         setProducts(activeProducts);
-        console.log("arreglo tomado del inventario", data);
       } catch (error) {
         console.error("Error al cargar los productos desde inventario:", error);
       }

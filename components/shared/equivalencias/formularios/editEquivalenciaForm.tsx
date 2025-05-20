@@ -10,6 +10,7 @@ import { CampoProducto } from "@/components/shared/compras/ui/campoProducto";
 import { CampoNumero } from "@/components/shared/varios/campoNumero";
 import { Button } from "@/components/ui/button";
 import { CampoSelectUnidad } from "../../productos/ui/campoSelectUnidad";
+import { IEquivalencia } from "@/lib/types";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { ToastError } from "@/components/shared/toast/toastError";
 
@@ -24,17 +25,22 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 interface Props {
-  onSuccess?: () => void;
+  equivalencia: IEquivalencia;
+  onSuccess?: (data: IEquivalencia) => void;
   onClose?: () => void;
 }
 
-export function FormEquivalencia({ onSuccess, onClose }: Props) {
+export function EditEquivalenciaForm({
+  equivalencia,
+  onSuccess,
+  onClose,
+}: Props) {
   const methods = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      prod_equiv: "",
-      und_prod_equiv: "",
-      cant_equiv: 1,
+      prod_equiv: equivalencia.prod_equiv?.id_prod.toString() || "",
+      und_prod_equiv: equivalencia.und_prod_equiv,
+      cant_equiv: equivalencia.cant_equiv,
     },
   });
 
@@ -49,28 +55,31 @@ export function FormEquivalencia({ onSuccess, onClose }: Props) {
         cant_equiv: data.cant_equiv,
       };
 
-      const res = await fetch(SERVICIOS_EQUIVALENCIAS.crear, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const result = await res.json();
+      const res = await fetch(
+        SERVICIOS_EQUIVALENCIAS.actualizar(equivalencia.id_equiv),
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      );
 
       if (!res.ok) {
-        throw new Error(result.message || "Error al registrar equivalencia");
+        const err = await res.json();
+        throw new Error(err.message || "Error al actualizar equivalencia");
       }
 
-      ToastSuccess({
-        message: result.message || "Equivalencia registrada correctamente",
-      });
+      const actualizado = await res.json();
+
+      ToastSuccess({ message: "Equivalencia actualizada correctamente" });
       await mutate(SERVICIOS_EQUIVALENCIAS.listar);
 
-      reset();
-      onSuccess?.();
+      onSuccess?.(actualizado);
       onClose?.();
     } catch (err: any) {
-      ToastError({ message: err.message || "Error al registrar equivalencia" });
+      ToastError({
+        message: err.message || "Error al actualizar equivalencia",
+      });
     }
   };
 
@@ -107,7 +116,7 @@ export function FormEquivalencia({ onSuccess, onClose }: Props) {
           <Button type="button" variant="secondary" onClick={handleCancel}>
             Cancelar
           </Button>
-          <Button type="submit">Registrar</Button>
+          <Button type="submit">Guardar Cambios</Button>
         </div>
       </form>
     </FormProvider>

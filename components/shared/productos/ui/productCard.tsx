@@ -5,7 +5,6 @@ import {
   Edit2,
   XCircle,
   CheckCircle,
-  Eye,
   Clock3,
   AlertCircle,
   CalendarX,
@@ -19,7 +18,6 @@ import {
 } from "@/components/ui/tooltip";
 import { ICategory, IProduct } from "@/lib/types";
 import { Card } from "@/components/ui/card";
-import { getDaysUntilExpiration } from "@/utils/dates";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { safePrice } from "@/utils/format";
 import { DEFAULT_PRODUCT_IMAGE_URL } from "@/lib/constants";
@@ -57,57 +55,53 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onDeactivate,
   onActivate,
 }) => {
-  const daysLeft = getDaysUntilExpiration(product.fecha_vence_proxima);
   const { ventasConfig } = useConfiguracionesVentas();
+  const daysLeft = product.dias_restantes;
 
   // Texto JSX dinámico
   let expirationText: React.ReactNode;
   let expirationIcon = <Clock3 className="mr-1 inline-block h-4 w-4" />;
   let expirationColorClass = "text-gray-500";
 
-  if (daysLeft === null) {
+  if (daysLeft === null || daysLeft === undefined) {
     expirationText = "Sin fecha de vencimiento";
-  } else if (daysLeft === 0) {
-    expirationText = <span className="font-semibold">Vence hoy</span>;
-    expirationColorClass = "text-yellow-500";
-    expirationIcon = <AlertCircle className="mr-1 inline-block h-4 w-4" />;
-  } else if (daysLeft > 0 && daysLeft <= 3) {
+  } else if (daysLeft <= 0) {
     expirationText = (
       <>
-        Quedan
+        Caducado hace{" "}
         <span className="font-semibold">
-          {" "}
-          {daysLeft} día{daysLeft === 1 ? "" : "s"}
+          {Math.abs(daysLeft)} día{Math.abs(daysLeft) !== 1 && "s"}
         </span>
       </>
     );
+    expirationColorClass = "text-red-600";
+    expirationIcon = <CalendarX className="mr-1 inline-block h-4 w-4" />;
+  } else if (daysLeft === 1) {
+    expirationText = <span className="font-semibold">Queda 1 día</span>;
     expirationColorClass = "text-yellow-500";
     expirationIcon = <AlertCircle className="mr-1 inline-block h-4 w-4" />;
-  } else if (daysLeft > 3 && daysLeft <= 10) {
+  } else if (daysLeft <= 3) {
     expirationText = (
       <>
-        Quedan <span className="font-semibold">{daysLeft} días</span>
+        Quedan <span className="font-semibold"> {daysLeft} días</span>
+      </>
+    );
+    expirationColorClass = "text-yellow-500";
+    expirationIcon = <AlertCircle className="mr-1 inline-block h-4 w-4" />;
+  } else if (daysLeft <= 10) {
+    expirationText = (
+      <>
+        Quedan <span className="font-semibold"> {daysLeft} días</span>
       </>
     );
     expirationColorClass = "text-amber-500";
-  } else if (daysLeft > 10) {
+  } else {
     expirationText = (
       <>
         Quedan <span className="font-semibold"> {daysLeft} días</span>
       </>
     );
     expirationColorClass = "text-green-600";
-  } else {
-    expirationText = (
-      <>
-        Caducado hace{" "}
-        <span className="font-semibold">
-          {Math.abs(daysLeft)} día{Math.abs(daysLeft) === 1 ? "" : "s"}
-        </span>
-      </>
-    );
-    expirationColorClass = "text-red-600";
-    expirationIcon = <CalendarX className="mr-1 inline-block h-4 w-4" />;
   }
 
   return (
