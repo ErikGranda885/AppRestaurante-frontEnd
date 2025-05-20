@@ -5,6 +5,7 @@ export const UNIT_OPTIONS = [
   { label: "Libra (lb)", value: "lb" },
   { label: "Gramo (g)", value: "g" },
   { label: "Presas", value: "presas" },
+  { label: "Huevo", value: "huevo" },
 ];
 export const TIP_PROD_OPTIONS = [
   { label: "Insumo", value: "Insumo" },

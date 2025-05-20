@@ -8,7 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
-import { CloudDownload, Plus, Search, Upload } from "lucide-react";
+import {
+  CloudDownload,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { GeneralDialog } from "@/components/shared/varios/dialogGen";
 
 import { useRecetas } from "@/hooks/recetas/useRecetas";
@@ -18,10 +25,21 @@ import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { mutate } from "swr";
 import { SERVICIOS_RECETAS } from "@/services/recetas.service";
 import { safePrice } from "@/utils/format";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { FormEditarReceta } from "@/components/shared/recetas/formularios/editRecetaForm";
+import { useEliminarReceta } from "@/hooks/recetas/useEliminarReceta";
+import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
 
 export default function RecetasPage() {
   useProtectedRoute();
-
+  const [abrirEditar, setAbrirEditar] = useState(false);
+  const [abrirEliminar, setAbrirEliminar] = useState(false);
+  const { eliminarReceta, loading: eliminando } = useEliminarReceta();
   const [selectedRecetaId, setSelectedRecetaId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [abrirCrear, setAbrirCrear] = useState(false);
@@ -34,6 +52,15 @@ export default function RecetasPage() {
   );
 
   const selectedReceta = recetas.find((r) => r.id_rec === selectedRecetaId);
+
+  const handleEliminarReceta = () => {
+    if (!selectedRecetaId) return;
+
+    eliminarReceta(selectedRecetaId, () => {
+      setAbrirEliminar(false);
+      setSelectedRecetaId(null);
+    });
+  };
 
   return (
     <ModulePageLayout
@@ -150,10 +177,53 @@ export default function RecetasPage() {
               {selectedReceta ? (
                 <Card className="flex h-full flex-col border-border px-2 py-5 dark:bg-[#1a1a1a]">
                   <CardHeader>
-                    <CardTitle className="text-xl">
-                      {selectedReceta.nom_rec}
-                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-xl font-semibold">
+                        {selectedReceta.nom_rec}
+                      </CardTitle>
+
+                      <div className="flex items-center gap-2">
+                        {/* Botón Editar */}
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setAbrirEditar(true)}
+                                className="text-muted-foreground hover:text-primary"
+                              >
+                                <Pencil className="h-5 w-5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <p>Editar receta</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+
+                        {/* Botón Eliminar */}
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setAbrirEliminar(true)}
+                                className="text-muted-foreground hover:text-destructive"
+                              >
+                                <Trash2 className="h-5 w-5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <p>Eliminar receta</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </div>
                   </CardHeader>
+
                   <CardContent className="flex-1 space-y-4 overflow-auto">
                     <div>
                       <h3 className="font-semibold">Descripción</h3>
@@ -219,6 +289,46 @@ export default function RecetasPage() {
           </div>
         )}
       </div>
+
+      {selectedReceta && (
+        <GeneralDialog
+          open={abrirEditar}
+          onOpenChange={setAbrirEditar}
+          triggerText={null}
+          title="Editar Receta"
+          description="Modifica los datos de la receta seleccionada."
+          submitText="Actualizar Receta"
+          contentClassName="w-full max-w-[95vw] sm:max-w-5xl px-6"
+        >
+          <FormEditarReceta
+            receta={{
+              ...selectedReceta,
+              ingredientes,
+            }}
+            onSuccess={() => {
+              setAbrirEditar(false);
+              mutate(SERVICIOS_RECETAS.listar);
+            }}
+            onClose={() => {
+              setAbrirEditar(false); // 👈 cerrar modal sin mostrar toast
+            }}
+          />
+        </GeneralDialog>
+      )}
+
+      {selectedReceta && (
+        <ModalModEstado
+          abierto={abrirEliminar}
+          onCambioAbierto={setAbrirEliminar}
+          tipoAccion="inactivar"
+          nombreElemento={selectedReceta.nom_rec}
+          onConfirmar={handleEliminarReceta}
+          tituloPersonalizado="Eliminar Receta"
+          descripcionPersonalizada={`¿Está seguro de eliminar la receta "${selectedReceta.nom_rec}"? Esta acción no se puede deshacer.`}
+          textoConfirmar={eliminando ? "Eliminando..." : "Sí"}
+          textoCancelar="No"
+        />
+      )}
     </ModulePageLayout>
   );
 }
