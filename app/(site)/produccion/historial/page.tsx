@@ -74,12 +74,12 @@ export default function Page() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button variant="secondary" className="text-xs font-semibold">
+            {/* <Button variant="secondary" className="text-xs font-semibold">
               <Upload className="h-4 w-4" /> Importar
             </Button>
             <Button variant="secondary" className="text-xs font-semibold">
               <CloudDownload className="h-4 w-4" /> Exportar
-            </Button>
+            </Button> */}
           </div>
         </div>
 

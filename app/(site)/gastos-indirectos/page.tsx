@@ -55,6 +55,7 @@ import { DateRangeFilter } from "@/components/shared/ventas/ui/dateRangeFilter";
 import { DateRange } from "react-day-picker";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { safePrice } from "@/utils/format";
+import { DialogExportarGastos } from "@/components/shared/gastos/ui/dialogExportarGastos";
 export type TipoAccion = "activar" | "inactivar" | "eliminar";
 
 type AccionGasto = {
@@ -64,6 +65,7 @@ type AccionGasto = {
 };
 
 export default function Page() {
+  const [abrirExportarGastos, setAbrirExportarGastos] = useState(false);
   const { ventasConfig } = useConfiguracionesVentas();
   const [abrirCrear, setAbrirCrear] = useState(false);
   const [gastoEditar, setGastoEditar] = useState<IGasto | null>(null);
@@ -362,6 +364,7 @@ export default function Page() {
               <Upload className="h-4 w-4" /> Importar
             </Button> */}
             <Button
+              onClick={() => setAbrirExportarGastos(true)}
               className="border-border text-[12px] font-semibold"
               variant="secondary"
             >
@@ -531,6 +534,13 @@ export default function Page() {
             await eliminarGasto(accionGasto.id);
             setAccionGasto(null);
           }}
+        />
+      )}
+
+      {abrirExportarGastos && (
+        <DialogExportarGastos
+          open={abrirExportarGastos}
+          onOpenChange={setAbrirExportarGastos}
         />
       )}
     </ModulePageLayout>
