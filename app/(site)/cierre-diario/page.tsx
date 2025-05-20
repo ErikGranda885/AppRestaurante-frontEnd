@@ -58,6 +58,7 @@ import {
 } from "date-fns";
 import { safePrice } from "@/utils/format";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
+import { DialogExportarCierres } from "@/components/shared/cierreDiario/ui/dialogExportarCierres";
 
 function hayCierresAnterioresPendientes(
   lista: ICierreDiario[],
@@ -113,6 +114,8 @@ export default function Page() {
     setDateRange(newRange);
   };
   useProtectedRoute();
+  const [abrirDialogExportar, setAbrirDialogExportar] = useState(false);
+
   const { ventasConfig } = useConfiguracionesVentas();
   const router = useRouter();
   const [estadoSeleccionado, setEstadoSeleccionado] = useState<string>("");
@@ -315,6 +318,7 @@ export default function Page() {
               <Upload className="h-4 w-4" /> Importar
             </Button> */}
             <Button
+              onClick={() => setAbrirDialogExportar(true)}
               className="border-border text-[12px] font-semibold"
               variant="secondary"
             >
@@ -468,6 +472,11 @@ export default function Page() {
           )}
         </div>
       </div>
+
+      <DialogExportarCierres
+        open={abrirDialogExportar}
+        onOpenChange={setAbrirDialogExportar}
+      />
     </ModulePageLayout>
   );
 }

@@ -27,4 +27,7 @@ export const SERVICIOS_CIERRES = {
   // Eliminar un cierre por ID
   eliminarCierre: (id: number | string) =>
     `http://localhost:5000/cierres/${id}`,
+
+  exportarCierresExcel: "http://localhost:5000/cierres/reporte/excel",
+  exportarCierresPDF: "http://localhost:5000/cierres/reporte/pdf",
 };
