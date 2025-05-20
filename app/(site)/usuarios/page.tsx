@@ -45,12 +45,14 @@ import { ToastError } from "@/components/shared/toast/toastError";
 import { IRol } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { SERVICIOS } from "@/services/usuarios.service";
+
 import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
 import { BulkUploadUsersDialog } from "@/components/shared/usuarios/formularios/cargaUsers";
 import Image from "next/image";
 import { parse } from "date-fns";
 import { DEFAULT_USER_URL } from "@/lib/constants";
+import { SERVICIOS_USUARIOS } from "@/services/usuarios.service";
+import { DialogExportarUsuariosRoles } from "@/components/shared/usuarios/ui/DialogExportarUsuariosRoles";
 // Importa el componente de diálogo generalizado para confirmar acciones
 
 // Tipo de dato para los usuarios
@@ -78,6 +80,8 @@ type AccionUsuario = {
 
 export default function PaginaUsuarios() {
   // Estados
+  const [openDialogExportar, setOpenDialogExportar] = React.useState(false);
+
   const [rolOpciones, setRolOpciones] = React.useState<IRol[]>([]);
   const [usuarios, setUsuarios] = React.useState<DataUsers[]>([]);
   const ahora = new Date();
@@ -124,7 +128,7 @@ export default function PaginaUsuarios() {
 
   // Cargar usuarios utilizando el servicio centralizado
   React.useEffect(() => {
-    fetch(SERVICIOS.usuarios)
+    fetch(SERVICIOS_USUARIOS.usuarios)
       .then((res) => {
         if (!res.ok) {
           throw new Error("Error al cargar los usuarios");
@@ -160,7 +164,7 @@ export default function PaginaUsuarios() {
 
   // Cargar roles utilizando el servicio centralizado
   React.useEffect(() => {
-    fetch(SERVICIOS.roles)
+    fetch(SERVICIOS_USUARIOS.roles)
       .then((res) => {
         if (!res.ok) {
           throw new Error("Error al cargar roles");
@@ -184,7 +188,7 @@ export default function PaginaUsuarios() {
 
   // Función para inactivar un usuario (se llama después de confirmar la acción)
   const ejecutarInactivacion = (usuario: DataUsers) => {
-    fetch(SERVICIOS.inactivarUsuario(usuario.id), {
+    fetch(SERVICIOS_USUARIOS.inactivarUsuario(usuario.id), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}),
@@ -214,7 +218,7 @@ export default function PaginaUsuarios() {
 
   // Función para activar un usuario (se llama después de confirmar la acción)
   const ejecutarActivacion = (usuario: DataUsers) => {
-    fetch(SERVICIOS.activarUsuario(usuario.id), {
+    fetch(SERVICIOS_USUARIOS.activarUsuario(usuario.id), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}),
@@ -516,6 +520,7 @@ export default function PaginaUsuarios() {
               </Button>
               {/* Botón para exportar */}
               <Button
+                onClick={() => setOpenDialogExportar(true)}
                 className="border-border text-[12px] font-semibold"
                 variant="secondary"
               >
@@ -736,6 +741,11 @@ export default function PaginaUsuarios() {
             </DialogContent>
           </Dialog>
         )}
+
+        <DialogExportarUsuariosRoles
+          open={openDialogExportar}
+          onOpenChange={setOpenDialogExportar}
+        />
       </ModulePageLayout>
 
       {/* Diálogo de confirmación para activar/inactivar usuario */}
