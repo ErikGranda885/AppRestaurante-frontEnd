@@ -119,6 +119,16 @@ export default function PaginaCierreDia() {
     }
   }, [movimientos]);
 
+  useEffect(() => {
+    const puedeGuardar =
+      cierreSeleccionado?.esta_cier !== "cerrado" && file && numeroComprobante;
+
+    if (puedeGuardar) {
+      guardarDeposito();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [file, numeroComprobante]);
+
   const totalTransferenciasSistema = Array.isArray(movimientos.ventas)
     ? movimientos.ventas
         .filter((venta: any) => {
@@ -205,28 +215,19 @@ export default function PaginaCierreDia() {
   };
 
   const guardarDeposito = () => {
-    if (!file) return;
+    if (!file || !numeroComprobante) return;
 
     const MAX_SIZE_MB = 5;
     const sizeInMB = file.size / (1024 * 1024);
     const isImage = file.type.startsWith("image/");
 
-    if (!isImage) {
-      ToastSuccess({ message: "❌ El archivo debe ser una imagen." });
-      return;
-    }
-
-    if (sizeInMB > MAX_SIZE_MB) {
-      ToastSuccess({
-        message: `❌ La imagen debe pesar menos de ${MAX_SIZE_MB} MB.`,
-      });
-      return;
-    }
+    if (!isImage || sizeInMB > MAX_SIZE_MB) return;
 
     ToastSuccess({
       message: "Comprobante de depósito cargado correctamente",
     });
   };
+
   const totalSistema =
     Number(totalEfectivoSistema ?? 0) + Number(totalTransferenciasSistema ?? 0);
 
@@ -845,18 +846,6 @@ export default function PaginaCierreDia() {
                 </label>
               )}
             </div>
-
-            {/* Botón guardar */}
-            {cierreSeleccionado.esta_cier !== "cerrado" && (
-              <Button
-                variant="secondary"
-                className="w-full text-[12px] font-semibold"
-                disabled={!file || !numeroComprobante}
-                onClick={guardarDeposito}
-              >
-                Guardar Depósito
-              </Button>
-            )}
           </CardContent>
         </Card>
       </div>

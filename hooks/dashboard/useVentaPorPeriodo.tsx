@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { SERVICIOS_DASHBOARD } from "@/services/dashboard.service";
-import { ToastError } from "@/components/shared/toast/toastError";
 
 interface VentaPeriodo {
   periodo: string;
@@ -28,11 +27,23 @@ export function useVentasPorPeriodo() {
         setLoading(true);
         setError(false);
 
-        const res = await fetch(SERVICIOS_DASHBOARD.ventasPorPeriodo);
-        if (!res.ok) throw new Error("Error en fetch");
+        const [mensualRes, semanalRes, diarioRes] = await Promise.all([
+          fetch(`${SERVICIOS_DASHBOARD.ventasPorPeriodo}?tipo=mensual`),
+          fetch(`${SERVICIOS_DASHBOARD.ventasPorPeriodo}?tipo=semanal`),
+          fetch(`${SERVICIOS_DASHBOARD.ventasPorPeriodo}?tipo=diario`),
+        ]);
 
-        const data = await res.json();
-        setDatos(data);
+        if (!mensualRes.ok || !semanalRes.ok || !diarioRes.ok) {
+          throw new Error("Error en la obtención de datos");
+        }
+
+        const [mensual, semanal, diario] = await Promise.all([
+          mensualRes.json(),
+          semanalRes.json(),
+          diarioRes.json(),
+        ]);
+
+        setDatos({ mensual, semanal, diario });
       } catch (e) {
         setError(true);
       } finally {

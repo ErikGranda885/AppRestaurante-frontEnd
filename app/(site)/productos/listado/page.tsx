@@ -180,6 +180,7 @@ function ordenarProductos(
 
 export default function PaginaProductos() {
   const [abrirDialogExportar, setAbrirDialogExportar] = useState(false);
+  const [soloInsumos, setSoloInsumos] = useState(false);
 
   // Estados y hooks de la aplicación
   const exportarReporte = useExportarReporteProductos();
@@ -208,12 +209,17 @@ export default function PaginaProductos() {
 
   // Aplicar filtros y ordenamiento
   const productosFiltrados = useMemo(() => {
-    const filtrados = filtrarProductos(todosLosProductos, {
+    let filtrados = filtrarProductos(todosLosProductos, {
       categoriaSeleccionada,
       filtroMetrica,
       consultaBusqueda,
       filtroEstado,
     });
+
+    if (soloInsumos) {
+      filtrados = filtrados.filter((prod) => prod.tip_prod === "Insumo");
+    }
+
     return ordenarProductos(filtrados, criterioOrden);
   }, [
     todosLosProductos,
@@ -222,6 +228,7 @@ export default function PaginaProductos() {
     consultaBusqueda,
     filtroEstado,
     criterioOrden,
+    soloInsumos,
   ]);
 
   // Paginación
@@ -234,6 +241,7 @@ export default function PaginaProductos() {
 
   // Handlers
   const manejarSeleccionCategoria = (valor: string) => {
+    setSoloInsumos(false); // 🧠
     setCategoriaSeleccionada(valor);
     setPaginaActual(1);
   };
@@ -335,6 +343,7 @@ export default function PaginaProductos() {
                   className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
                   value={consultaBusqueda}
                   onChange={(e) => {
+                    setSoloInsumos(false); // 🧠
                     setConsultaBusqueda(e.target.value);
                     setPaginaActual(1);
                   }}
@@ -447,6 +456,7 @@ export default function PaginaProductos() {
                 </div>
               }
               onClick={() => {
+                setSoloInsumos(false);
                 manejarFiltroMetrica("all");
                 setFiltroEstado("all");
               }}
@@ -471,6 +481,7 @@ export default function PaginaProductos() {
               iconColor="text-yellow-400"
               badgeColorClass="bg-yellow-100 dark:bg-yellow-800/30 text-yellow-500 dark:text-yellow-400"
               onClick={() => {
+                setSoloInsumos(false);
                 setFiltroMetrica("critical");
                 setPaginaActual(1);
                 setFiltroEstado("Activo");
@@ -485,8 +496,30 @@ export default function PaginaProductos() {
               iconColor="text-red-500"
               badgeColorClass="bg-red-100 dark:bg-red-800/30 text-red-500 dark:text-red-400"
               onClick={() => {
+                setSoloInsumos(false);
                 setFiltroMetrica("outOfStock");
                 setFiltroEstado("Activo");
+                setPaginaActual(1);
+              }}
+            />
+
+            <MetricCard
+              titulo="Productos Insumo"
+              valor={
+                todosLosProductos.filter(
+                  (producto) => producto.tip_prod === "Insumo",
+                ).length
+              }
+              porcentaje=""
+              periodo="Materias primas o consumibles"
+              iconColor="text-indigo-500"
+              badgeColorClass="bg-indigo-100 dark:bg-indigo-800/30 text-indigo-500 dark:text-indigo-400"
+              onClick={() => {
+                setSoloInsumos(true); // ✅ ESTO ES LO QUE FALTABA
+                setFiltroEstado("all");
+                setFiltroMetrica("all");
+                setConsultaBusqueda("");
+                setCategoriaSeleccionada("");
                 setPaginaActual(1);
               }}
             />

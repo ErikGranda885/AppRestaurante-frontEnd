@@ -15,7 +15,7 @@ import {
   Search,
   Upload,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   format,
   startOfDay,
@@ -101,6 +101,9 @@ export default function Page() {
   }, []);
 
   const filtrarPorFecha = (compra: ICompra) => {
+    // Si el filtro de pendientes está activo, ya se filtra por fecha en el onClick
+    if (filtroPendientesPago) return true;
+
     const fechaCompra = new Date(compra.fech_comp);
     const desde = dateRange?.from ? startOfDay(dateRange.from) : null;
     const hasta = dateRange?.to ? endOfDay(dateRange.to) : null;
@@ -111,6 +114,7 @@ export default function Page() {
   };
 
   const handleQuickRange = (option: "hoy" | "ayer" | "mes" | "año") => {
+    setFiltroPendientesPago(false);
     let newRange: DateRange | null = null;
 
     if (option === "hoy") {
@@ -146,18 +150,20 @@ export default function Page() {
     setDateRange(newRange);
   };
 
-  const comprasFiltradas = compras.filter(
-    (compra) =>
-      (compra.fech_comp
-        .toLowerCase()
-        .includes(consultaBusqueda.toLowerCase()) ||
-        compra.estado_comp
+  const comprasFiltradas = useMemo(() => {
+    return compras.filter(
+      (compra) =>
+        (compra.fech_comp
           .toLowerCase()
-          .includes(consultaBusqueda.toLowerCase())) &&
-      filtrarPorFecha(compra) &&
-      (!filtroPendientesPago ||
-        compra.estado_pag_comp.toLowerCase() === "pendiente"),
-  );
+          .includes(consultaBusqueda.toLowerCase()) ||
+          compra.estado_comp
+            .toLowerCase()
+            .includes(consultaBusqueda.toLowerCase())) &&
+        filtrarPorFecha(compra) &&
+        (!filtroPendientesPago ||
+          compra.estado_pag_comp.toLowerCase() === "pendiente"),
+    );
+  }, [compras, consultaBusqueda, dateRange, filtroPendientesPago]);
 
   const comprasColumnas = [
     {
@@ -309,7 +315,13 @@ export default function Page() {
               {/* Selector de fechas */}
               <div className="flex items-center gap-3">
                 {/* Filtro de fechas */}
-                <DateRangeFilter value={dateRange} onChange={setDateRange} />
+                <DateRangeFilter
+                  value={dateRange}
+                  onChange={(range) => {
+                    setFiltroPendientesPago(false);
+                    setDateRange(range);
+                  }}
+                />
 
                 {/* dropdown de fechas */}
                 <DropdownMenu>
@@ -414,8 +426,45 @@ export default function Page() {
 
               <div className="flex-1">
                 <div
-                  onClick={() => setFiltroPendientesPago((prev) => !prev)}
-                  className={`bg-blanco group flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a]`}
+                  onClick={() => {
+                    setFiltroPendientesPago((prev) => {
+                      const nuevoEstado = !prev;
+
+                      if (nuevoEstado) {
+                        // Si se activa el filtro, establecer la fecha de la compra pendiente más reciente
+                        const pendientes = compras.filter(
+                          (c) =>
+                            c.estado_pag_comp.toLowerCase() === "pendiente",
+                        );
+
+                        if (pendientes.length > 0) {
+                          const fechas = pendientes.map(
+                            (c) => new Date(c.fech_comp),
+                          );
+                          const fechaMax = new Date(
+                            Math.max.apply(
+                              null,
+                              fechas.map((d) => d.getTime()),
+                            ),
+                          );
+
+                          setDateRange({
+                            from: startOfDay(fechaMax),
+                            to: endOfDay(fechaMax),
+                          });
+
+                          setLabelQuickRange("Automático");
+                        }
+                      }
+
+                      return nuevoEstado;
+                    });
+                  }}
+                  className={`group flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg ${
+                    filtroPendientesPago
+                      ? "border-yellow-400 bg-yellow-50 dark:bg-yellow-900/10"
+                      : "bg-blanco dark:border-border dark:bg-[#1a1a1a]"
+                  }`}
                 >
                   <div className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
                     <div className="flex-1">
@@ -466,6 +515,7 @@ export default function Page() {
 
           <div className="px-6 pb-4">
             <DataTable<ICompra>
+              key={filtroPendientesPago ? "pendientes" : "todas"}
               data={comprasFiltradas}
               columns={comprasColumnas}
               onRowClick={(compra: ICompra) => {

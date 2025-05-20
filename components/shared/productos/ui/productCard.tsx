@@ -117,19 +117,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-gray-800 shadow transition-colors duration-200 hover:bg-blue-100 dark:bg-gray-800 dark:hover:bg-gray-700">
-                  <Eye className="dark:text-white" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Mostrar</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
                 <Button
                   onClick={() => onEdit(product)}
                   className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-blue-600 shadow transition-colors duration-200 hover:bg-blue-200 dark:bg-gray-800 dark:hover:bg-blue-900"

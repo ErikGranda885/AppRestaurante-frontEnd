@@ -109,14 +109,14 @@ export function GraficoVentasPorPeriodo() {
                   />
                   <Line
                     type="monotone"
-                    dataKey="ventas"
+                    dataKey="total"
                     stroke="#bcbcbc"
                     strokeWidth={2}
                     dot={{ fill: "#3eab78" }}
                     activeDot={{ r: 6 }}
                   >
                     <LabelList
-                      dataKey="ventas"
+                      dataKey="total"
                       position="top"
                       offset={10}
                       formatter={formatCurrency}
