@@ -17,8 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton"; // Asegúrate de importar tu Skeleton
-
+import { Skeleton } from "@/components/ui/skeleton";
 import { useVentasPorCategoria } from "@/hooks/dashboard/useVentasPorCategoria";
 import { safePrice } from "@/utils/format";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
@@ -67,7 +66,7 @@ export function GraficoVentasPorCategoria() {
         )}
       </CardHeader>
 
-      <CardContent className="h-[180px] px-5">
+      <CardContent className="h-[220px] px-5">
         {mostrarSkeleton ? (
           <div className="flex h-full w-full items-center justify-center">
             <Skeleton className="h-[140px] w-full" />
@@ -80,16 +79,26 @@ export function GraficoVentasPorCategoria() {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={datosFormateados}
-              margin={{ top: 10, right: 10, left: -11, bottom: 0 }}
+              margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
               className="dark:text-black"
             >
-              <XAxis dataKey="nombre" stroke="#888888" />
+              <XAxis
+                dataKey="nombre"
+                stroke="#888888"
+                angle={-0}
+                textAnchor="end"
+                height={60}
+                fontSize={10}
+                interval={0}
+                className="text-xs"
+              />
               <YAxis
                 stroke="#888888"
-                tickFormatter={(valor) => formatearDinero(valor)}
+                tickFormatter={(valor) => `$${valor.toFixed(2)}`}
+                fontSize={10}
               />
               <Tooltip
-                formatter={(valor: number) => formatearDinero(valor)}
+                formatter={(valor: number) => `$${valor.toFixed(2)}`}
                 labelClassName="text-xs"
               />
               <Bar dataKey="vendido" radius={[4, 4, 0, 0]}>
