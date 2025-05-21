@@ -158,11 +158,11 @@ export function DialogNumeracionEfectivo({
             variant="ghost"
             onClick={() => {
               onOpenChange(false);
-              router.push("/cierre-diario");
             }}
           >
             Cancelar
           </Button>
+
           <Button onClick={handleGuardar}>Guardar</Button>
         </DialogFooter>
       </DialogContent>

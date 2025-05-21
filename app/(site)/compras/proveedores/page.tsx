@@ -249,14 +249,14 @@ export default function Dashboard() {
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
+              <Button variant="ghost" className="h-8 w-8 p-0 ">
                 <MoreHorizontal />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="border-border">
               <DropdownMenuLabel>Acciones</DropdownMenuLabel>
               <DropdownMenuItem
-                className="cursor-pointer"
+                className="cursor-pointer "
                 onClick={() => {
                   setProveedorEditando(proveedor);
                   setAbrirEditar(true);

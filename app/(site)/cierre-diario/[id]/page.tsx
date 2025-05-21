@@ -853,10 +853,16 @@ export default function PaginaCierreDia() {
       {cierreSeleccionado.esta_cier !== "cerrado" && (
         <DialogNumeracionEfectivo
           open={openDialogNumeracion}
-          onOpenChange={(open) => setOpenDialogNumeracion(open)}
+          onOpenChange={(open) => {
+            if (!open) {
+              // Cualquier forma de cerrar el diálogo (X, click fuera, botón cancelar)
+              router.push("/cierre-diario");
+            }
+          }}
           onGuardar={(total) => {
             setTotalEfectivo(total);
             localStorage.setItem("totalEfectivo", total.toString());
+            setOpenDialogNumeracion(false); // Cierra el modal si se guarda
           }}
         />
       )}

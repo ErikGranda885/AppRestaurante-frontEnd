@@ -350,7 +350,7 @@ export default function PaginaProductos() {
                 />
               </div>
               {/* Dropdown para ordenar */}
-              <DropdownMenu>
+              <DropdownMenu >
                 <DropdownMenuTrigger asChild>
                   <Button
                     className="border-border text-[12px] font-semibold"
@@ -359,7 +359,7 @@ export default function PaginaProductos() {
                     <SlidersHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56">
+                <DropdownMenuContent className="w-56 border-border">
                   <DropdownMenuLabel>Ordenar por:</DropdownMenuLabel>
                   <DropdownMenuGroup>
                     <DropdownMenuItem

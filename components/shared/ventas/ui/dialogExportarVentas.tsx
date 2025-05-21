@@ -124,7 +124,7 @@ export function DialogExportarVentas({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md border-border">
         <DialogHeader>
           <DialogTitle>Exportar reporte de ventas</DialogTitle>
         </DialogHeader>

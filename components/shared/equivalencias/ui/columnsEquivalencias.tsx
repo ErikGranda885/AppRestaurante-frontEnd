@@ -62,7 +62,7 @@ export const columnsEquivalencias = ({
         const estado = estadoOriginal.toLowerCase();
 
         let colorCirculo = "bg-gray-500";
-        let colorTexto = "text-gray-600";
+        let colorTexto = "dark:text-white";
 
         switch (estado) {
           case "activo":

@@ -2,7 +2,6 @@
 
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { GeneralDialog } from "@/components/shared/varios/dialogGen";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { Plus, Search } from "lucide-react";
