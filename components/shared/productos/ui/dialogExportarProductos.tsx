@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { DateRange } from "react-day-picker";
 import { Label } from "@/components/ui/label";
-import { FileJson2, FileSpreadsheet, FileText, Download } from "lucide-react";
+import { FileSpreadsheet, FileText, Download } from "lucide-react";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
 import { DateRangeFilter } from "../../ventas/ui/dateRangeFilter";
@@ -28,6 +28,13 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
+
+function formatDateToYMD(date: Date) {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 interface Props {
   open: boolean;
@@ -46,11 +53,18 @@ export function DialogExportarProductos({ open, onOpenChange }: Props) {
   const handleExportar = async () => {
     setLoading(true);
     try {
-      let url = "";
-      const desde = range.from?.toISOString().split("T")[0];
-      const hasta = range.to?.toISOString().split("T")[0];
+      const desde = range.from ? formatDateToYMD(range.from) : undefined;
+      const hasta = range.to ? formatDateToYMD(range.to) : undefined;
 
-      console.log("Fechas enviadas al backend:", { desde, hasta });
+      console.log("DateRange original:", range);
+      console.log("Fechas enviadas al backend:", {
+        desde,
+        hasta,
+        tipoReporte,
+        formato,
+      });
+
+      let url = "";
 
       if (formato === "excel") {
         url =
@@ -95,9 +109,9 @@ export function DialogExportarProductos({ open, onOpenChange }: Props) {
 
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      const nombreArchivo = `reporte_${tipoReporte}_$${
-        desde || "inicio"
-      }_$${hasta || "hoy"}.${formato === "excel" ? "xlsx" : formato}`;
+      const nombreArchivo = `reporte_${tipoReporte}_$${desde || "inicio"}_$${hasta || "hoy"}.${
+        formato === "excel" ? "xlsx" : formato
+      }`;
       link.download = nombreArchivo;
       link.click();
 
@@ -112,7 +126,7 @@ export function DialogExportarProductos({ open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md border-border">
+      <DialogContent className="border-border sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Exportar reporte de productos</DialogTitle>
         </DialogHeader>
@@ -147,7 +161,6 @@ export function DialogExportarProductos({ open, onOpenChange }: Props) {
               <div className="flex gap-2 pt-1">
                 {(
                   [
-                    
                     {
                       value: "excel",
                       label: "Excel",
