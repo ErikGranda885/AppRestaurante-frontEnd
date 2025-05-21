@@ -38,6 +38,8 @@ import { SERVICIOS_VENTAS } from "@/services/ventas.service";
 import { ValidarPagoDialog } from "@/components/shared/dashboard/ui/validarPagoDialog";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { safePrice } from "@/utils/format";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 function formatoMoneda(valor: any): string {
   return typeof valor === "number"
@@ -259,12 +261,19 @@ export default function PaginaCierreDia() {
           <div className="flex items-center justify-center">
             <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
               Cierre Diario:
-              <span className="ml-2 text-lg font-semibold">
-                {new Date(fechaCierre).toLocaleDateString("es-EC", {
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                })}
+              <span className="ml-2 text-lg font-semibold" title={fechaCierre}>
+                {(() => {
+                  if (!fechaCierre) return "";
+                  const [year, month, day] = fechaCierre.split("-");
+                  const fecha = new Date(
+                    Number(year),
+                    Number(month) - 1,
+                    Number(day),
+                  );
+                  return format(fecha, "dd 'de' MMMM 'de' yyyy", {
+                    locale: es,
+                  });
+                })()}
               </span>
             </h1>
           </div>

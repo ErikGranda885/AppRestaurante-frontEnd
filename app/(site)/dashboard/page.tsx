@@ -322,44 +322,53 @@ export default function Dashboard() {
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between py-5">
                       <CardTitle className="text-md font-semibold">
-                        Productos por Caducar
+                        Productos por Caducidad
                       </CardTitle>
-                      {/* <span className="cursor-pointer text-xs font-medium text-blue-500 hover:underline">
-                        Ver Todos
-                      </span> */}
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4 pt-1">
                     {caducar.length === 0 ? (
                       <p className="text-start text-sm text-muted-foreground">
-                        No hay productos por caducar.
+                        No hay productos con fecha registrados
                       </p>
                     ) : (
-                      caducar.map((prod) => (
-                        <div key={prod.id} className="flex items-center gap-3">
-                          <Image
-                            src={prod.img}
-                            alt={prod.name}
-                            width={28}
-                            height={28}
-                            className="rounded-md object-cover"
-                          />
-                          <div className="flex flex-col">
-                            <p
-                              className="max-w-[180px] truncate text-sm font-medium"
-                              title={prod.name}
-                            >
-                              {prod.name}
-                            </p>
-                            <p className="text-xs text-red-400">
-                              Vence en:{" "}
-                              <span className="font-semibold">
-                                {prod.expiresIn}
-                              </span>
-                            </p>
+                      caducar.map((prod) => {
+                        const dias = parseInt(prod.expiresIn); // Asegúrate de que sea un número
+
+                        let color = "text-green-500";
+                        if (dias <= 1) color = "error-text";
+                        else if (dias <= 3) color = "text-orange-500";
+                        else if (dias <= 7) color = "text-yellow-500";
+
+                        return (
+                          <div
+                            key={prod.id}
+                            className="flex items-center gap-3"
+                          >
+                            <Image
+                              src={prod.img}
+                              alt={prod.name}
+                              width={28}
+                              height={28}
+                              className="rounded-md object-cover"
+                            />
+                            <div className="flex flex-col">
+                              <p
+                                className="max-w-[180px] truncate text-sm font-medium"
+                                title={prod.name}
+                              >
+                                {prod.name}
+                              </p>
+                              <p className={`text-xs ${color}`}>
+                                Vence en:{" "}
+                                <span className="font-semibold">
+                                  {prod.expiresIn}
+                                </span>
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                   </CardContent>
                 </Card>

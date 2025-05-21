@@ -1,7 +1,6 @@
 "use client";
 
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
-import { GeneralDialog } from "@/components/shared/varios/dialogGen";
 import { DataTable } from "@/components/shared/varios/dataTable";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,7 +17,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Plus,
   Search,
   Upload,
   CloudDownload,
@@ -27,19 +25,17 @@ import {
   AlertTriangle,
   MoreHorizontal,
   CheckCircle,
-  Clock,
 } from "lucide-react";
 import React, { useState } from "react";
 
 import { useRouter } from "next/navigation";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
-import { useFechaLocal } from "@/hooks/cierresDiarios/useFechaLocal";
 import { useResumenPendiente } from "@/hooks/cierresDiarios/useResumenPendiente";
 import { ICierreDiario } from "@/lib/types";
 import { useCargarCierres } from "@/hooks/cierresDiarios/useCargarCierres";
 import { useListaCierres } from "@/hooks/cierresDiarios/useListaCierres";
 import { useResumenCierres } from "@/hooks/cierresDiarios/useResumenCierres";
-import { ColumnDef, Row } from "@tanstack/react-table";
+import { ColumnDef } from "@tanstack/react-table";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { DateRangeFilter } from "@/components/shared/ventas/ui/dateRangeFilter";
 import { DateRange } from "react-day-picker";
@@ -49,6 +45,7 @@ import {
   endOfToday,
   endOfYear,
   endOfYesterday,
+  format,
   startOfDay,
   startOfMonth,
   startOfToday,
@@ -59,6 +56,7 @@ import {
 import { safePrice } from "@/utils/format";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { DialogExportarCierres } from "@/components/shared/cierreDiario/ui/dialogExportarCierres";
+import { es } from "date-fns/locale";
 
 function hayCierresAnterioresPendientes(
   lista: ICierreDiario[],
@@ -78,6 +76,20 @@ export default function Page() {
   });
   const [labelQuickRange, setLabelQuickRange] = useState("Hoy");
 
+  // Nueva función que reemplaza directamente el setDateRange original
+  const handleSetDateRange = (range: DateRange | undefined) => {
+    setDateRange(range ?? { from: undefined, to: undefined });
+
+    if (range?.from && range?.to) {
+      console.log("🗓️ Fechas seleccionadas:");
+      console.log("Desde:", format(range.from, "yyyy-MM-dd"));
+      console.log("Hasta:", format(range.to, "yyyy-MM-dd"));
+    } else {
+      console.log("🚫 Rango de fechas incompleto o limpiado.");
+    }
+  };
+
+  // Función para rangos rápidos
   const handleQuickRange = (option: "hoy" | "ayer" | "mes" | "año") => {
     let newRange: DateRange | null = null;
 
@@ -107,11 +119,10 @@ export default function Page() {
       };
       setLabelQuickRange("Este año");
     } else {
-      // Si la opción no es válida, no hace nada
       return;
     }
 
-    setDateRange(newRange);
+    handleSetDateRange(newRange); // usamos el nuevo manejador
   };
   useProtectedRoute();
   const [abrirDialogExportar, setAbrirDialogExportar] = useState(false);
@@ -162,19 +173,20 @@ export default function Page() {
       accessorKey: "fech_cier",
       header: "Fecha de Cierre",
       cell: ({ getValue }) => {
-        const fechaCierre = new Date(getValue() as string)
-          .toISOString()
-          .split("T")[0];
-        const esHoy = fechaCierre === fechaActualStr;
-        return esHoy
-          ? "Hoy"
-          : new Date(getValue() as string).toLocaleDateString("es-ES", {
-              day: "2-digit",
-              month: "long",
-              year: "numeric",
-            });
+        const [year, month, day] = (getValue() as string).split("-");
+        const fecha = new Date(Number(year), Number(month) - 1, Number(day));
+        const esHoy = format(fecha, "yyyy-MM-dd") === fechaActualStr;
+
+        return (
+          <span title={format(fecha, "yyyy-MM-dd")}>
+            {esHoy
+              ? "Hoy"
+              : format(fecha, "dd 'de' MMMM 'de' yyyy", { locale: es })}
+          </span>
+        );
       },
     },
+
     {
       accessorKey: "tot_vent_cier",
       header: "Total Ventas",
@@ -242,7 +254,8 @@ export default function Page() {
   useCargarCierres({
     estadoSeleccionado,
     setCierres,
-    dateRange: estadoSeleccionado === "Cerrado" ? dateRange : undefined,
+    dateRange:
+      estadoSeleccionado.toLowerCase() === "cerrado" ? dateRange : undefined,
   });
 
   return (
@@ -266,7 +279,10 @@ export default function Page() {
             {estadoSeleccionado === "cerrado" && (
               <>
                 {/* Filtro por rango de fechas */}
-                <DateRangeFilter value={dateRange} onChange={setDateRange} />
+                <DateRangeFilter
+                  value={dateRange}
+                  onChange={handleSetDateRange}
+                />
 
                 {/* Dropdown de fechas rápidas */}
                 <DropdownMenu>

@@ -21,39 +21,34 @@ export function useCargarCierres({
       try {
         let datos: ICierreDiario[] = [];
 
-        const desde = dateRange?.from
-          ? format(dateRange.from, "yyyy-MM-dd")
-          : undefined;
-        const hasta = dateRange?.to
-          ? format(dateRange.to, "yyyy-MM-dd")
-          : undefined;
-
+        const estado = estadoSeleccionado?.toLowerCase().trim(); // normalizado
         const queryParams = new URLSearchParams();
-        if (desde && hasta) {
+
+        // Solo incluir fechas si el estado es 'cerrado'
+        if (estado === "cerrado" && dateRange?.from && dateRange?.to) {
+          const desde = format(dateRange.from, "yyyy-MM-dd");
+          const hasta = format(dateRange.to, "yyyy-MM-dd");
           queryParams.append("desde", desde);
           queryParams.append("hasta", hasta);
         }
 
-        // 🔄 Cargar según estado
-        if (!estadoSeleccionado) {
-          // 🔹 Sin filtro: cargar todos
+        if (!estado) {
+          // Sin filtro
           const res = await fetch(
             `${SERVICIOS_CIERRES.listarCierres}?${queryParams.toString()}`,
           );
           datos = await res.json();
-        } else if (estadoSeleccionado === "por cerrar") {
-          // 🔹 Filtro por cerrar
+        } else if (estado === "por cerrar") {
           const res = await fetch(
             `${SERVICIOS_CIERRES.listarPorCerrar}?${queryParams.toString()}`,
           );
           datos = await res.json();
         } else {
-          // 🔹 Filtro específico
-          const estadoBackend =
-            estadoSeleccionado === "pendientes"
-              ? "pendiente"
-              : estadoSeleccionado;
-          queryParams.append("estado", estadoBackend);
+          // pendientes o cerrado
+          queryParams.append(
+            "estado",
+            estado === "pendientes" ? "pendiente" : estado,
+          );
           const res = await fetch(
             `${SERVICIOS_CIERRES.listarCierres}?${queryParams.toString()}`,
           );
@@ -63,6 +58,7 @@ export function useCargarCierres({
         setCierres(datos);
       } catch (err) {
         console.error("❌ Error cargando cierres:", err);
+        setCierres([]);
       }
     };
 
