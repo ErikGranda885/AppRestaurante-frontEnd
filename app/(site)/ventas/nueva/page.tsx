@@ -892,10 +892,14 @@ export default function Page() {
           open={showDialogComprobante}
           onOpenChange={(open) => {
             setShowDialogComprobante(open);
-            if (!open && (!comprobanteNumero || !comprobanteImagen)) {
-              setComprobanteNumero("");
-              setComprobanteImagen(null);
-              setMetodoPago("efectivo");
+
+            if (!open) {
+              // Solo resetea si no se ha confirmado
+              if (!pagoTransferenciaConfirmado) {
+                setComprobanteNumero("");
+                setComprobanteImagen(null);
+                setMetodoPago("efectivo");
+              }
             }
           }}
         >
@@ -941,6 +945,8 @@ export default function Page() {
                   setShowDialogComprobante(false);
                   setComprobanteNumero("");
                   setComprobanteImagen(null);
+                  setMetodoPago("efectivo");
+                  setPagoTransferenciaConfirmado(false);
                 }}
               >
                 Cancelar
@@ -953,6 +959,8 @@ export default function Page() {
                     setShowDialogComprobante(false);
                   }
                 }}
+                disabled={!comprobanteNumero || !comprobanteImagen}
+                className="disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Confirmar
               </Button>

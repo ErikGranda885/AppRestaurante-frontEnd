@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 
 interface ComprobanteCamaraProps {
@@ -15,45 +15,60 @@ export default function ComprobanteCamara({
   activarCamara,
 }: ComprobanteCamaraProps) {
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [cargandoCamara, setCargandoCamara] = useState(false);
+  const streamRef = useRef<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  useEffect(() => {
-    const iniciarCamara = async () => {
-      try {
-        const newStream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-        });
-        if (videoRef.current) {
-          videoRef.current.srcObject = newStream;
-          await videoRef.current.play();
-        }
-        setStream(newStream);
-      } catch (err) {
-        console.error("Error al acceder a la cámara:", err);
-      }
-    };
-
-    if (activarCamara && !imagenActual) {
-      iniciarCamara();
-    } else {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-        setStream(null);
-      }
+  const detenerCamara = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
     }
+  };
 
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-        setStream(null);
+  const iniciarCamara = useCallback(async () => {
+    try {
+      setCargandoCamara(true);
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
       }
+      streamRef.current = stream;
+    } catch (err) {
+      console.error("Error al acceder a la cámara:", err);
+    } finally {
+      setCargandoCamara(false);
+    }
+  }, []);
+
+  // Carga imagen si ya existe y genera la vista previa
+  useEffect(() => {
+    if (imagenActual) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFotoUrl(reader.result as string);
+      };
+      reader.readAsDataURL(imagenActual);
+    } else {
+      setFotoUrl(null);
+    }
+  }, [imagenActual]);
+
+  // Activación automática de cámara si no hay imagen ni foto
+  useEffect(() => {
+    if (activarCamara && !imagenActual && !fotoUrl && !streamRef.current) {
+      iniciarCamara();
+    }
+    return () => {
+      detenerCamara();
     };
-  }, [activarCamara, imagenActual]);
+  }, [activarCamara, imagenActual, fotoUrl, iniciarCamara]);
 
   const capturarFoto = () => {
     if (!videoRef.current || !canvasRef.current) return;
+
     const ctx = canvasRef.current.getContext("2d");
     if (!ctx) return;
 
@@ -63,11 +78,7 @@ export default function ComprobanteCamara({
 
     const dataUrl = canvasRef.current.toDataURL("image/png");
     setFotoUrl(dataUrl);
-
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      setStream(null);
-    }
+    detenerCamara();
 
     fetch(dataUrl)
       .then((res) => res.blob())
@@ -79,13 +90,13 @@ export default function ComprobanteCamara({
 
   return (
     <div>
-      {!imagenActual && !stream && (
+      {cargandoCamara && (
         <Button variant="secondary" className="mt-2" disabled>
           Cargando cámara...
         </Button>
       )}
 
-      {stream && !imagenActual && (
+      {!imagenActual && streamRef.current && !fotoUrl && (
         <div className="mt-2">
           <video
             ref={videoRef}
@@ -100,7 +111,7 @@ export default function ComprobanteCamara({
         </div>
       )}
 
-      {imagenActual && fotoUrl && (
+      {fotoUrl && (
         <div className="mt-3 rounded border border-border p-2">
           <p className="mb-2 text-sm text-gray-700 dark:text-gray-300">
             Previsualización:
@@ -116,6 +127,7 @@ export default function ComprobanteCamara({
             onClick={() => {
               setFotoUrl(null);
               onFotoTomada(null);
+              iniciarCamara();
             }}
           >
             Reintentar
