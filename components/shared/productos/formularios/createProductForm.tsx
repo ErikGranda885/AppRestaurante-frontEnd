@@ -29,9 +29,7 @@ const EsquemaFormulario = z
       .nonempty("El nombre del producto es requerido")
       .refine(
         async (nombre: string) => {
-          return fetch(
-            `http://localhost:5000/productos/verificar?nombre=${encodeURIComponent(nombre)}`,
-          )
+          return fetch(SERVICIOS_PRODUCTOS.verificarNombre(nombre))
             .then((res) => res.json())
             .then((data) => !data.exists);
         },

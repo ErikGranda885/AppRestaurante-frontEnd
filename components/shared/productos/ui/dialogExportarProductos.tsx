@@ -63,9 +63,7 @@ export function DialogExportarProductos({ open, onOpenChange }: Props) {
         tipoReporte,
         formato,
       });
-
       let url = "";
-
       if (formato === "excel") {
         url =
           tipoReporte === "insumos"

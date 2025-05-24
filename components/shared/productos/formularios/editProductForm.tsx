@@ -16,6 +16,7 @@ import { CampoSelectUnidad } from "../ui/campoSelectUnidad";
 import { CampoSelectTipo } from "../ui/campoTipo";
 import { eliminarImagen } from "@/firebase/eliminarImage";
 import { DEFAULT_PRODUCT_IMAGE_URL } from "@/lib/constants";
+import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
 
 const initialProductNameRef = { current: "" };
 
@@ -28,9 +29,7 @@ const EsquemaFormulario = z
       .refine(
         async (nombre: string) => {
           if (nombre === initialProductNameRef.current) return true;
-          const res = await fetch(
-            `http://localhost:5000/productos/verificar?nombre=${encodeURIComponent(nombre)}`,
-          );
+          const res = await fetch(SERVICIOS_PRODUCTOS.verificarNombre(nombre));
           const data = await res.json();
           return !data.exists;
         },
@@ -147,7 +146,7 @@ export function EditProductForm({
       };
 
       const res = await fetch(
-        `http://localhost:5000/productos/${initialData.id}`,
+        SERVICIOS_PRODUCTOS.actualizarProducto(parseInt(initialData.id)),
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

@@ -48,6 +48,7 @@ import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
 import { SERVICIOS_INVENTARIO } from "@/services/inventario.service";
 import { useExportarReporteProductos } from "@/hooks/productos/useExportarReporteProductos";
 import { DialogExportarProductos } from "@/components/shared/productos/ui/dialogExportarProductos";
+import useSWR from "swr";
 
 // Tipos y constantes globales
 export type Opcion = {
@@ -87,30 +88,20 @@ function useObtenerCategorias() {
   return opcionesCategorias;
 }
 
-// Hook para cargar productos
-function useObtenerProductos() {
-  const [todosLosProductos, setTodosLosProductos] = useState<IProduct[]>([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-  useEffect(() => {
-    async function obtenerProductos() {
-      try {
-        const respuesta = await fetch(SERVICIOS_INVENTARIO.productosConStock);
-        if (!respuesta.ok)
-          throw new Error("Error al cargar productos con stock");
-        const datos = await respuesta.json();
-        setTodosLosProductos(datos);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setCargando(false);
-      }
-    }
-    obtenerProductos();
-  }, []);
+export function useProductosConStock() {
+  const { data, error, isLoading, mutate } = useSWR(
+    SERVICIOS_INVENTARIO.productosConStock,
+    fetcher,
+  );
 
-  return { todosLosProductos, cargando, error, setTodosLosProductos };
+  return {
+    todosLosProductos: data ?? [],
+    cargando: isLoading,
+    error: error?.message ?? null,
+    refetch: mutate, // para que puedas usarlo en el asistente si deseas
+  };
 }
 
 // Funciones para filtrar y ordenar productos
@@ -204,8 +195,8 @@ export default function PaginaProductos() {
 
   useProtectedRoute();
   const opcionesCategorias = useObtenerCategorias();
-  const { todosLosProductos, cargando, error, setTodosLosProductos } =
-    useObtenerProductos();
+  const { todosLosProductos, cargando, error, refetch } =
+    useProductosConStock();
 
   // Aplicar filtros y ordenamiento
   const productosFiltrados = useMemo(() => {
@@ -264,13 +255,7 @@ export default function PaginaProductos() {
           { method: "PUT" },
         );
         if (!respuesta.ok) throw new Error("Error al inactivar el producto");
-        setTodosLosProductos((prev) =>
-          prev.map((p) =>
-            p.id_prod === productoAccion.id_prod
-              ? { ...p, est_prod: "Inactivo" }
-              : p,
-          ),
-        );
+        refetch();
         ToastSuccess({ message: "Producto inactivado exitosamente." });
       } else {
         const respuesta = await fetch(
@@ -278,13 +263,8 @@ export default function PaginaProductos() {
           { method: "PUT" },
         );
         if (!respuesta.ok) throw new Error("Error al activar el producto");
-        setTodosLosProductos((prev) =>
-          prev.map((p) =>
-            p.id_prod === productoAccion.id_prod
-              ? { ...p, est_prod: "Activo" }
-              : p,
-          ),
-        );
+        refetch();
+
         ToastSuccess({ message: "Producto activado exitosamente." });
       }
     } catch (error) {
@@ -326,7 +306,7 @@ export default function PaginaProductos() {
             >
               <FormProducts
                 onSuccess={(data: any) => {
-                  setTodosLosProductos((prev) => [...prev, data.producto]);
+                  refetch();
                   setAbrirCrear(false);
                 }}
               />
@@ -350,7 +330,7 @@ export default function PaginaProductos() {
                 />
               </div>
               {/* Dropdown para ordenar */}
-              <DropdownMenu >
+              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     className="border-border text-[12px] font-semibold"
@@ -434,7 +414,7 @@ export default function PaginaProductos() {
                       <strong>
                         {
                           todosLosProductos.filter(
-                            (p) => p.est_prod === "Activo",
+                            (p: IProduct) => p.est_prod === "Activo",
                           ).length
                         }
                       </strong>
@@ -447,7 +427,7 @@ export default function PaginaProductos() {
                       <strong>
                         {
                           todosLosProductos.filter(
-                            (p) => p.est_prod === "Inactivo",
+                            (p: IProduct) => p.est_prod === "Inactivo",
                           ).length
                         }
                       </strong>
@@ -466,7 +446,7 @@ export default function PaginaProductos() {
               titulo="Stock Crítico"
               valor={
                 todosLosProductos.filter(
-                  (producto) =>
+                  (producto: any) =>
                     producto.stock_prod <= stockCritico &&
                     producto.stock_prod > 0,
                 ).length
@@ -490,7 +470,10 @@ export default function PaginaProductos() {
 
             <MetricCard
               titulo="Productos Agotados"
-              valor={todosLosProductos.filter((p) => p.stock_prod === 0).length}
+              valor={
+                todosLosProductos.filter((p: IProduct) => p.stock_prod === 0)
+                  .length
+              }
               porcentaje=""
               periodo="Sin stock - Reposición inmediata"
               iconColor="text-red-500"
@@ -507,7 +490,7 @@ export default function PaginaProductos() {
               titulo="Productos Insumo"
               valor={
                 todosLosProductos.filter(
-                  (producto) => producto.tip_prod === "Insumo",
+                  (producto: any) => producto.tip_prod === "Insumo",
                 ).length
               }
               porcentaje=""
@@ -541,10 +524,7 @@ export default function PaginaProductos() {
               {abrirCargaMasiva && (
                 <BulkUploadProductDialog
                   onSuccess={(nuevosProductos: IProduct[]) => {
-                    setTodosLosProductos((prev) => [
-                      ...prev,
-                      ...nuevosProductos,
-                    ]);
+                    refetch();
                     setAbrirCargaMasiva(false);
                   }}
                   onClose={() => setAbrirCargaMasiva(false)}
@@ -678,15 +658,7 @@ export default function PaginaProductos() {
                     nom_cate: opcionCategoria ? opcionCategoria.label : "",
                   },
                 };
-
-                setTodosLosProductos((prev) =>
-                  prev.map((p) =>
-                    p.id_prod.toString() ===
-                    productoActualizado.id_prod.toString()
-                      ? productoConCategoria
-                      : p,
-                  ),
-                );
+                refetch();
                 setProductoEditar(null);
               }}
             />

@@ -15,6 +15,7 @@ import { ToastSuccess } from "../../toast/toastSuccess";
 import { Download } from "lucide-react";
 import { DropzoneFile } from "../../varios/dropzoneFile";
 import { DEFAULT_PRODUCT_IMAGE_URL } from "@/lib/constants";
+import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
 
 interface BulkUploadProductDialogProps {
   categoryOptions: { value: string; label: string }[];
@@ -186,7 +187,7 @@ export function BulkUploadProductDialog({
         return;
       }
 
-      const res = await fetch("http://localhost:5000/productos/masivo", {
+      const res = await fetch(SERVICIOS_PRODUCTOS.guardarMasivoProductos, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(processedData),
@@ -234,7 +235,7 @@ export function BulkUploadProductDialog({
               onClick={async () => {
                 try {
                   const response = await fetch(
-                    "http://localhost:5000/productos/plantilla",
+                    SERVICIOS_PRODUCTOS.descagarPlantillaProducto,
                   );
                   const blob = await response.blob();
                   const url = window.URL.createObjectURL(blob);

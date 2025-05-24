@@ -1,6 +1,8 @@
 export const SERVICIOS_PRODUCTOS = {
   categorias: "http://localhost:5000/categorias",
   productos: "http://localhost:5000/productos",
+  descagarPlantillaProducto: "http://localhost:5000/productos/plantilla",
+  guardarMasivoProductos: "http://localhost:5000/productos/masivo",
 
   inactivarProducto: (id: number) =>
     `http://localhost:5000/productos/inactivar/${id}`,
@@ -54,4 +56,7 @@ export const SERVICIOS_PRODUCTOS = {
     if (hasta) params.push(`hasta=${hasta}`);
     return params.length ? `${url}?${params.join("&")}` : url;
   },
+  // 🔽 Verificación de nombre de producto
+  verificarNombre: (nombre: string) =>
+    `http://localhost:5000/productos/verificar?nombre=${encodeURIComponent(nombre)}`,
 };
