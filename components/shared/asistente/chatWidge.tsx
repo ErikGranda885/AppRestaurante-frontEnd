@@ -159,23 +159,41 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
     }
 
     if (flowProducto) {
-      await handleFlowProducto(texto, flowProducto, contexto as any);
-      return;
+      const flowRef = flowProducto; // capturar referencia actual
+      await handleFlowProducto(texto, flowRef, contexto as any);
+
+      // Verifica si el flujo fue cerrado durante la ejecución
+      if (flowProducto !== null) return;
     }
+
     if (pendingSuggestions) {
       const sel = normalize(texto);
       const match = pendingSuggestions.find((s) => normalize(s) === sel);
+
       if (match) {
         setPendingSuggestions(null);
         await procesarComando(`inventario de ${match}`);
-      } else {
-        agregarMensaje(
-          "asistente",
-          `❌ No reconozco esa opción. Dime uno de: ${pendingSuggestions.join(", ")}`,
-        );
+        return;
       }
+
+      // Revisa si el texto coincide con un nuevo comando, ignorando la sugerencia
+      for (const cmd of comandosDeProductos) {
+        const m = texto.match(cmd.patron);
+        if (m) {
+          setPendingSuggestions(null);
+          await cmd.handler(m, contexto as any);
+          return;
+        }
+      }
+
+      // Si no es sugerencia ni comando válido
+      agregarMensaje(
+        "asistente",
+        `❌ No reconozco esa opción. Dime uno de: ${pendingSuggestions.join(", ")}`,
+      );
       return;
     }
+
     for (const cmd of comandosDeProductos) {
       const m = texto.match(cmd.patron);
       if (m) {
