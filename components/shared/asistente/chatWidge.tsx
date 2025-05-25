@@ -31,25 +31,57 @@ interface ChatWidgetProps {
 
 interface Mensaje {
   tipo: "usuario" | "asistente";
-  texto: string;
+  texto: string | React.ReactNode;
 }
 
 export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
-  const [mensajes, setMensajes] = useState<Mensaje[]>([
-    {
-      tipo: "asistente",
-      texto: `👋 ¡Hola! Soy KAI, tu asistente virtual 🤖.
+  const [comandosMostrados, setComandosMostrados] = useState(false);
+  const [mensajes, setMensajes] = useState<Mensaje[]>([]);
 
-Puedes decirme comandos como:
-🔹 Inventario de <producto>
-🔹 Agregar producto <nombre>
-🔹 ¿Cuánto se vendió hoy?
-🔹 Cancelar / salir (para terminar un flujo)
+  const mostrarMensajeBienvenida = () => {
+    setMensajes((prev) => {
+      const nuevaBienvenida: Mensaje = {
+        tipo: "asistente",
+        texto: (
+          <div className="space-y-2">
+            <p>👋 ¡Hola! Soy KAI, tu asistente virtual 🤖.</p>
+            <p>🧠 Puedes pedirme ayuda en cualquier momento.</p>
+            {!comandosMostrados ? (
+              <p>
+                <span
+                  className="cursor-pointer text-blue-600 hover:underline dark:text-blue-400"
+                  onClick={() => {
+                    procesarComando("ver comandos");
+                    setComandosMostrados(true);
+                  }}
+                >
+                  🔎 Ver comandos
+                </span>
+              </p>
+            ) : (
+              <p className="text-neutral-500 dark:text-neutral-400">
+                🔎 Comandos ya mostrados
+              </p>
+            )}
+            <p>🚀 Estoy listo para ayudarte.</p>
+          </div>
+        ),
+      };
 
+      // Reemplaza solo si ya existe un mensaje de bienvenida (primero), si no, agrega
+      if (prev.length > 0 && typeof prev[0].texto !== "string") {
+        return [nuevaBienvenida, ...prev.slice(1)];
+      } else {
+        return [nuevaBienvenida, ...prev];
+      }
+    });
+  };
 
-Estoy listo para ayudarte. 🚀`,
-    },
-  ]);
+  useEffect(() => {
+    mostrarMensajeBienvenida();
+    return () => detenerAzure();
+  }, [comandosMostrados]);
+
   const [pendingSuggestions, setPendingSuggestions] = useState<string[] | null>(
     null,
   );
@@ -138,19 +170,18 @@ Estoy listo para ayudarte. 🚀`,
 
   const toggleGrabacion = () => (escuchando ? detenerAzure() : iniciarAzure());
 
-  const agregarMensaje = (tipo: "usuario" | "asistente", texto: string) => {
+  const agregarMensaje = (
+    tipo: "usuario" | "asistente",
+    texto: string | React.ReactNode,
+  ) => {
     setMensajes((prev) => [...prev, { tipo, texto }]);
 
     const debeLeer =
       tipo === "asistente" &&
-      !texto.startsWith("⏳") &&
-      texto.length < 150 &&
+      typeof texto === "string" &&
+      texto.length < 200 &&
       !texto.includes("\n") &&
-      (texto.startsWith("✅") ||
-        texto.startsWith("❌") ||
-        texto.startsWith("👋") ||
-        texto.startsWith("🚫") ||
-        texto.startsWith("⚠️"));
+      !texto.startsWith("⏳");
 
     if (debeLeer) {
       const u = new SpeechSynthesisUtterance(texto);

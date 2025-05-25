@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { DataTable } from "@/components/shared/varios/dataTable";
-import { SERVICIOS_GASTOS } from "@/services/gastos.service";
+import { useGastos } from "@/hooks/gastos/useGastos";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import {
   CalendarDays,
@@ -72,7 +72,15 @@ export default function Page() {
   const [abrirEditar, setAbrirEditar] = useState(false);
   const [accionGasto, setAccionGasto] = useState<AccionGasto | null>(null);
   const [estadoSeleccionado, setEstadoSeleccionado] = useState<string>("");
-  const [gastos, setGastos] = useState<IGasto[]>([]);
+  const {
+    gastos,
+    crearGasto,
+    actualizarGasto,
+    eliminarGasto,
+    mutate,
+    loading,
+  } = useGastos();
+
   const [busqueda, setBusqueda] = useState<string>("");
   const [dateRange, setDateRange] = useState<DateRange>({
     from: startOfDay(new Date()),
@@ -81,11 +89,6 @@ export default function Page() {
   const [labelQuickRange, setLabelQuickRange] = useState("Hoy");
 
   useProtectedRoute();
-
-  // Cargar gastos
-  useEffect(() => {
-    listarGastos();
-  }, []);
 
   const handleQuickRange = (option: "hoy" | "ayer" | "mes" | "año") => {
     let newRange: DateRange | null = null;
@@ -123,43 +126,17 @@ export default function Page() {
     setDateRange(newRange);
   };
 
-  async function listarGastos() {
-    try {
-      const res = await fetch(SERVICIOS_GASTOS.listar);
-      const data = await res.json();
-
-      const gastosArray = Array.isArray(data) ? data : data.gastos || [];
-
-      setGastos(gastosArray);
-    } catch (error) {
-      console.error("Error al listar gastos", error);
-    }
-  }
-
-  async function eliminarGasto(id: number) {
-    try {
-      const res = await fetch(SERVICIOS_GASTOS.eliminar(id), {
-        method: "DELETE",
-      });
-      ToastSuccess({
-        message: "Registro eliminado exitosamente",
-      });
-      if (res.ok) {
-        setGastos((prev) => prev.filter((gasto) => gasto.id_gas !== id));
-      } else {
-        ToastError({
-          message: "Error al eliminar gasto",
-        });
-      }
-    } catch (error) {
-      ToastError({
-        message: "Error al eliminar gasto",
-      });
-    }
-  }
-
   function manejarClickTarjeta(estado: string) {
     setEstadoSeleccionado(estado);
+  }
+
+  async function handleEliminarGasto(id: number) {
+    try {
+      await eliminarGasto(id);
+      ToastSuccess({ message: "Registro eliminado exitosamente" });
+    } catch (err) {
+      ToastError({ message: "Error al eliminar gasto" });
+    }
   }
 
   const gastosFiltrados = useMemo(() => {
@@ -268,7 +245,6 @@ export default function Page() {
               >
                 Eliminar
               </DropdownMenuItem>
-
               <DropdownMenuSeparator />
             </DropdownMenuContent>
           </DropdownMenu>
@@ -307,7 +283,7 @@ export default function Page() {
             <CreateGastoForm
               onSuccess={() => {
                 setAbrirCrear(false);
-                listarGastos();
+                mutate();
               }}
             />
           </GeneralDialog>
@@ -500,20 +476,8 @@ export default function Page() {
         >
           <EditGastoForm
             gasto={gastoEditar}
-            onSuccess={(gastoActualizado) => {
-              setGastos((prev) =>
-                prev.map((g) =>
-                  g.id_gas === gastoActualizado.id_gas
-                    ? {
-                        ...g,
-                        desc_gas: gastoActualizado.desc_gas,
-                        mont_gas: gastoActualizado.mont_gas,
-                        obs_gas: gastoActualizado.obs_gas ?? "",
-                        fech_gas: g.fech_gas,
-                      }
-                    : g,
-                ),
-              );
+            onSuccess={() => {
+              mutate();
               setGastoEditar(null);
               setAbrirEditar(false);
             }}
@@ -531,7 +495,7 @@ export default function Page() {
             if (!abierto) setAccionGasto(null);
           }}
           onConfirmar={async () => {
-            await eliminarGasto(accionGasto.id);
+            await handleEliminarGasto(accionGasto.id);
             setAccionGasto(null);
           }}
         />
