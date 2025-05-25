@@ -45,10 +45,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
-import { SERVICIOS_INVENTARIO } from "@/services/inventario.service";
 import { useExportarReporteProductos } from "@/hooks/productos/useExportarReporteProductos";
 import { DialogExportarProductos } from "@/components/shared/productos/ui/dialogExportarProductos";
-import useSWR from "swr";
+import { useProductosConStock } from "@/hooks/productos/useProductosConStock";
+import { useCategorias } from "@/hooks/categorias/useCategorias";
 
 // Tipos y constantes globales
 export type Opcion = {
@@ -61,48 +61,7 @@ type FiltroMetrica = "all" | "critical" | "outOfStock";
 const stockCritico = 10;
 const diasCaducidad = 10;
 
-// Hook para cargar categorías
-function useObtenerCategorias() {
-  const [opcionesCategorias, setOpcionesCategorias] = useState<Opcion[]>([]);
-  useEffect(() => {
-    fetch(SERVICIOS_PRODUCTOS.categorias)
-      .then((res) => {
-        if (!res.ok) throw new Error("Error al cargar categorías");
-        return res.json();
-      })
-      .then((data: any) => {
-        const activas = data.categorias.filter(
-          (cate: ICategory) => cate.est_cate?.toLowerCase() === "activo",
-        );
-        const opciones: Opcion[] = [
-          { value: "", label: "Todos" },
-          ...activas.map((cate: ICategory) => ({
-            value: cate.id_cate.toString(),
-            label: cate.nom_cate,
-          })),
-        ];
-        setOpcionesCategorias(opciones);
-      })
-      .catch((err) => console.error("Error al cargar categorías:", err));
-  }, []);
-  return opcionesCategorias;
-}
-
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
-
-export function useProductosConStock() {
-  const { data, error, isLoading, mutate } = useSWR(
-    SERVICIOS_INVENTARIO.productosConStock,
-    fetcher,
-  );
-
-  return {
-    todosLosProductos: data ?? [],
-    cargando: isLoading,
-    error: error?.message ?? null,
-    refetch: mutate, // para que puedas usarlo en el asistente si deseas
-  };
-}
 
 // Funciones para filtrar y ordenar productos
 function filtrarProductos(
@@ -194,7 +153,12 @@ export default function PaginaProductos() {
   } | null>(null);
 
   useProtectedRoute();
-  const opcionesCategorias = useObtenerCategorias();
+  const {
+    categorias: opcionesCategorias,
+    isLoading: cargandoCategorias,
+    refetch: refetchCategorias,
+  } = useCategorias();
+
   const { todosLosProductos, cargando, error, refetch } =
     useProductosConStock();
 
@@ -642,12 +606,12 @@ export default function PaginaProductos() {
                 img_prod: productoEditar.img_prod,
               }}
               categoryOptions={opcionesCategorias.filter(
-                (opt) => opt.value !== "",
+                (opt: any) => opt.value !== "",
               )}
               onSuccess={(data) => {
                 const productoActualizado = data.producto;
                 const opcionCategoria = opcionesCategorias.find(
-                  (opt) =>
+                  (opt: any) =>
                     productoActualizado.cate_prod != null &&
                     opt.value === productoActualizado.cate_prod.toString(),
                 );

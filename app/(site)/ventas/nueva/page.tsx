@@ -19,12 +19,12 @@ import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useC
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { ICategory, IProduct } from "@/lib/types";
 import { SERVICIOS_INVENTARIO } from "@/services/inventario.service";
+import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
 import { safePrice } from "@/utils/format";
 import { format } from "date-fns";
 import {
   Banknote,
   Pencil,
-  Printer,
   Save,
   Search,
   Smartphone,
@@ -126,7 +126,7 @@ export default function Page() {
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const response = await fetch("http://localhost:5000/categorias");
+        const response = await fetch(SERVICIOS_PRODUCTOS.categorias);
         const result = await response.json();
         const data: ICategory[] = result.categorias || [];
         const activeCategories = data.filter(
