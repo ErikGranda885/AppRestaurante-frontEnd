@@ -15,6 +15,7 @@ import {
   FlowProducto,
   handleFlowProducto,
 } from "../comandos/productos";
+import { allCommands } from "../comandos";
 
 declare global {
   interface Window {
@@ -37,8 +38,16 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
   const [mensajes, setMensajes] = useState<Mensaje[]>([
     {
       tipo: "asistente",
-      texto:
-        "👋 ¡Hola soy KAI tu asistente virtual 😎! Di 'inventario de <producto>' o 'agregar producto <nombre>'.",
+      texto: `👋 ¡Hola! Soy KAI, tu asistente virtual 🤖.
+
+Puedes decirme comandos como:
+🔹 Inventario de <producto>
+🔹 Agregar producto <nombre>
+🔹 ¿Cuánto se vendió hoy?
+🔹 Cancelar / salir (para terminar un flujo)
+
+
+Estoy listo para ayudarte. 🚀`,
     },
   ]);
   const [pendingSuggestions, setPendingSuggestions] = useState<string[] | null>(
@@ -176,11 +185,9 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
         return;
       }
 
-      // Revisa si el texto coincide con un nuevo comando, ignorando la sugerencia
-      for (const cmd of comandosDeProductos) {
+      for (const cmd of allCommands) {
         const m = texto.match(cmd.patron);
         if (m) {
-          setPendingSuggestions(null);
           await cmd.handler(m, contexto as any);
           return;
         }
@@ -194,13 +201,14 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
       return;
     }
 
-    for (const cmd of comandosDeProductos) {
+    for (const cmd of allCommands) {
       const m = texto.match(cmd.patron);
       if (m) {
         await cmd.handler(m, contexto as any);
         return;
       }
     }
+
     if (texto.includes("cerrar asistente")) {
       agregarMensaje("asistente", "👋 Hasta luego.");
       setTimeout(onClose, 2000);

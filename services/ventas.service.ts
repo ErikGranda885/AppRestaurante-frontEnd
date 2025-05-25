@@ -28,4 +28,8 @@ export const SERVICIOS_VENTAS = {
 
   // Obtener ventas con detalles (formato tarjetas como el dashboard)
   ventasConDetalles: "http://localhost:5000/ventas/listado",
+
+  // ✅ Nuevo: Total de ventas por fecha
+  totalPorFecha: (fecha: string) =>
+    `http://localhost:5000/ventas/total?fecha=${fecha}`,
 };
