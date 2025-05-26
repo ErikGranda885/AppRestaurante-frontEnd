@@ -1,7 +1,8 @@
-// hooks/categorias/useCategorias.ts
 import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
 import useSWR from "swr";
+import { useSocket } from "../useSocket";
 
+// ✅ Agrega el fetcher que faltaba
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export function useCategorias() {
@@ -9,6 +10,8 @@ export function useCategorias() {
     SERVICIOS_PRODUCTOS.categorias,
     fetcher,
   );
+
+  useSocket("categorias-actualizadas", mutate);
 
   const categoriasActivas =
     data?.categorias

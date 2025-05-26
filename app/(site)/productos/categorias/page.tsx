@@ -13,7 +13,7 @@ import {
   CloudDownload,
 } from "lucide-react";
 import { GeneralDialog } from "@/components/shared/varios/dialogGen";
-import toast, { Toaster } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -40,29 +40,57 @@ import { ToastError } from "@/components/shared/toast/toastError";
 import { Input } from "@/components/ui/input";
 import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
 import { DialogExportarCategorias } from "@/components/shared/categorias/ui/dialogExportarCategorias";
-
-type AccionCategoria = {
-  id_cate: number;
-  nom_cate: string;
-  tipo: "activar" | "inactivar";
-};
+import { useCategoriasAdmin } from "@/hooks/categorias/useCategoriasAdmin";
 
 export default function PaginaCategorias() {
+  useProtectedRoute();
+
   const [abrirExportar, setAbrirExportar] = React.useState(false);
-  const [categorias, setCategorias] = React.useState<ICategory[]>([]);
-  const [cargando, setCargando] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
-  const [consulta, setConsulta] = React.useState<string>("");
+  const [abrirCargaMasiva, setAbrirCargaMasiva] = React.useState(false);
+  const [abrirCrear, setAbrirCrear] = React.useState(false);
   const [categoriaEditar, setEditCategory] = React.useState<ICategory | null>(
     null,
   );
-  const [abrirCargaMasiva, setAbrirCargaMasiva] = React.useState(false);
-  const [selectedStatus, setSelectedStatus] = React.useState<string>("");
-  const [abrirCrear, setAbrirCrear] = React.useState(false);
-  const [accionCategoria, setAccionCategoria] =
-    React.useState<AccionCategoria | null>(null);
+  const [accionCategoria, setAccionCategoria] = React.useState<{
+    id_cate: number;
+    nom_cate: string;
+    tipo: "activar" | "inactivar";
+  } | null>(null);
 
-  // Definición de las columnas de la tabla para categorías
+  const [consulta, setConsulta] = React.useState("");
+  const [selectedStatus, setSelectedStatus] = React.useState("");
+
+  const {
+    categorias,
+    isLoading,
+    isError,
+    refetch,
+    activarCategoria,
+    inactivarCategoria,
+  } = useCategoriasAdmin();
+
+  const confirmarAccionCategoria = async () => {
+    if (!accionCategoria) return;
+
+    const { id_cate, nom_cate, tipo } = accionCategoria;
+
+    if (tipo === "inactivar") {
+      await inactivarCategoria(id_cate, nom_cate);
+    } else {
+      await activarCategoria(id_cate, nom_cate);
+    }
+
+    setAccionCategoria(null);
+  };
+
+  const handleClickTarjeta = (status: string) => {
+    if (selectedStatus.toLowerCase() === status.toLowerCase()) {
+      setSelectedStatus("");
+    } else {
+      setSelectedStatus(status);
+    }
+  };
+
   const categoriaColumnas: ColumnDef<ICategory>[] = [
     {
       accessorKey: "nom_cate",
@@ -94,10 +122,6 @@ export default function PaginaCategorias() {
           case "inactivo":
             colorCirculo = "bg-[#f31260]";
             colorTexto = "";
-            break;
-          default:
-            colorCirculo = "bg-gray-500";
-            colorTexto = "text-gray-600";
             break;
         }
 
@@ -169,103 +193,8 @@ export default function PaginaCategorias() {
       },
     },
   ];
-  useProtectedRoute();
 
-  // Cargar categorías desde la API
-  React.useEffect(() => {
-    fetch("http://localhost:5000/categorias")
-      .then((res) => {
-        if (!res.ok) throw new Error("Error al cargar las categorías");
-        return res.json();
-      })
-      .then((data: any) => {
-        // Se asume que data.categorias corresponde a ICategory[]
-        setCategorias(data.categorias);
-        setCargando(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setCargando(false);
-      });
-  }, []);
-
-  // Función para inactivar una categoría
-  const handleDeactivate = (categoria: ICategory) => {
-    fetch(`http://localhost:5000/categorias/inactivar/${categoria.id_cate}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`Error: ${res.status}`);
-        return res.json();
-      })
-      .then(() => {
-        setCategorias((prev) =>
-          prev.map((cat) =>
-            cat.id_cate === categoria.id_cate
-              ? { ...cat, est_cate: "Inactivo" }
-              : cat,
-          ),
-        );
-        ToastSuccess({
-          message: `La categoría "${categoria.nom_cate}" ha sido inactivada con éxito.`,
-        });
-      })
-      .catch((err) => {
-        ToastError({
-          message: `Error al inactivar la categoría "${categoria.nom_cate}"`,
-        });
-      });
-  };
-
-  // Función para activar una categoría
-  const handleActivate = (categoria: ICategory) => {
-    fetch(`http://localhost:5000/categorias/activar/${categoria.id_cate}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`Error: ${res.status}`);
-        return res.json();
-      })
-      .then(() => {
-        setCategorias((prev) =>
-          prev.map((cat) =>
-            cat.id_cate === categoria.id_cate
-              ? { ...cat, est_cate: "Activo" }
-              : cat,
-          ),
-        );
-        ToastSuccess({
-          message: `La categoría "${categoria.nom_cate}" ha sido activada con éxito.`,
-        });
-      })
-      .catch((err) => {
-        ToastError({
-          message: `Error al activar la categoría "${categoria.nom_cate}"`,
-        });
-      });
-  };
-
-  // Función para confirmar la acción (activar/inactivar) usando el diálogo
-  const confirmarAccionCategoria = () => {
-    if (!accionCategoria) return;
-    const categoria = categorias.find(
-      (cat) => cat.id_cate === accionCategoria.id_cate,
-    );
-    if (!categoria) return;
-    if (accionCategoria.tipo === "inactivar") {
-      handleDeactivate(categoria);
-    } else {
-      handleActivate(categoria);
-    }
-    setAccionCategoria(null);
-  };
-
-  // Filtrar categorías según estado y consulta
-  const filteredCategorias = categorias.filter((cat) => {
+  const filteredCategorias = categorias.filter((cat: any) => {
     const cumpleEstado =
       selectedStatus === "" ||
       cat.est_cate?.toLowerCase() === selectedStatus.toLowerCase();
@@ -275,18 +204,6 @@ export default function PaginaCategorias() {
       (cat.desc_cate && cat.desc_cate.toLowerCase().includes(busqueda));
     return cumpleEstado && cumpleBusqueda;
   });
-
-  // Cambiar filtro de estado desde las tarjetas
-  const handleClickTarjeta = (status: string) => {
-    if (selectedStatus.toLowerCase() === status.toLowerCase()) {
-      setSelectedStatus("");
-    } else {
-      setSelectedStatus(status);
-    }
-  };
-
-  if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
-  if (cargando) return <div className="p-4">Cargando categorías...</div>;
 
   return (
     <>
@@ -317,9 +234,9 @@ export default function PaginaCategorias() {
               submitText="Crear Categoría"
             >
               <CreateCategoryForm
-                onSuccess={(data: any) => {
-                  setCategorias((prev) => [...prev, data.categoria]);
-                  setAbrirCrear(false);
+                onSuccess={() => {
+                  refetch(); // Revalida los datos desde el servidor
+                  setAbrirCrear(false); // Cierra el diálogo
                 }}
               />
             </GeneralDialog>
@@ -353,6 +270,7 @@ export default function PaginaCategorias() {
             </div>
           </div>
         </div>
+
         <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#111315]">
           {/* Tarjetas resumen */}
           <div className="flex flex-col gap-4 px-6 pt-6 md:flex-row md:justify-between">
@@ -397,7 +315,8 @@ export default function PaginaCategorias() {
                     <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
                       {
                         categorias.filter(
-                          (cat) => cat.est_cate?.toLowerCase() === "activo",
+                          (cat: any) =>
+                            cat.est_cate?.toLowerCase() === "activo",
                         ).length
                       }
                     </span>
@@ -428,7 +347,8 @@ export default function PaginaCategorias() {
                     <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
                       {
                         categorias.filter(
-                          (cat) => cat.est_cate?.toLowerCase() === "inactivo",
+                          (cat: any) =>
+                            cat.est_cate?.toLowerCase() === "inactivo",
                         ).length
                       }
                     </span>
@@ -447,17 +367,15 @@ export default function PaginaCategorias() {
             </Card>
           </div>
 
-          {/* Diálogo para carga masiva */}
           {abrirCargaMasiva && (
             <BulkUploadCategoryDialog
-              onSuccess={(nuevasCategorias: ICategory[]) => {
-                setCategorias((prev) => [...prev, ...nuevasCategorias]);
+              onSuccess={() => {
+                refetch(); // Actualiza la lista después de la carga masiva
               }}
               onClose={() => setAbrirCargaMasiva(false)}
             />
           )}
 
-          {/* Tabla de categorías */}
           <div className="px-6 pb-4">
             <DataTable<ICategory>
               data={filteredCategorias}
@@ -474,7 +392,6 @@ export default function PaginaCategorias() {
         />
       )}
 
-      {/* Diálogo para editar categoría */}
       {categoriaEditar && (
         <GeneralDialog
           open={!!categoriaEditar}
@@ -488,12 +405,8 @@ export default function PaginaCategorias() {
         >
           <EditCategoryForm
             initialData={categoriaEditar}
-            onSuccess={(data: any) => {
-              setCategorias((prev) =>
-                prev.map((cat) =>
-                  cat.id_cate === data.categoria.id_cate ? data.categoria : cat,
-                ),
-              );
+            onSuccess={() => {
+              refetch(); // Revalida los datos desde el backend
               setEditCategory(null);
             }}
           />

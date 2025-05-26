@@ -5,17 +5,14 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { uploadImage } from "@/firebase/subirImage";
 import { CampoCategoria, CategoryOption } from "../ui/campoCategoria";
 import { ZonaImagen } from "../ui/zonaImagen";
 import { CampoTexto } from "../../varios/campoTexto";
 import { ICategory } from "@/lib/types";
-import { ToastSuccess } from "../../toast/toastSuccess";
-import { ToastError } from "../../toast/toastError";
 import { CampoSelectUnidad } from "../ui/campoSelectUnidad";
 import { CampoSelectTipo } from "../ui/campoTipo";
 import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
-import { DEFAULT_PRODUCT_IMAGE_URL } from "@/lib/constants";
+import { useCrearProducto } from "@/hooks/productos/useCrearProducto";
 
 export type Option = {
   value: string;
@@ -75,7 +72,7 @@ export function FormProducts({
       undidad_prod: "",
     },
   });
-
+  const { crearProducto } = useCrearProducto();
   // Usamos form.watch para obtener el valor actual de "tipo_prod"
   const tipoProducto = form.watch("tipo_prod").toLowerCase();
 
@@ -129,48 +126,19 @@ export function FormProducts({
     e.preventDefault();
   };
 
-  // Función de envío del formulario
-  const onSubmit = async (data: ValoresFormulario) => {
-    let imageUrl = imagenPreview || "";
-    if (imagenArchivo) {
-      imageUrl = await uploadImage(
-        imagenArchivo,
-        "productos", // carpeta en Firebase
-        `producto_${data.nombre.replace(/\s+/g, "_").toLowerCase()}`, // nombre personalizado
-      );
-    } else {
-      imageUrl = DEFAULT_PRODUCT_IMAGE_URL;
-    }
-
-    const payload = {
-      nom_prod: data.nombre,
-      cate_prod: tipoProducto === "insumo" ? null : Number(data.categoria),
-      tip_prod: data.tipo_prod,
-      und_prod: data.undidad_prod,
-      img_prod: imageUrl,
-    };
-
-    try {
-      const response = await fetch(SERVICIOS_PRODUCTOS.productos, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!response.ok) {
-        throw new Error(`Error al crear el producto: ${response.status}`);
-      }
-      const resData = await response.json();
-      onSuccess(resData);
-      form.reset();
-      ToastSuccess({
-        message: "Producto creado correctamente",
-      });
-    } catch (error) {
-      console.error("Error al crear el producto:", error);
-      ToastError({
-        message: "Error al crear el producto",
-      });
-    }
+  const onSubmit = (data: ValoresFormulario) => {
+    crearProducto({
+      nombre: data.nombre,
+      categoria: data.categoria || "",
+      tipo: data.tipo_prod,
+      unidad: data.undidad_prod,
+      imagenArchivo,
+      imagenPreview,
+      onSuccess: (resData) => {
+        onSuccess(resData);
+        form.reset();
+      },
+    });
   };
 
   return (
