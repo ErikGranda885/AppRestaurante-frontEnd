@@ -36,6 +36,11 @@ export const comandosDeProductos = [
         if (resp.ok && datos.stock != null) {
           ctx.setFlow(null);
 
+          // Elegimos qué mostrar: interpretación o valor numérico
+          const stockDisplay = datos.interpretacion_stock
+            ? datos.interpretacion_stock
+            : `${datos.stock}`;
+
           const detalleVisual = (
             <div className="space-y-2">
               <p>
@@ -46,7 +51,7 @@ export const comandosDeProductos = [
                   Producto: <strong>{prod}</strong>
                 </li>
                 <li>
-                  Stock disponible: <strong>{datos.stock}</strong>
+                  Stock disponible: <strong>{stockDisplay}</strong>
                 </li>
               </ul>
             </div>

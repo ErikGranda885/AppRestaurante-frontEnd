@@ -60,6 +60,7 @@ export interface IProduct {
   cate_prod: ICategory | null;
   fecha_vence_proxima?: string;
   dias_restantes?: number;
+  interpretacion_stock?: string;
 }
 
 export interface IReceta {

@@ -173,7 +173,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="flex flex-1 flex-col">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold">{product.nom_prod}</h2>
-            <span className="text-xs">Stock: {product.stock_prod ?? "0"}</span>
+            {product.tip_prod === "Insumo" && product.interpretacion_stock ? (
+              <span className="text-xs">
+                Stock:{" "}
+                <span className="italic">{product.interpretacion_stock}</span>
+              </span>
+            ) : (
+              <span className="text-xs">
+                Stock: {product.stock_prod ?? "0"}
+              </span>
+            )}
           </div>
 
           {product.tip_prod === "Insumo" && (

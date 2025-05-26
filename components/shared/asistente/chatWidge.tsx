@@ -35,6 +35,7 @@ interface Mensaje {
 }
 
 export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
+  const finalRef = useRef<HTMLDivElement | null>(null);
   const [comandosMostrados, setComandosMostrados] = useState(false);
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
 
@@ -82,6 +83,14 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
     return () => detenerAzure();
   }, [comandosMostrados]);
 
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      finalRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 0);
+
+    return () => clearTimeout(delay);
+  }, [mensajes]);
+
   const [pendingSuggestions, setPendingSuggestions] = useState<string[] | null>(
     null,
   );
@@ -121,6 +130,9 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
   };
 
   const iniciarAzure = () => {
+    // 🛑 Detener cualquier síntesis de voz que esté hablando
+    window.speechSynthesis.cancel();
+
     const speechConfig = SpeechConfig.fromSubscription(
       process.env.NEXT_PUBLIC_AZURE_SPEECH_KEY!,
       process.env.NEXT_PUBLIC_AZURE_SPEECH_REGION!,
@@ -199,11 +211,17 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
     }
 
     if (flowProducto) {
-      const flowRef = flowProducto; // capturar referencia actual
+      setInputTexto(""); // ✅ limpiar input
+
+      const flowRef = flowProducto;
       await handleFlowProducto(texto, flowRef, contexto as any);
 
-      // Verifica si el flujo fue cerrado durante la ejecución
-      if (flowProducto !== null) return;
+      // Si el flujo terminó, limpiar sugerencias
+      if (!flowProducto) {
+        setPendingSuggestions(null);
+      }
+
+      return;
     }
 
     if (pendingSuggestions) {
@@ -289,12 +307,19 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
             {mensajes.map((msg, i) => (
               <div
                 key={i}
-                className={`max-w-[80%] px-3 py-2 text-sm shadow ${msg.tipo === "usuario" ? "ml-auto self-end rounded-xl bg-pink-500 text-white dark:bg-pink-600" : "mr-auto self-start rounded-xl bg-neutral-200 text-black dark:border-neutral-800 dark:bg-neutral-800 dark:text-neutral-200"}`}
+                className={`max-w-[80%] px-3 py-2 text-sm shadow ${
+                  msg.tipo === "usuario"
+                    ? "ml-auto self-end rounded-xl bg-pink-500 text-white dark:bg-pink-600"
+                    : "mr-auto self-start rounded-xl bg-neutral-200 text-black dark:border-neutral-800 dark:bg-neutral-800 dark:text-neutral-200"
+                }`}
               >
                 {msg.texto}
               </div>
             ))}
+            {/* 👇 Ref de scroll automático */}
+            <div ref={finalRef} />
           </div>
+
           {/* Input + botones */}
           <div className="flex items-center gap-2 border-t border-neutral-200 bg-neutral-100 p-2 dark:border-neutral-800 dark:bg-neutral-900">
             <input
