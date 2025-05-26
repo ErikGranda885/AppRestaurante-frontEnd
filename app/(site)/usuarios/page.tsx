@@ -40,22 +40,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
-import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
-import { ToastError } from "@/components/shared/toast/toastError";
 import { IRol } from "@/lib/types";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-
 import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
 import { BulkUploadUsersDialog } from "@/components/shared/usuarios/formularios/cargaUsers";
 import Image from "next/image";
 import { parse } from "date-fns";
 import { DEFAULT_USER_URL } from "@/lib/constants";
-import { SERVICIOS_USUARIOS } from "@/services/usuarios.service";
 import { DialogExportarUsuariosRoles } from "@/components/shared/usuarios/ui/DialogExportarUsuariosRoles";
-// Importa el componente de diálogo generalizado para confirmar acciones
+import { useAccionesUsuario } from "@/hooks/usuarios/useAccionesUsuario";
+import { useUsuariosAndRoles } from "@/hooks/usuarios/useUsuariosAndRoles";
 
-// Tipo de dato para los usuarios
 export type DataUsers = {
   id: string;
   usuario: string;
@@ -81,9 +76,16 @@ type AccionUsuario = {
 export default function PaginaUsuarios() {
   // Estados
   const [openDialogExportar, setOpenDialogExportar] = React.useState(false);
-
-  const [rolOpciones, setRolOpciones] = React.useState<IRol[]>([]);
-  const [usuarios, setUsuarios] = React.useState<DataUsers[]>([]);
+  const {
+    usuarios,
+    setUsuarios,
+    roles: rolOpciones,
+    setRoles: setRolOpciones,
+  } = useUsuariosAndRoles();
+  const {
+    activarUsuario: ejecutarActivacion,
+    inactivarUsuario: ejecutarInactivacion,
+  } = useAccionesUsuario(setUsuarios);
   const ahora = new Date();
   const mesActual = ahora.getMonth();
   const anioActual = ahora.getFullYear();
@@ -125,126 +127,6 @@ export default function PaginaUsuarios() {
     React.useState<AccionUsuario | null>(null);
 
   useProtectedRoute();
-
-  // Cargar usuarios utilizando el servicio centralizado
-  React.useEffect(() => {
-    fetch(SERVICIOS_USUARIOS.usuarios)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Error al cargar los usuarios");
-        }
-        return res.json();
-      })
-      .then((data: any[]) => {
-        const transformados = data.map((item) => ({
-          id: item.id_usu.toString(),
-          usuario: item.nom_usu,
-          correo: item.email_usu,
-          estado: item.esta_usu,
-          rol: item.rol_usu.id_rol.toString(),
-          rolNombre: item.rol_usu.nom_rol,
-          img_usu: item.img_usu || "",
-          fechaCreacion: parse(
-            item.crea_en_usu,
-            "dd-MM-yyyy HH:mm:ss",
-            new Date(),
-          ),
-          fechaActualizacion: parse(
-            item.act_en_usu,
-            "dd-MM-yyyy HH:mm:ss",
-            new Date(),
-          ),
-        }));
-        setUsuarios(transformados);
-      })
-      .catch((err) => {
-        console.error("Error al cargar usuarios:", err);
-      });
-  }, []);
-
-  // Cargar roles utilizando el servicio centralizado
-  React.useEffect(() => {
-    fetch(SERVICIOS_USUARIOS.roles)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Error al cargar roles");
-        }
-        return res.json();
-      })
-      .then((data: any) => {
-        const rolesData = Array.isArray(data) ? data : data.roles;
-        if (!Array.isArray(rolesData)) {
-          throw new Error("La respuesta de roles no es un arreglo");
-        }
-        const rolesActivos: IRol[] = rolesData.filter(
-          (rol: any) => rol.est_rol === "Activo",
-        );
-        setRolOpciones(rolesActivos);
-      })
-      .catch((err) => {
-        console.error("Error al cargar roles:", err);
-      });
-  }, []);
-
-  // Función para inactivar un usuario (se llama después de confirmar la acción)
-  const ejecutarInactivacion = (usuario: DataUsers) => {
-    fetch(SERVICIOS_USUARIOS.inactivarUsuario(usuario.id), {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Error: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then(() => {
-        setUsuarios((prev) =>
-          prev.map((u) =>
-            u.id === usuario.id ? { ...u, estado: "Inactivo" } : u,
-          ),
-        );
-        ToastSuccess({
-          message: "Se ha inactivado el usuario exitosamente.",
-        });
-      })
-      .catch((err) => {
-        ToastError({
-          message: `Error al inactivar el usuario: ${err.message}`,
-        });
-      });
-  };
-
-  // Función para activar un usuario (se llama después de confirmar la acción)
-  const ejecutarActivacion = (usuario: DataUsers) => {
-    fetch(SERVICIOS_USUARIOS.activarUsuario(usuario.id), {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Error: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then(() => {
-        setUsuarios((prev) =>
-          prev.map((u) =>
-            u.id === usuario.id ? { ...u, estado: "Activo" } : u,
-          ),
-        );
-        ToastSuccess({
-          message: "Se ha activado el usuario exitosamente.",
-        });
-      })
-      .catch((err) => {
-        ToastError({
-          message: `Error al activar el usuario: ${err.message}`,
-        });
-      });
-  };
 
   // Función general para confirmar la acción seleccionada (activar/inactivar)
   const confirmarAccion = async () => {

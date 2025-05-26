@@ -16,6 +16,9 @@ import { ToastSuccess } from "../../toast/toastSuccess";
 import { IRol } from "@/lib/types";
 import { DropzoneFile } from "../../varios/dropzoneFile";
 import { DEFAULT_USER_URL } from "@/lib/constants";
+import { useCargaMasivaUsuarios } from "@/hooks/usuarios/useCargaMasivaUsuarios";
+import { SERVICIOS } from "@/services/categorias.service";
+import { SERVICIOS_USUARIOS } from "@/services/usuarios.service";
 
 interface BulkUploadUsersDialogProps {
   roleOptions: IRol[];
@@ -30,6 +33,11 @@ export function BulkUploadUsersDialog({
   onSuccess,
   onClose,
 }: BulkUploadUsersDialogProps) {
+  const { cargarUsuarios } = useCargaMasivaUsuarios(
+    roleOptions,
+    onSuccess,
+    onClose,
+  );
   const [previewData, setPreviewData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
@@ -165,7 +173,7 @@ export function BulkUploadUsersDialog({
 
   const handleDownloadTemplate = async () => {
     try {
-      const res = await fetch("http://localhost:5000/usuarios/plantilla");
+      const res = await fetch(SERVICIOS_USUARIOS.plantillaCargaMasiva);
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -178,48 +186,8 @@ export function BulkUploadUsersDialog({
     }
   };
 
-  const handleUpload = async () => {
-    if (previewData.length === 0)
-      return ToastError({ message: "No hay datos para enviar." });
-
-    setLoading(true);
-    try {
-      const defaultImageUrl = DEFAULT_USER_URL;
-      const roles = mappedRoleOptionsMemo();
-      const processed = previewData.map((row) => {
-        let rol = row["rol_usu"];
-        const byValue = roles.find(
-          (r) => r.value.toLowerCase() === String(rol).toLowerCase(),
-        );
-        if (byValue) rol = byValue.value;
-        else {
-          const byLabel = roles.find(
-            (r) => r.label.toLowerCase() === String(rol).toLowerCase(),
-          );
-          if (byLabel) rol = byLabel.value;
-          else throw new Error(`Rol ${rol} no encontrado`);
-        }
-        return { ...row, rol_usu: rol, img_usu: defaultImageUrl };
-      });
-
-      const res = await fetch("http://localhost:5000/usuarios/masivo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(processed),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Error de carga.");
-
-      onSuccess(data.usuarios);
-      ToastSuccess({
-        message: `Se cargaron ${data.usuarios.length} usuarios.`,
-      });
-      onClose();
-    } catch (err: any) {
-      ToastError({ message: err.message || "Error al cargar usuarios." });
-    } finally {
-      setLoading(false);
-    }
+  const handleUpload = () => {
+    cargarUsuarios(previewData, setLoading);
   };
 
   return (

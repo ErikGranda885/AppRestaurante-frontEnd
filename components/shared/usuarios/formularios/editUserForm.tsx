@@ -23,6 +23,7 @@ import { uploadImage } from "@/firebase/subirImage";
 import { eliminarImagen } from "@/firebase/eliminarImage";
 import { DEFAULT_USER_URL } from "@/lib/constants";
 import { useUsuarioAutenticado } from "@/hooks/usuarios/useUsuarioAutenticado";
+import { useEditarUsuario } from "@/hooks/usuarios/useEditarUsuario";
 
 const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ]+( [A-Za-zÁÉÍÓÚáéíóúÑñ]+)?$/;
 
@@ -75,7 +76,7 @@ export function EditUserForm({
   roleOptions,
   onSuccess,
 }: EditUserFormProps) {
-  const { usuario, actualizar } = useUsuarioAutenticado();
+  const { editarUsuario } = useEditarUsuario();
   const [showPassword, setShowPassword] = React.useState(false);
   const [imagenArchivo, setImagenArchivo] = React.useState<File | null>(null);
   const [imagenPreview, setImagenPreview] = React.useState<string | null>(
@@ -101,69 +102,13 @@ export function EditUserForm({
   };
 
   const onSubmit = async (values: EditUserFormValues) => {
-    let imageUrl = imagenPreview || initialData.img_usu;
-    const defaultImage = DEFAULT_USER_URL;
-
-    try {
-      if (imagenArchivo) {
-        // Si la imagen actual no es la por defecto, elimínala
-        if (
-          initialData.img_usu &&
-          !initialData.img_usu.includes("user-default")
-        ) {
-          await eliminarImagen(initialData.img_usu);
-        }
-
-        // Subimos la nueva imagen
-        imageUrl = await uploadImage(
-          imagenArchivo,
-          "usuarios",
-          `usuario_${values.usuario.replace(/\s+/g, "_").toLowerCase()}`,
-        );
-      } else if (!imagenPreview) {
-        imageUrl = defaultImage;
-      }
-
-      const payload: any = {
-        nom_usu: values.usuario,
-        email_usu: values.correo,
-        rol_usu: values.rol,
-        img_usu: imageUrl,
-      };
-
-      if (values.password.trim() !== "") {
-        payload.clave_usu = values.password;
-      }
-
-      const res = await fetch(
-        `http://localhost:5000/usuarios/${initialData.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        },
-      );
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || `Error: ${res.status}`);
-      }
-
-      const data = await res.json();
-      onSuccess(data);
-      ToastSuccess({
-        message: "El usuario ha sido actualizado correctamente.",
-      });
-      if (usuario?.id === initialData.id) {
-        actualizar(); // Vuelve a obtener datos desde /auth/me
-      }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error inesperado";
-      ToastError({
-        message: "Error al actualizar el usuario: " + errorMessage,
-      });
-    }
+    editarUsuario({
+      id: initialData.id,
+      values,
+      imagenActual: initialData.img_usu,
+      imagenNueva: imagenArchivo,
+      onSuccess,
+    });
   };
 
   return (

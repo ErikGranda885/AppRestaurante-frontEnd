@@ -23,11 +23,9 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ToastError } from "../../toast/toastError";
-import { ToastSuccess } from "../../toast/toastSuccess";
 import { IRol } from "@/lib/types";
-import { uploadImage } from "@/firebase/subirImage";
-import { DEFAULT_USER_URL } from "@/lib/constants";
+import { useCrearUsuario } from "@/hooks/usuarios/useCrearUsuario";
+import { useCrearRol } from "@/hooks/usuarios/useCrearRol";
 
 // Esquema para el formulario principal de crear usuario
 const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ]+( [A-Za-zÁÉÍÓÚáéíóúÑñ]+)?$/;
@@ -80,6 +78,9 @@ export function CreateUserForm({
   onSuccess,
   onRoleCreated,
 }: CreateUserFormProps) {
+  const { crearUsuario } = useCrearUsuario();
+  const { crearRol } = useCrearRol();
+
   const [showPassword, setShowPassword] = React.useState(false);
   // Estado para controlar el modal de creación de rol
   const [showRoleModal, setShowRoleModal] = React.useState(false);
@@ -111,87 +112,28 @@ export function CreateUserForm({
   });
 
   const onSubmit = async (values: CreateUserFormValues) => {
-    let imageUrl = "";
-
-    try {
-      if (imagenArchivo) {
-        imageUrl = await uploadImage(
-          imagenArchivo,
-          "usuarios",
-          `usuario_${values.usuario.replace(/\s+/g, "_").toLowerCase()}`,
-        );
-      } else {
-        imageUrl = DEFAULT_USER_URL;
-      }
-
-      const payload = {
-        nom_usu: values.usuario,
-        email_usu: values.correo,
-        clave_usu: values.password,
-        rol_usu: parseInt(values.rol, 10),
-        img_usu: imageUrl,
-      };
-
-      const res = await fetch("http://localhost:5000/usuarios", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || `Error: ${res.status}`);
-      }
-
-      const data = await res.json();
-      onSuccess(data);
-      form.reset();
-      setImagenArchivo(null);
-      setImagenPreview(null);
-      ToastSuccess({ message: "Usuario creado correctamente" });
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error inesperado";
-      ToastError({ message: "Error al crear el usuario: " + errorMessage });
-    }
+    crearUsuario({
+      values,
+      imagenNueva: imagenArchivo,
+      onSuccess: (data: any) => {
+        onSuccess(data);
+        form.reset();
+        setImagenArchivo(null);
+        setImagenPreview(null);
+      },
+    });
   };
-
-  // Función para confirmar la creación del rol del modal
   const handleConfirmCreateRole = async (values: RoleFormValues) => {
-    try {
-      const res = await fetch("http://localhost:5000/roles", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nom_rol: values.nom_rol,
-          desc_rol: values.desc_rol,
-        }),
-      });
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || `Error: ${res.status}`);
-      }
-      const response = await res.json();
-      // Suponemos que la respuesta tiene { message: string, rol: { id_rol, nom_rol, ... } }
-      const createdRole = response.rol; // Asegúrate de que la propiedad se llame 'rol'
-      console.log("Nuevo rol creado:", createdRole);
-
-      // Actualiza el campo "rol" en el formulario principal
-      form.setValue("rol", String(createdRole.id_rol));
-      // Notifica al padre (si se pasa onRoleCreated)
-      if (onRoleCreated) {
-        onRoleCreated(createdRole);
-      }
-      ToastSuccess({ message: "Rol creado correctamente" });
-      resetRoleForm();
-      setShowRoleModal(false);
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Error inesperado";
-      ToastError({ message: "Error al crear el rol: " + errorMessage });
-    }
+    crearRol({
+      values,
+      onSuccess: (createdRole) => {
+        form.setValue("rol", String(createdRole.id_rol));
+        onRoleCreated?.(createdRole);
+      },
+      onClose: () => setShowRoleModal(false),
+      resetForm: () => resetRoleForm(),
+    });
   };
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
