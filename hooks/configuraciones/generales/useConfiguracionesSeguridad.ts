@@ -11,14 +11,10 @@ export function useConfiguracionesSeguridad() {
   const [maxIntentosLogin, setMaxIntentosLogin] = useState(5);
   const [loading, setLoading] = useState(true);
 
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : "";
-
   const fetchConfiguraciones = async () => {
-    if (!token) return;
     try {
       const response = await fetch(SERVICIOS_CONFIGURACIONES.listar, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include", // ✅ Usa la cookie HttpOnly automáticamente
       });
 
       const data = await response.json();
@@ -49,13 +45,12 @@ export function useConfiguracionesSeguridad() {
   };
 
   const updateConfiguracion = async (clave: string, valor: string) => {
-    if (!token) return;
     try {
       await fetch(SERVICIOS_CONFIGURACIONES.actualizarPorClave(clave), {
         method: "PUT",
+        credentials: "include", // ✅ Usa cookie HttpOnly
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ valor_conf: valor }),
       });

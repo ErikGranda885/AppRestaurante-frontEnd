@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { SERVICIOS_AUTH } from "@/services/auth.service";
 
 export function useInactividadLogOut({
   minutosInactividad = 2,
@@ -19,9 +20,23 @@ export function useInactividadLogOut({
     useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    const cerrarSesion = async () => {
+      try {
+        await fetch(SERVICIOS_AUTH.logout, {
+          method: "POST",
+          credentials: "include",
+        });
+      } catch (error) {
+        console.error("Error cerrando sesión por inactividad:", error);
+      } finally {
+        router.push("/login");
+      }
+    };
+
     const reiniciarTemporizadores = () => {
       if (timeoutCerrar) clearTimeout(timeoutCerrar);
       if (intervaloContador) clearInterval(intervaloContador);
+
       setMostrarAlerta(false);
       setContador(minutosAdvertencia * 60);
 
@@ -33,8 +48,7 @@ export function useInactividadLogOut({
           setContador((prev) => {
             if (prev <= 1) {
               clearInterval(intervalo);
-              localStorage.clear();
-              router.push("/login");
+              cerrarSesion(); // ✅ ahora cierra correctamente sesión del backend
               return 0;
             }
             return prev - 1;

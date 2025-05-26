@@ -19,16 +19,13 @@ export function useEmpresa() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : "";
-
   const fetchEmpresa = async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await fetch(SERVICIOS_EMPRESAS.obtener, {
         method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include", // ✅ Usa cookie HTTP-only
       });
 
       if (response.status === 404) {
@@ -40,7 +37,7 @@ export function useEmpresa() {
         const data = await response.json();
         setEmpresa(data.empresa);
         localStorage.setItem("empresa_actual", JSON.stringify(data.empresa));
-        window.dispatchEvent(new Event("empresaUpdated")); // ✅ también aquí si carga al inicio
+        window.dispatchEvent(new Event("empresaUpdated"));
       }
     } catch (err: any) {
       setError("Error al cargar la empresa");
@@ -54,8 +51,6 @@ export function useEmpresa() {
     logoFile?: File,
     empresaId?: number,
   ) => {
-    if (!token) throw new Error("No autorizado");
-
     let result: Empresa;
     let logoURL = data.logo_emp;
 
@@ -81,40 +76,31 @@ export function useEmpresa() {
       logo_emp: logoURL,
     };
 
-    if (empresa?.id_emp) {
-      const response = await fetch(
-        SERVICIOS_EMPRESAS.actualizar(empresa.id_emp),
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(bodyData),
-        },
-      );
+    const options: RequestInit = {
+      method: empresa?.id_emp ? "PUT" : "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include", // ✅ Usa cookie HTTP-only
+      body: JSON.stringify(bodyData),
+    };
 
-      if (!response.ok) throw new Error("Error al actualizar empresa");
-      const resData = await response.json();
-      result = resData.empresa;
-    } else {
-      const response = await fetch(SERVICIOS_EMPRESAS.crear, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(bodyData),
-      });
+    const url = empresa?.id_emp
+      ? SERVICIOS_EMPRESAS.actualizar(empresa.id_emp)
+      : SERVICIOS_EMPRESAS.crear;
 
-      if (!response.ok) throw new Error("Error al crear empresa");
-      const resData = await response.json();
-      result = resData.empresa;
+    const response = await fetch(url, options);
+
+    if (!response.ok) {
+      throw new Error("Error al guardar la empresa");
     }
+
+    const resData = await response.json();
+    result = resData.empresa;
 
     setEmpresa(result);
     localStorage.setItem("empresa_actual", JSON.stringify(result));
-    window.dispatchEvent(new Event("empresaUpdated")); // ✅ notifica al sidebar
+    window.dispatchEvent(new Event("empresaUpdated"));
   };
 
   useEffect(() => {

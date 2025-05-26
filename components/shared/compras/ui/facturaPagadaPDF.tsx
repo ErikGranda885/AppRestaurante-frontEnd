@@ -40,30 +40,22 @@ const FacturaPagadaPDF: React.FC<FacturaPagadaPDFProps> = ({
       }
     }
 
-    // ✅ consultar si se debe mostrar el logo en facturas
-    const token =
-      typeof window !== "undefined" ? localStorage.getItem("token") : "";
-
-    if (token) {
-      fetch(
-        SERVICIOS_CONFIGURACIONES.obtenerPorClave("incluir_logo_facturas"),
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      )
-        .then((res) => res.json())
-        .then((data) => {
-          if (data?.configuracion?.valor_conf === "true") {
-            setMostrarLogo(true);
-          }
-        })
-        .catch((err) => {
-          console.error(
-            "Error al obtener configuración incluir_logo_facturas",
-            err,
-          );
-        });
-    }
+    // ✅ ahora usa cookie en lugar de token de localStorage
+    fetch(SERVICIOS_CONFIGURACIONES.obtenerPorClave("incluir_logo_facturas"), {
+      credentials: "include", // 🔐 importante
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.configuracion?.valor_conf === "true") {
+          setMostrarLogo(true);
+        }
+      })
+      .catch((err) => {
+        console.error(
+          "Error al obtener configuración incluir_logo_facturas",
+          err,
+        );
+      });
   }, []);
 
   return (

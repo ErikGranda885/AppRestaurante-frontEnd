@@ -40,6 +40,7 @@ import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useC
 import { safePrice } from "@/utils/format";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { useUsuarioAutenticado } from "@/hooks/usuarios/useUsuarioAutenticado";
 
 function formatoMoneda(valor: any): string {
   return typeof valor === "number"
@@ -75,15 +76,16 @@ export default function PaginaCierreDia() {
   const bancoInfo = bancos.find((banco) => banco.id === bancoSeleccionado);
 
   useEffect(() => {
-    const userData = localStorage.getItem("usuarioActual");
-    if (userData) setUsuarioActual(JSON.parse(userData));
+    // ✅ Usuario desde cookie JWT (ya no desde localStorage)
+    const { usuario } = useUsuarioAutenticado(); // asegúrate de usar el hook correctamente según tu estructura
+    if (!usuario) return;
 
     const cierreData = localStorage.getItem("cierreSeleccionado");
     if (cierreData) {
       const parsed = JSON.parse(cierreData) as ICierreDiario;
       if (parsed.id_cier.toString() === id) {
         setCierreSeleccionado(parsed);
-        console.log("📦 Cierre seleccionado:", parsed); // 👈 Aquí
+        console.log("📦 Cierre seleccionado:", parsed);
       } else {
         router.push("/cierre-diario");
       }

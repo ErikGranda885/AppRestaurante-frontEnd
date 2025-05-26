@@ -18,17 +18,12 @@ import { uploadImage } from "@/firebase/subirImage";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { ICategory, IProduct } from "@/lib/types";
+import { SERVICIOS_AUTH } from "@/services/auth.service";
 import { SERVICIOS_INVENTARIO } from "@/services/inventario.service";
 import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
 import { safePrice } from "@/utils/format";
 import { format } from "date-fns";
-import {
-  Banknote,
-  Pencil,
-  Save,
-  Search,
-  Smartphone,
-} from "lucide-react";
+import { Banknote, Pencil, Save, Search, Smartphone } from "lucide-react";
 import Image from "next/image";
 import { useState, useMemo, useEffect, useRef } from "react";
 
@@ -141,10 +136,22 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const user = JSON.parse(localStorage.getItem("usuarioActual") || "{}");
-      setIdUsuario(user.id_usu ?? 0);
+    async function obtenerUsuario() {
+      try {
+        const res = await fetch(SERVICIOS_AUTH.me, {
+          credentials: "include",
+        });
+
+        if (!res.ok) throw new Error("No autorizado");
+
+        const usuario = await res.json();
+        setIdUsuario(usuario.id_usu ?? 0);
+      } catch (error) {
+        console.error("Error al obtener usuario autenticado:", error);
+      }
     }
+
+    obtenerUsuario();
   }, []);
 
   // Filtrar productos según categoría y búsqueda

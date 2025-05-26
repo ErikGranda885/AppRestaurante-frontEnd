@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { loginConGoogle } from "@/firebase/loginConGoogle";
 import { ToastError } from "../shared/toast/toastError";
+import { SERVICIOS_AUTH } from "@/services/auth.service";
 
 export function LoginForm({
   className,
@@ -31,6 +33,7 @@ export function LoginForm({
       const response = await fetch("http://localhost:5000/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // ✅ envía y recibe cookie automáticamente
         body: JSON.stringify({
           email_usu: email,
           clave_usu: password,
@@ -59,16 +62,6 @@ export function LoginForm({
         return;
       }
 
-      // ✅ Exitoso
-      const data = await response.json();
-      localStorage.setItem("usuarioActual", JSON.stringify(data.usuario));
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user_name", data.usuario.nom_usu);
-      localStorage.setItem("user_id", data.usuario.id_usu);
-      localStorage.setItem("user_email", data.usuario.email_usu);
-      localStorage.setItem("user_avatar", data.usuario.img_usu);
-      localStorage.setItem("showWelcomeToast", "true");
-
       setLoading(false);
       router.push("/dashboard");
     } catch {
@@ -76,6 +69,44 @@ export function LoginForm({
         message: "Error de red. Intenta nuevamente.",
       });
       setLoading(false);
+    }
+  };
+
+  const handleLoginGoogle = async () => {
+    try {
+      const usuario = await loginConGoogle();
+
+      const response = await fetch(SERVICIOS_AUTH.google, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // ✅ IMPORTANTE para guardar la cookie
+        body: JSON.stringify({
+          email: usuario.correo,
+          nombre: usuario.nombre,
+          foto: usuario.foto,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        let extra = "";
+        if (
+          err.statusCode === 401 &&
+          err.message === "Inicio con Google deshabilitado"
+        ) {
+          extra = " Contacte al administrador del sistema.";
+        }
+        ToastError({
+          message: ` ${err.message}${extra}`,
+        });
+        return;
+      }
+
+      router.push("/dashboard");
+    } catch {
+      ToastError({
+        message: "Error de red. Intenta nuevamente.",
+      });
     }
   };
 
@@ -162,57 +193,8 @@ export function LoginForm({
         <Button
           variant="outline"
           className="w-full"
-          onClick={async () => {
-            try {
-              const usuario = await loginConGoogle();
-              const response = await fetch(
-                "http://localhost:5000/usuarios/google",
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    email: usuario.correo,
-                    nombre: usuario.nombre,
-                    foto: usuario.foto,
-                  }),
-                },
-              );
-
-              if (!response.ok) {
-                const err = await response.json();
-                let extra = "";
-                if (
-                  err.statusCode === 401 &&
-                  err.message === "Inicio con Google deshabilitado"
-                ) {
-                  extra = " Contacte al administrador del sistema.";
-                }
-                ToastError({
-                  message: ` ${err.message}${extra}`,
-                });
-                return;
-              }
-
-              const data = await response.json();
-              localStorage.setItem(
-                "usuarioActual",
-                JSON.stringify(data.usuario),
-              );
-              localStorage.setItem("token", data.token);
-              localStorage.setItem("user_name", data.usuario.nom_usu);
-              localStorage.setItem("user_email", data.usuario.email_usu);
-              localStorage.setItem("user_avatar", data.usuario.foto_usu || "");
-              localStorage.setItem("showWelcomeToast", "true");
-
-              router.push("/dashboard");
-            } catch {
-              ToastError({
-                message: "Error de red. Intenta nuevamente.",
-              });
-            }
-          }}
+          onClick={handleLoginGoogle}
         >
-          {/* Icono de Google */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="18"

@@ -22,6 +22,7 @@ import { ToastError } from "../../toast/toastError";
 import { uploadImage } from "@/firebase/subirImage";
 import { eliminarImagen } from "@/firebase/eliminarImage";
 import { DEFAULT_USER_URL } from "@/lib/constants";
+import { useUsuarioAutenticado } from "@/hooks/usuarios/useUsuarioAutenticado";
 
 const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ]+( [A-Za-zÁÉÍÓÚáéíóúÑñ]+)?$/;
 
@@ -74,6 +75,7 @@ export function EditUserForm({
   roleOptions,
   onSuccess,
 }: EditUserFormProps) {
+  const { usuario, actualizar } = useUsuarioAutenticado();
   const [showPassword, setShowPassword] = React.useState(false);
   const [imagenArchivo, setImagenArchivo] = React.useState<File | null>(null);
   const [imagenPreview, setImagenPreview] = React.useState<string | null>(
@@ -152,11 +154,8 @@ export function EditUserForm({
       ToastSuccess({
         message: "El usuario ha sido actualizado correctamente.",
       });
-
-      const storedUser = localStorage.getItem("user_name") || "";
-      if (storedUser === initialData.usuario) {
-        localStorage.setItem("user_name", values.usuario);
-        window.dispatchEvent(new Event("userNameUpdated"));
+      if (usuario?.id === initialData.id) {
+        actualizar(); // Vuelve a obtener datos desde /auth/me
       }
     } catch (err) {
       const errorMessage =

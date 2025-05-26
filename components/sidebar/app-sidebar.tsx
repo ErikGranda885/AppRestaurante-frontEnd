@@ -1,4 +1,5 @@
 "use client";
+
 import * as React from "react";
 import { useState, useEffect } from "react";
 import Image from "next/image";
@@ -28,20 +29,47 @@ import {
 } from "@/components/ui/sidebar";
 import { NavAdmin } from "./nav-admin";
 import { DEFAULT_EMPRESA_IMAGE_URL } from "@/lib/constants";
+import { useUsuarioAutenticado } from "@/hooks/usuarios/useUsuarioAutenticado";
 
-export const data = {
+type NavItem = {
+  title: string;
+  url: string;
+  icon?: any;
+  submenu?: boolean;
+  roles?: string[];
+  items?: NavItem[];
+};
+
+type DataSidebar = {
+  user: {
+    name: string;
+    email: string;
+    avatar: string;
+  };
+  navMain: NavItem[];
+  adminModules: NavItem[];
+};
+
+export const data: DataSidebar = {
   user: {
     name: "",
     email: "",
     avatar: "",
   },
   navMain: [
-    { title: "Dashboard", url: "/dashboard", icon: House, submenu: false },
+    {
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: House,
+      submenu: false,
+      roles: ["administrador", "empleado", "sistema"],
+    },
     {
       title: "Ventas",
       url: "/ventas",
       icon: ShoppingBag,
       submenu: true,
+      roles: ["administrador", "empleado", "sistema"],
       items: [
         { title: "Nueva venta", url: "/ventas/nueva" },
         { title: "Historial de ventas", url: "/ventas/historial" },
@@ -52,10 +80,23 @@ export const data = {
       url: "/productos",
       icon: Box,
       submenu: true,
+      roles: ["administrador", "empleado", "sistema"],
       items: [
-        { title: "Gestión de categorias", url: "/productos/categorias" },
-        { title: "Gestión de productos", url: "/productos/listado" },
-        { title: "Gestión de recetas", url: "/productos/recetas" },
+        {
+          title: "Gestión de categorias",
+          url: "/productos/categorias",
+          roles: ["administrador", "sistema"],
+        },
+        {
+          title: "Gestión de productos",
+          url: "/productos/listado",
+          roles: ["administrador", "empleado", "sistema"],
+        },
+        {
+          title: "Gestión de recetas",
+          url: "/productos/recetas",
+          roles: ["administrador", "sistema"],
+        },
       ],
     },
     {
@@ -63,14 +104,17 @@ export const data = {
       url: "/produccion",
       icon: Factory,
       submenu: true,
+      roles: ["administrador", "empleado", "sistema"],
       items: [
         {
           title: "Gestión de Equivalencias",
           url: "/produccion/equivalencias",
+          roles: ["administrador", "sistema"],
         },
         {
           title: "Historial de Transformaciones",
           url: "/produccion/historial",
+          roles: ["administrador", "empleado", "sistema"],
         },
       ],
     },
@@ -79,9 +123,18 @@ export const data = {
       url: "/compras",
       icon: ShoppingCart,
       submenu: true,
+      roles: ["administrador", "empleado", "sistema"],
       items: [
-        { title: "Gestión de Proveedores", url: "/compras/proveedores" },
-        { title: "Historial de compras", url: "/compras/historial" },
+        {
+          title: "Gestión de Proveedores",
+          url: "/compras/proveedores",
+          roles: ["administrador", "sistema"],
+        },
+        {
+          title: "Historial de compras",
+          url: "/compras/historial",
+          roles: ["administrador", "empleado", "sistema"],
+        },
       ],
     },
     {
@@ -89,39 +142,43 @@ export const data = {
       url: "/gastos-indirectos",
       icon: Receipt,
       submenu: false,
+      roles: ["administrador", "empleado", "sistema"],
     },
     {
       title: "Cierre Diario",
       url: "/cierre-diario",
       icon: CalendarCheck,
       submenu: false,
+      roles: ["administrador", "empleado", "sistema"],
     },
   ],
   adminModules: [
-    { title: "Usuarios", url: "/usuarios", icon: User, submenu: false },
+    {
+      title: "Usuarios",
+      url: "/usuarios",
+      icon: User,
+      submenu: false,
+      roles: ["administrador", "sistema"],
+    },
     {
       title: "Configuraciones",
       url: "/configuraciones",
       icon: Settings,
       submenu: false,
+      roles: ["administrador", "sistema"],
     },
   ],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const [userData, setUserData] = useState(data.user);
+  const { usuario, rol, isLoading } = useUsuarioAutenticado();
+
   const [empresaData, setEmpresaData] = useState({
     nombre: "No registrado",
     logo: DEFAULT_EMPRESA_IMAGE_URL,
   });
-  const [isMounted, setIsMounted] = useState(false);
 
-  const updateUserData = () => {
-    const name = localStorage.getItem("user_name") || "";
-    const email = localStorage.getItem("user_email") || "";
-    const avatar = localStorage.getItem("user_avatar") || "";
-    setUserData({ name, email, avatar });
-
+  useEffect(() => {
     const empresaLS = localStorage.getItem("empresa_actual");
     if (empresaLS && empresaLS !== "null") {
       try {
@@ -134,25 +191,36 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               : DEFAULT_EMPRESA_IMAGE_URL,
         });
       } catch (error) {
-        console.error("Error parsing empresa_actual:", error);
+        console.error("Error al parsear empresa_actual:", error);
       }
     }
-  };
-
-  useEffect(() => {
-    updateUserData();
-    setIsMounted(true);
-
-    window.addEventListener("userNameUpdated", updateUserData);
-    window.addEventListener("empresaUpdated", updateUserData);
-
-    return () => {
-      window.removeEventListener("userNameUpdated", updateUserData);
-      window.removeEventListener("empresaUpdated", updateUserData);
-    };
   }, []);
 
-  if (!isMounted) return null;
+  if (isLoading) return null;
+
+  const navMainFiltrado = data.navMain
+    .filter((item: NavItem) => item.roles?.includes(rol))
+    .map((item: NavItem): NavItem | null => {
+      if (item.submenu && Array.isArray(item.items)) {
+        const filteredItems = item.items.filter(
+          (subitem: NavItem) => !subitem.roles || subitem.roles.includes(rol),
+        );
+        if (filteredItems.length === 0) return null;
+        return { ...item, items: filteredItems };
+      }
+      return item;
+    })
+    .filter((item): item is NavItem => item !== null); // <- Type guard
+
+  const adminModulesFiltrado = data.adminModules.filter((item: NavItem) =>
+    item.roles?.includes(rol),
+  );
+
+  const userData = {
+    nom_usu: usuario?.nom_usu ?? "",
+    email_usu: usuario?.email_usu ?? "",
+    img_usu: usuario?.img_usu ?? "",
+  };
 
   return (
     <Sidebar
@@ -186,8 +254,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavAdmin items={data.adminModules} />
+        <NavMain items={navMainFiltrado} />
+        {adminModulesFiltrado.length > 0 && (
+          <NavAdmin items={adminModulesFiltrado} />
+        )}
       </SidebarContent>
 
       <SidebarFooter>

@@ -359,10 +359,11 @@ export default function NuevaCompraPage() {
         img_prov: proveedorSeleccionado.imagen ?? "",
       },
       usu_comp: {
-        id_usu: usuarioActual.id_usu,
-        nom_usu: usuarioActual.nom_usu,
-        email_usu: usuarioActual.email_usu,
+        id_usu: usuarioActual.usuario!.id_usu,
+        nom_usu: usuarioActual.usuario!.nom_usu,
+        email_usu: usuarioActual.usuario!.email_usu,
       } as IUsuario,
+
       tipo_doc_comp: tipoDocumentoSeleccionado?.label || "Factura",
       num_doc_comp: formData.num_doc_comp,
       form_pag_comp: formData.forma_pago_comp,

@@ -11,14 +11,10 @@ export function useConfiguracionesVentas() {
   });
   const [loading, setLoading] = useState(true);
 
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : "";
-
   const fetchVentasConfig = async () => {
-    if (!token) return;
     try {
       const response = await fetch(SERVICIOS_CONFIGURACIONES.listar, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include", // ✅ Usa cookie HttpOnly
       });
 
       const res = await response.json();
@@ -37,7 +33,6 @@ export function useConfiguracionesVentas() {
         porcentaje_iva: getValor("porcentaje_iva", 12),
         moneda: getValor("moneda", "USD"),
         minimo_stock_alerta: getValor("minimo_stock_alerta", 5),
-        
       });
     } catch (err) {
       console.error("Error al obtener configuración de ventas:", err);
@@ -47,13 +42,12 @@ export function useConfiguracionesVentas() {
   };
 
   const updateConfiguracion = async (clave: string, valor: any) => {
-    if (!token) return;
     try {
       await fetch(SERVICIOS_CONFIGURACIONES.actualizarPorClave(clave), {
         method: "PUT",
+        credentials: "include", // ✅ Usa cookie HttpOnly
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           valor_conf:

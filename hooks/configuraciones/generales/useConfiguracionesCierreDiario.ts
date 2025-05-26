@@ -1,5 +1,3 @@
-// src/hooks/configuraciones/generales/useConfiguracionesCierreDiario.ts
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -15,14 +13,10 @@ export function useConfiguracionesCierreDiario() {
     useState(false);
   const [loading, setLoading] = useState(true);
 
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : "";
-
   const fetchConfiguraciones = async () => {
-    if (!token) return;
     try {
       const response = await fetch(SERVICIOS_CONFIGURACIONES.listar, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include", // ✅ Usa la cookie HttpOnly
       });
 
       const data = await response.json();
@@ -56,13 +50,12 @@ export function useConfiguracionesCierreDiario() {
     clave: string,
     valor: string | boolean,
   ) => {
-    if (!token) return;
     try {
       await fetch(SERVICIOS_CONFIGURACIONES.actualizarPorClave(clave), {
         method: "PUT",
+        credentials: "include", // ✅ Envia la cookie de sesión automáticamente
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           valor_conf:

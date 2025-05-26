@@ -7,18 +7,15 @@ export function useConfiguracionesBranding() {
   const [logoReportes, setLogoReportes] = useState(false);
   const [logoFacturas, setLogoFacturas] = useState(false);
   const [loading, setLoading] = useState(true);
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : "";
 
   const fetchConfiguraciones = async () => {
-    if (!token) return;
     try {
       const response = await fetch(SERVICIOS_CONFIGURACIONES.listar, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include", // ✅ Usa la cookie de sesión
       });
 
       const data = await response.json();
-      const configuraciones = data.configuraciones ?? []; // 👈 CORREGIDO
+      const configuraciones = data.configuraciones ?? [];
 
       const reportes = configuraciones.find(
         (item: any) => item.clave_conf === "incluir_logo_reportes",
@@ -37,15 +34,14 @@ export function useConfiguracionesBranding() {
   };
 
   const updateConfiguracion = async (clave: string, valor: boolean) => {
-    if (!token) return;
     try {
       await fetch(SERVICIOS_CONFIGURACIONES.actualizarPorClave(clave), {
-        method: "PUT", // 👈 tu backend espera PUT
+        method: "PUT",
+        credentials: "include", // ✅ Autenticación con cookie
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ valor_conf: valor ? "true" : "false" }), // 👈 tu backend espera 'valor_conf'
+        body: JSON.stringify({ valor_conf: valor ? "true" : "false" }),
       });
 
       if (clave === "incluir_logo_reportes") setLogoReportes(valor);
