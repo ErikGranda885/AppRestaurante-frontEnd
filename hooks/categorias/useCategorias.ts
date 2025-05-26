@@ -11,7 +11,12 @@ export function useCategorias() {
   );
 
   const categoriasActivas =
-    data?.categorias?.filter((cat: any) => cat.est_cate === "Activo") || [];
+    data?.categorias
+      ?.filter((cat: any) => cat.est_cate === "Activo")
+      .map((cat: any) => ({
+        value: cat.id_cate.toString(),
+        label: cat.nom_cate,
+      })) || [];
 
   return {
     categorias: categoriasActivas,

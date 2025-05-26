@@ -73,6 +73,17 @@ export const comandosDeTransformaciones = [
           );
         });
 
+        if (!recetas || recetas.length === 0) {
+          ctx.agregarMensajeBot(
+            <>
+              ❌ No hay recetas registradas en el sistema.
+              <br />
+              Por favor crea al menos una receta para poder transformarla.
+            </>,
+          );
+          return;
+        }
+
         if (!recetaEncontrada) {
           ctx.agregarMensajeBot(
             <>

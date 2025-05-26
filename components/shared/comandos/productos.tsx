@@ -22,52 +22,75 @@ export type FlowProducto = {
   };
 };
 
-type Contexto = {
-  agregarMensajeBot: (texto: string) => void;
-  establecerSugerenciasPendientes: (sugs: string[]) => void;
-  setFlow: (flow: FlowProducto | null) => void;
-};
-
 export const comandosDeProductos = [
   {
     nombre: "inventario",
     patron: /^inventario de (.+)$/i,
-    handler: async (m: RegExpMatchArray, ctx: Contexto) => {
+    handler: async (m: RegExpMatchArray, ctx: any) => {
       const prod = m[1].trim();
-      ctx.agregarMensajeBot(`\u23F3 Consultando inventario de ${prod}...`);
+      ctx.agregarMensajeBot(`⏳ Consultando inventario de ${prod}...`);
       try {
         const resp = await fetch(SERVICIOS_INVENTARIO.stockPorNombre(prod));
         const datos = await resp.json();
 
         if (resp.ok && datos.stock != null) {
           ctx.setFlow(null);
-          ctx.agregarMensajeBot(
-            `\u2705 Hay ${datos.stock} unidades de ${prod}.`,
+
+          const detalleVisual = (
+            <div className="space-y-2">
+              <p>
+                📦 <strong>Inventario encontrado:</strong>
+              </p>
+              <ul className="list-inside list-disc">
+                <li>
+                  Producto: <strong>{prod}</strong>
+                </li>
+                <li>
+                  Stock disponible: <strong>{datos.stock}</strong>
+                </li>
+              </ul>
+            </div>
           );
+          ctx.agregarMensajeBot(detalleVisual);
         } else if (
           Array.isArray(datos.suggestions) &&
           datos.suggestions.length > 0
         ) {
           ctx.establecerSugerenciasPendientes(datos.suggestions);
-          ctx.agregarMensajeBot(
-            `\u274C No existe "${prod}". \u00BfQuiz\u00E1s quisiste: ${datos.suggestions.join(", ")}?`,
+
+          const sugerenciasVisual = (
+            <div className="space-y-2">
+              <p>
+                ❌ No se encontró <strong>"{prod}"</strong>.
+              </p>
+              <p>¿Quizás quisiste?:</p>
+              <ul className="list-inside list-disc">
+                {datos.suggestions.map((s: any, i: any) => (
+                  <li key={i}>{s}</li>
+                ))}
+              </ul>
+              <p>Di el nombre correcto para continuar.</p>
+            </div>
           );
+
+          ctx.agregarMensajeBot(sugerenciasVisual);
+
           ctx.setFlow({
             step: "sugerenciaInventario",
             data: { nom_prod: prod, sugerencias: datos.suggestions },
           });
         } else {
-          ctx.agregarMensajeBot(`\u274C No existe "${prod}" en el inventario.`);
+          ctx.agregarMensajeBot(`❌ No existe "${prod}" en el inventario.`);
         }
       } catch (e: any) {
-        ctx.agregarMensajeBot(`\u274C ${e.message}`);
+        ctx.agregarMensajeBot(`❌ ${e.message}`);
       }
     },
   },
   {
     nombre: "agregarProducto",
     patron: /^agregar producto[,:]?\s*(.+)$/i,
-    handler: (m: RegExpMatchArray, ctx: Contexto) => {
+    handler: (m: RegExpMatchArray, ctx: any) => {
       const nombre = m[1].trim();
       ctx.setFlow({ step: "confirmacion", data: { nom_prod: nombre } });
       ctx.agregarMensajeBot(
@@ -80,7 +103,7 @@ export const comandosDeProductos = [
 export async function handleFlowProducto(
   texto: string,
   flow: FlowProducto,
-  ctx: Contexto,
+  ctx: any,
 ) {
   const { step, data } = flow;
 
@@ -146,9 +169,23 @@ export async function handleFlowProducto(
         const tipos = TIP_PROD_OPTIONS.map((o: any) => o.value);
         ctx.establecerSugerenciasPendientes(tipos);
         ctx.setFlow({ step: "tipo", data });
-        ctx.agregarMensajeBot(
-          `¿Cuál es el tipo de producto? Opciones: ${tipos.join(", ")}. Di 'cancelar' si deseas salir.`,
+        const tiposVisual = (
+          <div className="space-y-2">
+            <p>
+              📂 <strong>¿Cuál es el tipo de producto?</strong>
+            </p>
+            <ul className="list-inside list-disc">
+              {tipos.map((t, i) => (
+                <li key={i}>{t}</li>
+              ))}
+            </ul>
+            <p>
+              Di el nombre exacto o <strong>'cancelar'</strong> para salir.
+            </p>
+          </div>
         );
+
+        ctx.agregarMensajeBot(tiposVisual);
       } else if (/(^no$|^cancelar$|^salir$)/.test(resp)) {
         ctx.agregarMensajeBot(`🚫 Creación de producto cancelada.`);
         ctx.setFlow(null);
@@ -171,21 +208,63 @@ export async function handleFlowProducto(
         );
         return;
       }
-      data.tip_prod = texto;
+      const tipoEncontrado = TIP_PROD_OPTIONS.find(
+        (o) => o.value.toLowerCase() === texto.toLowerCase(),
+      );
+
+      if (!tipoEncontrado) {
+        ctx.agregarMensajeBot(
+          `❌ Tipo no válido. Elige uno de: ${TIP_PROD_OPTIONS.map((o: any) => o.value).join(", ")}`,
+        );
+        return;
+      }
+
+      data.tip_prod = tipoEncontrado.value;
 
       if (texto.toLowerCase() === "insumo") {
         const unds = UNIT_OPTIONS.map((o: any) => o.value);
         ctx.establecerSugerenciasPendientes(unds);
         ctx.setFlow({ step: "unidad", data });
-        ctx.agregarMensajeBot(
-          `¿Cuál es la unidad de medida? Opciones:\n` +
-            UNIT_OPTIONS.map((o) => `🔹 ${o.label}`).join("\n") +
-            `\nDi 'cancelar' si deseas salir.`,
+        const unidadesVisual = (
+          <div className="space-y-2">
+            <p>
+              📏 <strong>Unidades de medida disponibles:</strong>
+            </p>
+            <ul className="list-inside list-disc">
+              {UNIT_OPTIONS.map((u, i) => (
+                <li key={i}>{u.label}</li>
+              ))}
+            </ul>
+            <p>
+              Di el nombre exacto o <strong>'cancelar'</strong> para salir.
+            </p>
+          </div>
         );
+
+        ctx.agregarMensajeBot(unidadesVisual);
       } else {
         try {
           const resCat = await fetch(SERVICIOS_PRODUCTOS.categorias);
           const catData = await resCat.json();
+
+          if (
+            !Array.isArray(catData.categorias) ||
+            catData.categorias.length === 0
+          ) {
+            const sinCategoriasVisual = (
+              <div className="space-y-2">
+                <p>
+                  ❌ <strong>No hay categorías registradas.</strong>
+                </p>
+                <p>Por favor crea al menos una categoría antes de continuar.</p>
+              </div>
+            );
+
+            ctx.agregarMensajeBot(sinCategoriasVisual);
+            ctx.setFlow(null);
+            return;
+          }
+
           const sugerencias = catData.categorias.map(
             (c: any) => `${c.id_cate}:${c.nom_cate}`,
           );
@@ -193,11 +272,24 @@ export async function handleFlowProducto(
           ctx.establecerSugerenciasPendientes(sugerencias);
           ctx.setFlow({ step: "categoria", data });
 
-          ctx.agregarMensajeBot(
-            `📦 Categorías disponibles:\n` +
-              sugerencias.map((s: any) => `🔹 ${s}`).join("\n") +
-              `\n\nElige una diciendo el ID o nombre. Di 'cancelar' si deseas salir.`,
+          const categoriasVisual = (
+            <div className="space-y-2">
+              <p>
+                📦 <strong>Categorías disponibles:</strong>
+              </p>
+              <ul className="list-inside list-disc">
+                {sugerencias.map((s: any, i: any) => (
+                  <li key={i}>{s}</li>
+                ))}
+              </ul>
+              <p>
+                Elige una diciendo el ID o nombre. Di{" "}
+                <strong>‘cancelar’</strong> si deseas salir.
+              </p>
+            </div>
           );
+
+          ctx.agregarMensajeBot(categoriasVisual);
         } catch (e: any) {
           ctx.agregarMensajeBot(`❌ Error al cargar categorías: ${e.message}`);
           ctx.setFlow(null);
@@ -222,11 +314,26 @@ export async function handleFlowProducto(
           const opciones = catData.categorias.map(
             (c: any) => `${c.id_cate}:${c.nom_cate}`,
           );
-          ctx.agregarMensajeBot(
-            `❌ Categoría no reconocida. Opciones válidas:\n` +
-              opciones.map((s: any) => `🔹 ${s}`).join("\n") +
-              `\nIntenta nuevamente con el ID o nombre.`,
+          const categoriasInvalidasVisual = (
+            <div className="space-y-2">
+              <p>
+                ❌ <strong>Categoría no reconocida.</strong>
+              </p>
+              <p>Opciones válidas:</p>
+              <ul className="list-inside list-disc">
+                {opciones.map((s: any, i: any) => (
+                  <li key={i}>{s}</li>
+                ))}
+              </ul>
+              <p>
+                Intenta nuevamente con el <strong>ID</strong> o{" "}
+                <strong>nombre</strong>.
+              </p>
+            </div>
           );
+
+          ctx.agregarMensajeBot(categoriasInvalidasVisual);
+
           ctx.establecerSugerenciasPendientes(opciones);
           return;
         }
@@ -236,11 +343,23 @@ export async function handleFlowProducto(
         const unds = UNIT_OPTIONS.map((o: any) => o.value);
         ctx.establecerSugerenciasPendientes(unds);
         ctx.setFlow({ step: "unidad", data });
-        ctx.agregarMensajeBot(
-          `¿Cuál es la unidad de medida? Opciones:\n` +
-            UNIT_OPTIONS.map((o) => `🔹 ${o.label}`).join("\n") +
-            `\nDi 'cancelar' si deseas salir.`,
+        const unidadesVisual = (
+          <div className="space-y-2">
+            <p>
+              📏 <strong>Unidades de medida disponibles:</strong>
+            </p>
+            <ul className="list-inside list-disc">
+              {UNIT_OPTIONS.map((u, i) => (
+                <li key={i}>{u.label}</li>
+              ))}
+            </ul>
+            <p>
+              Di el nombre exacto o <strong>'cancelar'</strong> para salir.
+            </p>
+          </div>
         );
+
+        ctx.agregarMensajeBot(unidadesVisual);
       } catch (e: any) {
         ctx.agregarMensajeBot(`❌ Error al validar categoría: ${e.message}`);
         ctx.setFlow(null);
@@ -259,11 +378,22 @@ export async function handleFlowProducto(
       });
 
       if (!match) {
-        ctx.agregarMensajeBot(
-          `❌ Unidad no válida. Elige una de:\n${UNIT_OPTIONS.map(
-            (o) => `🔹 ${o.label}`,
-          ).join("\n")}`,
+        const unidadInvalidaVisual = (
+          <div className="space-y-2">
+            <p>
+              ❌ <strong>Unidad no válida.</strong>
+            </p>
+            <p>Elige una de las siguientes opciones:</p>
+            <ul className="list-inside list-disc">
+              {UNIT_OPTIONS.map((u, i) => (
+                <li key={i}>{u.label}</li>
+              ))}
+            </ul>
+          </div>
         );
+
+        ctx.agregarMensajeBot(unidadInvalidaVisual);
+
         ctx.establecerSugerenciasPendientes(UNIT_OPTIONS.map((o) => o.label));
         return;
       }
@@ -276,9 +406,22 @@ export async function handleFlowProducto(
         );
         const verifData = await verifResp.json();
         if (verifData.exists) {
-          ctx.agregarMensajeBot(
-            `⚠️ El producto "${data.nom_prod}" ya está registrado. Intenta con otro nombre.`,
+          const productoExistenteVisual = (
+            <div className="space-y-2">
+              <p>
+                ⚠️ <strong>Producto ya existente:</strong>
+              </p>
+              <ul className="list-inside list-disc">
+                <li>
+                  Nombre: <strong>{data.nom_prod}</strong>
+                </li>
+              </ul>
+              <p>Por favor intenta con otro nombre.</p>
+            </div>
           );
+
+          ctx.agregarMensajeBot(productoExistenteVisual);
+
           ctx.setFlow(null);
           return;
         }

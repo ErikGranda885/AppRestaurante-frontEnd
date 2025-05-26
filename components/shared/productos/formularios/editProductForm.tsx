@@ -9,7 +9,6 @@ import { uploadImage } from "@/firebase/subirImage";
 import { CampoCategoria } from "../ui/campoCategoria";
 import { ZonaImagen } from "../ui/zonaImagen";
 import { CampoTexto } from "../../varios/campoTexto";
-import { ICategory } from "@/lib/types";
 import { ToastSuccess } from "../../toast/toastSuccess";
 import { ToastError } from "../../toast/toastError";
 import { CampoSelectUnidad } from "../ui/campoSelectUnidad";

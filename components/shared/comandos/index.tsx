@@ -33,13 +33,22 @@ export const allCommands = [
 ];
 
 const ejemplos: Record<string, string> = {
+  // 🗃️ Inventario y productos
   inventario: "Inventario de Coca Cola",
   agregarProducto: "Agregar producto Dorito azul",
+
+  // 💵 Ventas
   ventasHoy: "¿Cuánto se vendió hoy?",
+
+  // 💸 Gastos
   registrarGasto: "Registrar gasto 5.75 por pan",
   gastosHoy: "¿Cuánto gasté hoy?",
+
+  // 🍳 Transformaciones
   realizarTransformacion: "Transformar 4 de shawarma",
   transformacionesHoy: "¿Qué transformaciones se hicieron hoy?",
+
+  // 🧠 Ayuda
   verComandos: "Ver comandos",
 };
 

@@ -1,5 +1,4 @@
 import { SERVICIOS_GASTOS } from "@/services/gastos.service";
-import React from "react"; // necesario para JSX en el mensaje visual
 
 export const comandosDeGastos = [
   {
