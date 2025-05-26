@@ -17,6 +17,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { uploadImage } from "@/firebase/subirImage";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
+import { useSocket } from "@/hooks/useSocket";
+import { socket } from "@/lib/socket";
 import { ICategory, IProduct } from "@/lib/types";
 import { SERVICIOS_AUTH } from "@/services/auth.service";
 import { SERVICIOS_INVENTARIO } from "@/services/inventario.service";
@@ -25,7 +27,7 @@ import { safePrice } from "@/utils/format";
 import { format } from "date-fns";
 import { Banknote, Pencil, Save, Search, Smartphone } from "lucide-react";
 import Image from "next/image";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 
 interface IExtendedProduct extends IProduct {
   special?: boolean;
@@ -91,49 +93,50 @@ export default function Page() {
   };
 
   // Cargar productos desde la API de inventario
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const response = await fetch(SERVICIOS_INVENTARIO.productosConStock);
-        const data = await response.json();
+  const fetchProducts = useCallback(async () => {
+    try {
+      const response = await fetch(SERVICIOS_INVENTARIO.productosConStock);
+      const data = await response.json();
 
-        if (!Array.isArray(data)) {
-          console.error("La respuesta esperada debe ser un arreglo:", data);
-          return;
-        }
-
-        const activeProducts = data.filter(
-          (producto: any) =>
-            producto.est_prod === "Activo" &&
-            ["Directo", "Transformado", "Combo"].includes(producto.tip_prod),
-        );
-
-        setProducts(activeProducts);
-      } catch (error) {
-        console.error("Error al cargar los productos desde inventario:", error);
+      if (!Array.isArray(data)) {
+        console.error("La respuesta esperada debe ser un arreglo:", data);
+        return;
       }
-    }
 
-    fetchProducts();
+      const activeProducts = data.filter(
+        (producto: any) =>
+          producto.est_prod === "Activo" &&
+          ["Directo", "Transformado", "Combo"].includes(producto.tip_prod),
+      );
+
+      setProducts(activeProducts);
+    } catch (error) {
+      console.error("Error al cargar los productos desde inventario:", error);
+    }
+  }, []);
+  useEffect(() => {
+    fetchProducts(); // ✅ solo lo llama al montar
+  }, [fetchProducts]);
+
+  useSocket("productos-actualizados", fetchProducts); // ✅ hook bien usado
+  const fetchCategories = useCallback(async () => {
+    try {
+      const response = await fetch(SERVICIOS_PRODUCTOS.categorias);
+      const result = await response.json();
+      const data: ICategory[] = result.categorias || [];
+
+      const activeCategories = data.filter((cat) => cat.est_cate === "Activo");
+      setCategories(activeCategories);
+    } catch (error) {
+      console.error("Error al cargar las categorías:", error);
+    }
   }, []);
 
-  // Cargar categorías desde la API
   useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const response = await fetch(SERVICIOS_PRODUCTOS.categorias);
-        const result = await response.json();
-        const data: ICategory[] = result.categorias || [];
-        const activeCategories = data.filter(
-          (cat) => cat.est_cate === "Activo",
-        );
-        setCategories(activeCategories);
-      } catch (error) {
-        console.error("Error al cargar las categorías:", error);
-      }
-    }
-    fetchCategories();
-  }, []);
+    fetchCategories(); // 🔁 al montar
+  }, [fetchCategories]);
+
+  useSocket("categorias-actualizadas", fetchCategories); // ✅ escucha WebSocket
 
   useEffect(() => {
     async function obtenerUsuario() {
@@ -442,6 +445,9 @@ export default function Page() {
       ToastSuccess({
         message: "Orden guardada y stock consumido exitosamente.",
       });
+      console.log("🔴 Emitiendo evento productos-actualizados");
+      socket.emit("productos-actualizados");
+
       setOrderItems([]);
       setComprobanteNumero("");
       setComprobanteImagen(null);
