@@ -1,8 +1,8 @@
-// hooks/equivalencias/useEquivalencias.ts
 import useSWR from "swr";
 import { IEquivalencia } from "@/lib/types";
 import { SERVICIOS_EQUIVALENCIAS } from "@/services/equivalencias.service";
 import { toast } from "sonner";
+import { useSocket } from "@/hooks/useSocket"; // 👈 Importar el hook de socket
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -18,6 +18,12 @@ export const useEquivalencias = () => {
     SERVICIOS_EQUIVALENCIAS.listar,
     fetcher,
   );
+
+  // 👇 Escuchar eventos de WebSocket
+  useSocket("equivalencias-actualizadas", () => {
+    console.log("📡 Evento: equivalencias_actualizadas recibido");
+    mutate(); // refresca las equivalencias
+  });
 
   if (error) toast.error(error.message);
 
