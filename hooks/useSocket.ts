@@ -4,17 +4,29 @@ import { socket } from "@/lib/socket";
 export function useSocket(event: string, callback: () => void) {
   useEffect(() => {
     console.log("📡 useSocket montado para evento:", event);
-    socket.on("connect", () => {
-      console.log("🔌 Conectado a WebSocket");
-    });
 
-    socket.on(event, () => {
+    // Handler dedicado por hook (importante para evitar fugas)
+    const handleConnect = () => {
+      console.log("🔌 Conectado a WebSocket");
+    };
+
+    const handleEvent = () => {
       console.log(`📡 Evento recibido: ${event}`);
       callback();
-    });
+    };
 
+    // Eliminar posibles duplicados antes de agregar
+    socket.off("connect", handleConnect);
+    socket.off(event, handleEvent);
+
+    // Agregar listeners
+    socket.on("connect", handleConnect);
+    socket.on(event, handleEvent);
+
+    // Limpiar al desmontar
     return () => {
-      socket.off(event, callback);
+      socket.off("connect", handleConnect);
+      socket.off(event, handleEvent);
     };
   }, [event, callback]);
 }

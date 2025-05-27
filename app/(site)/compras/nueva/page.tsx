@@ -387,7 +387,6 @@ export default function NuevaCompraPage() {
                 control={control}
                 name="proveedor"
                 label="Proveedor"
-                options={proveedores}
               />
               <CampoTipoDocumento
                 control={control}

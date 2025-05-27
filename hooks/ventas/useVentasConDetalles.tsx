@@ -28,11 +28,13 @@ export const useVentasConDetalles = () => {
     fetchVentas();
   }, [fetchVentas]);
 
-  // 🔌 Actualización en tiempo real por socket
-  useSocket("ventas-actualizadas", () => {
+  // ✅ Función estable para el socket
+  const handleVentasActualizadas = useCallback(() => {
     console.log("🔁 Revalidando ventas desde socket");
     fetchVentas();
-  });
+  }, [fetchVentas]);
+
+  useSocket("ventas-actualizadas", handleVentasActualizadas);
 
   return { ventas, loading, error };
 };
