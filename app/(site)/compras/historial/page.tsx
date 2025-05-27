@@ -47,6 +47,7 @@ import {
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { safePrice } from "@/utils/format";
 import { DialogExportarCompras } from "@/components/shared/compras/ui/dialogExportarCompras";
+import { socket } from "@/lib/socket";
 
 export default function Page() {
   const { ventasConfig } = useConfiguracionesVentas();
@@ -98,6 +99,14 @@ export default function Page() {
     };
 
     fetchData();
+
+    // 👂 Escuchar evento de socket
+    socket.on("compras-actualizadas", fetchData);
+
+    // 🧹 Limpiar listener al desmontar
+    return () => {
+      socket.off("compras-actualizadas", fetchData);
+    };
   }, []);
 
   const filtrarPorFecha = (compra: ICompra) => {

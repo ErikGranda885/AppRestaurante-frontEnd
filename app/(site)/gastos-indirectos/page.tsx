@@ -56,6 +56,7 @@ import { DateRange } from "react-day-picker";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { safePrice } from "@/utils/format";
 import { DialogExportarGastos } from "@/components/shared/gastos/ui/dialogExportarGastos";
+import { useSocket } from "@/hooks/useSocket";
 export type TipoAccion = "activar" | "inactivar" | "eliminar";
 
 type AccionGasto = {
@@ -80,6 +81,10 @@ export default function Page() {
     mutate,
     loading,
   } = useGastos();
+  useSocket("gastos-actualizadas", () => {
+    console.log("🔁 Revalidando gastos desde socket");
+    mutate();
+  });
 
   const [busqueda, setBusqueda] = useState<string>("");
   const [dateRange, setDateRange] = useState<DateRange>({
@@ -283,7 +288,6 @@ export default function Page() {
             <CreateGastoForm
               onSuccess={() => {
                 setAbrirCrear(false);
-                mutate();
               }}
             />
           </GeneralDialog>
@@ -477,7 +481,6 @@ export default function Page() {
           <EditGastoForm
             gasto={gastoEditar}
             onSuccess={() => {
-              mutate();
               setGastoEditar(null);
               setAbrirEditar(false);
             }}

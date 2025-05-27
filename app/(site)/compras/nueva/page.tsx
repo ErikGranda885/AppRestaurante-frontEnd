@@ -1,7 +1,6 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm, FormProvider } from "react-hook-form";
+import React, { useEffect } from "react";
+import { FormProvider } from "react-hook-form";
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { ICompra, IDetCompra, IProduct, IUsuario } from "@/lib/types";
 import { CampoProveedor } from "@/components/shared/compras/ui/campoProveedor";
@@ -12,29 +11,23 @@ import { CampoFormaPago } from "@/components/shared/compras/ui/campoFormaPago";
 import { CampoTexto } from "@/components/shared/varios/campoTexto";
 import { CampoTextArea } from "@/components/shared/compras/ui/campoTextArea";
 import { ArrowLeft, Box, ShoppingBag, Trash2 } from "lucide-react";
-import { CampoProducto } from "@/components/shared/compras/ui/campoProducto";
 import { CampoNumero } from "@/components/shared/varios/campoNumero";
 import { CampoFecha } from "@/components/shared/compras/ui/campoFecha";
 import Image from "next/image";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import FacturaModal from "@/components/shared/compras/ui/ordenModal";
 import { TIPO_DOCUMENTO_OPTIONS } from "@/lib/constants";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
-import { format } from "date-fns";
 import { useReactToPrint } from "react-to-print";
 import { GeneralDialog } from "@/components/shared/varios/dialogGen";
-import { useProveedores } from "@/hooks/compras/useProveedores";
-import { useProductos } from "@/hooks/compras/useProductos";
-import { useUsuarioActual } from "@/hooks/compras/useUsuarioActual";
-import { useUltimoIdCompra } from "@/hooks/compras/useUltimoIdCompra";
 import { safePrice } from "@/utils/format";
-import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { CampoSelectEquivalencia } from "@/components/shared/compras/ui/campoEquivalencias";
 import { validarEquivalenciaActiva } from "@/hooks/compras/validarEquivalenciaActiva";
 import { CampoProductoCompra } from "@/components/shared/compras/ui/campoProductoCompras";
+import { useNuevaCompra } from "@/hooks/compras/useNuevaCompra";
+import { SERVICIOS_COMPRAS } from "@/services/compras.service";
+import { socket } from "@/lib/socket";
 export interface ProductoOption {
   value: string;
   nombre: string;
@@ -42,50 +35,37 @@ export interface ProductoOption {
   img_prod: string;
   tipo: string;
 }
-const schema = z.object({
-  proveedor: z.string().min(1, "Seleccione un proveedor"),
-  tipo_doc_comp: z.string().min(1, "Seleccione un tipo de documento"),
-  num_doc_comp: z.string().min(1, "Ingrese el número de documento"),
-  forma_pago_comp: z.string().min(1, "Seleccione la forma de pago"),
-  observ_comp: z.string().optional(),
-  producto: z.string().nullable().optional(),
-  cant_dcom: z.number().nullable().optional(),
-  prec_uni_dcom: z.number().nullable().optional(),
-  fech_ven_prod_dcom: z.string().nullable().optional(),
-  equivalenciaSeleccionada: z.string().optional(),
-});
 
 export default function NuevaCompraPage() {
-  const { ventasConfig } = useConfiguracionesVentas();
-  const [bloquearAñadirFila, setBloquearAñadirFila] = useState(false);
-  const router = useRouter();
-  const proveedores = useProveedores();
-  const { productosOptions, setProductosOptions } = useProductos();
-  const usuarioActual = useUsuarioActual();
-  const ultimoIdCompra = useUltimoIdCompra();
-  const [productos, setProductos] = useState<IDetCompra[]>([]);
-  const [openFactura, setOpenFactura] = useState(false);
-  const [compraPreview, setCompraPreview] = useState<any | null>(null);
+  const {
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    methods,
+    router,
+    proveedores,
+    productosOptions,
+    setProductosOptions,
+    usuarioActual,
+    ultimoIdCompra,
+    productos,
+    setProductos,
+    bloquearAñadirFila,
+    setBloquearAñadirFila,
+    openFactura,
+    setOpenFactura,
+    compraPreview,
+    setCompraPreview,
+    contentRef,
+    openConfirmDialog,
+    setOpenConfirmDialog,
+    calcularEstadoLote,
+    ventasConfig,
+    esInsumo,
+  } = useNuevaCompra();
+
   const DIAS_UMBRAL_POR_VENCER = 30;
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
-  const methods = useForm({
-    defaultValues: {
-      proveedor: "",
-      tipo_doc_comp: "",
-      num_doc_comp: "",
-      forma_pago_comp: "",
-      producto: "",
-      cant_dcom: 1,
-      prec_uni_dcom: 0,
-      fech_ven_prod_dcom: null,
-      equivalenciaSeleccionada: "",
-    },
-    resolver: zodResolver(schema),
-  });
-  const { control, handleSubmit, watch, setValue } = methods;
-  const producto = productosOptions.find((p) => p.value === watch("producto"));
-  const esInsumo = producto?.tipo === "Insumo";
 
   const productoSeleccionado = watch("producto");
   const cantidad = watch("cant_dcom");
@@ -123,27 +103,6 @@ export default function NuevaCompraPage() {
 
     await handleConfirmarCompra();
   };
-
-  function calcularEstadoLote(
-    fechaVencimiento: string | null,
-    diasPorVencer = 30,
-  ): "vigente" | "por_vencer" | "vencido" {
-    if (!fechaVencimiento) return "vigente";
-
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0); // eliminar hora
-
-    const vencimiento = new Date(fechaVencimiento);
-    vencimiento.setHours(0, 0, 0, 0); // eliminar hora
-
-    const diferenciaDias = Math.floor(
-      (vencimiento.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24),
-    );
-
-    if (diferenciaDias < 0) return "vencido";
-    if (diferenciaDias <= diasPorVencer) return "por_vencer";
-    return "vigente";
-  }
 
   /* Agregar producto al detalle */
   const agregarDetalleProducto = () => {
@@ -247,7 +206,7 @@ export default function NuevaCompraPage() {
     if (!compraPreview) return;
 
     try {
-      const resCompra = await fetch("http://localhost:5000/compras", {
+      const resCompra = await fetch(SERVICIOS_COMPRAS.compras, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -304,6 +263,8 @@ export default function NuevaCompraPage() {
         }
       }
 
+      // 🔴 Emitir evento WebSocket
+      socket.emit("compras-actualizadas");
       setOpenFactura(false);
       ToastSuccess({ message: "Compra registrada exitosamente" });
       router.push("/compras/historial");

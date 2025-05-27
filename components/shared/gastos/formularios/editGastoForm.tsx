@@ -22,7 +22,22 @@ import { SERVICIOS_GASTOS } from "@/services/gastos.service";
 const editGastoSchema = z.object({
   id_gas: z.number(),
   desc_gas: z.string().min(1, { message: "La descripción es obligatoria" }),
-  mont_gas: z.number().min(0, { message: "El monto debe ser mayor o igual a 0" }),
+  mont_gas: z.preprocess(
+    (val) => {
+      if (typeof val === "string") {
+        const limpio = val.replace(",", "."); // ← convertir coma a punto
+        const num = parseFloat(limpio);
+        return isNaN(num) ? undefined : num;
+      }
+      return val;
+    },
+    z
+      .number({
+        required_error: "El monto es obligatorio",
+        invalid_type_error: "El monto debe ser un número válido",
+      })
+      .min(0, { message: "El monto debe ser mayor o igual a 0" }),
+  ),
   obs_gas: z.string().optional(),
 });
 
@@ -66,7 +81,10 @@ export function EditGastoForm({ gasto, onSuccess }: EditGastoFormProps) {
       });
     } catch (error) {
       ToastError({
-        message: error instanceof Error ? error.message : "Error al actualizar el gasto.",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Error al actualizar el gasto.",
       });
     }
   };
@@ -80,7 +98,9 @@ export function EditGastoForm({ gasto, onSuccess }: EditGastoFormProps) {
           name="desc_gas"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-black dark:text-white">Descripción</FormLabel>
+              <FormLabel className="text-black dark:text-white">
+                Descripción
+              </FormLabel>
               <FormControl>
                 <Input
                   placeholder="Ej. Compra de insumos"
@@ -99,7 +119,9 @@ export function EditGastoForm({ gasto, onSuccess }: EditGastoFormProps) {
           name="mont_gas"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-black dark:text-white">Monto</FormLabel>
+              <FormLabel className="text-black dark:text-white">
+                Monto
+              </FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -107,7 +129,7 @@ export function EditGastoForm({ gasto, onSuccess }: EditGastoFormProps) {
                   placeholder="0.00"
                   value={field.value ?? ""}
                   onChange={(e) => {
-                    const value = e.target.value;
+                    const value = e.target.value.replace(",", "."); // 👈 convierte coma a punto
                     field.onChange(value === "" ? 0 : parseFloat(value));
                   }}
                   className="dark:border-default-700 dark:border dark:bg-[#09090b]"
@@ -124,7 +146,9 @@ export function EditGastoForm({ gasto, onSuccess }: EditGastoFormProps) {
           name="obs_gas"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-black dark:text-white">Observaciones</FormLabel>
+              <FormLabel className="text-black dark:text-white">
+                Observaciones
+              </FormLabel>
               <FormControl>
                 <Input
                   placeholder="Opcional"
