@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   FormField,
@@ -21,6 +23,8 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { socket } from "@/lib/socket";
+import { SERVICIOS_PROVEEDORES } from "@/services/proveedores.service";
 
 export interface ProveedorOption {
   value: string;
@@ -38,16 +42,49 @@ interface CampoProveedorProps {
   control: any;
   name: string;
   label: string;
-  options: ProveedorOption[]; // Proveedores activos
 }
 
 export const CampoProveedor: React.FC<CampoProveedorProps> = ({
   control,
   name,
   label,
-  options,
 }) => {
   const [open, setOpen] = useState(false);
+  const [proveedores, setProveedores] = useState<ProveedorOption[]>([]);
+
+  const cargarProveedores = async () => {
+    try {
+      const res = await fetch(SERVICIOS_PROVEEDORES.proveedores);
+      if (!res.ok) throw new Error("Error al cargar proveedores");
+      const data = await res.json();
+
+      const activos: ProveedorOption[] = data
+        .filter((p: any) => p.est_prov?.toLowerCase() === "activo")
+        .map((p: any) => ({
+          value: String(p.id_prov),
+          label: p.nom_prov,
+          nombre: p.nom_prov,
+          ruc: p.ruc_prov,
+          contacto: p.cont_prov,
+          telefono: p.tel_prov,
+          direccion: p.direc_prov,
+          correo: p.email_prov,
+          imagen: p.img_prov,
+        }));
+
+      setProveedores(activos);
+    } catch (error) {
+      console.error("Error al cargar proveedores:", error);
+    }
+  };
+
+  useEffect(() => {
+    cargarProveedores();
+    socket.on("proveedores-actualizados", cargarProveedores);
+    return () => {
+      socket.off("proveedores-actualizados", cargarProveedores);
+    };
+  }, []);
 
   return (
     <FormField
@@ -69,7 +106,7 @@ export const CampoProveedor: React.FC<CampoProveedorProps> = ({
                   )}
                 >
                   {field.value
-                    ? options.find(
+                    ? proveedores.find(
                         (option) => option.value === field.value.toString(),
                       )?.nombre
                     : "Selecciona proveedor"}
@@ -85,7 +122,7 @@ export const CampoProveedor: React.FC<CampoProveedorProps> = ({
                   <CommandList>
                     <CommandEmpty>No se encontró proveedor.</CommandEmpty>
                     <CommandGroup heading="Proveedores">
-                      {options.map((option) => (
+                      {proveedores.map((option) => (
                         <CommandItem
                           key={option.value}
                           value={`${option.nombre} ${option.ruc}`}

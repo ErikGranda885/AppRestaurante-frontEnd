@@ -43,6 +43,7 @@ import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
 import { BulkUploadProveedoresDialog } from "@/components/shared/proveedores/formularios/cargaProveedores";
 import { DEFAULT_PROVEEDOR_IMAGE_URL } from "@/lib/constants";
 import { DialogExportarProveedores } from "@/components/shared/proveedores/ui/dialogExportarProveedores";
+import { socket } from "@/lib/socket";
 
 export default function Dashboard() {
   useProtectedRoute();
@@ -249,14 +250,14 @@ export default function Dashboard() {
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0 ">
+              <Button variant="ghost" className="h-8 w-8 p-0">
                 <MoreHorizontal />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="border-border">
               <DropdownMenuLabel>Acciones</DropdownMenuLabel>
               <DropdownMenuItem
-                className="cursor-pointer "
+                className="cursor-pointer"
                 onClick={() => {
                   setProveedorEditando(proveedor);
                   setAbrirEditar(true);
@@ -291,17 +292,24 @@ export default function Dashboard() {
 
   /* Cargar Proveedores */
   useEffect(() => {
-    fetch(SERVICIOS_PROVEEDORES.proveedores)
-      .then((res) => {
+    const cargarProveedores = async () => {
+      try {
+        const res = await fetch(SERVICIOS_PROVEEDORES.proveedores);
         if (!res.ok) throw new Error("Error al cargar proveedores");
-        return res.json();
-      })
-      .then((data: IProveedor[]) => {
+        const data: IProveedor[] = await res.json();
         setProveedores(data);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Error al cargar proveedores:", err);
-      });
+      }
+    };
+
+    cargarProveedores();
+
+    socket.on("proveedores-actualizados", cargarProveedores);
+
+    return () => {
+      socket.off("proveedores-actualizados", cargarProveedores);
+    };
   }, []);
 
   return (
