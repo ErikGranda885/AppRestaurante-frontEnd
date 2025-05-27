@@ -24,7 +24,12 @@ interface BulkUploadProductDialogProps {
 }
 
 const requiredColumns = ["cate_prod", "nom_prod", "tip_prod", "und_prod"];
-
+const previewColumns = [
+  ...requiredColumns,
+  "stock_inicial",
+  "precio_venta",
+  "fecha_vencimiento",
+];
 export function BulkUploadProductDialog({
   categoryOptions,
   onSuccess,
@@ -171,6 +176,12 @@ export function BulkUploadProductDialog({
         if (!tipoValido) errores.push(`Tipo: ${row["tip_prod"]}`);
         if (!unidadValida) errores.push(`Unidad: ${row["und_prod"]}`);
 
+        const stockInicial = Number(row["stock_inicial"] || 0);
+        const precioVenta = Number(row["precio_venta"] || 0);
+        const fechaVencimiento = row["fecha_vencimiento"]
+          ? new Date(row["fecha_vencimiento"])
+          : null;
+
         return {
           cate_prod: idCategoria,
           nom_prod: row["nom_prod"],
@@ -178,6 +189,9 @@ export function BulkUploadProductDialog({
           und_prod: row["und_prod"],
           est_prod: "Activo",
           img_prod: defaultImageUrl,
+          stock_prod: isNaN(stockInicial) ? null : stockInicial,
+          prec_vent_prod: isNaN(precioVenta) ? null : precioVenta,
+          fecha_venc_lote: fechaVencimiento,
         };
       });
 
@@ -211,7 +225,7 @@ export function BulkUploadProductDialog({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="border-border dark:bg-[#09090b] sm:max-w-3xl">
+      <DialogContent className="border-border dark:bg-[#09090b] sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>Carga Masiva de Productos</DialogTitle>
         </DialogHeader>
@@ -267,7 +281,7 @@ export function BulkUploadProductDialog({
               <table className="min-w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    {requiredColumns.map((col) => (
+                    {previewColumns.map((col) => (
                       <th key={col} className="border px-2 py-1">
                         {col}
                       </th>
@@ -277,7 +291,7 @@ export function BulkUploadProductDialog({
                 <tbody>
                   {previewData.map((row, idx) => (
                     <tr key={idx}>
-                      {requiredColumns.map((col) => (
+                      {previewColumns.map((col: any) => (
                         <td key={col} className="border px-2 py-1">
                           {row[col]}
                         </td>
