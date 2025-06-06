@@ -10,11 +10,7 @@ import {
   SpeechRecognizer,
   ResultReason,
 } from "microsoft-cognitiveservices-speech-sdk";
-import {
-  comandosDeProductos,
-  FlowProducto,
-  handleFlowProducto,
-} from "../comandos/productos";
+import { FlowProducto, handleFlowProducto } from "../comandos/productos";
 import { allCommands } from "../comandos";
 
 declare global {
@@ -130,9 +126,7 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
   };
 
   const iniciarAzure = () => {
-    // 🛑 Detener cualquier síntesis de voz que esté hablando
     window.speechSynthesis.cancel();
-
     const speechConfig = SpeechConfig.fromSubscription(
       process.env.NEXT_PUBLIC_AZURE_SPEECH_KEY!,
       process.env.NEXT_PUBLIC_AZURE_SPEECH_REGION!,
@@ -203,67 +197,81 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
   };
 
   const procesarComando = async (texto: string) => {
-    if (/cancelar|detener|salir/i.test(texto)) {
-      agregarMensaje("asistente", "🚫 Flujo cancelado por el usuario.");
-      setFlowProducto(null);
-      setPendingSuggestions(null);
-      return;
+    const textoNormalizado = normalize(texto);
+
+    const handlers: (() => Promise<boolean> | boolean)[] = [
+      () => manejarCancelacion(texto),
+      () => manejarFlujoProducto(texto),
+      () => manejarSugerencia(textoNormalizado),
+      () => manejarComando(texto),
+      () => manejarCierreAsistente(texto),
+    ];
+
+    for (const handler of handlers) {
+      const resultado = await handler();
+      if (resultado) return;
     }
 
-    if (flowProducto) {
-      setInputTexto(""); // ✅ limpiar input
-
-      const flowRef = flowProducto;
-      await handleFlowProducto(texto, flowRef, contexto as any);
-
-      // Si el flujo terminó, limpiar sugerencias
-      if (!flowProducto) {
-        setPendingSuggestions(null);
-      }
-
-      return;
-    }
-
-    if (pendingSuggestions) {
-      const sel = normalize(texto);
-      const match = pendingSuggestions.find((s) => normalize(s) === sel);
-
-      if (match) {
-        setPendingSuggestions(null);
-        await procesarComando(`inventario de ${match}`);
-        return;
-      }
-
-      for (const cmd of allCommands) {
-        const m = texto.match(cmd.patron);
-        if (m) {
-          await cmd.handler(m, contexto as any);
-          return;
-        }
-      }
-
-      // Si no es sugerencia ni comando válido
-      agregarMensaje(
-        "asistente",
-        `❌ No reconozco esa opción. Dime uno de: ${pendingSuggestions.join(", ")}`,
-      );
-      return;
-    }
-
-    for (const cmd of allCommands) {
-      const m = texto.match(cmd.patron);
-      if (m) {
-        await cmd.handler(m, contexto as any);
-        return;
-      }
-    }
-
-    if (texto.includes("cerrar asistente")) {
-      agregarMensaje("asistente", "👋 Hasta luego.");
-      setTimeout(onClose, 2000);
-      return;
-    }
     agregarMensaje("asistente", "❌ No entendí ese comando.");
+  };
+
+  const manejarCancelacion = (texto: string): boolean => {
+    if (!/cancelar|detener|salir/i.test(texto)) return false;
+
+    agregarMensaje("asistente", "🚫 Flujo cancelado por el usuario.");
+    setFlowProducto(null);
+    setPendingSuggestions(null);
+    return true;
+  };
+
+  const manejarFlujoProducto = async (texto: string): Promise<boolean> => {
+    if (!flowProducto) return false;
+
+    setInputTexto("");
+    const ref = flowProducto;
+    await handleFlowProducto(texto, ref, contexto as any);
+
+    if (!flowProducto) setPendingSuggestions(null);
+    return true;
+  };
+
+  const manejarSugerencia = async (texto: string): Promise<boolean> => {
+    if (!pendingSuggestions) return false;
+
+    const match = pendingSuggestions.find((s) => normalize(s) === texto);
+    if (match) {
+      setPendingSuggestions(null);
+      await procesarComando(`inventario de ${match}`);
+      return true;
+    }
+
+    const encontrado = await manejarComando(texto);
+    if (encontrado) return true;
+
+    agregarMensaje(
+      "asistente",
+      `❌ No reconozco esa opción. Dime uno de: ${pendingSuggestions.join(", ")}`,
+    );
+    return true;
+  };
+
+  const manejarComando = async (texto: string): Promise<boolean> => {
+    for (const cmd of allCommands) {
+      const match = texto.match(cmd.patron);
+      if (match) {
+        await cmd.handler(match, contexto as any);
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const manejarCierreAsistente = (texto: string): boolean => {
+    if (!texto.includes("cerrar asistente")) return false;
+
+    agregarMensaje("asistente", "👋 Hasta luego.");
+    setTimeout(onClose, 2000);
+    return true;
   };
 
   const manejarEnvioManual = async () => {

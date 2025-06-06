@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Bot } from "lucide-react";
 import { motion } from "framer-motion";
-import { ChatWidget } from "./chatWidge"; // ajusta si tienes alias
+import { ChatWidget } from "./chatWidge";
 
 export function AsistenteVoz() {
   const [abierto, setAbierto] = useState(false);
@@ -22,7 +22,7 @@ export function AsistenteVoz() {
     setTimeout(() => {
       setAbierto(false);
       setCerrando(false);
-    }, 250); // misma duración que AnimatePresence
+    }, 250);
   };
 
   return (
