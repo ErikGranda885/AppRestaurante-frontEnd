@@ -223,23 +223,23 @@ export function BulkUploadUsersDialog({
           />
 
           {previewData.length > 0 && (
-            <div className="mt-4 max-h-[40vh] overflow-y-auto border">
+            <div className="mt-4 max-h-[20vh] overflow-y-auto border border-border">
               <table className="min-w-full text-sm">
                 <thead>
                   <tr>
                     {Object.keys(previewData[0]).map((header) => (
-                      <th key={header} className="border px-2 py-1">
+                      <th key={header} className="border border-border px-2 py-1">
                         {header}
                       </th>
                     ))}
-                    <th className="border px-2 py-1">Acciones</th>
+                    <th className="border border-border px-2 py-1">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {previewData.map((row, idx) => (
                     <tr key={idx}>
                       {Object.keys(row).map((header) => (
-                        <td key={header} className="border px-2 py-1">
+                        <td key={header} className="border border-border px-2 py-1">
                           {editingRowIndex === idx ? (
                             <input
                               type="text"
@@ -263,39 +263,39 @@ export function BulkUploadUsersDialog({
                           )}
                         </td>
                       ))}
-                      <td className="border px-2 py-1">
+                      <td className="border border-border px-2 py-1">
                         {editingRowIndex === idx ? (
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 justify-center">
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => handleSaveRow(idx)}
                             >
-                              <CheckCircle className="h-4 w-4" />
+                              <CheckCircle className="h-4 w-4 success-text" />
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => setEditingRowIndex(null)}
                             >
-                              <X className="h-4 w-4" />
+                              <X className="h-4 w-4 error-text" />
                             </Button>
                           </div>
                         ) : (
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 justify-center">
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => handleEditRow(idx)}
                             >
-                              <Edit2 className="h-4 w-4" />
+                              <Edit2 className="h-4 w-4 edt-text" />
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => handleRemoveRow(idx)}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4 error-text" />
                             </Button>
                           </div>
                         )}

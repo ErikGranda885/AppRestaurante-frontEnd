@@ -266,7 +266,7 @@ export default function Dashboard() {
                 Editar
               </DropdownMenuItem>
               <DropdownMenuItem
-                className="cursor-pointer"
+                className="cursor-pointer error-text focus:hover:error-text"
                 onClick={() =>
                   setAccionProveedor({
                     id: proveedor.id_prov.toString(),

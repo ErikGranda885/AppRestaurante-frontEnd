@@ -283,7 +283,7 @@ export default function PaginaProductos() {
                 </div>
                 <Input
                   type="text"
-                  placeholder="Buscar producto..."
+                  placeholder="Buscar producto"
                   className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
                   value={consultaBusqueda}
                   onChange={(e) => {

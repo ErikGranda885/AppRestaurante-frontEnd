@@ -181,7 +181,7 @@ export default function PaginaCategorias() {
                       tipo: "inactivar",
                     })
                   }
-                  className="cursor-pointer"
+                  className="cursor-pointer error-text focus:hover:error-text"
                 >
                   Inactivar
                 </DropdownMenuItem>

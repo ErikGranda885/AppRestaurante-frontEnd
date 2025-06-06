@@ -283,7 +283,7 @@ export default function PaginaUsuarios() {
                       tipo: "inactivar",
                     })
                   }
-                  className="cursor-pointer"
+                  className="cursor-pointer error-text focus:hover:error-text "
                 >
                   Inactivar
                 </DropdownMenuItem>

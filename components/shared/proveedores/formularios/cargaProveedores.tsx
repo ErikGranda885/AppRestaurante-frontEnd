@@ -203,14 +203,17 @@ export function BulkUploadProveedoresDialog({
           />
 
           {previewData.length > 0 && (
-            <div className="max-h-[300px] w-[685px] overflow-auto border">
-              <table className=" text-sm">
+            <div className="max-h-[20vh] w-[685px] overflow-auto border border-border">
+              <table className="text-sm">
                 <thead>
                   <tr>
                     {Object.keys(previewData[0])
                       .filter((h) => h !== "img_prov")
                       .map((header) => (
-                        <th key={header} className="border px-2 py-1">
+                        <th
+                          key={header}
+                          className="border border-border px-2 py-1"
+                        >
                           {header}
                         </th>
                       ))}
@@ -222,7 +225,10 @@ export function BulkUploadProveedoresDialog({
                       {Object.keys(row)
                         .filter((key) => key !== "img_prov")
                         .map((key) => (
-                          <td key={key} className="border px-2 py-1">
+                          <td
+                            key={key}
+                            className="border border-border px-2 py-1"
+                          >
                             {row[key]}
                           </td>
                         ))}

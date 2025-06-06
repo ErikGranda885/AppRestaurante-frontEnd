@@ -70,7 +70,7 @@ export default function Page() {
               <Input
                 type="text"
                 placeholder="Buscar transformación"
-                className="w-[250px] border pl-10 text-[12px]"
+                className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>

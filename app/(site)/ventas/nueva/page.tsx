@@ -499,14 +499,14 @@ export default function Page() {
                     </span>
                   </div>
                   {/* Input para buscar */}
-                  <div className="relative">
+                  <div className="relative ">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                       <Search className="h-4 w-4 text-gray-500" />
                     </div>
                     <Input
                       type="text"
-                      placeholder="Buscar producto..."
-                      className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
+                      placeholder="Buscar producto"
+                      className="w-[250px] border border-border bg-white/10 pl-10 text-[12px] "
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />

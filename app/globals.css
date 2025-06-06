@@ -35,6 +35,7 @@
     --success-per: #17c964;
     --warning-per: #f5a524;
     --ama-per: #facc15;
+    --edt-per: #006fee;
   }
   .error-text {
     color: var(--error-per);
@@ -47,6 +48,9 @@
   }
   .ama-text {
     color: var(--ama-per);
+  }
+  .edt-text{
+    color: var(--edt-per);
   }
 
   .dark {

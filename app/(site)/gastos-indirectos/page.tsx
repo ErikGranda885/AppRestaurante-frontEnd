@@ -246,7 +246,7 @@ export default function Page() {
                     tipo: "eliminar",
                   });
                 }}
-                className="cursor-pointer text-red-500"
+                className="error-text focus:hover:error-text cursor-pointer"
               >
                 Eliminar
               </DropdownMenuItem>

@@ -277,12 +277,12 @@ export function BulkUploadProductDialog({
           />
 
           {previewData.length > 0 && (
-            <div className="mt-4 max-h-64 overflow-x-auto border">
+            <div className="mt-4 max-h-[20vh] overflow-x-auto border border-border">
               <table className="min-w-full text-sm">
-                <thead className="bg-gray-50 dark:bg-gray-700">
+                <thead >
                   <tr>
                     {previewColumns.map((col) => (
-                      <th key={col} className="border px-2 py-1">
+                      <th key={col} className="border border-border px-2 py-1">
                         {col}
                       </th>
                     ))}
@@ -292,7 +292,7 @@ export function BulkUploadProductDialog({
                   {previewData.map((row, idx) => (
                     <tr key={idx}>
                       {previewColumns.map((col: any) => (
-                        <td key={col} className="border px-2 py-1">
+                        <td key={col} className="border border-border px-2 py-1">
                           {row[col]}
                         </td>
                       ))}
