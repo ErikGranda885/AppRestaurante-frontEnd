@@ -170,6 +170,8 @@ export default function PaginaCierreDia() {
   const cerrarDia = async () => {
     if (!cierreSeleccionado || !file || !numeroComprobante) return;
 
+    const startTime = performance.now(); // ⏱️ Inicio
+
     try {
       const fecha = new Date(cierreSeleccionado.fech_cier)
         .toISOString()
@@ -202,7 +204,13 @@ export default function PaginaCierreDia() {
         throw new Error(data.message || "Error desconocido al cerrar el día");
       }
 
-      ToastSuccess({ message: "Cierre diario guardado correctamente" });
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
+      ToastSuccess({
+        message: `Cierre diario guardado correctamente en ${duration} segundos.`,
+      });
+
       localStorage.removeItem("totalEfectivo");
       setFile(null);
       setPreviewUrl(null);

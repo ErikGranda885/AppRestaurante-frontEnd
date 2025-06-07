@@ -116,7 +116,9 @@ export function EditProductForm({
   };
 
   const onSubmit = async (values: EditProductFormValues) => {
+    const startTime = performance.now(); // ⏱️ Inicio
     let imageUrl = DEFAULT_PRODUCT_IMAGE_URL;
+
     try {
       if (imageFile) {
         const esImagenFirebase =
@@ -159,8 +161,14 @@ export function EditProductForm({
       }
 
       const data = await res.json();
+
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
       onSuccess(data);
-      ToastSuccess({ message: "Producto actualizado correctamente" });
+      ToastSuccess({
+        message: `Producto actualizado correctamente en ${duration} segundos.`,
+      });
     } catch (err: any) {
       console.error("Error al actualizar el producto:", err);
       ToastError({

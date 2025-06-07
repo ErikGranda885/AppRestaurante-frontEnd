@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as ExcelJS from "exceljs";
 import {
   Dialog,
@@ -12,9 +12,13 @@ import { Button } from "@/components/ui/button";
 import { IProduct } from "@/lib/types";
 import { ToastError } from "../../toast/toastError";
 import { ToastSuccess } from "../../toast/toastSuccess";
-import { Download } from "lucide-react";
+import { CheckCircle, Download, Edit2, Trash2, X } from "lucide-react";
 import { DropzoneFile } from "../../varios/dropzoneFile";
-import { DEFAULT_PRODUCT_IMAGE_URL } from "@/lib/constants";
+import {
+  DEFAULT_PRODUCT_IMAGE_URL,
+  TIP_PROD_OPTIONS,
+  UNIT_OPTIONS,
+} from "@/lib/constants";
 import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
 
 interface BulkUploadProductDialogProps {
@@ -37,10 +41,18 @@ export function BulkUploadProductDialog({
 }: BulkUploadProductDialogProps) {
   const [file, setFile] = useState<File | null>(null);
   const [previewData, setPreviewData] = useState<any[]>([]);
+  const [editandoFilaIndex, setEditandoFilaIndex] = useState<number | null>(
+    null,
+  );
+  const [filaEditando, setFilaEditando] = useState<any>({});
+
   const [loading, setLoading] = useState(false);
   const categoriaMapRef = useRef<Record<string, number>>({});
   const tiposValidosRef = useRef<Set<string>>(new Set());
   const unidadesValidasRef = useRef<Set<string>>(new Set());
+  const [categoriaOptions, setCategoriaOptions] = useState<
+    { label: string; value: string }[]
+  >([]);
 
   const sanitize = (str: string) =>
     str
@@ -134,11 +146,30 @@ export function BulkUploadProductDialog({
         const rowData: any = {};
         headers.forEach((header: string, index: number) => {
           let value = rowValues[index + 1];
-          if (value instanceof Date) {
-            value = value.toLocaleDateString("es-ES");
+          if (header === "fecha_vencimiento") {
+            console.log("Valor original fecha:", value);
+            if (value instanceof Date) {
+              console.log("→ Es instancia Date");
+              value = value.toISOString().split("T")[0]; // ✅ Aquí el cambio
+              console.log("→ ISO:", value);
+            } else if (typeof value === "number") {
+              console.log("→ Es número serial Excel");
+              const excelEpoch = new Date(1900, 0, 1);
+              const actualDate = new Date(
+                excelEpoch.getTime() + (value - 2) * 86400000,
+              );
+              value = actualDate.toISOString().split("T")[0]; // ✅ También aplica aquí
+              console.log("→ Fecha desde serial (ISO):", value);
+            }
           }
+
           rowData[header] = value || "";
         });
+        if (rowNumber > 2) {
+          console.log("Fila Excel cruda:", row.values);
+          console.log("Fila procesada:", rowData);
+        }
+
         formattedData.push(rowData);
       });
 
@@ -157,10 +188,11 @@ export function BulkUploadProductDialog({
       return;
     }
 
+    const startTime = performance.now(); // ⏱️ Inicio
     setLoading(true);
+
     try {
       const defaultImageUrl = DEFAULT_PRODUCT_IMAGE_URL;
-
       const errores: string[] = [];
 
       const processedData = previewData.map((row) => {
@@ -195,6 +227,8 @@ export function BulkUploadProductDialog({
         };
       });
 
+      console.log("Preview para enviar al backend:", processedData);
+
       if (errores.length > 0) {
         ToastError({ message: `Valores no válidos: ${errores.join(", ")}` });
         setLoading(false);
@@ -211,10 +245,14 @@ export function BulkUploadProductDialog({
       if (!res.ok)
         throw new Error(data.message || "Error al registrar productos.");
 
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
       onSuccess(data.productos);
       ToastSuccess({
-        message: `Se cargaron ${data.productos.length} productos correctamente`,
+        message: `Se cargaron ${data.productos.length} productos correctamente en ${duration} segundos.`,
       });
+
       onClose();
     } catch (error: any) {
       ToastError({ message: error.message || "Error al cargar productos." });
@@ -223,6 +261,40 @@ export function BulkUploadProductDialog({
     }
   };
 
+  const handleEditarFila = (idx: number) => {
+    setEditandoFilaIndex(idx);
+    setFilaEditando({ ...previewData[idx] });
+  };
+
+  const handleGuardarFila = (idx: number) => {
+    setPreviewData((prev) =>
+      prev.map((row, i) => (i === idx ? filaEditando : row)),
+    );
+    setEditandoFilaIndex(null);
+    ToastSuccess({ message: "Fila actualizada correctamente." });
+  };
+
+  const handleEliminarFila = (idx: number) => {
+    setPreviewData((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  useEffect(() => {
+    fetch(SERVICIOS_PRODUCTOS.categorias)
+      .then((res) => res.json())
+      .then((data) => {
+        const activas = data.categorias.filter(
+          (cat: any) => cat.est_cate?.toLowerCase() === "activo",
+        );
+        const options = activas.map((cat: any) => ({
+          value: cat.nom_cate,
+          label: cat.nom_cate,
+        }));
+        setCategoriaOptions(options);
+      })
+      .catch(() => {
+        ToastError({ message: "Error al cargar categorías activas." });
+      });
+  }, []);
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="border-border dark:bg-[#09090b] sm:max-w-4xl">
@@ -279,23 +351,174 @@ export function BulkUploadProductDialog({
           {previewData.length > 0 && (
             <div className="mt-4 max-h-[20vh] overflow-x-auto border border-border">
               <table className="min-w-full text-sm">
-                <thead >
+                <thead>
                   <tr>
                     {previewColumns.map((col) => (
                       <th key={col} className="border border-border px-2 py-1">
                         {col}
                       </th>
                     ))}
+                    <th className="border border-border px-2 py-1">Acciones</th>
                   </tr>
                 </thead>
+
                 <tbody>
                   {previewData.map((row, idx) => (
                     <tr key={idx}>
-                      {previewColumns.map((col: any) => (
-                        <td key={col} className="border border-border px-2 py-1">
-                          {row[col]}
+                      {previewColumns.map((col) => (
+                        <td
+                          key={col}
+                          className="border border-border px-2 py-1"
+                        >
+                          {editandoFilaIndex === idx ? (
+                            col === "tip_prod" ? (
+                              <select
+                                className="w-full"
+                                value={filaEditando[col]}
+                                onChange={(e) =>
+                                  setFilaEditando({
+                                    ...filaEditando,
+                                    [col]: e.target.value,
+                                  })
+                                }
+                              >
+                                {TIP_PROD_OPTIONS.map((op) => (
+                                  <option key={op.value} value={op.value}>
+                                    {op.label}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : col === "und_prod" ? (
+                              <select
+                                className="w-full"
+                                value={filaEditando[col]}
+                                onChange={(e) =>
+                                  setFilaEditando({
+                                    ...filaEditando,
+                                    [col]: e.target.value,
+                                  })
+                                }
+                              >
+                                {UNIT_OPTIONS.map((op) => (
+                                  <option key={op.value} value={op.value}>
+                                    {op.label}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : col === "cate_prod" ? (
+                              <select
+                                className="w-full"
+                                value={filaEditando[col]}
+                                onChange={(e) =>
+                                  setFilaEditando({
+                                    ...filaEditando,
+                                    [col]: e.target.value,
+                                  })
+                                }
+                              >
+                                {categoriaOptions.map((op) => (
+                                  <option key={op.value} value={op.value}>
+                                    {op.label}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : col === "fecha_vencimiento" ? (
+                              <input
+                                type="date"
+                                className="w-full"
+                                value={filaEditando[col] || ""}
+                                onChange={(e) =>
+                                  setFilaEditando({
+                                    ...filaEditando,
+                                    [col]: e.target.value,
+                                  })
+                                }
+                              />
+                            ) : col === "stock_inicial" ? (
+                              <input
+                                type="text"
+                                className="w-full"
+                                value={filaEditando[col] || ""}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (/^\d*$/.test(val)) {
+                                    setFilaEditando({
+                                      ...filaEditando,
+                                      [col]: val,
+                                    });
+                                  }
+                                }}
+                              />
+                            ) : col === "precio_venta" ? (
+                              <input
+                                type="text"
+                                className="w-full"
+                                value={filaEditando[col] || ""}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (/^\d*\.?\d{0,2}$/.test(val)) {
+                                    setFilaEditando({
+                                      ...filaEditando,
+                                      [col]: val,
+                                    });
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <input
+                                type="text"
+                                className="w-full"
+                                value={filaEditando[col] || ""}
+                                onChange={(e) =>
+                                  setFilaEditando({
+                                    ...filaEditando,
+                                    [col]: e.target.value,
+                                  })
+                                }
+                              />
+                            )
+                          ) : (
+                            row[col]
+                          )}
                         </td>
                       ))}
+                      <td className="border border-border px-2 py-1 text-center">
+                        {editandoFilaIndex === idx ? (
+                          <div className="flex justify-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleGuardarFila(idx)}
+                            >
+                              <CheckCircle className="success-text h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setEditandoFilaIndex(null)}
+                            >
+                              <X className="error-text h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex justify-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEditarFila(idx)}
+                            >
+                              <Edit2 className="edt-text h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEliminarFila(idx)}
+                            >
+                              <Trash2 className="error-text h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

@@ -9,6 +9,8 @@ export function useAccionesUsuario(
 ) {
   const inactivarUsuario = useCallback(
     async (usuario: DataUsers) => {
+      const startTime = performance.now(); // ⏱️ Inicio
+
       try {
         const res = await fetch(
           SERVICIOS_USUARIOS.inactivarUsuario(usuario.id),
@@ -29,8 +31,11 @@ export function useAccionesUsuario(
           ),
         );
 
+        const endTime = performance.now(); // ⏱️ Fin
+        const duration = ((endTime - startTime) / 1000).toFixed(2);
+
         ToastSuccess({
-          message: "Se ha inactivado el usuario exitosamente.",
+          message: `Se ha inactivado el usuario exitosamente en ${duration} segundos.`,
         });
       } catch (err: any) {
         ToastError({
@@ -43,6 +48,8 @@ export function useAccionesUsuario(
 
   const activarUsuario = useCallback(
     async (usuario: DataUsers) => {
+      const startTime = performance.now(); // ⏱️ Inicio
+
       try {
         const res = await fetch(SERVICIOS_USUARIOS.activarUsuario(usuario.id), {
           method: "PUT",
@@ -60,8 +67,11 @@ export function useAccionesUsuario(
           ),
         );
 
+        const endTime = performance.now(); // ⏱️ Fin
+        const duration = ((endTime - startTime) / 1000).toFixed(2);
+
         ToastSuccess({
-          message: "Se ha activado el usuario exitosamente.",
+          message: `Se ha activado el usuario exitosamente en ${duration} segundos.`,
         });
       } catch (err: any) {
         ToastError({

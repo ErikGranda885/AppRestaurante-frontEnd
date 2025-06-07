@@ -59,6 +59,8 @@ export function FormTransformacion({
   }, []);
 
   const handleSubmit = async (values: FormValues) => {
+    const startTime = performance.now(); // ⏱️ Inicio
+
     try {
       setLoading(true);
 
@@ -81,7 +83,12 @@ export function FormTransformacion({
         );
       }
 
-      ToastSuccess({ message: "Transformación registrada correctamente" });
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
+      ToastSuccess({
+        message: `Transformación registrada correctamente en ${duration} segundos.`,
+      });
 
       if (onSuccess) {
         await Promise.resolve(onSuccess());

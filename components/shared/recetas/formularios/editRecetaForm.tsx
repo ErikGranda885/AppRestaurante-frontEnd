@@ -139,7 +139,9 @@ export function FormEditarReceta({
   }, [watch, setValue, productosFinales]);
 
   const onSubmit = async (data: IRecetaForm) => {
+    const startTime = performance.now(); // ⏱️ Inicio
     setLoading(true);
+
     try {
       const payloadReceta = {
         nom_rec: data.nom_rec,
@@ -177,7 +179,13 @@ export function FormEditarReceta({
         throw new Error(errorData.message || "Error al actualizar producto");
       }
 
-      ToastSuccess({ message: "Receta actualizada correctamente" });
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
+      ToastSuccess({
+        message: `Receta actualizada correctamente en ${duration} segundos.`,
+      });
+
       onSuccess();
     } catch (error: any) {
       ToastError({ message: error.message || "Error inesperado" });

@@ -20,14 +20,24 @@ export function useCategoriasAdmin() {
   const categorias: ICategory[] = data?.categorias ?? [];
 
   const activarCategoria = async (id: number, nombre: string) => {
+    const startTime = performance.now(); // ⏱️ Inicio
+
     try {
       const res = await fetch(SERVICIOS.activarCategoria(id), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       });
+
       if (!res.ok) throw new Error("Error al activar la categoría");
-      ToastSuccess({ message: `La categoría "${nombre}" ha sido activada.` });
+
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
+      ToastSuccess({
+        message: `La categoría "${nombre}" ha sido activada en ${duration} segundos.`,
+      });
+
       mutate();
     } catch (err: any) {
       ToastError({ message: err.message });
@@ -35,14 +45,24 @@ export function useCategoriasAdmin() {
   };
 
   const inactivarCategoria = async (id: number, nombre: string) => {
+    const startTime = performance.now(); // ⏱️ Inicio
+
     try {
       const res = await fetch(SERVICIOS.inactivarCategoria(id), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       });
+
       if (!res.ok) throw new Error("Error al inactivar la categoría");
-      ToastSuccess({ message: `La categoría "${nombre}" ha sido inactivada.` });
+
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
+      ToastSuccess({
+        message: `La categoría "${nombre}" ha sido inactivada en ${duration} segundos.`,
+      });
+
       mutate();
     } catch (err: any) {
       ToastError({ message: err.message });

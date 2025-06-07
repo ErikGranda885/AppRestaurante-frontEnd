@@ -66,7 +66,8 @@ export function EditCategoryForm({
   });
 
   const onSubmit = async (values: EditCategoryFormValues) => {
-    // Armamos el payload según lo que espera el backend
+    const startTime = performance.now(); // ⏱️ Inicio
+
     const payload = {
       nom_cate: values.nom_cate,
       desc_cate: values.desc_cate,
@@ -81,15 +82,19 @@ export function EditCategoryForm({
           body: JSON.stringify(payload),
         },
       );
+
       if (!res.ok) {
-        // Intentamos extraer el mensaje de error de la respuesta
         const errorResponse = await res.json();
         throw new Error(errorResponse.message || `Error: ${res.status}`);
       }
+
       const data = await res.json();
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
       onSuccess(data);
       ToastSuccess({
-        message: "Categoría actualizada correctamente",
+        message: `Categoría actualizada correctamente en ${duration} segundos.`,
       });
     } catch (err: any) {
       console.error("Error al actualizar la categoría:", err);

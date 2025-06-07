@@ -136,9 +136,17 @@ export default function Page() {
   }
 
   async function handleEliminarGasto(id: number) {
+    const startTime = performance.now(); // ⏱️ Inicio
+
     try {
       await eliminarGasto(id);
-      ToastSuccess({ message: "Registro eliminado exitosamente" });
+
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
+      ToastSuccess({
+        message: `Registro eliminado exitosamente en ${duration} segundos.`,
+      });
     } catch (err) {
       ToastError({ message: "Error al eliminar gasto" });
     }

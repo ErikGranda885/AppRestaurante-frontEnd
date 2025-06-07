@@ -71,6 +71,8 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
   const seleccionarImagen = () => imagenInputRef.current?.click();
 
   const onSubmit = async (values: EditProveedorFormValues) => {
+    const startTime = performance.now(); // ⏱️ Inicio
+
     let imageUrl =
       imagenPreview || initialData.img_prov || DEFAULT_PROVEEDOR_IMAGE_URL;
 
@@ -113,9 +115,16 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
       );
 
       if (!res.ok) throw new Error("Error al actualizar proveedor");
+
       const data = await res.json();
+
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
       onSuccess(data);
-      ToastSuccess({ message: "Proveedor actualizado correctamente." });
+      ToastSuccess({
+        message: `Proveedor actualizado correctamente en ${duration} segundos.`,
+      });
     } catch (error) {
       ToastError({ message: "Error al actualizar proveedor." });
       console.error(error);

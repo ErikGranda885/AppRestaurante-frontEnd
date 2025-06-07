@@ -26,6 +26,8 @@ export function useCrearProducto() {
     onSuccess,
     onError,
   }: CrearProductoPayload) => {
+    const startTime = performance.now();
+
     try {
       let imageUrl = imagenPreview || "";
 
@@ -59,7 +61,12 @@ export function useCrearProducto() {
         throw new Error(data.message || "Error al crear producto");
       }
 
-      ToastSuccess({ message: "Producto creado correctamente" });
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
+      ToastSuccess({
+        message: `Producto creado correctamente en ${duration} segundos.`,
+      });
       onSuccess(data);
     } catch (error) {
       console.error("❌ Error al crear el producto:", error);

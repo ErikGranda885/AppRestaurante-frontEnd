@@ -38,6 +38,8 @@ export default function OrdenesEnProceso({ onRefreshDashboard }: Props) {
   );
 
   const aceptarPago = async (id_vent: number) => {
+    const startTime = performance.now(); // ⏱️ Inicio
+
     try {
       const response = await fetch(SERVICIOS_VENTAS.actualizarEstado(id_vent), {
         method: "PUT",
@@ -47,8 +49,11 @@ export default function OrdenesEnProceso({ onRefreshDashboard }: Props) {
 
       if (!response.ok) throw new Error("Error al actualizar estado");
 
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
       ToastSuccess({
-        message: "Pago validado exitosamente",
+        message: `Pago validado exitosamente en ${duration} segundos`,
       });
 
       setOpenDialog(false);

@@ -205,6 +205,8 @@ export default function NuevaCompraPage() {
   const handleConfirmarCompra = async () => {
     if (!compraPreview) return;
 
+    const startTime = performance.now(); // ⏱️ Inicio
+
     try {
       const resCompra = await fetch(SERVICIOS_COMPRAS.compras, {
         method: "POST",
@@ -263,10 +265,15 @@ export default function NuevaCompraPage() {
         }
       }
 
-      // 🔴 Emitir evento WebSocket
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
       socket.emit("compras-actualizadas");
       setOpenFactura(false);
-      ToastSuccess({ message: "Compra registrada exitosamente" });
+      ToastSuccess({
+        message: `Compra registrada exitosamente en ${duration} segundos.`,
+      });
+
       router.push("/compras/historial");
     } catch (error: any) {
       ToastError({

@@ -54,6 +54,7 @@ export function CreateProveedorForm({
   const imagenInputRef = React.useRef<HTMLInputElement>(null);
 
   const onSubmit = async (values: CreateProveedorFormValues) => {
+    const startTime = performance.now(); // ⏱️ Inicio
     let imageUrl = "";
 
     try {
@@ -64,7 +65,7 @@ export function CreateProveedorForm({
           `proveedor_${values.nombre.replace(/\s+/g, "_").toLowerCase()}`,
         );
       } else {
-        imageUrl = DEFAULT_PROVEEDOR_IMAGE_URL; // ✅ USO DE CONSTANTE
+        imageUrl = DEFAULT_PROVEEDOR_IMAGE_URL;
       }
 
       const payload = {
@@ -85,12 +86,18 @@ export function CreateProveedorForm({
       });
 
       if (!res.ok) throw new Error("Error al crear proveedor");
+
       const data = await res.json();
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
       onSuccess(data);
       form.reset();
       setImagenArchivo(null);
       setImagenPreview(null);
-      ToastSuccess({ message: "Proveedor creado correctamente" });
+      ToastSuccess({
+        message: `Proveedor creado correctamente en ${duration} segundos.`,
+      });
     } catch (err) {
       ToastError({ message: "Error al crear proveedor" });
       console.error(err);

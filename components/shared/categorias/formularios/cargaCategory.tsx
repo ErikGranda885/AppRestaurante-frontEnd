@@ -141,7 +141,9 @@ export function BulkUploadCategoryDialog({
     if (previewData.length === 0)
       return ToastError({ message: "No hay datos para cargar." });
 
+    const startTime = performance.now(); // ⏱️ Inicio
     setLoading(true);
+
     try {
       const processed = previewData.map((row) => ({
         nom_cate: row["nom_cate"],
@@ -154,13 +156,20 @@ export function BulkUploadCategoryDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(processed),
       });
+
       const data = await res.json();
+
       if (!res.ok) throw new Error(data.message || "Error al cargar.");
 
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
       onSuccess(data.categorias);
+
       ToastSuccess({
-        message: `Se cargaron ${data.categorias.length} categorías.`,
+        message: `Se cargaron ${data.categorias.length} categorías en ${duration} segundos.`,
       });
+
       onClose();
     } catch (err: any) {
       ToastError({ message: err.message || "Error al cargar categorías." });
@@ -226,7 +235,10 @@ export function BulkUploadCategoryDialog({
                   {previewData.map((row, idx) => (
                     <tr key={idx}>
                       {Object.keys(row).map((header) => (
-                        <td key={header} className="border border-border px-2 py-1">
+                        <td
+                          key={header}
+                          className="border border-border px-2 py-1"
+                        >
                           {editingRowIndex === idx ? (
                             <input
                               type="text"

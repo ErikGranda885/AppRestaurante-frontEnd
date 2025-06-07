@@ -10,11 +10,11 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { CheckCircle, Download, Edit2, Trash2, X } from "lucide-react";
 import { ToastError } from "../../toast/toastError";
 import { ToastSuccess } from "../../toast/toastSuccess";
 import { DropzoneFile } from "../../varios/dropzoneFile";
-import { DEFAULT_PROVEEDOR_IMAGE_URL } from "@/lib/constants"; // ✅ importación nueva
+import { DEFAULT_PROVEEDOR_IMAGE_URL } from "@/lib/constants";
 
 interface BulkUploadProveedoresDialogProps {
   onSuccess: (newProveedores: any[]) => void;
@@ -35,6 +35,11 @@ export function BulkUploadProveedoresDialog({
   onClose,
 }: BulkUploadProveedoresDialogProps) {
   const [previewData, setPreviewData] = useState<any[]>([]);
+  const [editandoFilaIndex, setEditandoFilaIndex] = useState<number | null>(
+    null,
+  );
+  const [editarFila, seteditarFila] = useState<any>({});
+
   const [loading, setLoading] = useState(false);
 
   const validateHeaders = (headers: string[]) =>
@@ -140,7 +145,9 @@ export function BulkUploadProveedoresDialog({
     if (previewData.length === 0)
       return ToastError({ message: "No hay datos para cargar." });
 
+    const startTime = performance.now(); // ⏱️ Inicio
     setLoading(true);
+
     try {
       const res = await fetch("http://localhost:5000/proveedores/masivo", {
         method: "POST",
@@ -151,16 +158,37 @@ export function BulkUploadProveedoresDialog({
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Error en la carga");
 
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
       onSuccess(data.proveedores);
       ToastSuccess({
-        message: `Se cargaron ${data.proveedores.length} proveedores.`,
+        message: `Se cargaron ${data.proveedores.length} proveedores en ${duration} segundos.`,
       });
+
       onClose();
     } catch (err: any) {
       ToastError({ message: err.message || "Error al cargar proveedores." });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEditarFila = (idx: number) => {
+    setEditandoFilaIndex(idx);
+    seteditarFila({ ...previewData[idx] });
+  };
+
+  const handleGuardarFila = (idx: number) => {
+    setPreviewData((prev) =>
+      prev.map((row, i) => (i === idx ? editarFila : row)),
+    );
+    setEditandoFilaIndex(null);
+    ToastSuccess({ message: "Fila actualizada correctamente." });
+  };
+
+  const handleEliminarFila = (idx: number) => {
+    setPreviewData((prev) => prev.filter((_, i) => i !== idx));
   };
 
   return (
@@ -217,6 +245,7 @@ export function BulkUploadProveedoresDialog({
                           {header}
                         </th>
                       ))}
+                    <th className="border border-border px-2 py-1">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -229,9 +258,60 @@ export function BulkUploadProveedoresDialog({
                             key={key}
                             className="border border-border px-2 py-1"
                           >
-                            {row[key]}
+                            {editandoFilaIndex === idx ? (
+                              <input
+                                type="text"
+                                value={editarFila[key]}
+                                onChange={(e) =>
+                                  seteditarFila({
+                                    ...editarFila,
+                                    [key]: e.target.value,
+                                  })
+                                }
+                                className="w-full"
+                              />
+                            ) : (
+                              row[key]
+                            )}
                           </td>
                         ))}
+                      <td className="border border-border px-2 py-1 text-center">
+                        {editandoFilaIndex === idx ? (
+                          <div className="flex justify-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleGuardarFila(idx)}
+                            >
+                              <CheckCircle className="success-text h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setEditandoFilaIndex(null)}
+                            >
+                              <X className="error-text h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex justify-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEditarFila(idx)}
+                            >
+                              <Edit2 className="edt-text h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEliminarFila(idx)}
+                            >
+                              <Trash2 className="error-text h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

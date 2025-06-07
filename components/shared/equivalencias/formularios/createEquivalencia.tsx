@@ -42,6 +42,8 @@ export function FormEquivalencia({ onSuccess, onClose }: Props) {
   const { handleSubmit, reset, setValue } = methods;
 
   const onSubmit = async (data: FormData) => {
+    const startTime = performance.now(); // ⏱️ Inicio
+
     try {
       const payload = {
         prod_equiv: Number(data.prod_equiv),
@@ -61,11 +63,16 @@ export function FormEquivalencia({ onSuccess, onClose }: Props) {
         throw new Error(result.message || "Error al registrar equivalencia");
       }
 
-      ToastSuccess({
-        message: result.message || "Equivalencia registrada correctamente",
-      });
-      await mutate(SERVICIOS_EQUIVALENCIAS.listar);
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
 
+      ToastSuccess({
+        message: `${
+          result.message || "Equivalencia registrada correctamente"
+        } en ${duration} segundos.`,
+      });
+
+      await mutate(SERVICIOS_EQUIVALENCIAS.listar);
       reset();
       onSuccess?.();
       onClose?.();

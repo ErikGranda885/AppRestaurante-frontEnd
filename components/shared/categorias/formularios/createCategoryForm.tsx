@@ -56,7 +56,8 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
   });
 
   const onSubmit = async (values: CreateCategoryFormValues) => {
-    // Actualiza las propiedades para que coincidan con lo que espera el backend.
+    const startTime = performance.now(); // ⏱️ Inicio
+
     const payload = {
       nom_cate: values.nom_cate,
       desc_cate: values.desc_cate,
@@ -68,14 +69,19 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
       if (!res.ok) {
         throw new Error(`Error: ${res.status}`);
       }
+
       const data = await res.json();
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
       onSuccess(data);
       form.reset();
       ToastSuccess({
-        message: "Categoría creada correctamente",
+        message: `Categoría creada correctamente en ${duration} segundos.`,
       });
     } catch (err) {
       console.error("Error al crear la categoría:", err);

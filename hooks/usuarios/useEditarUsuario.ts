@@ -29,6 +29,7 @@ export function useEditarUsuario() {
     imagenNueva,
     onSuccess,
   }: EditarUsuarioPayload) => {
+    const startTime = performance.now(); // ⏱️ Inicio
     let imageUrl = imagenActual || DEFAULT_USER_URL;
 
     try {
@@ -69,10 +70,13 @@ export function useEditarUsuario() {
       }
 
       const data = await res.json();
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
       onSuccess(data);
 
       ToastSuccess({
-        message: "El usuario ha sido actualizado correctamente.",
+        message: `El usuario ha sido actualizado correctamente en ${duration} segundos.`,
       });
 
       if (usuario?.id === id) {

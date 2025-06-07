@@ -18,7 +18,9 @@ export function useCargaMasivaUsuarios(
       return;
     }
 
+    const startTime = performance.now(); // ⏱️ Inicio
     setLoading(true);
+
     try {
       const defaultImageUrl = DEFAULT_USER_URL;
       const roles = roleOptions.map((rol) => ({
@@ -51,9 +53,12 @@ export function useCargaMasivaUsuarios(
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Error de carga.");
 
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
       onSuccess(data.usuarios);
       ToastSuccess({
-        message: `Se cargaron ${data.usuarios.length} usuarios.`,
+        message: `Se cargaron ${data.usuarios.length} usuarios en ${duration} segundos.`,
       });
       onClose();
     } catch (err: any) {

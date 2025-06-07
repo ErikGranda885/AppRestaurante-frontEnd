@@ -342,18 +342,18 @@ export default function Page() {
       return;
     }
 
+    const startTime = performance.now(); // ⏱️ inicio
+
     try {
-      // Subir la imagen primero (si aplica)
       let urlImg = "";
       if (metodoPago === "transferencia") {
         urlImg = await subirComprobanteTransferencia(
           comprobanteImagen!,
-          Date.now(), // Puedes usar timestamp temporal
+          Date.now(),
           customerName,
         );
       }
 
-      // ✅ Calcula total con el IVA configurado
       const iva = ventasConfig.porcentaje_iva ?? 12;
       const taxableSubtotal = orderItems.reduce((acc, item) => {
         const prod = products.find((p) => p.id_prod === item.productId);
@@ -394,7 +394,6 @@ export default function Page() {
       const saleData = await saleResponse.json();
       const id_vent = saleData.venta.id_vent;
 
-      // Crear detalles de venta
       for (const item of orderItems) {
         const producto = products.find((p) => p.id_prod === item.productId);
         if (!producto) continue;
@@ -421,7 +420,6 @@ export default function Page() {
         }
       }
 
-      // Consumir stock
       for (const item of orderItems) {
         const consumoResponse = await fetch(
           SERVICIOS_INVENTARIO.consumirPorLote,
@@ -442,9 +440,13 @@ export default function Page() {
         }
       }
 
+      const endTime = performance.now(); // ⏱️ fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2); // segundos
+
       ToastSuccess({
-        message: "Orden guardada y stock consumido exitosamente.",
+        message: `Orden guardada y stock consumido exitosamente en ${duration} segundos.`,
       });
+
       console.log("🔴 Emitiendo evento productos-actualizados");
       socket.emit("productos-actualizados");
 
@@ -499,14 +501,14 @@ export default function Page() {
                     </span>
                   </div>
                   {/* Input para buscar */}
-                  <div className="relative ">
+                  <div className="relative">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                       <Search className="h-4 w-4 text-gray-500" />
                     </div>
                     <Input
                       type="text"
                       placeholder="Buscar producto"
-                      className="w-[250px] border border-border bg-white/10 pl-10 text-[12px] "
+                      className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />

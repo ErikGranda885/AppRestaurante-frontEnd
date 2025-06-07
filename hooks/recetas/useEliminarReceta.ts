@@ -8,7 +8,9 @@ export function useEliminarReceta() {
   const [loading, setLoading] = useState(false);
 
   const eliminarReceta = async (id_receta: number, onSuccess?: () => void) => {
+    const startTime = performance.now(); // ⏱️ Inicio
     setLoading(true);
+
     try {
       const res = await fetch(SERVICIOS_RECETAS.eliminar(id_receta), {
         method: "DELETE",
@@ -19,7 +21,13 @@ export function useEliminarReceta() {
         throw new Error(data.message || "Error al eliminar receta");
       }
 
-      ToastSuccess({ message: "Receta eliminada con éxito" });
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
+      ToastSuccess({
+        message: `Receta eliminada con éxito en ${duration} segundos.`,
+      });
+
       mutate(SERVICIOS_RECETAS.listar);
       if (onSuccess) onSuccess();
     } catch (error: any) {

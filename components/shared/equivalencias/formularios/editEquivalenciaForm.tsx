@@ -48,6 +48,8 @@ export function EditEquivalenciaForm({
   const { handleSubmit, reset, setValue } = methods;
 
   const onSubmit = async (data: FormData) => {
+    const startTime = performance.now(); // ⏱️ Inicio
+
     try {
       const payload = {
         prod_equiv: Number(data.prod_equiv),
@@ -71,9 +73,14 @@ export function EditEquivalenciaForm({
 
       const actualizado = await res.json();
 
-      ToastSuccess({ message: "Equivalencia actualizada correctamente" });
-      await mutate(SERVICIOS_EQUIVALENCIAS.listar);
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
 
+      ToastSuccess({
+        message: `Equivalencia actualizada correctamente en ${duration} segundos.`,
+      });
+
+      await mutate(SERVICIOS_EQUIVALENCIAS.listar);
       onSuccess?.(actualizado);
       onClose?.();
     } catch (err: any) {

@@ -212,25 +212,34 @@ export default function PaginaProductos() {
   // Función general para confirmar la acción (activar o inactivar)
   const confirmarAccion = async () => {
     if (!productoAccion) return;
+
+    const startTime = performance.now(); // ⏱️ Inicio
+
     try {
+      let mensaje = "";
+
       if (productoAccion.tipo === "inactivar") {
         const respuesta = await fetch(
           SERVICIOS_PRODUCTOS.inactivarProducto(productoAccion.id_prod),
           { method: "PUT" },
         );
         if (!respuesta.ok) throw new Error("Error al inactivar el producto");
-        refetch();
-        ToastSuccess({ message: "Producto inactivado exitosamente." });
+        mensaje = "Producto inactivado exitosamente";
       } else {
         const respuesta = await fetch(
           SERVICIOS_PRODUCTOS.activarProducto(productoAccion.id_prod),
           { method: "PUT" },
         );
         if (!respuesta.ok) throw new Error("Error al activar el producto");
-        refetch();
-
-        ToastSuccess({ message: "Producto activado exitosamente." });
+        mensaje = "Producto activado exitosamente";
       }
+
+      refetch();
+
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
+      ToastSuccess({ message: `${mensaje} en ${duration} segundos.` });
     } catch (error) {
       ToastError({ message: "Hubo un error al procesar la acción." });
     } finally {

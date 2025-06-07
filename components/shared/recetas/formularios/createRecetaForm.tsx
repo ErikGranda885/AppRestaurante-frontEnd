@@ -139,7 +139,9 @@ export function FormCrearReceta({
   }, [watch, setValue, productosFinales]);
 
   const onSubmit = async (data: IRecetaForm) => {
+    const startTime = performance.now(); // ⏱️ Inicio
     setLoading(true);
+
     try {
       const payloadReceta = {
         nom_rec: data.nom_rec,
@@ -170,7 +172,14 @@ export function FormCrearReceta({
       );
 
       const recetaCreada = await res.json();
-      ToastSuccess({ message: "Receta creada exitosamente" });
+
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
+      ToastSuccess({
+        message: `Receta creada exitosamente en ${duration} segundos.`,
+      });
+
       reset();
       onSuccess(recetaCreada);
     } catch (error: any) {

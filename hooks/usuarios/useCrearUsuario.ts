@@ -22,6 +22,7 @@ export function useCrearUsuario() {
     imagenNueva,
     onSuccess,
   }: CrearUsuarioPayload) => {
+    const startTime = performance.now(); // ⏱️ Inicio
     let imageUrl = "";
 
     try {
@@ -55,9 +56,14 @@ export function useCrearUsuario() {
       }
 
       const data = await res.json();
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
       onSuccess(data);
 
-      ToastSuccess({ message: "Usuario creado correctamente" });
+      ToastSuccess({
+        message: `Usuario creado correctamente en ${duration} segundos.`,
+      });
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Error inesperado";

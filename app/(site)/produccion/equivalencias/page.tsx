@@ -88,9 +88,11 @@ export default function Page() {
             columns={columnsEquivalencias({
               onEdit: (eq) => {
                 setEquivalenciaEditar(eq);
-                setAbrirEditar(true); // ✅ asegúrate de abrir el modal aquí
+                setAbrirEditar(true);
               },
               onDelete: async (eq) => {
+                const startTime = performance.now(); // ⏱️ Inicio
+
                 try {
                   const res = await fetch(
                     SERVICIOS_EQUIVALENCIAS.eliminar(eq.id_equiv),
@@ -98,11 +100,18 @@ export default function Page() {
                       method: "DELETE",
                     },
                   );
+
                   const data = await res.json();
 
                   if (!res.ok) throw new Error(data.message);
 
-                  ToastSuccess({ message: data.message });
+                  const endTime = performance.now(); // ⏱️ Fin
+                  const duration = ((endTime - startTime) / 1000).toFixed(2);
+
+                  ToastSuccess({
+                    message: `${data.message} en ${duration} segundos.`,
+                  });
+
                   await mutate(SERVICIOS_EQUIVALENCIAS.listar);
                 } catch (err: any) {
                   ToastError({ message: err.message });

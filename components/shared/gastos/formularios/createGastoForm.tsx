@@ -39,7 +39,7 @@ export interface CreateGastoFormProps {
 }
 
 export function CreateGastoForm({ onSuccess }: CreateGastoFormProps) {
-    const { ventasConfig } = useConfiguracionesVentas();
+  const { ventasConfig } = useConfiguracionesVentas();
   const [montoTexto, setMontoTexto] = React.useState<string>("");
   const form = useForm<GastoFormValues>({
     resolver: zodResolver(gastoSchema),
@@ -53,6 +53,8 @@ export function CreateGastoForm({ onSuccess }: CreateGastoFormProps) {
   const { crearGasto } = useGastos();
 
   const onSubmit = async (values: GastoFormValues) => {
+    const startTime = performance.now(); // ⏱️ Inicio
+
     try {
       const now = new Date();
       const fechaFormateada = `${now.getFullYear()}-${String(
@@ -72,7 +74,13 @@ export function CreateGastoForm({ onSuccess }: CreateGastoFormProps) {
 
       await crearGasto(payload);
 
-      ToastSuccess({ message: "Gasto creado correctamente." });
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
+      ToastSuccess({
+        message: `Gasto creado correctamente en ${duration} segundos.`,
+      });
+
       form.reset();
       onSuccess && onSuccess();
     } catch (error) {

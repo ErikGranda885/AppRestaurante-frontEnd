@@ -55,6 +55,8 @@ export function EditGastoForm({ gasto, onSuccess }: EditGastoFormProps) {
   });
 
   const onSubmit = async (values: EditGastoFormValues) => {
+    const startTime = performance.now(); // ⏱️ Inicio
+
     try {
       const payload = {
         desc_gas: values.desc_gas,
@@ -73,7 +75,13 @@ export function EditGastoForm({ gasto, onSuccess }: EditGastoFormProps) {
         throw new Error(errorData.message || `Error: ${res.status}`);
       }
 
-      ToastSuccess({ message: "Gasto actualizado correctamente." });
+      const endTime = performance.now(); // ⏱️ Fin
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
+      ToastSuccess({
+        message: `Gasto actualizado correctamente en ${duration} segundos.`,
+      });
+
       form.reset();
       onSuccess?.({
         id_gas: values.id_gas,

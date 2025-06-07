@@ -72,6 +72,8 @@ export default function Dashboard() {
         ? SERVICIOS_PROVEEDORES.activarProveedor(proveedor.id_prov)
         : SERVICIOS_PROVEEDORES.inactivarProveedor(proveedor.id_prov);
 
+    const startTime = performance.now(); // ⏱️ Inicio
+
     fetch(servicio, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -81,6 +83,9 @@ export default function Dashboard() {
         return res.json();
       })
       .then(() => {
+        const endTime = performance.now(); // ⏱️ Fin
+        const duration = ((endTime - startTime) / 1000).toFixed(2);
+
         setProveedores((prev) =>
           prev.map((p) =>
             p.id_prov === proveedor.id_prov
@@ -88,8 +93,9 @@ export default function Dashboard() {
               : p,
           ),
         );
+
         ToastSuccess({
-          message: `Se ha ${nuevoEstado === "Activo" ? "activado" : "inactivado"} el proveedor exitosamente.`,
+          message: `Se ha ${nuevoEstado === "Activo" ? "activado" : "inactivado"} el proveedor exitosamente en ${duration} segundos.`,
         });
       })
       .catch((err) => {
@@ -266,7 +272,7 @@ export default function Dashboard() {
                 Editar
               </DropdownMenuItem>
               <DropdownMenuItem
-                className="cursor-pointer error-text focus:hover:error-text"
+                className="error-text focus:hover:error-text cursor-pointer"
                 onClick={() =>
                   setAccionProveedor({
                     id: proveedor.id_prov.toString(),
