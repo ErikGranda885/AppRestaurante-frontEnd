@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { SERVICIOS_USUARIOS } from "@/services/usuarios.service";
 import { parse } from "date-fns";
 import { IRol } from "@/lib/types";
@@ -10,6 +10,9 @@ export function useUsuariosAndRoles() {
   const [usuarios, setUsuarios] = useState<DataUsers[]>([]);
   const [roles, setRoles] = useState<IRol[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const hasShownError = useRef(false); // ✅ Referencia para controlar el toast
 
   // Cargar usuarios
   const fetchUsuarios = async () => {
@@ -39,8 +42,14 @@ export function useUsuariosAndRoles() {
       }));
 
       setUsuarios(transformados);
+      setError(false);
+      hasShownError.current = false; // 🔄 Resetear si todo va bien
     } catch (error: any) {
-      ToastError({ message: error.message });
+      setError(true);
+      if (!hasShownError.current) {
+        ToastError({ message: "Error al cargar los usuarios" });
+        hasShownError.current = true;
+      }
     } finally {
       setLoading(false);
     }
@@ -60,15 +69,13 @@ export function useUsuariosAndRoles() {
     }
   };
 
-  // Cargar datos inicialmente
   useEffect(() => {
     fetchUsuarios();
     fetchRoles();
   }, []);
 
-  // 🔁 Escuchar eventos en tiempo real
   useSocket("usuarios-actualizados", fetchUsuarios);
-  useSocket("roles-actualizados", fetchRoles); // 👈 Agregado
+  useSocket("roles-actualizados", fetchRoles);
 
   return {
     usuarios,
@@ -76,7 +83,8 @@ export function useUsuariosAndRoles() {
     roles,
     setRoles,
     loading,
+    error,
     refetchUsuarios: fetchUsuarios,
-    refetchRoles: fetchRoles, // opcional si quieres llamar manualmente
+    refetchRoles: fetchRoles,
   };
 }

@@ -50,6 +50,7 @@ import { DEFAULT_USER_URL } from "@/lib/constants";
 import { DialogExportarUsuariosRoles } from "@/components/shared/usuarios/ui/DialogExportarUsuariosRoles";
 import { useAccionesUsuario } from "@/hooks/usuarios/useAccionesUsuario";
 import { useUsuariosAndRoles } from "@/hooks/usuarios/useUsuariosAndRoles";
+import Preloader from "@/components/shared/varios/preloader";
 
 export type DataUsers = {
   id: string;
@@ -81,11 +82,16 @@ export default function PaginaUsuarios() {
     setUsuarios,
     roles: rolOpciones,
     setRoles: setRolOpciones,
+    loading,
+    error,
+    refetchUsuarios
   } = useUsuariosAndRoles();
+  const [showLoader, setShowLoader] = React.useState(true);
   const {
     activarUsuario: ejecutarActivacion,
     inactivarUsuario: ejecutarInactivacion,
   } = useAccionesUsuario(setUsuarios);
+
   const ahora = new Date();
   const mesActual = ahora.getMonth();
   const anioActual = ahora.getFullYear();
@@ -127,6 +133,35 @@ export default function PaginaUsuarios() {
     React.useState<AccionUsuario | null>(null);
 
   useProtectedRoute();
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoader(false);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, []);
+  if (loading || showLoader) return <Preloader />;
+  if (error) {
+    return (
+      <div className="flex h-full w-full items-center justify-center px-6">
+        <div className="rounded-lg border border-red-400 bg-red-50 p-6 text-center dark:border-red-600 dark:bg-red-900/20">
+          <h2 className="text-lg font-semibold text-red-600 dark:text-red-400">
+            Error al cargar los usuarios
+          </h2>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+            Verifica tu conexión con el servidor o intenta nuevamente.
+          </p>
+          <button
+            onClick={refetchUsuarios}
+            className="mt-4 rounded-md bg-red-500 px-4 py-2 text-white hover:bg-red-600"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Función general para confirmar la acción seleccionada (activar/inactivar)
   const confirmarAccion = async () => {
@@ -283,7 +318,7 @@ export default function PaginaUsuarios() {
                       tipo: "inactivar",
                     })
                   }
-                  className="cursor-pointer error-text focus:hover:error-text "
+                  className="error-text focus:hover:error-text cursor-pointer"
                 >
                   Inactivar
                 </DropdownMenuItem>
