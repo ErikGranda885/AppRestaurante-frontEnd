@@ -28,6 +28,8 @@ interface ChatWidgetProps {
 interface Mensaje {
   tipo: "usuario" | "asistente";
   texto: string | React.ReactNode;
+  leer?: boolean;
+  duracionMs?: number;
 }
 
 export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
@@ -179,15 +181,17 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
   const agregarMensaje = (
     tipo: "usuario" | "asistente",
     texto: string | React.ReactNode,
+    leer = true,
+    duracionMs?: number,
   ) => {
-    setMensajes((prev) => [...prev, { tipo, texto }]);
+    setMensajes((prev) => [...prev, { tipo, texto, leer, duracionMs }]);
 
     const debeLeer =
       tipo === "asistente" &&
       typeof texto === "string" &&
+      leer &&
       texto.length < 200 &&
-      !texto.includes("\n") &&
-      !texto.startsWith("⏳");
+      !texto.includes("\n");
 
     if (debeLeer) {
       const u = new SpeechSynthesisUtterance(texto);
@@ -198,6 +202,7 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
 
   const procesarComando = async (texto: string) => {
     const textoNormalizado = normalize(texto);
+    const inicio = performance.now();
 
     const handlers: (() => Promise<boolean> | boolean)[] = [
       () => manejarCancelacion(texto),
@@ -207,12 +212,36 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
       () => manejarCierreAsistente(texto),
     ];
 
+    const indexAntes = mensajes.length;
+
     for (const handler of handlers) {
       const resultado = await handler();
-      if (resultado) return;
+      if (resultado) {
+        const fin = performance.now();
+        const duracion = fin - inicio;
+
+        setMensajes((prev) => {
+          const copy = [...prev];
+          // Busca el último mensaje del asistente que no tenga duración aún
+          for (let i = copy.length - 1; i >= indexAntes; i--) {
+            if (
+              copy[i].tipo === "asistente" &&
+              copy[i].duracionMs === undefined
+            ) {
+              copy[i] = { ...copy[i], duracionMs: duracion };
+              break;
+            }
+          }
+          return copy;
+        });
+
+        return;
+      }
     }
 
-    agregarMensaje("asistente", "❌ No entendí ese comando.");
+    const fin = performance.now();
+    const duracion = fin - inicio;
+    agregarMensaje("asistente", "❌ No entendí ese comando.", true, duracion);
   };
 
   const manejarCancelacion = (texto: string): boolean => {
@@ -322,6 +351,12 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
                 }`}
               >
                 {msg.texto}
+                {/* Pie de duración si es string con tiempo */}
+                {msg.duracionMs !== undefined && (
+                  <div className="mt-1 text-[10px] text-gray-500">
+                    ⏱️ {msg.duracionMs.toFixed(2)} ms.
+                  </div>
+                )}
               </div>
             ))}
             {/* 👇 Ref de scroll automático */}
