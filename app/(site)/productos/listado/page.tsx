@@ -49,6 +49,7 @@ import { useExportarReporteProductos } from "@/hooks/productos/useExportarReport
 import { DialogExportarProductos } from "@/components/shared/productos/ui/dialogExportarProductos";
 import { useProductosConStock } from "@/hooks/productos/useProductosConStock";
 import { useCategorias } from "@/hooks/categorias/useCategorias";
+import Preloader from "@/components/shared/varios/preloader";
 
 // Tipos y constantes globales
 export type Opcion = {
@@ -131,7 +132,7 @@ function ordenarProductos(
 export default function PaginaProductos() {
   const [abrirDialogExportar, setAbrirDialogExportar] = useState(false);
   const [soloInsumos, setSoloInsumos] = useState(false);
-
+  const [showLoader, setShowLoader] = useState(true);
   // Estados y hooks de la aplicación
   const exportarReporte = useExportarReporteProductos();
   const [paginaActual, setPaginaActual] = useState(1);
@@ -194,6 +195,14 @@ export default function PaginaProductos() {
     paginaActual * itemsPorPagina,
   );
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoader(false);
+    }, 400); // puedes ajustar este valor si deseas
+
+    return () => clearTimeout(timer);
+  }, []);
+
   // Handlers
   const manejarSeleccionCategoria = (valor: string) => {
     setSoloInsumos(false); // 🧠
@@ -246,6 +255,9 @@ export default function PaginaProductos() {
       setProductoAccion(null);
     }
   };
+
+  if ( showLoader) return <Preloader />;
+
 
   return (
     <>

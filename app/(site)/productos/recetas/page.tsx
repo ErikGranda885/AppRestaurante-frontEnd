@@ -2,7 +2,7 @@
 
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -34,6 +34,7 @@ import {
 import { FormEditarReceta } from "@/components/shared/recetas/formularios/editRecetaForm";
 import { useEliminarReceta } from "@/hooks/recetas/useEliminarReceta";
 import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
+import Preloader from "@/components/shared/varios/preloader";
 
 export default function RecetasPage() {
   useProtectedRoute();
@@ -43,7 +44,7 @@ export default function RecetasPage() {
   const [selectedRecetaId, setSelectedRecetaId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [abrirCrear, setAbrirCrear] = useState(false);
-
+  const [showLoader, setShowLoader] = useState(true);
   const { recetas } = useRecetas();
   const { ingredientes, isLoading, error } = useDetalleReceta(selectedRecetaId);
 
@@ -53,6 +54,14 @@ export default function RecetasPage() {
 
   const selectedReceta = recetas.find((r) => r.id_rec === selectedRecetaId);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoader(false);
+    }, 400); // puedes ajustar este valor si deseas
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleEliminarReceta = () => {
     if (!selectedRecetaId) return;
 
@@ -61,7 +70,7 @@ export default function RecetasPage() {
       setSelectedRecetaId(null);
     });
   };
-
+  if (showLoader) return <Preloader />;
   return (
     <ModulePageLayout
       breadcrumbLinkTitle="Productos"

@@ -5,7 +5,7 @@ import { GeneralDialog } from "@/components/shared/varios/dialogGen";
 import { Input } from "@/components/ui/input";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { Plus, Search } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DataTable } from "@/components/shared/varios/dataTable";
 
 import { useEquivalencias } from "@/hooks/equivalencias/useEquivalencias";
@@ -18,11 +18,12 @@ import { SERVICIOS_EQUIVALENCIAS } from "@/services/equivalencias.service";
 import { Toaster } from "react-hot-toast";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
+import Preloader from "@/components/shared/varios/preloader";
 
 export default function Page() {
   useProtectedRoute();
-
   const [abrirCrear, setAbrirCrear] = useState(false);
+  const [showLoader, setShowLoader] = useState(true);
   const [abrirEditar, setAbrirEditar] = useState(false);
   const [equivalenciaEditar, setEquivalenciaEditar] =
     useState<IEquivalencia | null>(null);
@@ -33,7 +34,14 @@ export default function Page() {
   const filtradas = equivalencias?.filter((e: IEquivalencia) =>
     e.prod_equiv.nom_prod.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoader(false);
+    }, 400); // puedes ajustar este valor si deseas
 
+    return () => clearTimeout(timer);
+  }, []);
+  if (showLoader) return <Preloader />;
   return (
     <>
       <ModulePageLayout

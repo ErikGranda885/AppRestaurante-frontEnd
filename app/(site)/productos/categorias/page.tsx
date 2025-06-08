@@ -41,6 +41,7 @@ import { Input } from "@/components/ui/input";
 import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
 import { DialogExportarCategorias } from "@/components/shared/categorias/ui/dialogExportarCategorias";
 import { useCategoriasAdmin } from "@/hooks/categorias/useCategoriasAdmin";
+import Preloader from "@/components/shared/varios/preloader";
 
 export default function PaginaCategorias() {
   useProtectedRoute();
@@ -48,6 +49,7 @@ export default function PaginaCategorias() {
   const [abrirExportar, setAbrirExportar] = React.useState(false);
   const [abrirCargaMasiva, setAbrirCargaMasiva] = React.useState(false);
   const [abrirCrear, setAbrirCrear] = React.useState(false);
+  const [showLoader, setShowLoader] = React.useState(true);
   const [categoriaEditar, setEditCategory] = React.useState<ICategory | null>(
     null,
   );
@@ -90,6 +92,14 @@ export default function PaginaCategorias() {
       setSelectedStatus(status);
     }
   };
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoader(false);
+    }, 400); // puedes ajustar este valor si deseas
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const categoriaColumnas: ColumnDef<ICategory>[] = [
     {
@@ -181,7 +191,7 @@ export default function PaginaCategorias() {
                       tipo: "inactivar",
                     })
                   }
-                  className="cursor-pointer error-text focus:hover:error-text"
+                  className="error-text focus:hover:error-text cursor-pointer"
                 >
                   Inactivar
                 </DropdownMenuItem>
@@ -204,7 +214,7 @@ export default function PaginaCategorias() {
       (cat.desc_cate && cat.desc_cate.toLowerCase().includes(busqueda));
     return cumpleEstado && cumpleBusqueda;
   });
-
+  if (showLoader) return <Preloader />;
   return (
     <>
       <Toaster position="top-right" />

@@ -44,6 +44,7 @@ import {
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { safePrice } from "@/utils/format";
 import { DialogExportarVentas } from "@/components/shared/ventas/ui/dialogExportarVentas";
+import Preloader from "@/components/shared/varios/preloader";
 
 export default function Page() {
   const { ventasConfig } = useConfiguracionesVentas();
@@ -64,7 +65,16 @@ export default function Page() {
   const [mostrarComprobante, setMostrarComprobante] = useState(false);
   const [mostrarContenidoComprobante, setMostrarContenidoComprobante] =
     useState(false);
-  const { ventas, loading, error } = useVentasConDetalles(); // Hook que trae las ventas
+  const { ventas, loading, error, refetchVentas } = useVentasConDetalles(); // Hook que trae las ventas
+  const [showLoader, setShowLoader] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoader(false);
+    }, 400); // puedes ajustar los milisegundos si deseas
+
+    return () => clearTimeout(timer);
+  }, []);
+
   useProtectedRoute();
   const contentRef = useRef<HTMLDivElement>(null);
   const reactToPrintFn = useReactToPrint({ contentRef });
@@ -162,8 +172,35 @@ export default function Page() {
     });
   }, [ventas, filtroEstado, consultaBusqueda, dateRange, tipoPago]);
 
-  if (loading) return <p className="px-6 py-4">Cargando ventas...</p>;
-  if (error) return <p className="px-6 py-4 text-red-500">Error: {error}</p>;
+  if (loading || showLoader) return <Preloader />;
+
+  if (error) {
+    return (
+      <ModulePageLayout
+        breadcrumbLinkTitle="Ventas"
+        breadcrumbPageTitle="Historial de ventas"
+        submenu
+        isLoading={false}
+      >
+        <div className="flex h-[70vh] w-full items-center justify-center px-4">
+          <div className="max-w-md rounded-lg border border-red-300 bg-red-50 p-6 text-center shadow-sm dark:border-red-500 dark:bg-red-900/20">
+            <h2 className="text-lg font-semibold text-red-700 dark:text-red-400">
+              Error al cargar las ventas
+            </h2>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+              Verifica tu conexión con el servidor o intenta nuevamente.
+            </p>
+            <button
+              onClick={refetchVentas} // o llama a refetch si lo tienes
+              className="mt-4 rounded-md bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600"
+            >
+              Reintentar
+            </button>
+          </div>
+        </div>
+      </ModulePageLayout>
+    );
+  }
 
   const handleQuickRange = (option: "hoy" | "ayer" | "mes" | "año") => {
     let newRange: DateRange | null = null;

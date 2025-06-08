@@ -57,6 +57,7 @@ import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useC
 import { safePrice } from "@/utils/format";
 import { DialogExportarGastos } from "@/components/shared/gastos/ui/dialogExportarGastos";
 import { useSocket } from "@/hooks/useSocket";
+import Preloader from "@/components/shared/varios/preloader";
 export type TipoAccion = "activar" | "inactivar" | "eliminar";
 
 type AccionGasto = {
@@ -68,6 +69,7 @@ type AccionGasto = {
 export default function Page() {
   const [abrirExportarGastos, setAbrirExportarGastos] = useState(false);
   const { ventasConfig } = useConfiguracionesVentas();
+  const [showLoader, setShowLoader] = useState(true);
   const [abrirCrear, setAbrirCrear] = useState(false);
   const [gastoEditar, setGastoEditar] = useState<IGasto | null>(null);
   const [abrirEditar, setAbrirEditar] = useState(false);
@@ -94,6 +96,14 @@ export default function Page() {
   const [labelQuickRange, setLabelQuickRange] = useState("Hoy");
 
   useProtectedRoute();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoader(false);
+    }, 400); // puedes ajustar este valor si deseas
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleQuickRange = (option: "hoy" | "ayer" | "mes" | "año") => {
     let newRange: DateRange | null = null;
@@ -266,6 +276,7 @@ export default function Page() {
     },
   ];
 
+  if (showLoader) return <Preloader />;
   return (
     <ModulePageLayout
       breadcrumbLinkTitle="Gastos"

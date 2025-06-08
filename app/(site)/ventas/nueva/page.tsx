@@ -3,6 +3,7 @@ import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { ModalPagoEfectivo } from "@/components/shared/compras/ui/modalPagoEfe";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
+import Preloader from "@/components/shared/varios/preloader";
 import ComprobanteCamara from "@/components/shared/ventas/ui/comprobanteCamara";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,7 +48,6 @@ export default function Page() {
 
   // Estados para productos, orden y filtros
   const [idUsuario, setIdUsuario] = useState<number>(0);
-
   const [products, setProducts] = useState<IExtendedProduct[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("Todos");
@@ -65,6 +65,7 @@ export default function Page() {
   const [efectivoCambio, setEfectivoCambio] = useState<number>(0);
   const [fotoTomada, setFotoTomada] = useState<string | null>(null);
 
+  const [showLoader, setShowLoader] = useState(true);
   const [comprobanteNumero, setComprobanteNumero] = useState("");
   const [comprobanteImagen, setComprobanteImagen] = useState<File | null>(null);
   const [showDialogComprobante, setShowDialogComprobante] = useState(false);
@@ -91,6 +92,14 @@ export default function Page() {
     setTableInfo(tempTable);
     setShowCustomerForm(false);
   };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoader(false);
+    }, 400); // puedes ajustar este valor si deseas
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // Cargar productos desde la API de inventario
   const fetchProducts = useCallback(async () => {
@@ -475,6 +484,7 @@ export default function Page() {
     pagoEfectivoConfirmado,
     pagoTransferenciaConfirmado,
   ]);
+  if (loadingVentas || showLoader) return <Preloader />;
 
   // ---------------------
   // RENDER

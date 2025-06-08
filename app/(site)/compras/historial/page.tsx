@@ -48,11 +48,12 @@ import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useC
 import { safePrice } from "@/utils/format";
 import { DialogExportarCompras } from "@/components/shared/compras/ui/dialogExportarCompras";
 import { socket } from "@/lib/socket";
+import Preloader from "@/components/shared/varios/preloader";
 
 export default function Page() {
   const { ventasConfig } = useConfiguracionesVentas();
   const [abrirExportar, setAbrirExportar] = useState(false);
-
+  const [showLoader, setShowLoader] = useState(true);
   const [consultaBusqueda, setConsultaBusqueda] = useState<string>("");
   const [compras, setCompras] = useState<ICompra[]>([]);
   const [detCompras, setDetCompras] = useState<IDetCompra[]>([]);
@@ -69,6 +70,14 @@ export default function Page() {
   const totalPendientesPago = pendientesPago.length;
 
   useProtectedRoute();
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoader(false);
+    }, 400); // puedes ajustar este valor si deseas
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -299,7 +308,7 @@ export default function Page() {
   const numeroCompras = compras.length;
   const promedioItems =
     numeroCompras > 0 ? (detCompras.length / numeroCompras).toFixed(2) : "0";
-
+  if (showLoader) return <Preloader />;
   return (
     <ModulePageLayout
       breadcrumbLinkTitle="Compras"

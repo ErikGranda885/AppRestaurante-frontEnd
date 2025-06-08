@@ -5,7 +5,7 @@ import { GeneralDialog } from "@/components/shared/varios/dialogGen";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CloudDownload, Plus, Search, Upload } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 
 import { DataTable } from "@/components/shared/varios/dataTable";
@@ -14,22 +14,33 @@ import { columnsTransformaciones } from "@/components/shared/transformaciones/ui
 import { FormTransformacion } from "@/components/shared/transformaciones/fomularios/create-transformacion";
 import { mutate } from "swr";
 import { SERVICIOS_TRANSFORMACIONES } from "@/services/transformaciones.service";
+import Preloader from "@/components/shared/varios/preloader";
 
 export default function Page() {
   useProtectedRoute();
   const [searchTerm, setSearchTerm] = useState("");
   const [abrirCrear, setAbrirCrear] = useState(false);
+  const [showLoader, setShowLoader] = useState(true);
   const { data: transformaciones, isLoading } = useTransformaciones();
 
   const filtradas = transformaciones?.filter((t: any) =>
     t.rece_trans.nom_rec.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoader(false);
+    }, 400); // puedes ajustar este valor si deseas
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleSuccess = async () => {
     await mutate(SERVICIOS_TRANSFORMACIONES.listar);
     setAbrirCrear(false);
   };
 
+  if (showLoader) return <Preloader />;
   return (
     <ModulePageLayout
       breadcrumbLinkTitle="Producción"

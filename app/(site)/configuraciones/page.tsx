@@ -8,10 +8,20 @@ import { VentasConfiguracion } from "@/components/shared/configuraciones/ui/vent
 import { CierresDiariosConfiguracion } from "@/components/shared/configuraciones/ui/cierresDiariosConfiguracion";
 import { SeguridadConfiguracion } from "@/components/shared/configuraciones/ui/seguridadConfiguracion";
 import { AplicacionConfiguracion } from "@/components/shared/configuraciones/ui/aplicacionConfiguracion";
+import Preloader from "@/components/shared/varios/preloader";
+import { useEffect, useState } from "react";
 
 export default function Page() {
+  const [showLoader, setShowLoader] = useState(true);
   useProtectedRoute();
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoader(false);
+    }, 400); // puedes ajustar este valor si deseas
 
+    return () => clearTimeout(timer);
+  }, []);
+  if (showLoader) return <Preloader />;
   return (
     <ModulePageLayout
       breadcrumbLinkTitle="Configuraciones"

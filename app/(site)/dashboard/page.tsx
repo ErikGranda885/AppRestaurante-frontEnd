@@ -21,9 +21,12 @@ import Image from "next/image";
 import { safePrice } from "@/utils/format";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { useEmpresa } from "@/hooks/configuraciones/generales/useEmpresa";
+import { useEffect, useState } from "react";
+import Preloader from "@/components/shared/varios/preloader";
 
 export default function Dashboard() {
   useProtectedRoute();
+  const [showLoader, setShowLoader] = useState(true);
   const { ventasConfig } = useConfiguracionesVentas();
   const { userName } = useUserData();
   const { empresa } = useEmpresa();
@@ -50,6 +53,15 @@ export default function Dashboard() {
   const Skeleton = ({ className }: { className?: string }) => (
     <div className={`animate-pulse rounded bg-muted ${className}`} />
   );
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoader(false);
+    }, 400); // puedes ajustar este valor si deseas
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (showLoader) return <Preloader />;
 
   return (
     <ModulePageLayout

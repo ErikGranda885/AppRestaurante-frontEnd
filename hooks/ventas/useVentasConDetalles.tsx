@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { IVentaDetalle } from "@/lib/types";
 import { SERVICIOS_VENTAS } from "@/services/ventas.service";
 import { useSocket } from "@/hooks/useSocket";
+import { ToastError } from "@/components/shared/toast/toastError";
 
 export const useVentasConDetalles = () => {
   const [ventas, setVentas] = useState<IVentaDetalle[]>([]);
@@ -16,9 +17,12 @@ export const useVentasConDetalles = () => {
       }
       const data = await res.json();
       setVentas(data);
+      setError(null); // limpia error si la siguiente carga es exitosa
     } catch (err: any) {
-      console.error("Error al cargar ventas:", err);
       setError(err.message);
+      ToastError({
+        message: "No se puede conectar con el servidor, intentalo mas tarde",
+      });
     } finally {
       setLoading(false);
     }
@@ -28,7 +32,7 @@ export const useVentasConDetalles = () => {
     fetchVentas();
   }, [fetchVentas]);
 
-  // ✅ Función estable para el socket
+  // ✅ Revalidación automática por socket
   const handleVentasActualizadas = useCallback(() => {
     console.log("🔁 Revalidando ventas desde socket");
     fetchVentas();
@@ -36,5 +40,10 @@ export const useVentasConDetalles = () => {
 
   useSocket("ventas-actualizadas", handleVentasActualizadas);
 
-  return { ventas, loading, error };
+  return {
+    ventas,
+    loading,
+    error,
+    refetchVentas: fetchVentas, // ← lo expones así
+  };
 };

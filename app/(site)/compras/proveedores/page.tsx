@@ -44,11 +44,13 @@ import { BulkUploadProveedoresDialog } from "@/components/shared/proveedores/for
 import { DEFAULT_PROVEEDOR_IMAGE_URL } from "@/lib/constants";
 import { DialogExportarProveedores } from "@/components/shared/proveedores/ui/dialogExportarProveedores";
 import { socket } from "@/lib/socket";
+import Preloader from "@/components/shared/varios/preloader";
 
 export default function Dashboard() {
   useProtectedRoute();
   const [abrirExportar, setAbrirExportar] = useState(false);
   const [proveedores, setProveedores] = React.useState<IProveedor[]>([]);
+  const [showLoader, setShowLoader] = useState(true);
   const [abrirCrear, setAbrirCrear] = React.useState(false);
   const [abrirEditar, setAbrirEditar] = React.useState(false);
   const [proveedorEditando, setProveedorEditando] =
@@ -296,6 +298,14 @@ export default function Dashboard() {
     },
   ];
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoader(false);
+    }, 400); // puedes ajustar este valor si deseas
+
+    return () => clearTimeout(timer);
+  }, []);
+
   /* Cargar Proveedores */
   useEffect(() => {
     const cargarProveedores = async () => {
@@ -318,6 +328,7 @@ export default function Dashboard() {
     };
   }, []);
 
+  if (showLoader) return <Preloader />;
   return (
     <ModulePageLayout
       breadcrumbLinkTitle="Compras"

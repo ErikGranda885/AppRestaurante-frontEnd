@@ -26,7 +26,7 @@ import {
   MoreHorizontal,
   CheckCircle,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { useRouter } from "next/navigation";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
@@ -57,6 +57,7 @@ import { safePrice } from "@/utils/format";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { DialogExportarCierres } from "@/components/shared/cierreDiario/ui/dialogExportarCierres";
 import { es } from "date-fns/locale";
+import Preloader from "@/components/shared/varios/preloader";
 
 function hayCierresAnterioresPendientes(
   lista: ICierreDiario[],
@@ -125,8 +126,16 @@ export default function Page() {
     handleSetDateRange(newRange); // usamos el nuevo manejador
   };
   useProtectedRoute();
-  const [abrirDialogExportar, setAbrirDialogExportar] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoader(false);
+    }, 400); // puedes ajustar este valor si deseas
 
+    return () => clearTimeout(timer);
+  }, []);
+
+  const [abrirDialogExportar, setAbrirDialogExportar] = useState(false);
+  const [showLoader, setShowLoader] = useState(true);
   const { ventasConfig } = useConfiguracionesVentas();
   const router = useRouter();
   const [estadoSeleccionado, setEstadoSeleccionado] = useState<string>("");
@@ -143,6 +152,7 @@ export default function Page() {
       c.esta_cier.toLowerCase() === "pendiente" &&
       new Date(c.fech_cier) < new Date(fechaActual),
   );
+
   const estadoActual = hayPendientesAnteriores
     ? "pendiente"
     : (cierreActual?.esta_cier?.toLowerCase() ?? "sin datos");
@@ -168,6 +178,7 @@ export default function Page() {
   );
   const { totalDisponible, totalDepositado, diferenciaTotal, numeroCierres } =
     useResumenCierres(lista);
+
   const cierresColumnas: ColumnDef<ICierreDiario>[] = [
     {
       accessorKey: "fech_cier",
@@ -258,6 +269,7 @@ export default function Page() {
       estadoSeleccionado.toLowerCase() === "cerrado" ? dateRange : undefined,
   });
 
+  if (showLoader) return <Preloader />;
   return (
     <ModulePageLayout
       breadcrumbLinkTitle="Cierre Diario"
