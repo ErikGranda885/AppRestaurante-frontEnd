@@ -1,4 +1,5 @@
 "use client";
+
 import ModulePageLayout from "@/components/pageLayout/ModulePageLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -39,7 +40,7 @@ export default function Dashboard() {
     diferenciaCaja,
     loading,
     error,
-    refreshDashboard, // ✅ NUEVO
+    refreshDashboard,
   } = useDashboardMetrics(fechaActual);
 
   const {
@@ -50,13 +51,15 @@ export default function Dashboard() {
     errorPopulares,
     errorCaducar,
   } = useProductosDashboard();
+
   const Skeleton = ({ className }: { className?: string }) => (
     <div className={`animate-pulse rounded bg-muted ${className}`} />
   );
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowLoader(false);
-    }, 400); // puedes ajustar este valor si deseas
+    }, 400);
 
     return () => clearTimeout(timer);
   }, []);
@@ -71,37 +74,32 @@ export default function Dashboard() {
       isLoading={false}
     >
       <div className="space-y-6 px-4">
-        <div className="grid grid-cols-12 items-start justify-between gap-4">
-          {/* Saludo */}
-          <div className="col-span-7">
-            <h2 className="text-xl font-semibold">Buen día, {userName} 👋</h2>
-            <p className="text-sm text-muted-foreground">
-              Resumen de operaciones del restaurante{" "}
-              {empresa?.nom_emp ?? "tu negocio"}
-            </p>
-          </div>
-          {/* Hora dinámica */}
-          <div className="col-span-2 text-right text-sm">
-            <HoraActual />
-          </div>
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:auto-rows-auto xl:grid-cols-12">
+          {/* Contenedor unificado de saludo, hora y métricas */}
+          <div className="col-span-12 grid auto-rows-auto grid-cols-12 gap-y-4 xl:col-span-9">
+            <div className="col-span-12 flex justify-between gap-2 sm:flex-row xl:grid xl:grid-cols-12 xl:items-start">
+              {/* Saludo */}
+              <div className="sm:flex-1 xl:col-span-8">
+                <h2 className="font-semibold xl:text-xl">
+                  Buen día, {userName} 👋
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Resumen de operaciones del restaurante{" "}
+                  {empresa?.nom_emp ?? "tu negocio"}
+                </p>
+              </div>
 
-          {/* Métricas */}
-          <div className="col-span-9 grid">
-            <div className="flex w-full justify-between gap-4">
-              {/* TOTAL GANADO */}
-              {loading || error ? (
-                <Card className="h-[150px] w-full animate-pulse border border-border dark:bg-[#1e1e1e] dark:text-white">
-                  <CardHeader className="flex-row items-center justify-between">
-                    <Skeleton className="h-6 w-28" />
-                    <Skeleton className="h-8 w-8 rounded-full bg-[#3eab78]" />
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Skeleton className="h-8 w-28" />
-                    <Skeleton className="h-4 w-32" />
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card className="w-full border border-border dark:bg-[#1e1e1e] dark:text-white">
+              {/* Hora */}
+              <div className="text-right text-sm sm:text-left xl:col-span-4 xl:self-start">
+                <HoraActual />
+              </div>
+            </div>
+
+            {/* Métricas en subgrid */}
+            <div className="col-span-12">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {/* TOTAL GANADO */}
+                <Card className="w-full border border-border dark:bg-[#1e1e1e] dark:text-white md:max-w-full xl:max-w-full">
                   <CardHeader className="flex-row items-center justify-between">
                     <CardTitle>Total Ganado</CardTitle>
                     <div className="mt-3 rounded-xl bg-[#3eab78] p-2">
@@ -118,22 +116,9 @@ export default function Dashboard() {
                     </div>
                   </CardContent>
                 </Card>
-              )}
 
-              {/* COMPRAS REALIZADAS */}
-              {loading || error ? (
-                <Card className="h-[150px] w-full animate-pulse border border-border dark:bg-[#1e1e1e] dark:text-white">
-                  <CardHeader className="flex-row items-center justify-between">
-                    <Skeleton className="h-6 w-32" />
-                    <Skeleton className="h-8 w-8 rounded-full bg-[#e1992e]" />
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Skeleton className="h-8 w-24" />
-                    <Skeleton className="h-4 w-20" />
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card className="w-full border border-border dark:bg-[#1e1e1e] dark:text-white">
+                {/* COMPRAS REALIZADAS */}
+                <Card className="w-full border border-border dark:bg-[#1e1e1e] dark:text-white md:md:max-w-full xl:max-w-full">
                   <CardHeader className="flex-row items-center justify-between">
                     <CardTitle>Compras Realizadas</CardTitle>
                     <div className="mt-3 rounded-xl bg-[#e1992e] p-2">
@@ -149,22 +134,9 @@ export default function Dashboard() {
                     </p>
                   </CardContent>
                 </Card>
-              )}
 
-              {/* GASTOS TOTALES */}
-              {loading || error ? (
-                <Card className="h-[150px] w-full animate-pulse border border-border dark:bg-[#1e1e1e] dark:text-white">
-                  <CardHeader className="flex-row items-center justify-between">
-                    <Skeleton className="h-6 w-32" />
-                    <Skeleton className="h-8 w-8 rounded-full bg-[#ef4444]" />
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Skeleton className="h-8 w-24" />
-                    <Skeleton className="h-4 w-20" />
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card className="w-full border border-border dark:bg-[#1e1e1e] dark:text-white">
+                {/* GASTOS TOTALES */}
+                <Card className="w-full border border-border dark:bg-[#1e1e1e] dark:text-white md:md:max-w-full xl:max-w-full">
                   <CardHeader className="flex-row items-center justify-between">
                     <CardTitle>Gastos Totales</CardTitle>
                     <div className="mt-3 rounded-xl bg-[#ef4444] p-2">
@@ -180,22 +152,9 @@ export default function Dashboard() {
                     </p>
                   </CardContent>
                 </Card>
-              )}
 
-              {/* DIFERENCIA DE CAJA */}
-              {loading || error ? (
-                <Card className="h-[150px] w-full animate-pulse border border-border dark:bg-[#1e1e1e] dark:text-white">
-                  <CardHeader className="flex-row items-center justify-between">
-                    <Skeleton className="h-6 w-40" />
-                    <Skeleton className="h-8 w-8 rounded-full bg-[#f97316]" />
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Skeleton className="h-8 w-24" />
-                    <Skeleton className="h-4 w-28" />
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card className="w-full border border-border dark:bg-[#1e1e1e] dark:text-white">
+                {/* DIFERENCIA DE CAJA */}
+                <Card className="w-full border border-border dark:bg-[#1e1e1e] dark:text-white md:md:max-w-full xl:max-w-full">
                   <CardHeader className="flex-row items-center justify-between">
                     <CardTitle>
                       {diferenciaCaja < 0
@@ -228,55 +187,35 @@ export default function Dashboard() {
                     </p>
                   </CardContent>
                 </Card>
-              )}
+              </div>
             </div>
-          </div>
 
-          {/* Órdenes en progreso */}
-          <div className="col-span-3 col-start-10 row-span-3 row-start-1 grid h-[670px]">
-            <OrdenesEnProceso onRefreshDashboard={refreshDashboard} />
-          </div>
-
-          {/* Productos y gráficos */}
-          <div className="col-span-9 row-start-3 grid">
-            <div className="flex h-full w-full justify-between gap-4">
-              {/* Productos populares */}
-              {loadingPopulares || errorPopulares ? (
-                <Card className="h-[455px] w-[280px] animate-pulse rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between py-5">
-                      <Skeleton className="h-4 w-40" />
-                      <Skeleton className="h-4 w-14" />
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {[...Array(4)].map((_, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <Skeleton className="h-6 w-6 rounded" />
-                        <Skeleton className="h-7 w-7 rounded-md" />
-                        <div className="flex flex-col space-y-1">
-                          <Skeleton className="h-4 w-40" />
-                          <Skeleton className="h-3 w-28" />
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card className="h-full w-[280px] rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
+            {/* Productos y gráficos */}
+            <div className="col-span-12">
+              <div className="grid gap-4 xl:grid-cols-4">
+                {/* Productos más vendidos */}
+                <Card className="overflow-hidden rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between py-5">
                       <CardTitle className="text-md font-semibold">
                         Productos más vendidos
                       </CardTitle>
-                      {/* <span className="cursor-pointer text-xs font-medium text-blue-500 hover:underline">
-                        Ver Todos
-                      </span> */}
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    {populares.length === 0 ? (
-                      <p className="text-start text-sm text-muted-foreground">
+                  <CardContent className="h-[370px] space-y-4 overflow-y-auto">
+                    {loadingPopulares || errorPopulares ? (
+                      [...Array(4)].map((_, i) => (
+                        <div key={i} className="flex items-center gap-3">
+                          <Skeleton className="h-6 w-6 rounded" />
+                          <Skeleton className="h-7 w-7 rounded-md" />
+                          <div className="flex flex-col space-y-1">
+                            <Skeleton className="h-4 w-40" />
+                            <Skeleton className="h-3 w-28" />
+                          </div>
+                        </div>
+                      ))
+                    ) : populares.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
                         No hay productos populares disponibles.
                       </p>
                     ) : (
@@ -306,31 +245,9 @@ export default function Dashboard() {
                     )}
                   </CardContent>
                 </Card>
-              )}
 
-              {/* Productos por caducar */}
-              {loadingCaducar || errorCaducar ? (
-                <Card className="h-[455px] w-[280px] animate-pulse rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between py-5">
-                      <Skeleton className="h-4 w-40" />
-                      <Skeleton className="h-4 w-14" />
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4 pt-1">
-                    {[...Array(5)].map((_, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <Skeleton className="h-7 w-7 rounded-md" />
-                        <div className="flex flex-col space-y-1">
-                          <Skeleton className="h-4 w-40" />
-                          <Skeleton className="h-3 w-28" />
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card className="h-[455px] w-[280px] rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
+                {/* Productos por caducar */}
+                <Card className="overflow-hidden rounded-lg border border-border shadow-sm dark:bg-[#1e1e1e] dark:text-white">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between py-5">
                       <CardTitle className="text-md font-semibold">
@@ -338,17 +255,26 @@ export default function Dashboard() {
                       </CardTitle>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4 pt-1">
-                    {caducar.length === 0 ? (
-                      <p className="text-start text-sm text-muted-foreground">
-                        No hay productos con fecha registrados
+                  <CardContent className="h-[370px] space-y-4 overflow-y-auto pt-1">
+                    {loadingCaducar || errorCaducar ? (
+                      [...Array(5)].map((_, i) => (
+                        <div key={i} className="flex items-center gap-3">
+                          <Skeleton className="h-7 w-7 rounded-md" />
+                          <div className="flex flex-col space-y-1">
+                            <Skeleton className="h-4 w-40" />
+                            <Skeleton className="h-3 w-28" />
+                          </div>
+                        </div>
+                      ))
+                    ) : caducar.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        No hay productos con fecha registrados.
                       </p>
                     ) : (
                       caducar.map((prod) => {
-                        const dias = parseInt(prod.expiresIn); // Asegúrate de que sea un número
-
+                        const dias = parseInt(prod.expiresIn);
                         let color = "text-green-500";
-                        if (dias <= 1) color = "error-text";
+                        if (dias <= 1) color = "text-red-500";
                         else if (dias <= 3) color = "text-orange-500";
                         else if (dias <= 7) color = "text-yellow-500";
 
@@ -384,14 +310,25 @@ export default function Dashboard() {
                     )}
                   </CardContent>
                 </Card>
-              )}
 
-              {/* Gráficos */}
-              <div className="flex h-[435px] min-w-[350px] flex-1 flex-col gap-4">
-                <GraficoVentasPorCategoria />
-                <GraficoVentasPorPeriodo />
+                {/* Gráficos combinados */}
+                <div className="col-span-2 h-[450px] overflow-hidden rounded-lg border border-border p-4 shadow-sm dark:bg-[#1e1e1e] dark:text-white">
+                  <div className="flex h-full flex-col gap-4">
+                    <div className="h-1/2 overflow-hidden">
+                      <GraficoVentasPorCategoria />
+                    </div>
+                    <div className="h-1/2 overflow-hidden">
+                      <GraficoVentasPorPeriodo />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
+          </div>
+
+          {/* Órdenes en progreso */}
+          <div className="hidden xl:col-span-3 xl:col-start-10 xl:block xl:self-start">
+            <OrdenesEnProceso onRefreshDashboard={refreshDashboard} />
           </div>
         </div>
       </div>

@@ -49,7 +49,7 @@ export function GraficoVentasPorCategoria() {
   const mostrarSkeleton = loading || error;
 
   return (
-    <Card className="h-1/2 w-full border border-border dark:bg-[#1e1e1e] dark:text-white">
+    <Card className="h-[215px] w-full border border-border dark:bg-[#1e1e1e] dark:text-white">
       <CardHeader className="pt-5">
         {mostrarSkeleton ? (
           <>
@@ -66,7 +66,7 @@ export function GraficoVentasPorCategoria() {
         )}
       </CardHeader>
 
-      <CardContent className="h-[220px] px-5">
+      <CardContent className="h-[217px] px-5">
         {mostrarSkeleton ? (
           <div className="flex h-full w-full items-center justify-center">
             <Skeleton className="h-[140px] w-full" />
