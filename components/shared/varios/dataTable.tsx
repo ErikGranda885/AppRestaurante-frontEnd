@@ -1,4 +1,5 @@
 "use client";
+
 import * as React from "react";
 import {
   ColumnDef,
@@ -12,7 +13,6 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -78,8 +78,13 @@ export function DataTable<T>({
 
   return (
     <div className="w-full">
-      <div className="flex items-center py-4">
+      <div className="flex items-center justify-end py-4">
         <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="text-xs">
+              Columnas
+            </Button>
+          </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="border-border">
             {table
               .getAllColumns()
@@ -96,8 +101,9 @@ export function DataTable<T>({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div>
-        <Table className="overflow-hidden rounded-lg border border-border">
+
+      <div className="w-[335px] overflow-x-auto rounded-lg border border-border md:w-full xl:w-full">
+        <Table>
           <TableHeader className="bg-secondary">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
@@ -150,12 +156,13 @@ export function DataTable<T>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
+
+      <div className="flex flex-col-reverse items-start justify-between gap-3 py-4 sm:flex-row sm:items-center sm:gap-0">
+        <div className="text-sm text-muted-foreground">
           {table.getFilteredSelectedRowModel().rows.length} de{" "}
           {table.getFilteredRowModel().rows.length} fila(s) seleccionadas.
         </div>
-        <div className="space-x-2">
+        <div className="space-x-2 self-end">
           <Button
             variant="outline"
             size="sm"

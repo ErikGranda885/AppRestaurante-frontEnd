@@ -84,7 +84,7 @@ export default function PaginaUsuarios() {
     setRoles: setRolOpciones,
     loading,
     error,
-    refetchUsuarios
+    refetchUsuarios,
   } = useUsuariosAndRoles();
   const [showLoader, setShowLoader] = React.useState(true);
   const {
@@ -363,236 +363,272 @@ export default function PaginaUsuarios() {
         submenu={false}
         isLoading={false}
       >
-        <div className="px-6 pt-2">
-          <h1 className="text-xl font-bold">Usuarios</h1>
-          <p className="text-sm text-muted-foreground">
-            Aquí puedes gestionar los usuarios de tu negocio.
-          </p>
-          <div className="pt-4" />
-          <div className="mb-5 flex items-center justify-between">
-            <GeneralDialog
-              open={abrirCrear}
-              onOpenChange={setAbrirCrear}
-              triggerText={
-                <>
-                  <Plus className="h-4 w-4 font-light" /> Añadir nuevo usuario
-                </>
-              }
-              title="Crear Nuevo Usuario"
-              description="Ingresa la información para crear un nuevo usuario."
-              submitText="Crear Usuario"
-            >
-              <CreateUserForm
-                roleOptions={rolOpciones}
-                onSuccess={(data: any) => {
-                  const rolData = data.usuario.rol_usu;
-                  const usuarioCreado: DataUsers = {
-                    id: data.usuario.id_usu.toString(),
-                    usuario: data.usuario.nom_usu,
-                    correo: data.usuario.email_usu,
-                    estado: data.usuario.esta_usu,
-                    rol: rolData.id_rol.toString(),
-                    rolNombre: rolData.nom_rol,
-                    img_usu: data.usuario.img_usu || "",
-                    fechaCreacion: parse(
-                      data.usuario.crea_en_usu,
-                      "dd-MM-yyyy HH:mm:ss",
-                      new Date(),
-                    ),
-                    fechaActualizacion: parse(
-                      data.usuario.act_en_usu,
-                      "dd-MM-yyyy HH:mm:ss",
-                      new Date(),
-                    ),
-                  };
-                  setUsuarios((prev) => [...prev, usuarioCreado]);
-                  setAbrirCrear(false);
-                }}
-                onRoleCreated={(nuevoRol: IRol) => {
-                  setRolOpciones((prev) => [...prev, nuevoRol]);
-                }}
-              />
-            </GeneralDialog>
-            <div className="flex items-center gap-3">
-              {/* Input para buscar */}
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <Search className="h-4 w-4 text-gray-500" />
-                </div>
-                <Input
-                  type="text"
-                  placeholder="Buscar usuarios"
-                  className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
-                  value={consultaBusqueda}
-                  onChange={(e) => setConsultaBusqueda(e.target.value)}
+        <div className="h-full w-full space-y-5 rounded-lg bg-[hsl(var(--card))] dark:bg-[#111315]">
+          {/* Encabezado + filtros */}
+          <div className="px-4 pt-6 sm:px-6">
+            <h1 className="text-xl font-bold">Usuarios</h1>
+            <p className="text-sm text-muted-foreground">
+              Aquí puedes gestionar los usuarios de tu negocio.
+            </p>
+
+            <div className="mb-5 mt-4 flex gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <GeneralDialog
+                open={abrirCrear}
+                onOpenChange={setAbrirCrear}
+                title="Crear Nuevo Usuario"
+                description="Ingresa la información para crear un nuevo usuario."
+                submitText="Crear Usuario"
+                triggerText={
+                  <>
+                    <Plus className="h-4 w-4 shrink-0" />
+                    <span className="ml-1 sm:hidden">Nuevo usuario</span>
+                    <span className="ml-1 hidden sm:inline">
+                      Añadir nuevo usuario
+                    </span>
+                  </>
+                }
+              >
+                <CreateUserForm
+                  roleOptions={rolOpciones}
+                  onSuccess={(data: any) => {
+                    const rolData = data.usuario.rol_usu;
+                    const usuarioCreado: DataUsers = {
+                      id: data.usuario.id_usu.toString(),
+                      usuario: data.usuario.nom_usu,
+                      correo: data.usuario.email_usu,
+                      estado: data.usuario.esta_usu,
+                      rol: rolData.id_rol.toString(),
+                      rolNombre: rolData.nom_rol,
+                      img_usu: data.usuario.img_usu || "",
+                      fechaCreacion: parse(
+                        data.usuario.crea_en_usu,
+                        "dd-MM-yyyy HH:mm:ss",
+                        new Date(),
+                      ),
+                      fechaActualizacion: parse(
+                        data.usuario.act_en_usu,
+                        "dd-MM-yyyy HH:mm:ss",
+                        new Date(),
+                      ),
+                    };
+                    setUsuarios((prev) => [...prev, usuarioCreado]);
+                    setAbrirCrear(false);
+                  }}
+                  onRoleCreated={(nuevoRol: IRol) => {
+                    setRolOpciones((prev) => [...prev, nuevoRol]);
+                  }}
                 />
+              </GeneralDialog>
+
+              <div className="flex gap-2 sm:flex-row sm:items-center">
+                <div className="relative sm:w-auto">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 sm:pl-3">
+                    <Search className="h-4 w-4 text-gray-500" />
+                  </div>
+                  <Input
+                    type="text"
+                    placeholder="Buscar Usuarios"
+                    className="w-full border border-border bg-white/10 pl-8 text-xs sm:w-[160px] md:w-[180px] lg:w-[200px]"
+                    value={consultaBusqueda}
+                    onChange={(e) => setConsultaBusqueda(e.target.value)}
+                  />
+                </div>
+
+                <Button
+                  className="h-8 w-8 p-0 sm:w-auto sm:px-3 sm:text-sm sm:font-semibold"
+                  variant="secondary"
+                  onClick={() => setAbrirCargaMasiva(true)}
+                >
+                  <Upload className="h-4 w-4" />
+                  <span className="ml-1 hidden sm:inline">Importar</span>
+                </Button>
+
+                <Button
+                  className="h-8 w-8 p-0 sm:w-auto sm:px-3 sm:text-sm sm:font-semibold"
+                  variant="secondary"
+                  onClick={() => setOpenDialogExportar(true)}
+                >
+                  <CloudDownload className="h-4 w-4" />
+                  <span className="ml-1 hidden sm:inline">Exportar</span>
+                </Button>
               </div>
-              {/* Botón para importar */}
-              <Button
-                className="border-border text-[12px] font-semibold"
-                variant="secondary"
-                onClick={() => setAbrirCargaMasiva(true)}
-              >
-                <Upload className="h-4 w-4" /> Importar
-              </Button>
-              {/* Botón para exportar */}
-              <Button
-                onClick={() => setOpenDialogExportar(true)}
-                className="border-border text-[12px] font-semibold"
-                variant="secondary"
-              >
-                <CloudDownload className="h-4 w-4" /> Exportar
-              </Button>
             </div>
           </div>
-        </div>
-        <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#111315]">
+
           {/* Tarjetas de métricas */}
-          <div className="flex flex-col gap-4 px-6 pt-6 md:flex-row md:justify-between">
+          <div className="grid grid-cols-1 gap-4 px-4 sm:grid-cols-3 lg:grid-cols-3 xl:px-6">
             {/* Tarjeta: Usuarios Totales */}
             <Card
               onClick={() => manejarClickTarjeta("")}
-              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
+              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-4 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] xl:p-7 ${
                 estadoSeleccionado === "" ? "ring-2 ring-secondary" : ""
               } group`}
             >
-              <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
-                <div className="flex-1">
-                  <CardTitle className="text-sm font-light text-secondary-foreground">
-                    Usuarios Totales
-                  </CardTitle>
-                  <div className="mt-2 flex items-center gap-5">
-                    <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
+              <CardHeader className="flex flex-col justify-between gap-2 p-0 sm:flex-row sm:items-center sm:gap-0">
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center justify-between sm:hidden">
+                    <CardTitle className="text-sm font-medium text-secondary-foreground">
+                      Usuarios Totales
+                    </CardTitle>
+                    <TrendingUpIcon className="h-5 w-5 text-muted-foreground group-hover:scale-110" />
+                  </div>
+                  <div className="hidden sm:block">
+                    <CardTitle className="text-sm font-medium text-secondary-foreground">
+                      Usuarios Totales
+                    </CardTitle>
+                  </div>
+                  <div className="flex items-center gap-1 sm:gap-4">
+                    <span className="text-2xl font-extrabold text-gray-800 dark:text-white">
                       {usuarios.length}
                     </span>
-                    <span className="inline-block rounded-md bg-secondary px-2 py-1 text-sm font-bold dark:bg-green-800/30">
+                    <span className="inline-block rounded-md bg-secondary px-2 py-1 text-xs font-semibold dark:bg-green-800/30">
                       {activosEsteMes > 0
                         ? `+${activosEsteMes} nuevos usuarios`
                         : activosEsteMes}
                     </span>
                   </div>
-                  <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                  <CardDescription className="text-xs text-gray-500 dark:text-gray-400">
                     Este mes
                   </CardDescription>
                 </div>
-                <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
-                  <TrendingUpIcon className="h-7 w-7 transition-transform duration-300 group-hover:scale-110" />
+                <div className="mt-2 hidden items-center justify-center sm:mt-0 sm:flex">
+                  <TrendingUpIcon className="h-6 w-6 text-muted-foreground transition-transform duration-300 group-hover:scale-110" />
                 </div>
               </CardHeader>
             </Card>
+
             {/* Tarjeta: Usuarios Activos */}
             <Card
               onClick={() => manejarClickTarjeta("Activo")}
-              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
+              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-4 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
                 estadoSeleccionado.toLowerCase() === "activo"
                   ? "ring-2 ring-secondary"
                   : ""
               } group`}
             >
-              <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
-                <div className="flex-1">
-                  <CardTitle className="text-sm font-light text-secondary-foreground">
-                    Usuarios Activos
-                  </CardTitle>
-                  <div className="mt-2 flex items-center gap-5">
-                    <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
+              <CardHeader className="flex flex-col justify-between gap-2 p-0 sm:flex-row sm:items-center sm:gap-0">
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center justify-between sm:hidden">
+                    <CardTitle className="text-sm font-medium text-secondary-foreground">
+                      Usuarios Activos
+                    </CardTitle>
+                    <UserCheck className="h-5 w-5 text-green-500 group-hover:scale-110" />
+                  </div>
+                  <div className="hidden sm:block">
+                    <CardTitle className="text-sm font-medium text-secondary-foreground">
+                      Usuarios Activos
+                    </CardTitle>
+                  </div>
+                  <div className="flex items-center gap-1 sm:gap-4">
+                    <span className="text-2xl font-extrabold text-gray-800 dark:text-white">
                       {
                         usuarios.filter(
                           (u) => u.estado?.toLowerCase() === "activo",
                         ).length
                       }
                     </span>
-                    <span className="inline-block rounded-md bg-green-100 px-2 py-1 text-sm font-bold text-green-500 dark:bg-green-800/30 dark:text-green-400">
+                    <span className="inline-block rounded-md bg-green-100 px-2 py-1 text-xs font-semibold text-green-500 dark:bg-green-800/30 dark:text-green-400">
                       {nuevosEsteMes > 0 ? `+${nuevosEsteMes}` : nuevosEsteMes}
                     </span>
                   </div>
-                  <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                  <CardDescription className="text-xs text-gray-500 dark:text-gray-400">
                     Este mes
                   </CardDescription>
                 </div>
-                <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
-                  <UserCheck className="h-7 w-7 text-green-400 transition-transform duration-300 group-hover:scale-110" />
+                <div className="mt-2 hidden items-center justify-center sm:mt-0 sm:flex">
+                  <UserCheck className="h-6 w-6 text-green-500 transition-transform duration-300 group-hover:scale-110" />
                 </div>
               </CardHeader>
             </Card>
+
             {/* Tarjeta: Usuarios Inactivos */}
             <Card
               onClick={() => manejarClickTarjeta("Inactivo")}
-              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
+              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-4 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] xl:p-7 ${
                 estadoSeleccionado.toLowerCase() === "inactivo"
                   ? "ring-2 ring-secondary"
                   : ""
               } group`}
             >
-              <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
-                <div className="flex-1">
-                  <CardTitle className="text-sm font-light text-secondary-foreground">
-                    Usuarios Inactivos
-                  </CardTitle>
-                  <div className="mt-2 flex items-center gap-5">
-                    <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
+              <CardHeader className="flex flex-col justify-between gap-2 p-0 sm:flex-row sm:items-center sm:gap-0">
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center justify-between sm:hidden">
+                    <CardTitle className="text-sm font-medium text-secondary-foreground">
+                      Usuarios Inactivos
+                    </CardTitle>
+                    <UserX className="h-5 w-5 text-muted-foreground group-hover:scale-110" />
+                  </div>
+                  <div className="hidden sm:block">
+                    <CardTitle className="text-sm font-medium text-secondary-foreground">
+                      Usuarios Inactivos
+                    </CardTitle>
+                  </div>
+                  <div className="flex items-center gap-1 sm:gap-4">
+                    <span className="text-2xl font-extrabold text-gray-800 dark:text-white">
                       {
                         usuarios.filter(
                           (u) => u.estado?.toLowerCase() === "inactivo",
                         ).length
                       }
                     </span>
-                    <span className="inline-block rounded-md bg-red-100 px-2 py-1 text-sm font-bold dark:bg-red-800/30">
+                    <span className="inline-block rounded-md bg-red-100 px-2 py-1 text-xs font-semibold dark:bg-red-800/30">
                       {inactivosEsteMes > 0
                         ? `-${inactivosEsteMes}`
                         : inactivosEsteMes}
                     </span>
                   </div>
-                  <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                  <CardDescription className="text-xs text-gray-500 dark:text-gray-400">
                     Este mes
                   </CardDescription>
                 </div>
-                <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
-                  <UserX className="h-7 w-7 transition-transform duration-300 group-hover:scale-110" />
+                <div className="mt-2 hidden items-center justify-center sm:mt-0 sm:flex">
+                  <UserX className="h-6 w-6 text-muted-foreground transition-transform duration-300 group-hover:scale-110" />
                 </div>
               </CardHeader>
             </Card>
           </div>
 
-          {/* Diálogo para carga masiva */}
-          {abrirCargaMasiva && (
-            <BulkUploadUsersDialog
-              roleOptions={rolOpciones}
-              onSuccess={(nuevosUsuarios: any[]) => {
-                const usuariosFormateados = nuevosUsuarios.map((u: any) => {
-                  let idRol = "";
-                  let nombreRol = "";
-                  if (typeof u.rol_usu === "object") {
-                    idRol = u.rol_usu.id_rol.toString();
-                    nombreRol = u.rol_usu.nom_rol;
-                  } else {
-                    idRol = u.rol_usu.toString();
-                    nombreRol = u.rol_usu.toString();
-                  }
-                  return {
-                    id: u.id_usu.toString(),
-                    usuario: u.nom_usu,
-                    correo: u.email_usu,
-                    estado: u.esta_usu,
-                    rol: idRol,
-                    rolNombre: nombreRol,
-                    img_usu: u.img_usu || "",
-                  };
-                });
-                setUsuarios((prev) => [...prev, ...usuariosFormateados]);
-              }}
-              onClose={() => setAbrirCargaMasiva(false)}
-            />
-          )}
-
-          {/* Tabla de usuarios */}
-          <div className="px-6 pb-4">
-            <DataTable<DataUsers>
-              data={usuariosFiltrados}
-              columns={usuariosColumnas}
-            />
+          {/* Tabla */}
+          <div className="w-full px-4 pb-6 sm:px-6">
+            <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-sm dark:bg-[#1a1a1a]">
+              <DataTable<DataUsers>
+                data={usuariosFiltrados}
+                columns={usuariosColumnas}
+              />
+            </div>
           </div>
         </div>
+
+        {/* Diálogo para carga masiva */}
+        {abrirCargaMasiva && (
+          <BulkUploadUsersDialog
+            roleOptions={rolOpciones}
+            onSuccess={(nuevosUsuarios: any[]) => {
+              const usuariosFormateados = nuevosUsuarios.map((u: any) => {
+                let idRol = "";
+                let nombreRol = "";
+                if (typeof u.rol_usu === "object") {
+                  idRol = u.rol_usu.id_rol.toString();
+                  nombreRol = u.rol_usu.nom_rol;
+                } else {
+                  idRol = u.rol_usu.toString();
+                  nombreRol = u.rol_usu.toString();
+                }
+                return {
+                  id: u.id_usu.toString(),
+                  usuario: u.nom_usu,
+                  correo: u.email_usu,
+                  estado: u.esta_usu,
+                  rol: idRol,
+                  rolNombre: nombreRol,
+                  img_usu: u.img_usu || "",
+                };
+              });
+              setUsuarios((prev) => [...prev, ...usuariosFormateados]);
+            }}
+            onClose={() => setAbrirCargaMasiva(false)}
+          />
+        )}
 
         {/* Diálogo para editar usuario */}
         {usuarioEditar && (

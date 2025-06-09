@@ -8,13 +8,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 export interface GeneralDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   triggerText?: React.ReactNode;
   triggerVariant?: "outline" | "ghost" | "primary" | "secondary";
-  title: React.ReactNode;
+  title?: React.ReactNode; // 🔁 ahora es opcional
   description?: React.ReactNode;
   submitText?: React.ReactNode;
   onSubmit?: () => void;
@@ -41,22 +42,28 @@ export function GeneralDialog({
       {triggerText && (
         <DialogTrigger asChild>
           <Button
-            className="text-[12px] font-semibold"
             variant={triggerVariant}
+            className="inline-flex h-9 w-auto items-center justify-center gap-2 whitespace-nowrap text-xs font-medium sm:w-auto sm:px-4 sm:text-sm sm:font-semibold"
           >
             {triggerText}
           </Button>
         </DialogTrigger>
       )}
       <DialogContent
-        className={`border-border ${contentClassName ? contentClassName : "w-[500px] max-w-none"}`}
+        className={`border-border ${contentClassName ?? "w-[500px] max-w-none"}`}
         style={{
-          width: contentWidth || undefined,
-          height: contentHeight || undefined,
+          width: contentWidth,
+          height: contentHeight,
         }}
       >
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          {title ? (
+            <DialogTitle>{title}</DialogTitle>
+          ) : (
+            <DialogTitle>
+              <VisuallyHidden>Título del diálogo</VisuallyHidden>
+            </DialogTitle>
+          )}
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
         <div className="grid gap-4 py-4">{children}</div>
