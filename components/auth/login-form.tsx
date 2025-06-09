@@ -116,14 +116,16 @@ export function LoginForm({
       onSubmit={handleSubmit}
       {...props}
     >
-      <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold">Inicio de Sesión</h1>
+      <div className="flex flex-col items-center text-center">
+        <h1 className="text-2xl font-bold text-black dark:text-white">
+          Inicio de Sesión
+        </h1>
         <p className="text-balance text-sm text-muted-foreground">
           Ingresa tus credenciales para acceder a tu cuenta
         </p>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-2">
         {/* Correo */}
         <div className="grid gap-1">
           <Label htmlFor="email">Correo</Label>
@@ -135,7 +137,7 @@ export function LoginForm({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className={cn(
-              "border border-border",
+              "border border-black/70 dark:border-gray-500 xl:border-border",
               emailError && "border-2 border-[var(--error-per)]",
             )}
           />
@@ -164,7 +166,7 @@ export function LoginForm({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={cn(
-                "border border-border pr-10",
+                "border border-black/70 dark:border-gray-500 xl:border-border",
                 passwordError && "border-2 border-[var(--error-per)]",
               )}
             />
@@ -228,12 +230,12 @@ export function LoginForm({
         </Button>
       </div>
 
-      <div className="text-center text-sm">
+      {/* <div className="text-center text-sm">
         ¿No tienes una cuenta?{" "}
         <a href="#" className="underline underline-offset-4">
           Regístrate
         </a>
-      </div>
+      </div> */}
     </form>
   );
 }

@@ -56,13 +56,24 @@ export default function LoginPage() {
   if (!isMounted) return null; // ✅ evita renderizar hasta montar
 
   return (
-    <div className="flex h-screen w-full">
+    <div className="relative flex h-screen w-full">
+      {/* Fondo con imagen y blur solo en móviles/tablets */}
+      <div className="absolute inset-0 block xl:hidden">
+        <Image
+          src="/imagenes/portada-login.jpg"
+          alt="Fondo de login"
+          fill
+          className="object-cover blur-sm"
+        />
+        <div className="absolute inset-0 bg-black/30" />
+      </div>
+
       {/* Panel Izquierdo: Logo y formulario */}
-      <div className="flex max-w-full flex-1 flex-col border border-border md:max-w-[500px]">
-        <div className="mt-[5%] flex flex-1 justify-center">
-          <div className="w-full max-w-xs">
-            <div className="flex justify-center p-4 md:p-6">
-              <div className="relative size-28">
+      <div className="relative z-10 flex max-w-full flex-1 flex-col border border-border bg-background/80 shadow-md backdrop-blur-md xl:max-w-[400px] xl:shadow-none">
+        <div className="flex flex-1 items-start justify-center pt-[30%]">
+          <div className="w-full px-6 lg:px-6">
+            <div className="flex justify-center p-4">
+              <div className="relative size-36 xl:size-28">
                 <Image
                   key={logo}
                   src={logo}
@@ -76,10 +87,16 @@ export default function LoginPage() {
             <LoginForm />
           </div>
         </div>
+
+        {/* Footer con copyright */}
+        <div className="pb-4 text-center text-xs text-muted-foreground">
+          © {new Date().getFullYear()} Desarrollado por ErikDev. Todos los derechos
+          reservados.
+        </div>
       </div>
 
-      {/* Panel Derecho: Imagen de fondo */}
-      <div className="relative hidden flex-1 bg-muted lg:flex">
+      {/* Panel Derecho solo visible en xl+ */}
+      <div className="relative hidden flex-1 xl:flex">
         <Image
           src="/imagenes/portada-login.jpg"
           alt="Fondo de login"

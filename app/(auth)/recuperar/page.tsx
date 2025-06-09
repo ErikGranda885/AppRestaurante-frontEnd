@@ -10,6 +10,7 @@ import { SERVICIOS_AUTH } from "@/services/auth.service";
 import { SERVICIOS_EMPRESAS } from "@/services/empresas.service";
 import { DEFAULT_EMPRESA_IMAGE_URL } from "@/lib/constants";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, MoveRight } from "lucide-react";
 
 export default function RecuperarPasswordPage() {
   const [email, setEmail] = useState("");
@@ -90,9 +91,21 @@ export default function RecuperarPasswordPage() {
   };
 
   return (
-    <div className="flex h-screen w-full bg-background">
-      {/* Panel izquierdo con imagen */}
-      <div className="relative hidden w-full lg:block">
+    <div className="relative flex h-screen w-full bg-background">
+      {/* Fondo con imagen + blur para < xl */}
+      <div className="absolute inset-0 block xl:hidden">
+        <Image
+          src="/imagenes/recuperar.avif"
+          alt="Fondo recuperación"
+          fill
+          className="object-cover blur-sm"
+        />
+        {/* Filtro oscuro opcional para mayor contraste */}
+        <div className="absolute inset-0 bg-black/30" />
+      </div>
+
+      {/* Panel izquierdo con imagen solo para XL+ */}
+      <div className="relative hidden w-full xl:block">
         <Image
           src="/imagenes/recuperar.avif"
           alt="Recuperar contraseña"
@@ -101,72 +114,77 @@ export default function RecuperarPasswordPage() {
         />
       </div>
 
-      {/* Panel derecho con formulario */}
-      <div className="flex w-full items-center justify-center bg-background p-6 md:w-1/2">
-        <div className="w-full max-w-sm space-y-1">
-          {/* Logo */}
-          {isMounted && (
-            <div className="flex justify-center">
-              <div className="relative size-28">
-                <Image
-                  key={logo}
-                  src={logo}
-                  alt="Logo Empresa"
-                  fill
-                  className="rounded-md object-contain"
-                  onError={() => setLogo(DEFAULT_EMPRESA_IMAGE_URL)}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Volver */}
+      {/* Panel derecho */}
+      <div className="relative z-10 flex w-full flex-col p-6 xl:w-1/2">
+        {/* Volver */}
+        <div className="absolute left-6 top-6">
           <Button
             onClick={() => router.push("login")}
-            variant={"ghost"}
-            className="text-sm hover:underline"
+            variant="ghost"
+            className="flex items-center gap-1 px-2 py-1 text-sm text-white hover:underline xl:text-black xl:dark:text-white"
           >
-            ← Volver al inicio de sesión
+            <ArrowLeft className="h-4 w-4" />
+            Volver al inicio de sesión
           </Button>
+        </div>
 
-          {/* Título */}
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-foreground">
-              Recuperar Contraseña
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Ingresa tu correo registrado y te enviaremos instrucciones.
-            </p>
-          </div>
-
-          {/* Formulario */}
-          <div className="space-y-4">
-            <Input
-              type="email"
-              placeholder="Correo electrónico"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-
-            <Button
-              className="w-full"
-              onClick={handleRecuperar}
-              disabled={loading}
-            >
-              {loading ? "Enviando..." : "Enviar instrucciones"}
-            </Button>
-
-            {enviado && (
-              <p className="text-center text-sm text-green-600 dark:text-green-400">
-                Revisa tu correo para continuar.
-              </p>
+        {/* Contenido */}
+        <div className="flex flex-1 items-center justify-center">
+          <div className="w-full space-y-4 rounded-xl bg-background/85 p-6 shadow-md backdrop-blur-md xl:max-w-lg xl:shadow-none">
+            {/* Logo */}
+            {isMounted && (
+              <div className="flex justify-center">
+                <div className="relative size-28 xl:size-36">
+                  <Image
+                    key={logo}
+                    src={logo}
+                    alt="Logo Empresa"
+                    fill
+                    className="rounded-md object-contain"
+                    onError={() => setLogo(DEFAULT_EMPRESA_IMAGE_URL)}
+                  />
+                </div>
+              </div>
             )}
-          </div>
 
-          {/* Footer */}
-          <div className="pt-6 text-center text-xs text-muted-foreground">
-            <a href="#">Términos y Condiciones</a> •{" "}
-            <a href="#">Política de Privacidad</a>
+            {/* Título */}
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-foreground">
+                Recuperar Contraseña
+              </h1>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Ingresa tu correo registrado y te enviaremos instrucciones.
+              </p>
+            </div>
+
+            {/* Formulario */}
+            <div className="space-y-4">
+              <Input
+                type="email"
+                placeholder="Correo electrónico"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="border-black/70 dark:border-gray-500 xl:border-border"
+              />
+              <Button
+                className="w-full"
+                onClick={handleRecuperar}
+                disabled={loading}
+              >
+                {loading ? "Enviando..." : "Enviar instrucciones"}
+              </Button>
+              {enviado && (
+                <p className="text-center text-sm text-green-600 dark:text-green-400">
+                  Revisa tu correo para continuar.
+                </p>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="pt-6 text-center text-xs text-muted-foreground">
+              <a href="#">Términos y Condiciones</a> •{" "}
+              <a href="#">Política de Privacidad</a>
+            </div>
           </div>
         </div>
       </div>
