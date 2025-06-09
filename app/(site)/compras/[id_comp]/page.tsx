@@ -16,16 +16,18 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { ICompra, IDetCompra } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { format, isValid,  parseISO } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 import { DialogRegistrarPagoCompra } from "@/components/shared/cierreDiario/ui/dialogRegistrarPagoCompra";
 import { useReactToPrint } from "react-to-print";
 import FacturaPendientePDF from "@/components/shared/compras/ui/facturaPendientePDF";
 import FacturaPagadaPDF from "@/components/shared/compras/ui/facturaPagadaPDF";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { safePrice } from "@/utils/format";
+import { useUsuarioAutenticado } from "@/hooks/usuarios/useUsuarioAutenticado";
 
 export default function DetalleCompraPage() {
   useProtectedRoute();
+  const { rol } = useUsuarioAutenticado();
   const { ventasConfig } = useConfiguracionesVentas();
   const router = useRouter();
   const { id_comp } = useParams();
@@ -332,24 +334,23 @@ export default function DetalleCompraPage() {
                 <hr className="my-2 border-gray-200 dark:border-gray-700" />
                 <div className="flex justify-end">
                   {/* Si el estado de la factura de es pendiente coloca el boton regstrar */}
-                  {compra.estado_pag_comp.toLowerCase() === "pendiente" && (
-                    <DialogRegistrarPagoCompra
-                      open={abrirDialogPago}
-                      onOpenChange={setAbrirDialogPago}
-                      idCompra={compra.id_comp}
-                      formaPago={
-                        compra.form_pag_comp as "efectivo" | "transferencia"
-                      }
-                      onPagoExitoso={() => {
-                        setAbrirDialogPago(false);
-
-                        // Redirigir después de 1.5 segundos
-                        setTimeout(() => {
-                          router.push("/compras/historial");
-                        });
-                      }}
-                    />
-                  )}
+                  {compra.estado_pag_comp.toLowerCase() === "pendiente" &&
+                    rol === "administrador" && (
+                      <DialogRegistrarPagoCompra
+                        open={abrirDialogPago}
+                        onOpenChange={setAbrirDialogPago}
+                        idCompra={compra.id_comp}
+                        formaPago={
+                          compra.form_pag_comp as "efectivo" | "transferencia"
+                        }
+                        onPagoExitoso={() => {
+                          setAbrirDialogPago(false);
+                          setTimeout(() => {
+                            router.push("/compras/historial");
+                          }, 1500);
+                        }}
+                      />
+                    )}
                 </div>
               </div>
             </div>

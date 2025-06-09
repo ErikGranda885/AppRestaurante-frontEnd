@@ -3,4 +3,7 @@ export const SERVICIOS_AUTH = {
   google: "http://localhost:5000/auth/google",
   me: "http://localhost:5000/auth/me",
   logout: "http://localhost:5000/auth/logout",
+  enviarCorreoRecuperacion:
+    "http://localhost:5000/auth/solicitar-restablecimiento",
+  restablecerPassword: "http://localhost:5000/auth/restablecer-password",
 };

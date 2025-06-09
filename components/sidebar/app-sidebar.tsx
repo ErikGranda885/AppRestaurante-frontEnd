@@ -158,7 +158,7 @@ export const data: DataSidebar = {
       url: "/usuarios",
       icon: User,
       submenu: false,
-      roles: ["administrador", "sistema", "empleado"],
+      roles: ["administrador", "sistema"],
     },
     {
       title: "Configuraciones",

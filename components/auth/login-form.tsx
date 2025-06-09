@@ -146,9 +146,15 @@ export function LoginForm({
         <div className="grid gap-1">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Contraseña</Label>
-            <a href="#" className="text-sm underline-offset-4 hover:underline">
+
+            <Button
+              type="button"
+              variant={"ghost"}
+              onClick={() => router.push("/recuperar")}
+              className="edt-text text-sm underline-offset-4 hover:underline"
+            >
               ¿Olvidaste tu contraseña?
-            </a>
+            </Button>
           </div>
           <div className="relative">
             <Input
