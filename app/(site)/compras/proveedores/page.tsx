@@ -344,88 +344,65 @@ export default function Dashboard() {
             Aquí puedes gestionar los proveedores de tu negocio.
           </p>
           <div className="pt-4" />
-          <div className="mb-5 flex items-center justify-between">
-            <GeneralDialog
-              open={abrirCrear}
-              onOpenChange={setAbrirCrear}
-              triggerText={
-                <>
-                  <Plus className="h-4 w-4 font-light" /> Añadir nuevo proveedor
-                </>
-              }
-              title="Crear Nuevo Proveedor"
-              description="Ingresa la información para crear un nuevo proveedor."
-              contentClassName="w-[600px] max-w-none"
-            >
-              <CreateProveedorForm
-                onSuccess={(nuevoProveedor) => {
-                  setAbrirCrear(false);
-                  setProveedores((prev) => [...prev, nuevoProveedor]);
-                }}
-              />
-            </GeneralDialog>
 
-            {proveedorEditando && (
+          <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            {/* Botón: Añadir proveedor */}
+            <div className="w-full md:w-auto">
               <GeneralDialog
-                open={abrirEditar}
-                onOpenChange={setAbrirEditar}
-                title="Editar Proveedor"
-                description="Actualiza la información del proveedor seleccionado."
+                open={abrirCrear}
+                onOpenChange={setAbrirCrear}
+                triggerText={
+                  <>
+                    <Plus className="h-4 w-4 font-light" />
+                    <span className="ml-1">Añadir nuevo proveedor</span>
+                  </>
+                }
+                title="Crear Nuevo Proveedor"
+                description="Ingresa la información para crear un nuevo proveedor."
                 contentClassName="w-[600px] max-w-none"
               >
-                <EditProveedorForm
-                  initialData={{
-                    id: String(proveedorEditando.id_prov),
-                    nombre: proveedorEditando.nom_prov,
-                    contacto: proveedorEditando.cont_prov,
-                    telefono: proveedorEditando.tel_prov,
-                    direccion: proveedorEditando.direc_prov,
-                    email: proveedorEditando.email_prov,
-                    ruc: proveedorEditando.ruc_prov,
-                    img_prov: proveedorEditando.img_prov,
-                  }}
-                  onSuccess={(proveedorActualizado) => {
-                    setAbrirEditar(false);
-                    setProveedorEditando(null);
-                    setProveedores((prev) =>
-                      prev.map((prov) =>
-                        prov.id_prov === proveedorActualizado.id_prov
-                          ? proveedorActualizado
-                          : prov,
-                      ),
-                    );
+                <CreateProveedorForm
+                  onSuccess={(nuevoProveedor) => {
+                    setAbrirCrear(false);
+                    setProveedores((prev) => [...prev, nuevoProveedor]);
                   }}
                 />
               </GeneralDialog>
-            )}
+            </div>
 
-            <div className="flex items-center gap-3">
-              <div className="relative">
+            {/* Buscador + Importar/Exportar en la misma fila */}
+            <div className="flex w-full flex-col gap-2 sm:flex-row md:w-auto md:flex-row md:items-center md:gap-3">
+              {/* Buscador */}
+              <div className="relative w-full sm:w-[250px]">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <Search className="h-4 w-4 text-gray-500" />
                 </div>
                 <Input
                   type="text"
                   placeholder="Buscar proveedores"
-                  className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
+                  className="w-full border border-border bg-white/10 pl-10 text-[12px]"
                   value={consultaBusqueda}
                   onChange={(e) => setConsultaBusqueda(e.target.value)}
                 />
               </div>
-              <Button
-                className="border-border text-[12px] font-semibold"
-                variant="secondary"
-                onClick={() => setAbrirCargaMasiva(true)}
-              >
-                <Upload className="h-4 w-4" /> Importar
-              </Button>
-              <Button
-                onClick={() => setAbrirExportar(true)}
-                className="border-border text-[12px] font-semibold"
-                variant="secondary"
-              >
-                <CloudDownload className="h-4 w-4" /> Exportar
-              </Button>
+
+              {/* Botones Importar/Exportar */}
+              <div className="flex w-full gap-2 sm:w-auto sm:flex-row">
+                <Button
+                  className="w-full border-border text-[12px] font-semibold sm:w-auto"
+                  variant="secondary"
+                  onClick={() => setAbrirCargaMasiva(true)}
+                >
+                  <Upload className="h-4 w-4" /> Importar
+                </Button>
+                <Button
+                  onClick={() => setAbrirExportar(true)}
+                  className="w-full border-border text-[12px] font-semibold sm:w-auto"
+                  variant="secondary"
+                >
+                  <CloudDownload className="h-4 w-4" /> Exportar
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -433,97 +410,145 @@ export default function Dashboard() {
         <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#111315]">
           <div className="flex flex-col gap-4 px-6 pt-6 md:flex-row md:justify-between">
             <Card
-              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
+              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-4 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] xl:p-7 ${
                 estadoSeleccionado === "" ? "ring-2 ring-secondary" : ""
               } group`}
             >
-              <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
-                <div className="flex-1">
-                  <CardTitle className="text-sm font-light text-secondary-foreground">
-                    Total de Proveedores
-                  </CardTitle>
-                  <div className="mt-2 flex items-center gap-5">
-                    <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
+              <CardHeader className="flex flex-col justify-between gap-2 p-0 sm:flex-row sm:items-center sm:gap-0">
+                <div className="flex-1 space-y-2">
+                  {/* Título visible solo en móvil */}
+                  <div className="flex items-center justify-between sm:hidden">
+                    <CardTitle className="text-sm font-medium text-secondary-foreground">
+                      Total de Proveedores
+                    </CardTitle>
+                    <TrendingUpIcon className="h-5 w-5 text-muted-foreground group-hover:scale-110" />
+                  </div>
+
+                  {/* Título visible solo en desktop */}
+                  <div className="hidden sm:block">
+                    <CardTitle className="text-sm font-medium text-secondary-foreground">
+                      Total de Proveedores
+                    </CardTitle>
+                  </div>
+
+                  {/* Métricas */}
+                  <div className="flex items-center gap-1 sm:gap-4">
+                    <span className="text-2xl font-extrabold text-gray-800 dark:text-white">
                       {proveedores.length}
                     </span>
-                    <span className="inline-block rounded-md bg-secondary px-2 py-1 text-sm font-bold dark:bg-green-800/30">
+                    <span className="inline-block rounded-md bg-secondary px-2 py-1 text-xs font-semibold dark:bg-green-800/30">
                       +5%
                     </span>
                   </div>
-                  <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+
+                  <CardDescription className="text-xs text-gray-500 dark:text-gray-400">
                     Este mes
                   </CardDescription>
                 </div>
-                <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
-                  <TrendingUpIcon className="h-7 w-7 transition-transform duration-300 group-hover:scale-110" />
+
+                {/* Ícono en desktop */}
+                <div className="mt-2 hidden items-center justify-center sm:mt-0 sm:flex">
+                  <TrendingUpIcon className="h-6 w-6 text-muted-foreground transition-transform duration-300 group-hover:scale-110" />
                 </div>
               </CardHeader>
             </Card>
 
             <Card
-              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
+              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-4 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] xl:p-7 ${
                 estadoSeleccionado.toLowerCase() === "activo"
                   ? "ring-2 ring-secondary"
                   : ""
               } group`}
             >
-              <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
-                <div className="flex-1">
-                  <CardTitle className="text-sm font-light text-secondary-foreground">
-                    Proveedores Activos
-                  </CardTitle>
-                  <div className="mt-2 flex items-center gap-5">
-                    <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
+              <CardHeader className="flex flex-col justify-between gap-2 p-0 sm:flex-row sm:items-center sm:gap-0">
+                <div className="flex-1 space-y-2">
+                  {/* Título en móviles */}
+                  <div className="flex items-center justify-between sm:hidden">
+                    <CardTitle className="text-sm font-medium text-secondary-foreground">
+                      Proveedores Activos
+                    </CardTitle>
+                    <UserCheck className="h-5 w-5 text-green-400 group-hover:scale-110" />
+                  </div>
+
+                  {/* Título en escritorio */}
+                  <div className="hidden sm:block">
+                    <CardTitle className="text-sm font-medium text-secondary-foreground">
+                      Proveedores Activos
+                    </CardTitle>
+                  </div>
+
+                  {/* Valor y badge */}
+                  <div className="flex items-center gap-1 sm:gap-4">
+                    <span className="text-2xl font-extrabold text-gray-800 dark:text-white">
                       {
                         proveedores.filter(
                           (p) => p.est_prov.toLowerCase() === "activo",
                         ).length
                       }
                     </span>
-                    <span className="inline-block rounded-md bg-green-100 px-2 py-1 text-sm font-bold text-green-500 dark:bg-green-800/30 dark:text-green-400">
+                    <span className="inline-block rounded-md bg-green-100 px-2 py-1 text-xs font-semibold text-green-600 dark:bg-green-800/30 dark:text-green-400">
                       +3%
                     </span>
                   </div>
-                  <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+
+                  <CardDescription className="text-xs text-gray-500 dark:text-gray-400">
                     Este mes
                   </CardDescription>
                 </div>
-                <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
-                  <UserCheck className="h-7 w-7 text-green-400 transition-transform duration-300 group-hover:scale-110" />
+
+                {/* Ícono en escritorio */}
+                <div className="mt-2 hidden items-center justify-center sm:mt-0 sm:flex">
+                  <UserCheck className="h-6 w-6 text-green-400 transition-transform duration-300 group-hover:scale-110" />
                 </div>
               </CardHeader>
             </Card>
 
             <Card
-              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${
+              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-4 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] xl:p-7 ${
                 estadoSeleccionado.toLowerCase() === "inactivo"
                   ? "ring-2 ring-secondary"
                   : ""
               } group`}
             >
-              <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
-                <div className="flex-1">
-                  <CardTitle className="text-sm font-light text-secondary-foreground">
-                    Proveedores Inactivos
-                  </CardTitle>
-                  <div className="mt-2 flex items-center gap-5">
-                    <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
+              <CardHeader className="flex flex-col justify-between gap-2 p-0 sm:flex-row sm:items-center sm:gap-0">
+                <div className="flex-1 space-y-2">
+                  {/* Título en móvil */}
+                  <div className="flex items-center justify-between sm:hidden">
+                    <CardTitle className="text-sm font-medium text-secondary-foreground">
+                      Proveedores Inactivos
+                    </CardTitle>
+                    <UserX className="h-5 w-5 text-red-400 group-hover:scale-110" />
+                  </div>
+
+                  {/* Título en desktop */}
+                  <div className="hidden sm:block">
+                    <CardTitle className="text-sm font-medium text-secondary-foreground">
+                      Proveedores Inactivos
+                    </CardTitle>
+                  </div>
+
+                  {/* Valor y badge */}
+                  <div className="flex items-center gap-1 sm:gap-4">
+                    <span className="text-2xl font-extrabold text-gray-800 dark:text-white">
                       {
                         proveedores.filter(
                           (p) => p.est_prov.toLowerCase() === "inactivo",
                         ).length
                       }
                     </span>
-                    <span className="inline-block rounded-md bg-red-100 px-2 py-1 text-sm font-bold dark:bg-red-800/30">
+                    <span className="inline-block rounded-md bg-red-100 px-2 py-1 text-xs font-semibold text-red-600 dark:bg-red-800/30 dark:text-red-400">
                       -2%
                     </span>
                   </div>
-                  <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+
+                  <CardDescription className="text-xs text-gray-500 dark:text-gray-400">
                     Este mes
                   </CardDescription>
                 </div>
-                <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
-                  <UserX className="h-7 w-7 text-red-400 transition-transform duration-300 group-hover:scale-110" />
+
+                {/* Ícono en escritorio */}
+                <div className="mt-2 hidden items-center justify-center sm:mt-0 sm:flex">
+                  <UserX className="h-6 w-6 text-red-400 transition-transform duration-300 group-hover:scale-110" />
                 </div>
               </CardHeader>
             </Card>
@@ -564,6 +589,40 @@ export default function Dashboard() {
             open={abrirExportar}
             onOpenChange={setAbrirExportar}
           />
+        )}
+
+        {proveedorEditando && (
+          <GeneralDialog
+            open={abrirEditar}
+            onOpenChange={setAbrirEditar}
+            title="Editar Proveedor"
+            description="Actualiza la información del proveedor seleccionado."
+            contentClassName="w-[600px] max-w-none"
+          >
+            <EditProveedorForm
+              initialData={{
+                id: String(proveedorEditando.id_prov),
+                nombre: proveedorEditando.nom_prov,
+                contacto: proveedorEditando.cont_prov,
+                telefono: proveedorEditando.tel_prov,
+                direccion: proveedorEditando.direc_prov,
+                email: proveedorEditando.email_prov,
+                ruc: proveedorEditando.ruc_prov,
+                img_prov: proveedorEditando.img_prov,
+              }}
+              onSuccess={(proveedorActualizado) => {
+                setAbrirEditar(false);
+                setProveedorEditando(null);
+                setProveedores((prev) =>
+                  prev.map((prov) =>
+                    prov.id_prov === proveedorActualizado.id_prov
+                      ? proveedorActualizado
+                      : prov,
+                  ),
+                );
+              }}
+            />
+          </GeneralDialog>
         )}
       </>
     </ModulePageLayout>

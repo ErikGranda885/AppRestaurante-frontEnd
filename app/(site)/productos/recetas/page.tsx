@@ -85,7 +85,7 @@ export default function RecetasPage() {
           o eliminar recetas según sea necesario.
         </p>
         <div className="pt-4" />
-        <div className="mb-5 flex items-center justify-between">
+        <div className="mb-5 flex items-center justify-between gap-6">
           <GeneralDialog
             open={abrirCrear}
             onOpenChange={setAbrirCrear}
@@ -108,7 +108,7 @@ export default function RecetasPage() {
             />
           </GeneralDialog>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center">
             <div className="relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                 <Search className="h-4 w-4 text-gray-500" />
@@ -116,22 +116,10 @@ export default function RecetasPage() {
               <Input
                 type="text"
                 placeholder="Buscar recetas..."
-                className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
+                className="w-full border border-border bg-white/10 pl-10 text-[12px]"
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            {/* <Button
-              className="border-border text-[12px] font-semibold"
-              variant="secondary"
-            >
-              <Upload className="h-4 w-4" /> Importar
-            </Button> */}
-            {/* <Button
-              className="border-border text-[12px] font-semibold"
-              variant="secondary"
-            >
-              <CloudDownload className="h-4 w-4" /> Exportar
-            </Button> */}
           </div>
         </div>
       </div>

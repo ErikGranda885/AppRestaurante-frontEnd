@@ -254,7 +254,7 @@ export default function Page() {
           {/* Barra de búsqueda y botones */}
           <div className="flex flex-wrap items-end justify-between gap-4">
             {/* Filtros (lado izquierdo) */}
-            <div className="flex flex-wrap items-end gap-4">
+            <div className="flex w-full items-end justify-between gap-7 md:w-auto xl:w-auto">
               {/* Filtro por fecha */}
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
@@ -296,57 +296,62 @@ export default function Page() {
 
             {/* Botón Exportar (lado derecho) */}
             <div className="flex flex-wrap items-end gap-4">
-              {/* Tipo de pago */}
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                  Tipo de pago
-                </label>
-                <ComboboxPago value={tipoPago} onChange={setTipoPago} />
-              </div>
+              <div className="flex w-full flex-row justify-between gap-1 md:w-auto xl:w-auto">
+                {/* Tipo de pago */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                    Tipo de pago
+                  </label>
+                  <ComboboxPago value={tipoPago} onChange={setTipoPago} />
+                </div>
 
-              {/* Estado de orden */}
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                  Estado de orden
-                </label>
-                <ComboboxEstado
-                  value={filtroEstado}
-                  onChange={setFiltroEstado}
-                />
+                {/* Estado de orden */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                    Estado de orden
+                  </label>
+                  <ComboboxEstado
+                    value={filtroEstado}
+                    onChange={setFiltroEstado}
+                  />
+                </div>
               </div>
 
               {/* Búsqueda */}
-              <div className="relative">
+              <div className="relative flex w-full md:w-auto xl:w-auto">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <Search className="h-4 w-4 text-gray-500" />
                 </div>
                 <Input
                   type="text"
                   placeholder="Buscar orden por usuario"
-                  className="w-[250px] border border-border pl-10 text-[12px] dark:bg-[#222224]"
+                  className="border border-border pl-10 text-[12px] dark:bg-[#222224]"
                   value={consultaBusqueda}
                   onChange={(e) => setConsultaBusqueda(e.target.value)}
                 />
               </div>
 
-              {/* Limpiar filtros */}
-              <Button
-                variant="secondary"
-                className="text-[12px] font-semibold"
-                onClick={limpiarFiltros}
-              >
-                <XCircle className="h-4 w-4" />
-                Limpiar filtros
-              </Button>
+              <div className="flex w-full gap-2 md:w-auto md:flex-row xl:w-auto">
+                {/* Limpiar filtros */}
+                <Button
+                  variant="secondary"
+                  className="w-full text-[12px] font-semibold"
+                  onClick={limpiarFiltros}
+                >
+                  <XCircle className="h-4 w-4" />
+                  Limpiar filtros
+                </Button>
 
-              {/* Exportar */}
-              <Button
-                variant="secondary"
-                className="text-[12px] font-semibold"
-                onClick={() => setDialogExportarOpen(true)}
-              >
-                <CloudDownload className="h-4 w-4" /> Exportar
-              </Button>
+                {/* Exportar */}
+                <Button
+                  variant="secondary"
+                  className="w-full text-[12px] font-semibold"
+                  onClick={() => setDialogExportarOpen(true)}
+                >
+                  <CloudDownload className="h-4 w-4" />
+                  Exportar
+                </Button>
+              </div>
             </div>
           </div>
         </div>

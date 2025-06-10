@@ -319,20 +319,24 @@ export default function Page() {
       <div className="flex h-full w-full flex-col">
         <div className="flex h-full w-full flex-col px-4">
           <h1 className="text-xl font-bold">Compras</h1>
-          <p className="w-[500px] text-sm text-muted-foreground">
+          <p className="max-w-full text-sm text-muted-foreground sm:max-w-[500px]">
             Aquí puedes gestionar todas las compras realizadas en tu negocio.
           </p>
+
           <div className="pt-2">
-            <div className="mb-5 flex items-center justify-between">
-              <Button
-                onClick={() => router.push("/compras/nueva")}
-                className="flex items-center gap-2 text-[12px] font-semibold"
-              >
-                <Plus className="h-4 w-4 font-light" /> Añade una nueva compra
-              </Button>
-              {/* Selector de fechas */}
-              <div className="flex items-center gap-3">
-                {/* Filtro de fechas */}
+            <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
+              {/* Botón: Añadir compra */}
+              <div>
+                <Button
+                  onClick={() => router.push("/compras/nueva")}
+                  className="flex w-full items-center justify-center gap-2 text-[12px] font-semibold"
+                >
+                  <Plus className="h-4 w-4 font-light" /> Añade una nueva compra
+                </Button>
+              </div>
+
+              {/* Filtro de fechas */}
+              <div className="w-full">
                 <DateRangeFilter
                   value={dateRange}
                   onChange={(range) => {
@@ -340,13 +344,15 @@ export default function Page() {
                     setDateRange(range);
                   }}
                 />
+              </div>
 
-                {/* dropdown de fechas */}
+              {/* Rango rápido */}
+              <div className="w-full">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      className="text-[12px] dark:bg-[#222224]"
+                      className="w-full text-[12px] dark:bg-[#222224]"
                     >
                       {labelQuickRange}
                     </Button>
@@ -366,33 +372,26 @@ export default function Page() {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+              </div>
 
-                {/* Separador visual entre filtros y buscador */}
-                <Separator orientation="vertical" className="h-6" />
-                {/* Buscador */}
-                <div className="relative">
+              {/* Buscador + exportar */}
+              <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:flex-row">
+                <div className="relative w-full sm:w-auto">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                     <Search className="h-4 w-4 text-gray-500" />
                   </div>
                   <Input
                     type="text"
                     placeholder="Buscar compras..."
-                    className="w-[230px] border border-border bg-white/10 pl-10 text-[12px]"
+                    className="w-full border border-border bg-white/10 pl-10 text-[12px]"
                     value={consultaBusqueda}
                     onChange={(e) => setConsultaBusqueda(e.target.value)}
                   />
                 </div>
 
-                {/* <Button
-                  className="border-border text-[12px] font-semibold"
-                  variant="secondary"
-                >
-                  <Upload className="h-4 w-4" /> Importar
-                </Button> */}
-
                 <Button
                   onClick={() => setAbrirExportar(true)}
-                  className="border-border text-[12px] font-semibold"
+                  className="w-full border-border text-[12px] font-semibold sm:w-auto"
                   variant="secondary"
                 >
                   <CloudDownload className="h-4 w-4" /> Exportar

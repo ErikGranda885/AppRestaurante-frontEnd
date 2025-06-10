@@ -502,7 +502,7 @@ export default function Page() {
           <div className="flex-1 space-y-8">
             <div className="rounded-lg bg-white px-3 shadow dark:bg-[#09090b]">
               <div className="mb-5 flex h-[140px] flex-col items-start gap-3 rounded-lg bg-white p-4 shadow dark:bg-[#1a1a1a]">
-                <div className="flex w-full items-center justify-between gap-2">
+                <div className="flex w-full flex-col items-center justify-between gap-2 xl:flex-row">
                   <div className="flex flex-col items-start">
                     <h2 className="text-xl font-bold">Nuestros Productos</h2>
                     <span className="text-sm text-gray-600 dark:text-[#ababab]">
@@ -511,20 +511,20 @@ export default function Page() {
                     </span>
                   </div>
                   {/* Input para buscar */}
-                  <div className="relative">
+                  <div className="relative mt-2 w-full xl:mt-0 xl:w-auto">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                       <Search className="h-4 w-4 text-gray-500" />
                     </div>
                     <Input
                       type="text"
                       placeholder="Buscar producto"
-                      className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
+                      className="w-full border border-border bg-white/10 pl-10 text-[12px] xl:w-[250px]"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="hidden flex-wrap items-center gap-2 xl:flex">
                   {["Todos", ...categories.map((cat) => cat.nom_cate)].map(
                     (cat) => (
                       <button
@@ -544,7 +544,7 @@ export default function Page() {
               </div>
 
               <ScrollArea className="h-[calc(74vh-4rem)]">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
                   {filteredProducts.map((prod) => {
                     const cartQ = getCartQuantity(prod.id_prod);
                     return (
@@ -619,7 +619,7 @@ export default function Page() {
           </div>
 
           {/* Columna Derecha (Panel de Orden) */}
-          <div className="flex h-[calc(80vh-6rem)] w-[356px] flex-col">
+          <div className="mt-5 flex h-[calc(80vh-6rem)] flex-col px-3 md:mt-0 md:w-[296px] xl:mt-0 xl:w-[358px]">
             <div className="rounded-t-lg bg-white px-4 pt-4 shadow dark:bg-[#1a1a1a]">
               <div className="flex items-center justify-between">
                 <h3 className="text-md mb-2 font-bold dark:text-[#f5f5f5]">

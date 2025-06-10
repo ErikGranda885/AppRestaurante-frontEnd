@@ -256,8 +256,7 @@ export default function PaginaProductos() {
     }
   };
 
-  if ( showLoader) return <Preloader />;
-
+  if (showLoader) return <Preloader />;
 
   return (
     <>
@@ -274,51 +273,57 @@ export default function PaginaProductos() {
           </p>
           <div className="pt-4" />
           {/* Sección de acciones y búsqueda */}
-          <div className="mb-5 flex items-center justify-between">
-            <GeneralDialog
-              open={abrirCrear}
-              onOpenChange={setAbrirCrear}
-              triggerText={
-                <>
-                  <Plus className="h-4 w-4 font-light" /> Añadir nuevo producto
-                </>
-              }
-              title="Crear Nuevo Producto"
-              description="Ingresa la información para crear un nuevo producto."
-              submitText="Crear Producto"
-              contentWidth="700px"
-              contentHeight="auto"
-            >
-              <FormProducts
-                onSuccess={(data: any) => {
-                  refetch();
-                  setAbrirCrear(false);
-                }}
-              />
-            </GeneralDialog>
-            <div className="flex items-center gap-3">
+          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            {/* Fila 1 (móvil) */}
+            <div className="flex w-full gap-4 sm:flex-row sm:items-center sm:gap-3">
+              <GeneralDialog
+                open={abrirCrear}
+                onOpenChange={setAbrirCrear}
+                title="Crear Nuevo Producto"
+                description="Ingresa la información para crear un nuevo producto."
+                submitText="Crear Producto"
+                contentWidth="700px"
+                contentHeight="auto"
+                triggerText={
+                  <>
+                    <Plus className="h-4 w-4 shrink-0" />
+                    <span className="ml-1 sm:hidden">Nuevo producto</span>
+                    <span className="ml-1 hidden sm:inline">
+                      Añadir nuevo producto
+                    </span>
+                  </>
+                }
+              >
+                <FormProducts
+                  onSuccess={(data: any) => {
+                    refetch();
+                    setAbrirCrear(false);
+                  }}
+                />
+              </GeneralDialog>
+
               {/* Buscador */}
-              <div className="relative">
+              <div className="relative flex w-full justify-between sm:w-auto">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <Search className="h-4 w-4 text-gray-500" />
                 </div>
                 <Input
                   type="text"
                   placeholder="Buscar producto"
-                  className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
+                  className="w-full border border-border bg-white/10 pl-10 text-[12px] sm:w-[200px]"
                   value={consultaBusqueda}
                   onChange={(e) => {
-                    setSoloInsumos(false); // 🧠
+                    setSoloInsumos(false);
                     setConsultaBusqueda(e.target.value);
                     setPaginaActual(1);
                   }}
                 />
               </div>
-              {/* Dropdown para ordenar */}
+              {/* Ordenar */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    className="border-border text-[12px] font-semibold"
+                    className="w-[40px] border-border text-[12px] font-semibold sm:w-auto"
                     variant="secondary"
                   >
                     <SlidersHorizontal className="h-4 w-4" />
@@ -351,7 +356,6 @@ export default function PaginaProductos() {
                     >
                       Menor stock a mayor stock
                     </DropdownMenuItem>
-
                     <DropdownMenuItem
                       onSelect={() => {
                         setCriterioOrden("priceAsc");
@@ -363,16 +367,28 @@ export default function PaginaProductos() {
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Separator className="h-8" orientation="vertical" />
+            </div>
+
+            {/* Fila 2 (móvil, o al lado en desktop) */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Separador visible solo en sm+ */}
+              <Separator
+                className="hidden h-8 sm:block"
+                orientation="vertical"
+              />
+
+              {/* Importar */}
               <Button
-                className="border-border text-[12px] font-semibold"
+                className="w-full border-border text-[12px] font-semibold sm:w-auto"
                 variant="secondary"
                 onClick={() => setAbrirCargaMasiva(true)}
               >
                 <Upload className="h-4 w-4" /> Importar
               </Button>
+
+              {/* Exportar */}
               <Button
-                className="border-border text-[12px] font-semibold"
+                className="w-full border-border text-[12px] font-semibold sm:w-auto"
                 variant="secondary"
                 onClick={() => setAbrirDialogExportar(true)}
               >

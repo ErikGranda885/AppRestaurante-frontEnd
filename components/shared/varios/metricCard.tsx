@@ -18,7 +18,6 @@ export interface MetricCardProps {
   customRightContent?: React.ReactNode;
   onClick?: () => void;
   className?: string;
-  
 }
 
 export const MetricCard: React.FC<MetricCardProps> = ({
@@ -35,33 +34,58 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   return (
     <Card
       onClick={onClick}
-      className={`group flex cursor-pointer flex-col justify-between rounded-xl border border-border bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-lg dark:bg-[#1a1a1a] ${className || ""}`}
+      className={`bg-blanco flex-1 cursor-pointer rounded-xl border border-border p-4 shadow-sm transition-shadow hover:shadow-lg dark:bg-[#1a1a1a] xl:p-7 ${
+        className || ""
+      } group`}
     >
-      <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
-        <div className="flex-1">
-          <CardTitle className="text-sm font-light text-secondary-foreground">
-            {titulo}
-          </CardTitle>
-          <div className="mt-2 flex items-center gap-5">
-            <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
+      <CardHeader className="flex flex-col justify-between gap-2 p-0 sm:flex-row sm:items-center sm:gap-0">
+        <div className="flex-1 space-y-2">
+          {/* Título + ícono en móvil */}
+          <div className="flex items-center justify-between sm:hidden">
+            <CardTitle className="text-sm font-medium text-secondary-foreground">
+              {titulo}
+            </CardTitle>
+            {customRightContent ? (
+              customRightContent
+            ) : (
+              <TrendingUpIcon
+                className={`h-5 w-5 text-muted-foreground group-hover:scale-110 ${iconColor}`}
+              />
+            )}
+          </div>
+
+          {/* Título en desktop */}
+          <div className="hidden sm:block">
+            <CardTitle className="text-sm font-medium text-secondary-foreground">
+              {titulo}
+            </CardTitle>
+          </div>
+
+          {/* Valor + porcentaje */}
+          <div className="flex items-center gap-1 sm:gap-4">
+            <span className="text-2xl font-extrabold text-gray-800 dark:text-white">
               {valor}
             </span>
             <span
-              className={`inline-block rounded-md px-2 text-sm font-bold ${badgeColorClass}`}
+              className={`inline-block rounded-md bg-secondary px-2 py-1 text-xs font-semibold ${badgeColorClass}`}
             >
               {porcentaje}
             </span>
           </div>
-          <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+
+          {/* Periodo */}
+          <CardDescription className="text-xs text-gray-500 dark:text-gray-400">
             {periodo}
           </CardDescription>
         </div>
-        <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
+
+        {/* Ícono en desktop */}
+        <div className="mt-2 hidden items-center justify-center sm:mt-0 sm:flex">
           {customRightContent ? (
             customRightContent
           ) : (
             <TrendingUpIcon
-              className={`h-7 w-7 transition-transform duration-300 group-hover:scale-110 ${iconColor}`}
+              className={`h-6 w-6 text-muted-foreground transition-transform duration-300 group-hover:scale-110 ${iconColor}`}
             />
           )}
         </div>

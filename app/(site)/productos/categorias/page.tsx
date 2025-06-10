@@ -230,18 +230,22 @@ export default function PaginaCategorias() {
             Aquí puedes gestionar las categorias de tu negocio.
           </p>
           <div className="pt-4" />
-          <div className="mb-5 flex items-center justify-between">
+          <div className="mb-5 flex items-center justify-between gap-2">
             <GeneralDialog
               open={abrirCrear}
               onOpenChange={setAbrirCrear}
-              triggerText={
-                <>
-                  <Plus className="h-4 w-4 font-light" /> Añade nueva categoría
-                </>
-              }
               title="Crear Nueva Categoría"
               description="Ingresa la información para crear una nueva categoría."
               submitText="Crear Categoría"
+              triggerText={
+                <>
+                  <Plus className="h-4 w-4 shrink-0" />
+                  <span className="ml-1 sm:hidden">Nueva categoría</span>
+                  <span className="ml-1 hidden sm:inline">
+                    Añadir nueva categoría
+                  </span>
+                </>
+              }
             >
               <CreateCategoryForm
                 onSuccess={() => {
@@ -250,32 +254,37 @@ export default function PaginaCategorias() {
                 }}
               />
             </GeneralDialog>
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+
+            <div className="flex gap-2 sm:flex-row sm:items-center">
+              <div className="relative sm:w-auto">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 sm:pl-3">
                   <Search className="h-4 w-4 text-gray-500" />
                 </div>
                 <Input
                   type="text"
-                  placeholder="Buscar categorías..."
-                  className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
+                  placeholder="Buscar Usuarios"
+                  className="w-full border border-border bg-white/10 pl-8 text-xs sm:w-[160px] md:w-[180px] lg:w-[200px]"
                   value={consulta}
                   onChange={(e) => setConsulta(e.target.value)}
                 />
               </div>
+
               <Button
+                className="h-8 w-8 p-0 sm:w-auto sm:px-3 sm:text-sm sm:font-semibold"
+                variant="secondary"
                 onClick={() => setAbrirCargaMasiva(true)}
-                className="border-border text-[12px] font-semibold"
-                variant="secondary"
               >
-                <Upload className="h-4 w-4" /> Importar
+                <Upload className="h-4 w-4" />
+                <span className="ml-1 hidden sm:inline">Importar</span>
               </Button>
+
               <Button
-                onClick={() => setAbrirExportar(true)}
-                className="border-border text-[12px] font-semibold"
+                className="h-8 w-8 p-0 sm:w-auto sm:px-3 sm:text-sm sm:font-semibold"
                 variant="secondary"
+                onClick={() => setAbrirExportar(true)}
               >
-                <CloudDownload className="h-4 w-4" /> Exportar
+                <CloudDownload className="h-4 w-4" />
+                <span className="ml-1 hidden sm:inline">Exportar</span>
               </Button>
             </div>
           </div>
@@ -287,42 +296,79 @@ export default function PaginaCategorias() {
             {/* Tarjeta: Categorías Totales */}
             <Card
               onClick={() => handleClickTarjeta("")}
-              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${selectedStatus === "" ? "ring-2 ring-secondary" : ""} group`}
+              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-4 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] xl:p-7 ${
+                selectedStatus === "" ? "ring-2 ring-secondary" : ""
+              } group`}
             >
-              <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
-                <div className="flex-1">
-                  <CardTitle className="text-sm font-light text-secondary-foreground">
-                    Categorías Totales
-                  </CardTitle>
-                  <div className="mt-2 flex items-center gap-5">
-                    <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
+              <CardHeader className="flex flex-col justify-between gap-2 p-0 sm:flex-row sm:items-center sm:gap-0">
+                <div className="flex-1 space-y-2">
+                  {/* Mobile title + icon */}
+                  <div className="flex items-center justify-between sm:hidden">
+                    <CardTitle className="text-sm font-medium text-secondary-foreground">
+                      Categorías Totales
+                    </CardTitle>
+                    <Folders className="h-5 w-5 text-muted-foreground group-hover:scale-110" />
+                  </div>
+
+                  {/* Desktop title */}
+                  <div className="hidden sm:block">
+                    <CardTitle className="text-sm font-medium text-secondary-foreground">
+                      Categorías Totales
+                    </CardTitle>
+                  </div>
+
+                  {/* Count + badge */}
+                  <div className="flex items-center gap-1 sm:gap-4">
+                    <span className="text-2xl font-extrabold text-gray-800 dark:text-white">
                       {categorias.length}
                     </span>
-                    <span className="inline-block rounded-md bg-secondary px-2 py-1 text-sm font-bold dark:bg-blue-800/30">
+                    <span className="inline-block rounded-md bg-secondary px-2 py-1 text-xs font-semibold dark:bg-blue-800/30">
                       +5%
                     </span>
                   </div>
-                  <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+
+                  {/* Description */}
+                  <CardDescription className="text-xs text-gray-500 dark:text-gray-400">
                     Este mes
                   </CardDescription>
                 </div>
-                <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
-                  <Folders className="h-7 w-7 transition-transform duration-300 group-hover:scale-110" />
+
+                {/* Desktop icon */}
+                <div className="mt-2 hidden items-center justify-center sm:mt-0 sm:flex">
+                  <Folders className="h-6 w-6 text-muted-foreground transition-transform duration-300 group-hover:scale-110" />
                 </div>
               </CardHeader>
             </Card>
+
             {/* Tarjeta: Categorías Activas */}
             <Card
               onClick={() => handleClickTarjeta("Activo")}
-              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${selectedStatus.toLowerCase() === "activo" ? "ring-2 ring-secondary" : ""} group`}
+              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-4 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] xl:p-7 ${
+                selectedStatus.toLowerCase() === "activo"
+                  ? "ring-2 ring-secondary"
+                  : ""
+              } group`}
             >
-              <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
-                <div className="flex-1">
-                  <CardTitle className="text-sm font-light text-secondary-foreground">
-                    Categorías Activas
-                  </CardTitle>
-                  <div className="mt-2 flex items-center gap-5">
-                    <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
+              <CardHeader className="flex flex-col justify-between gap-2 p-0 sm:flex-row sm:items-center sm:gap-0">
+                <div className="flex-1 space-y-2">
+                  {/* Mobile title + icon */}
+                  <div className="flex items-center justify-between sm:hidden">
+                    <CardTitle className="text-sm font-medium text-secondary-foreground">
+                      Categorías Activas
+                    </CardTitle>
+                    <Folder className="h-5 w-5 text-green-500 group-hover:scale-110" />
+                  </div>
+
+                  {/* Desktop title */}
+                  <div className="hidden sm:block">
+                    <CardTitle className="text-sm font-medium text-secondary-foreground">
+                      Categorías Activas
+                    </CardTitle>
+                  </div>
+
+                  {/* Count + badge */}
+                  <div className="flex items-center gap-1 sm:gap-4">
+                    <span className="text-2xl font-extrabold text-gray-800 dark:text-white">
                       {
                         categorias.filter(
                           (cat: any) =>
@@ -330,31 +376,53 @@ export default function PaginaCategorias() {
                         ).length
                       }
                     </span>
-                    <span className="inline-block rounded-md bg-green-100 px-2 py-1 text-sm font-bold text-green-500 dark:bg-green-800/30 dark:text-green-400">
+                    <span className="inline-block rounded-md bg-green-100 px-2 py-1 text-xs font-semibold text-green-600 dark:bg-green-800/30 dark:text-green-400">
                       +10%
                     </span>
                   </div>
-                  <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+
+                  {/* Description */}
+                  <CardDescription className="text-xs text-gray-500 dark:text-gray-400">
                     Este mes
                   </CardDescription>
                 </div>
-                <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
-                  <Folder className="h-7 w-7 text-green-500 transition-transform duration-300 group-hover:scale-110" />
+
+                {/* Desktop icon */}
+                <div className="mt-2 hidden items-center justify-center sm:mt-0 sm:flex">
+                  <Folder className="h-6 w-6 text-green-500 transition-transform duration-300 group-hover:scale-110" />
                 </div>
               </CardHeader>
             </Card>
+
             {/* Tarjeta: Categorías Inactivas */}
             <Card
               onClick={() => handleClickTarjeta("Inactivo")}
-              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${selectedStatus.toLowerCase() === "inactivo" ? "ring-2 ring-secondary" : ""} group`}
+              className={`bg-blanco flex-1 cursor-pointer rounded-xl border p-4 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] xl:p-7 ${
+                selectedStatus.toLowerCase() === "inactivo"
+                  ? "ring-2 ring-secondary"
+                  : ""
+              } group`}
             >
-              <CardHeader className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
-                <div className="flex-1">
-                  <CardTitle className="text-sm font-light text-secondary-foreground">
-                    Categorías Inactivas
-                  </CardTitle>
-                  <div className="mt-2 flex items-center gap-5">
-                    <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
+              <CardHeader className="flex flex-col justify-between gap-2 p-0 sm:flex-row sm:items-center sm:gap-0">
+                <div className="flex-1 space-y-2">
+                  {/* Mobile title + icon */}
+                  <div className="flex items-center justify-between sm:hidden">
+                    <CardTitle className="text-sm font-medium text-secondary-foreground">
+                      Categorías Inactivas
+                    </CardTitle>
+                    <FolderX className="h-5 w-5 text-red-500 group-hover:scale-110" />
+                  </div>
+
+                  {/* Desktop title */}
+                  <div className="hidden sm:block">
+                    <CardTitle className="text-sm font-medium text-secondary-foreground">
+                      Categorías Inactivas
+                    </CardTitle>
+                  </div>
+
+                  {/* Count + badge */}
+                  <div className="flex items-center gap-1 sm:gap-4">
+                    <span className="text-2xl font-extrabold text-gray-800 dark:text-white">
                       {
                         categorias.filter(
                           (cat: any) =>
@@ -362,16 +430,20 @@ export default function PaginaCategorias() {
                         ).length
                       }
                     </span>
-                    <span className="inline-block rounded-md bg-red-100 px-2 py-1 text-sm font-bold dark:bg-red-800/30">
+                    <span className="inline-block rounded-md bg-red-100 px-2 py-1 text-xs font-semibold text-red-600 dark:bg-red-800/30 dark:text-red-400">
                       -8%
                     </span>
                   </div>
-                  <CardDescription className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+
+                  {/* Description */}
+                  <CardDescription className="text-xs text-gray-500 dark:text-gray-400">
                     Este mes
                   </CardDescription>
                 </div>
-                <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
-                  <FolderX className="h-7 w-7 text-red-500 transition-transform duration-300 group-hover:scale-110" />
+
+                {/* Desktop icon */}
+                <div className="mt-2 hidden items-center justify-center sm:mt-0 sm:flex">
+                  <FolderX className="h-6 w-6 text-red-500 transition-transform duration-300 group-hover:scale-110" />
                 </div>
               </CardHeader>
             </Card>

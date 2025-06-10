@@ -51,7 +51,7 @@ export function ComboboxPago({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-[130px] justify-between dark:bg-[#222224]"
+          className="w-[160px] justify-between dark:bg-[#222224]"
         >
           {opcionesPago.find((item) => item.value === value)?.label ??
             placeholder}

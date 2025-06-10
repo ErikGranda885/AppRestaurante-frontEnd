@@ -590,7 +590,7 @@ export default function PaginaUsuarios() {
 
           {/* Tabla */}
           <div className="w-full px-4 pb-6 sm:px-6">
-            <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-sm dark:bg-[#1a1a1a]">
+            <div className="overflow-x-auto rounded-lg border border-none bg-card shadow-sm dark:bg-[#1a1a1a]">
               <DataTable<DataUsers>
                 data={usuariosFiltrados}
                 columns={usuariosColumnas}

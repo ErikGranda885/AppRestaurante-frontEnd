@@ -102,7 +102,7 @@ export function DataTable<T>({
         </DropdownMenu>
       </div>
 
-      <div className="w-[335px] overflow-x-auto rounded-lg border border-border md:w-full xl:w-full">
+      <div className="w-[335px] overflow-x-auto rounded-lg border border-none md:w-full xl:w-full">
         <Table>
           <TableHeader className="bg-secondary">
             {table.getHeaderGroups().map((headerGroup) => (

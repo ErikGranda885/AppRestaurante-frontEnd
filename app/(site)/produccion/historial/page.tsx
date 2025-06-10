@@ -54,43 +54,42 @@ export default function Page() {
           Aquí puedes gestionar el listado de transformaciones realizadas.
         </p>
 
-        <div className="mb-5 flex items-center justify-between pt-4">
-          <GeneralDialog
-            open={abrirCrear}
-            onOpenChange={setAbrirCrear}
-            triggerText={
-              <>
-                <Plus className="h-4 w-4 font-light" /> Nueva transformación
-              </>
-            }
-            title="Registrar transformación"
-            description="Ingresa la cantidad de productos transformados."
-            submitText={null}
-          >
-            <FormTransformacion
-              onSuccess={handleSuccess}
-              onClose={() => setAbrirCrear(false)}
-            />
-          </GeneralDialog>
+        <div className="mb-5 flex gap-2 pt-4 md:flex-row md:items-center md:justify-between">
+          {/* Botón: Nueva transformación */}
+          <div className="w-full md:w-auto">
+            <GeneralDialog
+              open={abrirCrear}
+              onOpenChange={setAbrirCrear}
+              triggerText={
+                <>
+                  <Plus className="h-4 w-4 font-light" />
+                  <span className="ml-1">Nueva transformación</span>
+                </>
+              }
+              title="Registrar transformación"
+              description="Ingresa la cantidad de productos transformados."
+              submitText={null}
+            >
+              <FormTransformacion
+                onSuccess={handleSuccess}
+                onClose={() => setAbrirCrear(false)}
+              />
+            </GeneralDialog>
+          </div>
 
-          <div className="flex items-center gap-3">
-            <div className="relative">
+          {/* Buscador */}
+          <div className="w-full md:w-auto">
+            <div className="relative w-full">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                 <Search className="h-4 w-4 text-gray-500" />
               </div>
               <Input
                 type="text"
                 placeholder="Buscar transformación"
-                className="w-[250px] border border-border bg-white/10 pl-10 text-[12px]"
+                className="w-full border border-border bg-white/10 pl-10 text-[12px] md:w-[250px]"
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            {/* <Button variant="secondary" className="text-xs font-semibold">
-              <Upload className="h-4 w-4" /> Importar
-            </Button>
-            <Button variant="secondary" className="text-xs font-semibold">
-              <CloudDownload className="h-4 w-4" /> Exportar
-            </Button> */}
           </div>
         </div>
 

@@ -36,6 +36,16 @@
     --warning-per: #f5a524;
     --ama-per: #facc15;
     --edt-per: #006fee;
+
+    /* Sidebar personalizado - MODO CLARO */
+    --sidebar-background: 0 0% 100%; /* blanco */
+    --sidebar-foreground: 145 30% 20%; /* verde oscuro (puedes cambiarlo si deseas gris oscuro) */
+    --sidebar-primary: 145 40% 35%;
+    --sidebar-primary-foreground: 145 80% 90%;
+    --sidebar-accent: 145 55% 65%;
+    --sidebar-accent-foreground: 145 25% 15%;
+    --sidebar-border: 145 30% 85%;
+    --sidebar-ring: 145 50% 60%;
   }
   .error-text {
     color: var(--error-per);
@@ -78,6 +88,14 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    --sidebar-background: 0 0% 10%; /* gris oscuro como en la imagen */
+    --sidebar-foreground: 0 0% 98%; /* blanco */
+    --sidebar-primary: 220 50% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 25% 35%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 220 50% 60%;
   }
   html,
   body {
