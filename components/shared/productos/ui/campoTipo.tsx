@@ -45,7 +45,7 @@ export const CampoSelectTipo: React.FC<CampoSelectTipProdProps> = ({
             </SelectTrigger>
             <SelectContent>
               {TIP_PROD_OPTIONS.map((tipOpt) => (
-                <SelectItem key={tipOpt.value} value={tipOpt.value}>
+                <SelectItem key={tipOpt.value} value={tipOpt.value} className="cursor-pointer hover:bg-gray-100 focus:bg-gray-200 dark:hover:bg-gray-700 dark:focus:bg-gray-800">
                   {tipOpt.label}
                 </SelectItem>
               ))}

@@ -51,7 +51,7 @@ export const CampoSelectUnidad: React.FC<CampoSelectUnidadProps> = ({
             </SelectTrigger>
             <SelectContent>
               {UNIT_OPTIONS.map((unidad) => (
-                <SelectItem key={unidad.value} value={unidad.value}>
+                <SelectItem key={unidad.value} value={unidad.value} className="cursor-pointer hover:bg-gray-100 focus:bg-gray-200 dark:hover:bg-gray-700 dark:focus:bg-gray-800">
                   {unidad.label}
                 </SelectItem>
               ))}

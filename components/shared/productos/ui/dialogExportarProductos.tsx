@@ -133,7 +133,7 @@ export function DialogExportarProductos({ open, onOpenChange }: Props) {
           {/* Tipo de reporte */}
           <div className="space-y-1">
             <Label className="text-sm">Tipo de reporte:</Label>
-            <Select value={tipoReporte} onValueChange={setTipoReporte}>
+            <Select value={tipoReporte} onValueChange={setTipoReporte} >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Seleccionar tipo de reporte" />
               </SelectTrigger>

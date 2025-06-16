@@ -267,12 +267,12 @@ export default function Page() {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      className="text-[12px] dark:bg-[#222224]"
+                      className="text-[12px] dark:bg-[#222224] "
                     >
                       {labelQuickRange}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="border-border">
+                  <DropdownMenuContent className="border-border ">
                     <DropdownMenuItem onClick={() => handleQuickRange("hoy")}>
                       Hoy
                     </DropdownMenuItem>
@@ -357,7 +357,7 @@ export default function Page() {
         </div>
 
         {/* Cards con Scroll */}
-        <div className="h-[540px] px-6 pt-6">
+        <div className="h-[530px] px-6 pt-6">
           <ScrollArea className="h-full pr-2">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {ventasFiltradas.length === 0 ? (

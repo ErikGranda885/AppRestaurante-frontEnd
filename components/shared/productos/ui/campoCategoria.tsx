@@ -1,25 +1,14 @@
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
+"use client";
+
+import React from "react";
+import { Controller } from "react-hook-form";
 import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-} from "@/components/ui/command";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 export interface CategoryOption {
@@ -32,6 +21,7 @@ interface CampoCategoriaProps {
   name: string;
   label: string;
   options: CategoryOption[];
+  placeholder?: string;
 }
 
 export const CampoCategoria: React.FC<CampoCategoriaProps> = ({
@@ -39,67 +29,42 @@ export const CampoCategoria: React.FC<CampoCategoriaProps> = ({
   name,
   label,
   options,
+  placeholder,
 }) => {
-  const [open, setOpen] = useState(false);
   return (
-    <FormField
+    <Controller
       control={control}
       name={name}
       render={({ field, fieldState: { error } }) => (
-        <FormItem>
-          <FormLabel className="text-black dark:text-white">{label}</FormLabel>
-          <FormControl>
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={open}
-                  className={cn(
-                    "w-full justify-between font-normal",
-                    error ? "border-2 border-[#f31260]" : "",
-                  )}
-                >
-                  {field.value
-                    ? options.find(
-                        (option) => option.value === field.value.toString(),
-                      )?.label
-                    : "Selecciona categoría"}
-                  <span className="opacity-50">⌄</span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[200px] p-0 border-border">
-                <Command>
-                  <CommandInput
-                    placeholder="Buscar categoría..."
-                    className="h-9"
-                  />
-                  <CommandList>
-                    <CommandEmpty>No se encontró categoría.</CommandEmpty>
-                    <CommandGroup heading="Categorías">
-                      {options.map((option) => (
-                        <CommandItem
-                          key={option.value}
-                          value={option.label}
-                          onSelect={(currentValue) => {
-                            const selected = options.find(
-                              (o) => o.label === currentValue,
-                            );
-                            field.onChange(selected?.value || "");
-                            setOpen(false);
-                          }}
-                        >
-                          {option.label}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </FormControl>
-          <FormMessage className="error-text" />
-        </FormItem>
+        <div className="flex flex-col">
+          <label className="mb-2 text-sm font-medium">{label}</label>
+          <Select value={field.value || ""} onValueChange={field.onChange}>
+            <SelectTrigger
+              className={cn(
+                "w-full justify-between font-normal",
+                error ? "border-2 border-[#f31260]" : "",
+              )}
+            >
+              <SelectValue
+                placeholder={placeholder || "Selecciona categoría"}
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {options.map((option) =>
+                option.value !== "" ? (
+                  <SelectItem
+                    key={option.value}
+                    value={option.value}
+                    className="cursor-pointer hover:bg-gray-100 focus:bg-gray-200 dark:hover:bg-gray-700 dark:focus:bg-gray-800"
+                  >
+                    {option.label}
+                  </SelectItem>
+                ) : null,
+              )}
+            </SelectContent>
+          </Select>
+          {error && <p className="error-text mt-2 text-xs">{error.message}</p>}
+        </div>
       )}
     />
   );

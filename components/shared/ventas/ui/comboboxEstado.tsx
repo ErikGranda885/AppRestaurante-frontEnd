@@ -61,6 +61,7 @@ export function ComboboxEstado({ value, onChange }: ComboboxEstadoProps) {
                     onChange(estado.value);
                     setOpen(false);
                   }}
+                  className="cursor-pointer"
                 >
                   {estado.label}
                   <Check

@@ -76,6 +76,7 @@ export function ComboboxPago({
                     onChange(item.value === value ? "" : item.value);
                     setOpen(false);
                   }}
+                  className="cursor-pointer"
                 >
                   {item.label}
                   <Check

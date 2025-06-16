@@ -324,75 +324,55 @@ export default function Page() {
           </p>
 
           <div className="pt-2">
-            <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
-              {/* Botón: Añadir compra */}
-              <div>
+            <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              {/* IZQUIERDA: Botón + Fecha + Hoy */}
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   onClick={() => router.push("/compras/nueva")}
-                  className="flex w-full items-center justify-center gap-2 text-[12px] font-semibold"
+                  className="flex-shrink-0 text-[12px] font-semibold"
                 >
                   <Plus className="h-4 w-4 font-light" /> Añade una nueva compra
                 </Button>
+
+                <div className="flex-shrink-0">
+                  <DateRangeFilter
+                    value={dateRange}
+                    onChange={(r) => {
+                      setFiltroPendientesPago(false);
+                      setDateRange(r);
+                    }}
+                    className="w-full sm:w-auto"
+                  />
+                </div>
+
+                <Button
+                  variant="outline"
+                  onClick={() => handleQuickRange("hoy")}
+                  className="flex-shrink-0 whitespace-nowrap text-[12px]"
+                >
+                  Hoy
+                </Button>
               </div>
 
-              {/* Filtro de fechas */}
-              <div className="w-full">
-                <DateRangeFilter
-                  value={dateRange}
-                  onChange={(range) => {
-                    setFiltroPendientesPago(false);
-                    setDateRange(range);
-                  }}
-                />
-              </div>
-
-              {/* Rango rápido */}
-              <div className="w-full">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full text-[12px] dark:bg-[#222224]"
-                    >
-                      {labelQuickRange}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="border-border">
-                    <DropdownMenuItem onClick={() => handleQuickRange("hoy")}>
-                      Hoy
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleQuickRange("ayer")}>
-                      Ayer
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleQuickRange("mes")}>
-                      Este mes
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleQuickRange("año")}>
-                      Este Año
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-
-              {/* Buscador + exportar */}
-              <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:flex-row">
-                <div className="relative w-full sm:w-auto">
+              {/* DERECHA: Buscar + Exportar */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative min-w-[150px] flex-1">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                     <Search className="h-4 w-4 text-gray-500" />
                   </div>
                   <Input
                     type="text"
                     placeholder="Buscar compras..."
-                    className="w-full border border-border bg-white/10 pl-10 text-[12px]"
                     value={consultaBusqueda}
                     onChange={(e) => setConsultaBusqueda(e.target.value)}
+                    className="w-full pl-10 text-[12px]"
                   />
                 </div>
 
                 <Button
-                  onClick={() => setAbrirExportar(true)}
-                  className="w-full border-border text-[12px] font-semibold sm:w-auto"
                   variant="secondary"
+                  onClick={() => setAbrirExportar(true)}
+                  className="flex-shrink-0 text-[12px] font-semibold"
                 >
                   <CloudDownload className="h-4 w-4" /> Exportar
                 </Button>

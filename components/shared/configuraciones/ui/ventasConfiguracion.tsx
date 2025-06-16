@@ -2,7 +2,6 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
@@ -16,10 +15,6 @@ export function VentasConfiguracion() {
     setVentasConfig((prev: any) => ({ ...prev, [key]: value }));
   };
 
-  const handleSwitchChange = (key: string, value: boolean) => {
-    setVentasConfig((prev: any) => ({ ...prev, [key]: value }));
-  };
-
   const handleCancel = () => {
     window.location.reload();
   };
@@ -30,18 +25,6 @@ export function VentasConfiguracion() {
     await updateConfiguracion(
       "minimo_stock_alerta",
       ventasConfig.minimo_stock_alerta,
-    );
-    await updateConfiguracion(
-      "permitir_venta_sin_cierre",
-      ventasConfig.permitir_venta_sin_cierre,
-    );
-    await updateConfiguracion(
-      "mostrar_stock_negativo",
-      ventasConfig.mostrar_stock_negativo,
-    );
-    await updateConfiguracion(
-      "habilitar_qr_pago_inmediato",
-      ventasConfig.habilitar_qr_pago_inmediato,
     );
 
     ToastSuccess({
@@ -61,27 +44,34 @@ export function VentasConfiguracion() {
 
         <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
           <div className="flex flex-col justify-between space-y-4">
+            {/* Porcentaje IVA */}
             <div>
               <Label>Porcentaje de IVA (%)</Label>
               <Input
                 type="number"
-                value={ventasConfig.porcentaje_iva}
+                value={ventasConfig.porcentaje_iva ?? ""}
                 onChange={(e) =>
                   handleInputChange(
                     "porcentaje_iva",
-                    parseFloat(e.target.value),
+                    e.target.value === ""
+                      ? ""
+                      : parseFloat(e.target.value),
                   )
                 }
               />
             </div>
 
+            {/* Moneda */}
             <div>
               <Label>Moneda</Label>
               <select
-                value={ventasConfig.moneda}
-                onChange={(e) => handleInputChange("moneda", e.target.value)}
+                value={ventasConfig.moneda ?? ""}
+                onChange={(e) =>
+                  handleInputChange("moneda", e.target.value)
+                }
                 className="mt-1 block w-full rounded-md border border-input bg-background p-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               >
+                <option value="">-- selecciona una moneda --</option>
                 <option value="USD">USD ($)</option>
                 <option value="EUR">EUR (€)</option>
                 <option value="PEN">PEN (S/)</option>
@@ -90,74 +80,25 @@ export function VentasConfiguracion() {
               </select>
             </div>
 
+            {/* Mínimo stock alerta */}
             <div>
               <Label>Mínimo de stock para alerta</Label>
               <Input
                 type="number"
-                value={ventasConfig.minimo_stock_alerta}
+                value={ventasConfig.minimo_stock_alerta ?? ""}
                 onChange={(e) =>
                   handleInputChange(
                     "minimo_stock_alerta",
-                    parseInt(e.target.value),
+                    e.target.value === ""
+                      ? ""
+                      : parseInt(e.target.value, 10),
                   )
                 }
               />
             </div>
           </div>
 
-          {/* <div className="flex flex-col justify-between space-y-6 pt-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">
-                  Permitir ventas sin cierre
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Permite registrar ventas aunque el cierre diario no se haya
-                  realizado.
-                </p>
-              </div>
-              <Switch
-                checked={ventasConfig.permitir_venta_sin_cierre}
-                onCheckedChange={(checked) =>
-                  handleSwitchChange("permitir_venta_sin_cierre", checked)
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Mostrar stock negativo</p>
-                <p className="text-xs text-muted-foreground">
-                  Permite vender productos aunque el stock disponible sea menor
-                  o igual a cero.
-                </p>
-              </div>
-              <Switch
-                checked={ventasConfig.mostrar_stock_negativo}
-                onCheckedChange={(checked) =>
-                  handleSwitchChange("mostrar_stock_negativo", checked)
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">
-                  Habilitar QR de pago inmediato
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Genera un QR en la factura para que el cliente pueda pagar su
-                  orden directamente desde su celular.
-                </p>
-              </div>
-              <Switch
-                checked={ventasConfig.habilitar_qr_pago_inmediato}
-                onCheckedChange={(checked) =>
-                  handleSwitchChange("habilitar_qr_pago_inmediato", checked)
-                }
-              />
-            </div>
-          </div> */}
+          {/* Si quieres agregar más switches, siguen la misma lógica: valor ?? "" */}
         </div>
       </Card>
 
