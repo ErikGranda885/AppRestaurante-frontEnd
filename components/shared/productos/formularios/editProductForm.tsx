@@ -88,6 +88,8 @@ export function EditProductForm({
     },
   });
 
+  const [estaEnviando, setEstaEnviando] = useState(false);
+
   const tipoProducto = form.watch("tipo_prod")?.toLowerCase() || "";
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -116,6 +118,7 @@ export function EditProductForm({
   };
 
   const onSubmit = async (values: EditProductFormValues) => {
+    setEstaEnviando(true);
     const startTime = performance.now(); // ⏱️ Inicio
     let imageUrl = DEFAULT_PRODUCT_IMAGE_URL;
 
@@ -174,6 +177,8 @@ export function EditProductForm({
       ToastError({
         message: `Error al actualizar el producto: ${err.message}`,
       });
+    } finally {
+      setEstaEnviando(false);
     }
   };
 
@@ -226,7 +231,9 @@ export function EditProductForm({
           />
         </div>
         <div className="col-span-2 mt-4 flex justify-end gap-4">
-          <Button type="submit">Guardar Cambios</Button>
+          <Button type="submit" disabled={estaEnviando}>
+            {estaEnviando ? "Guardando…" : "Guardar Cambios"}
+          </Button>
         </div>
       </form>
     </Form>

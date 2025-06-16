@@ -301,7 +301,10 @@ export default function PaginaProductos() {
                   }}
                 />
               </GeneralDialog>
+            </div>
 
+            {/* Fila 2 (móvil, o al lado en desktop) */}
+            <div className="flex items-center gap-2 sm:gap-3">
               {/* Buscador */}
               <div className="relative flex w-full justify-between sm:w-auto">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -367,10 +370,6 @@ export default function PaginaProductos() {
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
-
-            {/* Fila 2 (móvil, o al lado en desktop) */}
-            <div className="flex items-center gap-2 sm:gap-3">
               {/* Separador visible solo en sm+ */}
               <Separator
                 className="hidden h-8 sm:block"

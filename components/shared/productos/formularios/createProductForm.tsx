@@ -14,7 +14,7 @@ import { CampoSelectTipo } from "../ui/campoTipo";
 import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
 import { useCrearProducto } from "@/hooks/productos/useCrearProducto";
 
-export type Option = {
+export type Opcion = {
   value: string;
   label: string;
 };
@@ -23,29 +23,30 @@ const EsquemaFormulario = z
   .object({
     nombre: z
       .string()
-      .nonempty("El nombre del producto es requerido")
+      .nonempty("El nombre del producto es obligatorio")
       .refine(
         async (nombre: string) => {
-          return fetch(SERVICIOS_PRODUCTOS.verificarNombre(nombre))
-            .then((res) => res.json())
-            .then((data) => !data.exists);
+          const respuesta = await fetch(
+            SERVICIOS_PRODUCTOS.verificarNombre(nombre)
+          );
+          const datos = await respuesta.json();
+          return !datos.exists;
         },
         {
-          message: "El nombre del producto ya se encuentra registrado",
+          message: "Este nombre ya está registrado",
           async: true,
-        } as any,
+        } as any
       ),
     categoria: z.string().optional(),
     tipo_prod: z.string().nonempty("Seleccione un tipo de producto"),
-    undidad_prod: z.string().nonempty("Seleccione una unidad de medida"),
+    unidad_prod: z.string().nonempty("Seleccione una unidad de medida"),
   })
-  .superRefine((val, ctx) => {
-    // Convertimos a minúsculas para comparar de forma insensible a mayúsculas
+  .superRefine((valores, contexto) => {
     if (
-      val.tipo_prod.toLowerCase() !== "insumo" &&
-      (!val.categoria || val.categoria.trim() === "")
+      valores.tipo_prod.toLowerCase() !== "insumo" &&
+      (!valores.categoria || valores.categoria.trim() === "")
     ) {
-      ctx.addIssue({
+      contexto.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["categoria"],
         message: "Seleccione una categoría",
@@ -55,69 +56,74 @@ const EsquemaFormulario = z
 
 export type ValoresFormulario = z.infer<typeof EsquemaFormulario>;
 
-// Ref para almacenar el nombre inicial (para evitar verificación si no cambia)
-const initialProductNameRef = { current: "" };
-
 export function FormProducts({
   onSuccess,
 }: {
-  onSuccess: (data: any) => void;
+  onSuccess: (datos: any) => void;
 }) {
-  const form = useForm<ValoresFormulario>({
+  // Hook de formulario
+  const formulario = useForm<ValoresFormulario>({
     resolver: zodResolver(EsquemaFormulario),
     defaultValues: {
       nombre: "",
       categoria: "",
       tipo_prod: "",
-      undidad_prod: "",
+      unidad_prod: "",
     },
   });
-  const { crearProducto } = useCrearProducto();
-  // Usamos form.watch para obtener el valor actual de "tipo_prod"
-  const tipoProducto = form.watch("tipo_prod").toLowerCase();
 
-  // Cargar opciones de categoría desde la API mediante el servicio definido
-  const [opcionesCategoria, setOpcionesCategoria] = useState<CategoryOption[]>(
-    [],
-  );
+  // Hook personalizado para crear producto
+  const { crearProducto } = useCrearProducto();
+
+  // Estado para bloquear el botón mientras se envía
+  const [estaEnviando, setEstaEnviando] = useState(false);
+
+  // Observar el campo tipo_prod
+  const tipoProducto = formulario.watch("tipo_prod").toLowerCase();
+
+  // Opciones de categoría
+  const [opcionesCategoria, setOpcionesCategoria] = useState<
+    CategoryOption[]
+  >([]);
   useEffect(() => {
     fetch(SERVICIOS_PRODUCTOS.categorias)
       .then((res) => {
         if (!res.ok) throw new Error("Error al cargar categorías");
         return res.json();
       })
-      .then((data: any) => {
-        const activas = data.categorias.filter(
-          (cate: ICategory) => cate.est_cate?.toLowerCase() === "activo",
+      .then((datos: any) => {
+        const activas = datos.categorias.filter(
+          (c: ICategory) => c.est_cate?.toLowerCase() === "activo"
         );
-        const opciones: Option[] = [
+        const opciones: Opcion[] = [
           { value: "", label: "Todos" },
-          ...activas.map((cate: ICategory) => ({
-            value: cate.id_cate.toString(),
-            label: cate.nom_cate,
+          ...activas.map((c: ICategory) => ({
+            value: c.id_cate.toString(),
+            label: c.nom_cate,
           })),
         ];
         setOpcionesCategoria(opciones);
       })
-      .catch((err) => console.error("Error al cargar categorías:", err));
+      .catch((err) =>
+        console.error("Error al cargar opciones de categoría:", err)
+      );
   }, []);
 
-  // Estados para la imagen y su previsualización
-  const [imagenArchivo, setImagenArchivo] = useState<File | null>(null);
-  const [imagenPreview, setImagenPreview] = useState<string | null>(null);
-  const imagenInputRef = useRef<HTMLInputElement>(null);
+  // Estados de la imagen
+  const [archivoImagen, setArchivoImagen] = useState<File | null>(null);
+  const [vistaPrevia, setVistaPrevia] = useState<string | null>(null);
+  const refInputImagen = useRef<HTMLInputElement>(null);
 
-  // Funciones para manejo de imagen
   const seleccionarImagen = () => {
-    imagenInputRef.current?.click();
+    refInputImagen.current?.click();
   };
 
-  const manejarDropImagen = (e: React.DragEvent<HTMLDivElement>) => {
+  const manejarDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    if (e.dataTransfer.files.length > 0) {
       const archivo = e.dataTransfer.files[0];
-      setImagenArchivo(archivo);
-      setImagenPreview(URL.createObjectURL(archivo));
+      setArchivoImagen(archivo);
+      setVistaPrevia(URL.createObjectURL(archivo));
       e.dataTransfer.clearData();
     }
   };
@@ -126,84 +132,88 @@ export function FormProducts({
     e.preventDefault();
   };
 
-  const onSubmit = (data: ValoresFormulario) => {
-    crearProducto({
-      nombre: data.nombre,
-      categoria: data.categoria || "",
-      tipo: data.tipo_prod,
-      unidad: data.undidad_prod,
-      imagenArchivo,
-      imagenPreview,
-      onSuccess: (resData) => {
-        onSuccess(resData);
-        form.reset();
-      },
-    });
+  // Función de envío
+  const alEnviarFormulario = async (valores: ValoresFormulario) => {
+    setEstaEnviando(true);
+    try {
+      await crearProducto({
+        nombre: valores.nombre,
+        categoria: valores.categoria || "",
+        tipo: valores.tipo_prod,
+        unidad: valores.unidad_prod,
+        imagenArchivo: archivoImagen,
+        imagenPreview: vistaPrevia,
+        onSuccess: (datosRes: any) => {
+          onSuccess(datosRes);
+          formulario.reset();
+        },
+      });
+    } finally {
+      setEstaEnviando(false);
+    }
   };
 
   return (
-    <Form {...form}>
+    <Form {...formulario}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={formulario.handleSubmit(alEnviarFormulario)}
         className="grid grid-cols-2 gap-4"
       >
-        {/* Columna izquierda: campos del formulario */}
+        {/* Columna izquierda: campos */}
         <div className="col-span-1 flex flex-col gap-4 pr-3">
-          <div className="grid grid-cols-1 gap-4">
-            <CampoTexto
-              control={form.control}
-              name="nombre"
-              label="Nombre del Producto"
-              placeholder="Nombre del producto"
+          <CampoTexto
+            control={formulario.control}
+            name="nombre"
+            label="Nombre del producto"
+            placeholder="Ingrese el nombre"
+          />
+          <CampoSelectTipo
+            control={formulario.control}
+            name="tipo_prod"
+            label="Tipo de producto"
+            placeholder="Seleccione un tipo"
+          />
+          {tipoProducto !== "insumo" && (
+            <CampoCategoria
+              control={formulario.control}
+              name="categoria"
+              label="Categoría"
+              options={opcionesCategoria}
             />
-            <CampoSelectTipo
-              control={form.control}
-              name="tipo_prod"
-              label="Tipo de Producto"
-              placeholder="Seleccione el tipo de producto"
-            />
-            {/* Solo se muestra el campo Categoría si el tipo no es "insumo" */}
-            {tipoProducto !== "insumo" && (
-              <CampoCategoria
-                control={form.control}
-                name="categoria"
-                label="Categoría"
-                options={opcionesCategoria}
-              />
-            )}
-
-            <CampoSelectUnidad
-              control={form.control}
-              name="undidad_prod"
-              label="Unidad de Medida"
-              placeholder="Seleccione una unidad"
-            />
-          </div>
+          )}
+          <CampoSelectUnidad
+            control={formulario.control}
+            name="unidad_prod"
+            label="Unidad de medida"
+            placeholder="Seleccione una unidad"
+          />
         </div>
+
         {/* Columna derecha: zona de imagen */}
         <div className="col-span-1 flex h-full items-center justify-center">
           <ZonaImagen
-            imageFile={imagenArchivo}
-            imagePreview={imagenPreview || ""}
-            setImageFile={setImagenArchivo}
-            setImagePreview={setImagenPreview}
-            imageInputRef={imagenInputRef}
+            imageFile={archivoImagen}
+            imagePreview={vistaPrevia || ""}
+            setImageFile={setArchivoImagen}
+            setImagePreview={setVistaPrevia}
+            imageInputRef={refInputImagen}
             handleImageSelect={seleccionarImagen}
-            handleImageDrop={manejarDropImagen}
+            handleImageDrop={manejarDrop}
             handleDragOver={manejarDragOver}
           />
         </div>
-        {/* Botón de envío */}
+
+        {/* Botones al pie */}
         <div className="col-span-2 mt-4 flex justify-end gap-4">
-          <Button variant={"secondary"} onClick={() => form.reset()}>
+          <Button
+            variant="secondary"
+            onClick={() => formulario.reset()}
+            disabled={estaEnviando}
+          >
             Limpiar
           </Button>
-          <Button
-            className="hover:/80"
-            type="button"
-            onClick={() => form.handleSubmit(onSubmit)()}
-          >
-            Crear Producto
+          <Button type="submit" disabled={estaEnviando}>
+            {estaEnviando ? "Creando..." : "Crear producto"}
           </Button>
         </div>
       </form>
