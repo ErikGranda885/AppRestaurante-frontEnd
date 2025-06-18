@@ -39,7 +39,7 @@ const ejemplos: Record<string, string> = {
 
   // 💵 Ventas
   ventasHoy: "¿Cuánto se vendió hoy?",
-
+  iniciarVenta: "Registrar venta",
   // 💸 Gastos
   registrarGasto: "Registrar gasto 5.75 por pan",
   gastosHoy: "¿Cuánto gasté hoy?",

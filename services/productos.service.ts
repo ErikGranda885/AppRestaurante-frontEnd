@@ -1,6 +1,7 @@
 export const SERVICIOS_PRODUCTOS = {
   categorias: "http://localhost:5000/categorias",
   productos: "http://localhost:5000/productos",
+  obtenerPorId: (id: number) => `http://localhost:5000/productos/${id}`,
   descagarPlantillaProducto: "http://localhost:5000/productos/plantilla",
   guardarMasivoProductos: "http://localhost:5000/productos/masivo",
 
@@ -59,4 +60,7 @@ export const SERVICIOS_PRODUCTOS = {
   // 🔽 Verificación de nombre de producto
   verificarNombre: (nombre: string) =>
     `http://localhost:5000/productos/verificar?nombre=${encodeURIComponent(nombre)}`,
+
+  productosPorCategoria: (id_cate: number) =>
+    `http://localhost:5000/productos/categoria/${id_cate}`,
 };

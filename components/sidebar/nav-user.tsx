@@ -32,7 +32,7 @@ export function NavUser({
   const router = useRouter();
 
   // 🔍 Debug: log de props
-  console.log("🧑‍💼 Datos del usuario en NavUser:", user);
+  /* console.log("🧑‍💼 Datos del usuario en NavUser:", user); */
 
   const handleLogout = async () => {
     try {

@@ -8,7 +8,7 @@ const fetcherConCookie = async (url: string) => {
     credentials: "include", // ✅ para enviar cookie HttpOnly
   });
 
-  console.log("📡 Respuesta:", res.status);
+  /* console.log("📡 Respuesta:", res.status); */
 
   if (!res.ok) {
     const msg = await res.text();
@@ -16,7 +16,7 @@ const fetcherConCookie = async (url: string) => {
   }
 
   const json = await res.json();
-  console.log("✅ Datos recibidos:", json);
+  /* console.log("✅ Datos recibidos:", json); */
   return json;
 };
 

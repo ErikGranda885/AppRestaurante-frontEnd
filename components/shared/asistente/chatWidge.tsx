@@ -12,6 +12,7 @@ import {
 } from "microsoft-cognitiveservices-speech-sdk";
 import { FlowProducto, handleFlowProducto } from "../comandos/productos";
 import { allCommands } from "../comandos";
+import { FlowVenta, handleFlowVenta } from "../comandos/ventas";
 
 declare global {
   interface Window {
@@ -88,11 +89,13 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
 
     return () => clearTimeout(delay);
   }, [mensajes]);
-
+  const [inicioFlujo, setInicioFlujo] = useState<number | null>(null);
   const [pendingSuggestions, setPendingSuggestions] = useState<string[] | null>(
     null,
   );
   const [flowProducto, setFlowProducto] = useState<FlowProducto | null>(null);
+  const [flowVenta, setFlowVenta] = useState<FlowVenta | null>(null);
+
   const [escuchando, setEscuchando] = useState(false);
   const [inputTexto, setInputTexto] = useState("");
   const reconocimientoRef = useRef<SpeechRecognizer | null>(null);
@@ -106,9 +109,39 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
       .trim();
 
   const contexto = {
-    agregarMensajeBot: (t: string) => agregarMensaje("asistente", t),
+    agregarMensajeBot: (t: string | React.ReactNode) =>
+      agregarMensaje("asistente", t),
     establecerSugerenciasPendientes: setPendingSuggestions,
-    setFlow: setFlowProducto,
+    setFlow: (flow: FlowProducto | FlowVenta | null) => {
+      if (flow === null) {
+        setFlowProducto(null);
+        setFlowVenta(null);
+        setInicioFlujo(null); // 🧹 Limpia cuando termina el flujo
+        return;
+      }
+
+      const pasosDeVenta = [
+        "categoria",
+        "producto",
+        "cantidad",
+        "agregarOtro", // ✅ Agregado
+        "pago",
+        "montoEfectivo",
+        "comprobante",
+        "confirmacion",
+      ];
+
+      const esInicio = flow.step === "categoria";
+      if (pasosDeVenta.includes(flow.step)) {
+        setFlowVenta(flow as FlowVenta);
+        setFlowProducto(null);
+        if (esInicio) setInicioFlujo(Date.now()); // 🟢 Marca inicio
+      } else {
+        setFlowProducto(flow as FlowProducto);
+        setFlowVenta(null);
+      }
+    },
+    obtenerInicioFlujo: () => inicioFlujo, // ✅ ESTO FALTABA
   };
 
   useEffect(() => () => detenerAzure(), []);
@@ -202,11 +235,23 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
 
   const procesarComando = async (texto: string) => {
     const textoNormalizado = normalize(texto);
-    const inicio = performance.now();
+    const inicio = Date.now();
+
+    const manejarFlujoVenta = async (texto: string): Promise<boolean> => {
+      if (!flowVenta) return false;
+
+      setInputTexto("");
+      const ref = flowVenta;
+      await handleFlowVenta(texto, ref, contexto as any);
+
+      if (!flowVenta) setPendingSuggestions(null);
+      return true;
+    };
 
     const handlers: (() => Promise<boolean> | boolean)[] = [
       () => manejarCancelacion(texto),
       () => manejarFlujoProducto(texto),
+      () => manejarFlujoVenta(texto),
       () => manejarSugerencia(textoNormalizado),
       () => manejarComando(texto),
       () => manejarCierreAsistente(texto),
@@ -217,7 +262,7 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
     for (const handler of handlers) {
       const resultado = await handler();
       if (resultado) {
-        const fin = performance.now();
+        const fin = Date.now();
         const duracion = fin - inicio;
 
         setMensajes((prev) => {
@@ -310,6 +355,20 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
     await procesarComando(txt.toLowerCase());
     setInputTexto("");
   };
+  function formatearDuracion(ms: number | undefined) {
+    if (ms === undefined) return "";
+
+    const totalSeconds = Math.floor(ms / 1000);
+    const horas = Math.floor(totalSeconds / 3600);
+    const minutos = Math.floor((totalSeconds % 3600) / 60);
+    const segundos = totalSeconds % 60;
+
+    const hh = horas.toString().padStart(2, "0");
+    const mm = minutos.toString().padStart(2, "0");
+    const ss = segundos.toString().padStart(2, "0");
+
+    return `${hh}:${mm}:${ss}`;
+  }
 
   return (
     <AnimatePresence>
@@ -351,12 +410,6 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
                 }`}
               >
                 {msg.texto}
-                {/* Pie de duración si es string con tiempo */}
-                {msg.duracionMs !== undefined && (
-                  <div className="mt-1 text-[10px] text-gray-500">
-                    ⏱️ {msg.duracionMs.toFixed(2)} ms.
-                  </div>
-                )}
               </div>
             ))}
             {/* 👇 Ref de scroll automático */}
