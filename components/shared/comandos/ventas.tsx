@@ -388,14 +388,19 @@ export async function handleFlowVenta(
           <div className="space-y-2">
             <p>💰 ¿Cuál es el método de pago?</p>
             <div className="flex gap-2">
-  <button className="btn-opciones" onClick={() => ctx.procesarEntradaDirecta?.("efectivo")}>
-    efectivo
-  </button>
-  <button className="btn-opciones" onClick={() => ctx.procesarEntradaDirecta?.("transferencia")}>
-    transferencia
-  </button>
-</div>
-
+              <button
+                className="btn-opciones"
+                onClick={() => ctx.procesarEntradaDirecta?.("efectivo")}
+              >
+                efectivo
+              </button>
+              <button
+                className="btn-opciones"
+                onClick={() => ctx.procesarEntradaDirecta?.("transferencia")}
+              >
+                transferencia
+              </button>
+            </div>
           </div>,
         );
       } else {

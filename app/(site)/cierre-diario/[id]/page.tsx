@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -62,6 +62,7 @@ export default function PaginaCierreDia() {
   const [ventaSeleccionada, setVentaSeleccionada] = useState<any | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [ventas, setVentas] = useState<any[]>([]);
+  const inicioCierreRef = useRef<number>(performance.now());
 
   useProtectedRoute();
 
@@ -205,10 +206,14 @@ export default function PaginaCierreDia() {
       }
 
       const endTime = performance.now(); // ⏱️ Fin
-      const duration = ((endTime - startTime) / 1000).toFixed(2);
+      const duracionParcial = ((endTime - startTime) / 1000).toFixed(2);
+      const duracionTotal = (
+        (endTime - inicioCierreRef.current) /
+        1000
+      ).toFixed(2);
 
       ToastSuccess({
-        message: `Cierre diario guardado correctamente en ${duration} segundos.`,
+        message: `✔️ Cierre diario guardado en ${duracionParcial}s (Tiempo total en vista: ${duracionTotal}s).`,
       });
 
       localStorage.removeItem("totalEfectivo");

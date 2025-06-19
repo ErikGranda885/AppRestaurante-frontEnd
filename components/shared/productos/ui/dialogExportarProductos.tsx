@@ -28,6 +28,7 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
+import { ToastSuccess } from "../../toast/toastSuccess";
 
 function formatDateToYMD(date: Date) {
   const year = date.getFullYear();
@@ -52,6 +53,7 @@ export function DialogExportarProductos({ open, onOpenChange }: Props) {
 
   const handleExportar = async () => {
     setLoading(true);
+    const startTime = performance.now(); // ⏱️ Inicio del cronómetro
     try {
       const desde = range.from ? formatDateToYMD(range.from) : undefined;
       const hasta = range.to ? formatDateToYMD(range.to) : undefined;
@@ -63,6 +65,7 @@ export function DialogExportarProductos({ open, onOpenChange }: Props) {
         tipoReporte,
         formato,
       });
+
       let url = "";
       if (formato === "excel") {
         url =
@@ -113,6 +116,12 @@ export function DialogExportarProductos({ open, onOpenChange }: Props) {
       link.download = nombreArchivo;
       link.click();
 
+      const endTime = performance.now(); // ⏱️ Fin del cronómetro
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+      ToastSuccess({
+        message: `📥 Reporte generado exitosamente en ${duration} segundos.`,
+      });
+
       onOpenChange(false);
     } catch (err) {
       console.error("Error al exportar:", err);
@@ -133,7 +142,7 @@ export function DialogExportarProductos({ open, onOpenChange }: Props) {
           {/* Tipo de reporte */}
           <div className="space-y-1">
             <Label className="text-sm">Tipo de reporte:</Label>
-            <Select value={tipoReporte} onValueChange={setTipoReporte} >
+            <Select value={tipoReporte} onValueChange={setTipoReporte}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Seleccionar tipo de reporte" />
               </SelectTrigger>

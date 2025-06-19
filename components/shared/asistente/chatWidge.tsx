@@ -13,6 +13,7 @@ import {
 import { FlowProducto, handleFlowProducto } from "../comandos/productos";
 import { allCommands } from "../comandos";
 import { FlowVenta, handleFlowVenta } from "../comandos/ventas";
+import { FlowReporte, handleFlowReporte } from "../comandos/reportes";
 
 declare global {
   interface Window {
@@ -95,6 +96,8 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
   );
   const [flowProducto, setFlowProducto] = useState<FlowProducto | null>(null);
   const [flowVenta, setFlowVenta] = useState<FlowVenta | null>(null);
+  const [flowGasto, setFlowGasto] = useState<any>(null); // si tienes ya definido FlowGasto usa ese tipo
+  const [flowReporte, setFlowReporte] = useState<FlowReporte | null>(null);
 
   const [escuchando, setEscuchando] = useState(false);
   const [inputTexto, setInputTexto] = useState("");
@@ -112,36 +115,59 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
     agregarMensajeBot: (t: string | React.ReactNode) =>
       agregarMensaje("asistente", t),
     establecerSugerenciasPendientes: setPendingSuggestions,
-    setFlow: (flow: FlowProducto | FlowVenta | null) => {
+    setFlow: (flow: FlowProducto | FlowVenta | FlowReporte | any | null) => {
       if (flow === null) {
         setFlowProducto(null);
         setFlowVenta(null);
-        setInicioFlujo(null); // 🧹 Limpia cuando termina el flujo
+        setFlowGasto(null);
+        setFlowReporte(null); // 🟠 AÑADIR ESTO
+        setInicioFlujo(null);
         return;
       }
 
-      const pasosDeVenta = [
-        "categoria",
-        "producto",
-        "cantidad",
-        "agregarOtro", // ✅ Agregado
-        "pago",
-        "montoEfectivo",
-        "comprobante",
+      const pasosDeVenta = ["a"];
+      const pasosDeGasto = ["a"];
+      const pasosDeReporte = [
+        "modulo",
+        "subreporte",
+        "formato",
         "confirmacion",
-      ];
+      ]; // 🟢
 
-      const esInicio = flow.step === "categoria";
+      const esInicioVenta =
+        pasosDeVenta.includes(flow.step) && flow.step === "categoria";
+      const esInicioGasto =
+        pasosDeGasto.includes(flow.step) && flow.step === "descripcion";
+      const esInicioReporte =
+        pasosDeReporte.includes(flow.step) && flow.step === "modulo"; // 🟢
+
       if (pasosDeVenta.includes(flow.step)) {
         setFlowVenta(flow as FlowVenta);
         setFlowProducto(null);
-        if (esInicio) setInicioFlujo(Date.now()); // 🟢 Marca inicio
+        setFlowGasto(null);
+        setFlowReporte(null);
+        if (esInicioVenta) setInicioFlujo(Date.now());
+      } else if (pasosDeGasto.includes(flow.step)) {
+        setFlowGasto(flow);
+        setFlowProducto(null);
+        setFlowVenta(null);
+        setFlowReporte(null);
+        if (esInicioGasto) setInicioFlujo(Date.now());
+      } else if (pasosDeReporte.includes(flow.step)) {
+        setFlowReporte(flow as FlowReporte); // ✅
+        setFlowProducto(null);
+        setFlowVenta(null);
+        setFlowGasto(null);
+        if (esInicioReporte) setInicioFlujo(Date.now());
       } else {
         setFlowProducto(flow as FlowProducto);
         setFlowVenta(null);
+        setFlowGasto(null);
+        setFlowReporte(null);
       }
     },
-    obtenerInicioFlujo: () => inicioFlujo, // ✅ ESTO FALTABA
+
+    obtenerInicioFlujo: () => inicioFlujo,
   };
 
   useEffect(() => () => detenerAzure(), []);
@@ -239,12 +265,28 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
 
     const manejarFlujoVenta = async (texto: string): Promise<boolean> => {
       if (!flowVenta) return false;
-
       setInputTexto("");
       const ref = flowVenta;
       await handleFlowVenta(texto, ref, contexto as any);
-
       if (!flowVenta) setPendingSuggestions(null);
+      return true;
+    };
+
+    const manejarFlujoProducto = async (texto: string): Promise<boolean> => {
+      if (!flowProducto) return false;
+      setInputTexto("");
+      const ref = flowProducto;
+      await handleFlowProducto(texto, ref, contexto as any);
+      if (!flowProducto) setPendingSuggestions(null);
+      return true;
+    };
+
+    const manejarFlujoReporte = async (texto: string): Promise<boolean> => {
+      if (!flowReporte) return false;
+      setInputTexto("");
+      const ref = flowReporte;
+      await handleFlowReporte(texto, ref, contexto as any);
+      if (!flowReporte) setPendingSuggestions(null);
       return true;
     };
 
@@ -252,6 +294,7 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
       () => manejarCancelacion(texto),
       () => manejarFlujoProducto(texto),
       () => manejarFlujoVenta(texto),
+      () => manejarFlujoReporte(texto), // ✅ nuevo flujo añadido aquí
       () => manejarSugerencia(textoNormalizado),
       () => manejarComando(texto),
       () => manejarCierreAsistente(texto),
@@ -267,7 +310,6 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
 
         setMensajes((prev) => {
           const copy = [...prev];
-          // Busca el último mensaje del asistente que no tenga duración aún
           for (let i = copy.length - 1; i >= indexAntes; i--) {
             if (
               copy[i].tipo === "asistente" &&

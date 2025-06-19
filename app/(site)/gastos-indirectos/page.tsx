@@ -75,6 +75,9 @@ export default function Page() {
   const [abrirEditar, setAbrirEditar] = useState(false);
   const [accionGasto, setAccionGasto] = useState<AccionGasto | null>(null);
   const [estadoSeleccionado, setEstadoSeleccionado] = useState<string>("");
+  const [inicioGastoTimestamp, setInicioGastoTimestamp] = useState<
+    number | null
+  >(null);
   const {
     gastos,
     crearGasto,
@@ -146,17 +149,18 @@ export default function Page() {
   }
 
   async function handleEliminarGasto(id: number) {
-    const startTime = performance.now(); // ⏱️ Inicio
-
     try {
       await eliminarGasto(id);
-
-      const endTime = performance.now(); // ⏱️ Fin
-      const duration = ((endTime - startTime) / 1000).toFixed(2);
+      const startTime = performance.now();
+      const endTime = performance.now();
+      const duration = inicioGastoTimestamp
+        ? ((endTime - inicioGastoTimestamp) / 1000).toFixed(2)
+        : ((endTime - startTime) / 1000).toFixed(2); // fallback
 
       ToastSuccess({
         message: `Registro eliminado exitosamente en ${duration} segundos.`,
       });
+      setInicioGastoTimestamp(null);
     } catch (err) {
       ToastError({ message: "Error al eliminar gasto" });
     }
@@ -294,7 +298,10 @@ export default function Page() {
         <div className="mb-5 flex items-center justify-between">
           <GeneralDialog
             open={abrirCrear}
-            onOpenChange={setAbrirCrear}
+            onOpenChange={(open) => {
+              setAbrirCrear(open);
+              if (open) setInicioGastoTimestamp(performance.now());
+            }}
             triggerText={
               <>
                 <Plus className="h-4 w-4 font-light" /> Añadir nuevo gasto
@@ -305,6 +312,8 @@ export default function Page() {
             submitText="Registrar Gasto"
           >
             <CreateGastoForm
+              inicioGastoTimestamp={inicioGastoTimestamp}
+              resetearInicioGasto={() => setInicioGastoTimestamp(null)}
               onSuccess={() => {
                 setAbrirCrear(false);
               }}
@@ -491,6 +500,7 @@ export default function Page() {
           open={abrirEditar}
           onOpenChange={(open) => {
             setAbrirEditar(open);
+            if (open) setInicioGastoTimestamp(performance.now());
             if (!open) setGastoEditar(null);
           }}
           title="Editar Gasto"

@@ -3,12 +3,14 @@ import { comandosDeGastos } from "./gastos";
 import { comandosDeProductos } from "./productos";
 import { comandosDeVentas } from "./ventas";
 import { comandosDeTransformaciones } from "./transformaciones";
+import { comandoGenerarReporte } from "./reportes"; // ✅ importar comando
 
 export const allCommands = [
   ...comandosDeProductos,
   ...comandosDeVentas,
   ...comandosDeGastos,
   ...comandosDeTransformaciones,
+  comandoGenerarReporte, // ✅ integrar nuevo comando
   {
     nombre: "verComandos",
     patron: /\b(ver comandos|mostrar comandos|ayuda|qué puedo decir)\b/i,
@@ -40,6 +42,7 @@ const ejemplos: Record<string, string> = {
   // 💵 Ventas
   ventasHoy: "¿Cuánto se vendió hoy?",
   iniciarVenta: "Registrar venta",
+
   // 💸 Gastos
   registrarGasto: "Registrar gasto 5.75 por pan",
   gastosHoy: "¿Cuánto gasté hoy?",
@@ -47,6 +50,9 @@ const ejemplos: Record<string, string> = {
   // 🍳 Transformaciones
   realizarTransformacion: "Transformar 4 de shawarma",
   transformacionesHoy: "¿Qué transformaciones se hicieron hoy?",
+
+  // 🧾 Reportes
+  generarReporte: "Generar reporte",
 
   // 🧠 Ayuda
   verComandos: "Ver comandos",

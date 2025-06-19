@@ -36,9 +36,15 @@ type GastoFormValues = z.infer<typeof gastoSchema>;
 
 export interface CreateGastoFormProps {
   onSuccess?: () => void;
+  inicioGastoTimestamp?: number | null;
+  resetearInicioGasto?: () => void;
 }
 
-export function CreateGastoForm({ onSuccess }: CreateGastoFormProps) {
+export function CreateGastoForm({
+  onSuccess,
+  inicioGastoTimestamp,
+  resetearInicioGasto,
+}: CreateGastoFormProps) {
   const { ventasConfig } = useConfiguracionesVentas();
   const [montoTexto, setMontoTexto] = React.useState<string>("");
   const form = useForm<GastoFormValues>({
@@ -53,7 +59,7 @@ export function CreateGastoForm({ onSuccess }: CreateGastoFormProps) {
   const { crearGasto } = useGastos();
 
   const onSubmit = async (values: GastoFormValues) => {
-    const startTime = performance.now(); // ⏱️ Inicio
+    const startTime = inicioGastoTimestamp ?? performance.now(); // usa el inicio externo si existe
 
     try {
       const now = new Date();
@@ -83,6 +89,7 @@ export function CreateGastoForm({ onSuccess }: CreateGastoFormProps) {
 
       form.reset();
       onSuccess && onSuccess();
+      resetearInicioGasto && resetearInicioGasto(); // resetea en el padre
     } catch (error) {
       ToastError({
         message:

@@ -79,6 +79,10 @@ export default function Page() {
   const [tempTable, setTempTable] = useState(tableInfo);
   const detenerCamaraRef = useRef<() => void>(() => {});
 
+  const [inicioVentaTimestamp, setInicioVentaTimestamp] = useState<
+    number | null
+  >(null);
+
   // Funciones para editar información del cliente
   const handleOpenCustomerForm = () => {
     setTempName(customerName);
@@ -200,6 +204,11 @@ export default function Page() {
     if (!found) {
       incrementLockRef.current = false;
       return;
+    }
+
+    // 🟡 Inicia el conteo desde el primer producto agregado
+    if (orderItems.length === 0 && inicioVentaTimestamp === null) {
+      setInicioVentaTimestamp(performance.now());
     }
 
     setOrderItems((prev) => {
@@ -339,7 +348,6 @@ export default function Page() {
       return;
     }
 
-    // Validación para transferencia
     if (
       metodoPago === "transferencia" &&
       (!comprobanteNumero || !comprobanteImagen)
@@ -351,7 +359,7 @@ export default function Page() {
       return;
     }
 
-    const startTime = performance.now(); // ⏱️ inicio
+    const startTime = performance.now(); // inicio del proceso de guardado
 
     try {
       let urlImg = "";
@@ -449,11 +457,13 @@ export default function Page() {
         }
       }
 
-      const endTime = performance.now(); // ⏱️ fin
-      const duration = ((endTime - startTime) / 1000).toFixed(2); // segundos
+      const endTime = performance.now(); // fin del proceso
+      const duracionTotal = inicioVentaTimestamp
+        ? ((endTime - inicioVentaTimestamp) / 1000).toFixed(2)
+        : "N/A";
 
       ToastSuccess({
-        message: `Orden guardada y stock consumido exitosamente en ${duration} segundos.`,
+        message: `✅ Orden guardada exitosamente en ${duracionTotal} segundos (desde primer producto).`,
       });
 
       console.log("🔴 Emitiendo evento productos-actualizados");
@@ -464,6 +474,7 @@ export default function Page() {
       setComprobanteImagen(null);
       setPagoEfectivoConfirmado(false);
       setPagoTransferenciaConfirmado(false);
+      setInicioVentaTimestamp(null); // reset
     } catch (error: any) {
       console.error(error);
       ToastError({
