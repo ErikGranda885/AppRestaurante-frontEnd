@@ -9,7 +9,7 @@ import { useUsuarioActual } from "@/hooks/compras/useUsuarioActual";
 import { useUltimoIdCompra } from "@/hooks/compras/useUltimoIdCompra";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { validarEquivalenciaActiva } from "@/hooks/compras/validarEquivalenciaActiva";
-import {  IDetCompra } from "@/lib/types";
+import { IDetCompra } from "@/lib/types";
 
 const DIAS_UMBRAL_POR_VENCER = 30;
 
@@ -38,6 +38,7 @@ export const useNuevaCompra = () => {
     prec_uni_dcom: z.number().nullable().optional(),
     fech_ven_prod_dcom: z.string().nullable().optional(),
     equivalenciaSeleccionada: z.string().optional(),
+    dias_credito: z.string().optional(),
   });
 
   const methods = useForm({
@@ -51,6 +52,7 @@ export const useNuevaCompra = () => {
       prec_uni_dcom: 0,
       fech_ven_prod_dcom: null,
       equivalenciaSeleccionada: "",
+      dias_credito: "",
     },
     resolver: zodResolver(schema),
   });

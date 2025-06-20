@@ -271,7 +271,7 @@ export default function PaginaProductos() {
           <p className="text-sm text-muted-foreground">
             Aquí puedes gestionar los productos de tu negocio.
           </p>
-          <div className="pt-4" />
+          <div className="pt-2" />
           {/* Sección de acciones y búsqueda */}
           <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             {/* Fila 1 (móvil) */}

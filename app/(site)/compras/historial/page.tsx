@@ -13,7 +13,6 @@ import {
   CloudDownload,
   Plus,
   Search,
-  Upload,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import {
@@ -29,15 +28,8 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ToastError } from "@/components/shared/toast/toastError";
-import { Separator } from "@/components/ui/separator";
 import { DateRangeFilter } from "@/components/shared/ventas/ui/dateRangeFilter";
 import { DateRange } from "react-day-picker";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
@@ -202,6 +194,48 @@ export default function Page() {
         }
       },
     },
+    {
+      header: "Días de vencimiento",
+      accessorKey: "fech_venc_comp",
+      cell: ({ row }: any) => {
+        const formaPago = row.original.form_pag_comp?.toLowerCase();
+        const fechaVenc = row.original.fech_venc_comp;
+
+        if (formaPago !== "credito" || !fechaVenc) {
+          return <span className="text-muted-foreground">—</span>;
+        }
+
+        const hoy = new Date();
+        const venc = new Date(fechaVenc);
+        venc.setHours(0, 0, 0, 0);
+        hoy.setHours(0, 0, 0, 0);
+
+        const diasRestantes = Math.ceil(
+          (venc.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24),
+        );
+
+        let color = "bg-green-500";
+        if (diasRestantes <= 3 && diasRestantes > 0) color = "bg-yellow-500";
+        if (diasRestantes <= 0) color = "bg-red-500";
+
+        return (
+          <div className="flex items-center gap-2 leading-tight">
+            <div className={`h-3 w-3 rounded-full ${color}`} />
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">
+                {new Date(fechaVenc).toLocaleDateString("es-EC")}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {diasRestantes <= 0
+                  ? `Vencido`
+                  : `${diasRestantes} día${diasRestantes === 1 ? "" : "s"} restantes`}
+              </span>
+            </div>
+          </div>
+        );
+      },
+    },
+
     {
       header: "Total",
       accessorKey: "tot_comp",
@@ -382,8 +416,8 @@ export default function Page() {
         </div>
 
         <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#111315]">
-          <div className="flex flex-col gap-4 pt-4">
-            <div className="flex flex-col gap-4 px-6 pt-6 md:flex-row md:justify-between">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 px-6 pt-2 md:flex-row md:justify-between">
               {/* Volumen total de compras */}
               <div className="flex-1">
                 <MetricCard
@@ -408,32 +442,52 @@ export default function Page() {
                   onClick={() => setFiltroPendientesPago(false)}
                 />
               </div>
-              {/* Items promedio de compras */}
+              {/* Facturas vencidas */}
               <div className="flex-1">
                 <MetricCard
-                  titulo="Ítems Promedio por Compra"
-                  valor={promedioItems}
+                  titulo="Facturas Vencidas"
+                  valor={compras
+                    .filter((c) => {
+                      const venc = new Date(c.fech_venc_comp);
+                      const hoy = new Date();
+                      venc.setHours(0, 0, 0, 0);
+                      hoy.setHours(0, 0, 0, 0);
+                      return (
+                        c.form_pag_comp?.toLowerCase() === "credito" &&
+                        venc.getTime() < hoy.getTime()
+                      );
+                    })
+                    .length.toString()}
                   porcentaje=""
-                  periodo="Promedio"
-                  iconColor="text-purple-400"
-                  badgeColorClass="bg-purple-100 dark:bg-purple-800/30 text-purple-500 dark:text-purple-400"
-                  onClick={() => {}}
+                  periodo="Total vencidas"
+                  iconColor="text-red-500"
+                  badgeColorClass="bg-red-100 dark:bg-red-800/30 text-red-500 dark:text-red-400"
+                  onClick={() => {
+                    setFiltroPendientesPago(false); // puedes ajustar si necesitas otro filtro
+                  }}
                 />
               </div>
 
               <div className="flex-1">
-                <div
+                <MetricCard
+                  titulo="Pendientes de pago"
+                  valor={totalPendientesPago.toString()}
+                  porcentaje=""
+                  periodo="Total"
+                  iconColor="text-yellow-500"
+                  badgeColorClass={`${
+                    filtroPendientesPago
+                      ? "border-yellow-400 bg-yellow-50 dark:bg-yellow-900/10"
+                      : "bg-blanco dark:border-border dark:bg-[#1a1a1a]"
+                  }`}
                   onClick={() => {
                     setFiltroPendientesPago((prev) => {
                       const nuevoEstado = !prev;
-
                       if (nuevoEstado) {
-                        // Si se activa el filtro, establecer la fecha de la compra pendiente más reciente
                         const pendientes = compras.filter(
                           (c) =>
                             c.estado_pag_comp.toLowerCase() === "pendiente",
                         );
-
                         if (pendientes.length > 0) {
                           const fechas = pendientes.map(
                             (c) => new Date(c.fech_comp),
@@ -444,68 +498,32 @@ export default function Page() {
                               fechas.map((d) => d.getTime()),
                             ),
                           );
-
                           setDateRange({
                             from: startOfDay(fechaMax),
                             to: endOfDay(fechaMax),
                           });
-
                           setLabelQuickRange("Automático");
                         }
                       }
-
                       return nuevoEstado;
                     });
                   }}
-                  className={`group flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg ${
-                    filtroPendientesPago
-                      ? "border-yellow-400 bg-yellow-50 dark:bg-yellow-900/10"
-                      : "bg-blanco dark:border-border dark:bg-[#1a1a1a]"
-                  }`}
-                >
-                  <div className="flex flex-col justify-between p-0 sm:flex-row sm:items-center">
-                    <div className="flex-1">
-                      <h3 className="text-sm font-light text-secondary-foreground">
-                        Pendientes de pago
-                      </h3>
-                      <div className="mt-2 flex items-center gap-5">
-                        <span className="text-3xl font-extrabold text-gray-800 dark:text-white">
+                  customIcon={
+                    totalPendientesPago > 0 ? (
+                      <div
+                        className="group relative cursor-pointer transition-transform duration-300 hover:scale-110"
+                        title={`${totalPendientesPago} compras pendientes de pago`}
+                      >
+                        <AlertTriangle className="h-6 w-6 animate-pulse text-yellow-500" />
+                        <span className="absolute -right-1 -top-1 flex h-4 w-4 animate-bounce items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
                           {totalPendientesPago}
                         </span>
                       </div>
-                      <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">
-                        Total
-                      </p>
-                    </div>
-
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="mt-4 flex flex-shrink-0 items-center justify-center sm:mt-0">
-                            {totalPendientesPago > 0 ? (
-                              <div
-                                className="group relative cursor-pointer transition-transform duration-300 hover:scale-110"
-                                title={`${totalPendientesPago} compras pendientes de pago`}
-                              >
-                                <AlertTriangle className="h-7 w-7 animate-pulse text-yellow-500" />
-                                <span className="absolute -right-1 -top-1 flex h-4 w-4 animate-bounce items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
-                                  {totalPendientesPago}
-                                </span>
-                              </div>
-                            ) : (
-                              <CheckCircle className="h-6 w-6 text-green-500 transition-transform group-hover:scale-110" />
-                            )}
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="text-xs">
-                          {totalPendientesPago > 0
-                            ? `${totalPendientesPago} compras pendientes de pago`
-                            : "No hay pendientes de pago"}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                </div>
+                    ) : (
+                      <CheckCircle className="h-6 w-6 text-green-500 transition-transform group-hover:scale-110" />
+                    )
+                  }
+                />
               </div>
             </div>
           </div>

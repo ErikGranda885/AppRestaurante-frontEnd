@@ -357,7 +357,7 @@ export default function Page() {
       </div>
 
       <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#111315]">
-        <div className="flex flex-col gap-4 px-6 pt-6 md:flex-row md:justify-between">
+        <div className="flex flex-col gap-4 px-6 md:flex-row md:justify-between">
           <Card
             className={`bg-blanco relative flex-1 cursor-pointer rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-lg dark:border-border dark:bg-[#1a1a1a] ${["pendientes", "cerrado"].includes(estadoSeleccionado) ? "ring-2 ring-secondary" : ""} group`}
           >

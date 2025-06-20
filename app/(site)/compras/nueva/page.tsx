@@ -28,6 +28,13 @@ import { CampoProductoCompra } from "@/components/shared/compras/ui/campoProduct
 import { useNuevaCompra } from "@/hooks/compras/useNuevaCompra";
 import { SERVICIOS_COMPRAS } from "@/services/compras.service";
 import { socket } from "@/lib/socket";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 export interface ProductoOption {
   value: string;
   nombre: string;
@@ -71,6 +78,10 @@ export default function NuevaCompraPage() {
   const cantidad = watch("cant_dcom");
   const precioUnitario = watch("prec_uni_dcom");
   const fechaVencimiento = watch("fech_ven_prod_dcom");
+
+  useEffect(() => {
+    methods.register("dias_credito");
+  }, [methods]);
 
   useEffect(() => {
     const productoSeleccionado = productosOptions.find(
@@ -335,6 +346,10 @@ export default function NuevaCompraPage() {
       tipo_doc_comp: tipoDocumentoSeleccionado?.label || "Factura",
       num_doc_comp: formData.num_doc_comp,
       form_pag_comp: formData.forma_pago_comp,
+      dias_credito:
+        formData.forma_pago_comp === "credito"
+          ? Number(formData.dias_credito)
+          : null,
       fech_comp: new Date().toISOString(),
       fech_venc_comp: new Date().toISOString(),
       estado_comp: "pendiente",
@@ -383,40 +398,88 @@ export default function NuevaCompraPage() {
           </div>
 
           {/* Detalle del vendedor */}
-          <div className="mt-2 w-full">
+          <div className="mt-2">
             <div className="mb-2 flex items-center">
               <ShoppingBag className="mr-2 h-4 w-4" />
               <h3 className="font-semibold">Detalle de la venta</h3>
             </div>
 
-            <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
-              <CampoProveedor
-                control={control}
-                name="proveedor"
-                label="Proveedor"
-              />
-              <CampoTipoDocumento
-                control={control}
-                name="tipo_doc_comp"
-                label="Tipo de documento"
-              />
-              <CampoTexto
-                control={control}
-                name="num_doc_comp"
-                placeholder="Ingresa el número de la factura"
-                label="Número de documento"
-              />
-              <CampoFormaPago
-                control={control}
-                name="forma_pago_comp"
-                label="Forma de pago"
-              />
-              <CampoTextArea
-                control={control}
-                name="observ_comp"
-                label="Observaciones"
-                placeholder="Escriba alguna observación relevante"
-              />
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-6">
+              <div className="col-span-1">
+                <CampoProveedor
+                  control={control}
+                  name="proveedor"
+                  label="Proveedor"
+                />
+              </div>
+
+              <div className="col-span-1">
+                <CampoTipoDocumento
+                  control={control}
+                  name="tipo_doc_comp"
+                  label="Tipo de documento"
+                />
+              </div>
+
+              <div className="col-span-1">
+                <CampoTexto
+                  control={control}
+                  name="num_doc_comp"
+                  placeholder="Ingresa el número de la factura"
+                  label="Número de documento"
+                />
+              </div>
+
+              <div className="col-span-1">
+                <CampoFormaPago
+                  control={control}
+                  name="forma_pago_comp"
+                  label="Forma de pago"
+                />
+              </div>
+
+              {watch("forma_pago_comp") === "credito" ? (
+                <>
+                  <div className="col-span-1">
+                    <label className="mb-1 block text-sm font-medium text-foreground">
+                      Días de crédito
+                    </label>
+                    <Select
+                      name="dias_credito"
+                      value={String(watch("dias_credito") ?? "")}
+                      onValueChange={(value) => setValue("dias_credito", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona días de crédito" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 30 }, (_, i) => (
+                          <SelectItem key={i + 1} value={(i + 1).toString()}>
+                            {i + 1} días
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-1">
+                    <CampoTextArea
+                      control={control}
+                      name="observ_comp"
+                      label="Observaciones"
+                      placeholder="Escriba alguna observación relevante"
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="col-span-2">
+                  <CampoTextArea
+                    control={control}
+                    name="observ_comp"
+                    label="Observaciones"
+                    placeholder="Escriba alguna observación relevante"
+                  />
+                </div>
+              )}
             </div>
           </div>
 

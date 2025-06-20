@@ -292,7 +292,7 @@ export default function PaginaCategorias() {
 
         <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#111315]">
           {/* Tarjetas resumen */}
-          <div className="flex flex-col gap-4 px-6 pt-6 md:flex-row md:justify-between">
+          <div className="flex flex-col gap-4 px-6  md:flex-row md:justify-between">
             {/* Tarjeta: Categorías Totales */}
             <Card
               onClick={() => handleClickTarjeta("")}

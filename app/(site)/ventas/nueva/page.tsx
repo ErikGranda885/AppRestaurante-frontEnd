@@ -469,12 +469,22 @@ export default function Page() {
       console.log("🔴 Emitiendo evento productos-actualizados");
       socket.emit("productos-actualizados");
 
+      // 🔁 Limpiar todos los estados
       setOrderItems([]);
+      setSelectedCategory("Todos");
+      setSearchQuery("");
+      setInicioVentaTimestamp(null);
       setComprobanteNumero("");
       setComprobanteImagen(null);
+      setMetodoPago("efectivo");
       setPagoEfectivoConfirmado(false);
       setPagoTransferenciaConfirmado(false);
-      setInicioVentaTimestamp(null); // reset
+      setMostarEfectivoModal(false);
+      setEfectivoRecibido(null);
+      setEfectivoCambio(0);
+      setFotoTomada(null);
+      setCustomerName("Erik Granda");
+      setTableInfo("Orden para llevar");
     } catch (error: any) {
       console.error(error);
       ToastError({

@@ -365,7 +365,7 @@ export default function PaginaUsuarios() {
       >
         <div className="h-full w-full space-y-5 rounded-lg bg-[hsl(var(--card))] dark:bg-[#111315]">
           {/* Encabezado + filtros */}
-          <div className="px-4 pt-6 sm:px-6">
+          <div className="px-4  sm:px-6">
             <h1 className="text-xl font-bold">Usuarios</h1>
             <p className="text-sm text-muted-foreground">
               Aquí puedes gestionar los usuarios de tu negocio.

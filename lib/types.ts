@@ -90,6 +90,7 @@ export interface ICompra {
   obs_pago_efec_comp?: string;
   num_tra_comprob_comp?: string;
   comprob_tran_comp?: string;
+  dias_credito?: number | null;
 }
 
 export interface IDetReceta {
