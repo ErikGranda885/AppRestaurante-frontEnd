@@ -1,15 +1,6 @@
 import React from "react";
 import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
-
-export type FlowReporte = {
-  step: "modulo" | "subreporte" | "formato" | "confirmacion";
-  data: {
-    modulo?: "productos" | "produccion" | "compras" | "ventas" | "gastos";
-    subreporte?: string;
-    formato?: "excel" | "pdf";
-    inicioFlujo?: number;
-  };
-};
+import { FlowReporte } from "../asistente/flujos/flujos";
 
 const subreportesPorModulo: Record<string, string[]> = {
   productos: ["inventario de insumos", "productos transformados"],

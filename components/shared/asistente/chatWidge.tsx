@@ -4,23 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { X, Mic, MicOff, Send, Bot } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import {
-  SpeechConfig,
-  AudioConfig,
-  SpeechRecognizer,
-  ResultReason,
-} from "microsoft-cognitiveservices-speech-sdk";
-import { FlowProducto, handleFlowProducto } from "../comandos/productos";
-import { allCommands } from "../comandos";
-import { FlowVenta, handleFlowVenta } from "../comandos/ventas";
-import { FlowReporte, handleFlowReporte } from "../comandos/reportes";
-
-declare global {
-  interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
-  }
-}
+import { useChatContext } from "@/hooks/asistente/useChatContext";
+import { useProcesadorComandos } from "@/hooks/asistente/useProcesadorComandos";
+import { useSpeechRecognizer } from "@/hooks/asistente/useSpeechRecognizer";
+import { MensajeBot } from "./mensajeBot";
 
 interface ChatWidgetProps {
   onClose: () => void;
@@ -38,6 +25,102 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
   const finalRef = useRef<HTMLDivElement | null>(null);
   const [comandosMostrados, setComandosMostrados] = useState(false);
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
+  const [flowProducto, setFlowProducto] = useState<any>(null);
+  const [flowVenta, setFlowVenta] = useState<any>(null);
+  const [flowGasto, setFlowGasto] = useState<any>(null);
+  const [flowReporte, setFlowReporte] = useState<any>(null);
+  const [inicioFlujo, setInicioFlujo] = useState<number | null>(null);
+  const [pendingSuggestions, setPendingSuggestions] = useState<string[] | null>(
+    null,
+  );
+  const [escuchando, setEscuchando] = useState(false);
+  const [inputTexto, setInputTexto] = useState("");
+
+  const agregarMensaje = (
+    tipo: "usuario" | "asistente",
+    texto: string | React.ReactNode,
+    leer = true,
+    duracionMs?: number,
+  ) => {
+    setMensajes((prev) => [...prev, { tipo, texto, leer, duracionMs }]);
+
+    const debeLeer =
+      tipo === "asistente" &&
+      typeof texto === "string" &&
+      leer &&
+      texto.length < 200 &&
+      !texto.includes("\n");
+
+    if (debeLeer) {
+      const u = new SpeechSynthesisUtterance(texto);
+      u.lang = "es-ES";
+      window.speechSynthesis.speak(u);
+    }
+  };
+
+  const { crearContexto } = useChatContext({
+    setFlowProducto,
+    setFlowVenta,
+    setFlowGasto,
+    setFlowReporte,
+    setInicioFlujo,
+    setPendingSuggestions,
+  });
+
+  const contexto = crearContexto(
+    (t: string | React.ReactNode) => agregarMensaje("asistente", t),
+    inicioFlujo,
+  );
+
+  const { procesarComando } = useProcesadorComandos({
+    flowProducto,
+    flowVenta,
+    flowReporte,
+    agregarMensaje,
+    pendingSuggestions,
+    setPendingSuggestions,
+    contexto,
+    mensajes,
+    setMensajes,
+  });
+
+  const { iniciar, detener } = useSpeechRecognizer({
+    procesarTextoReconocido: async (txt: string) => {
+      agregarMensaje("usuario", txt);
+      await procesarComando(txt.toLowerCase());
+      setInputTexto("");
+    },
+    setTextoReconocido: setInputTexto,
+  });
+
+  useEffect(() => {
+    const listener = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.classList.contains("btn-opciones")) {
+        const texto = target.textContent?.trim().toLowerCase();
+        if (texto) {
+          document.querySelectorAll(".btn-opciones").forEach((el) => {
+            el.classList.add("pointer-events-none", "opacity-50");
+          });
+          agregarMensaje("usuario", texto);
+          procesarComando(texto);
+        }
+      }
+    };
+    document.addEventListener("click", listener);
+    return () => document.removeEventListener("click", listener);
+  }, []);
+
+  useEffect(() => {
+    setTimeout(() => {
+      finalRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 0);
+  }, [mensajes]);
+
+  useEffect(() => {
+    setTimeout(() => mostrarMensajeBienvenida(), 300);
+    return () => detener();
+  }, [comandosMostrados]);
 
   const mostrarMensajeBienvenida = () => {
     setMensajes((prev) => {
@@ -69,7 +152,6 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
         ),
       };
 
-      // Reemplaza solo si ya existe un mensaje de bienvenida (primero), si no, agrega
       if (prev.length > 0 && typeof prev[0].texto !== "string") {
         return [nuevaBienvenida, ...prev.slice(1)];
       } else {
@@ -78,317 +160,7 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
     });
   };
 
-  useEffect(() => {
-    mostrarMensajeBienvenida();
-    return () => detenerAzure();
-  }, [comandosMostrados]);
-
-  useEffect(() => {
-    const delay = setTimeout(() => {
-      finalRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 0);
-
-    return () => clearTimeout(delay);
-  }, [mensajes]);
-  const [inicioFlujo, setInicioFlujo] = useState<number | null>(null);
-  const [pendingSuggestions, setPendingSuggestions] = useState<string[] | null>(
-    null,
-  );
-  const [flowProducto, setFlowProducto] = useState<FlowProducto | null>(null);
-  const [flowVenta, setFlowVenta] = useState<FlowVenta | null>(null);
-  const [flowGasto, setFlowGasto] = useState<any>(null); // si tienes ya definido FlowGasto usa ese tipo
-  const [flowReporte, setFlowReporte] = useState<FlowReporte | null>(null);
-
-  const [escuchando, setEscuchando] = useState(false);
-  const [inputTexto, setInputTexto] = useState("");
-  const reconocimientoRef = useRef<SpeechRecognizer | null>(null);
-  const silencioTimer = useRef<number | null>(null);
-
-  const normalize = (s: string) =>
-    s
-      .toLowerCase()
-      .replace(/[-.,!?¡¿]/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
-
-  const contexto = {
-    agregarMensajeBot: (t: string | React.ReactNode) =>
-      agregarMensaje("asistente", t),
-    establecerSugerenciasPendientes: setPendingSuggestions,
-    setFlow: (flow: FlowProducto | FlowVenta | FlowReporte | any | null) => {
-      if (flow === null) {
-        setFlowProducto(null);
-        setFlowVenta(null);
-        setFlowGasto(null);
-        setFlowReporte(null); // 🟠 AÑADIR ESTO
-        setInicioFlujo(null);
-        return;
-      }
-
-      const pasosDeVenta = ["a"];
-      const pasosDeGasto = ["a"];
-      const pasosDeReporte = [
-        "modulo",
-        "subreporte",
-        "formato",
-        "confirmacion",
-      ]; // 🟢
-
-      const esInicioVenta =
-        pasosDeVenta.includes(flow.step) && flow.step === "categoria";
-      const esInicioGasto =
-        pasosDeGasto.includes(flow.step) && flow.step === "descripcion";
-      const esInicioReporte =
-        pasosDeReporte.includes(flow.step) && flow.step === "modulo"; // 🟢
-
-      if (pasosDeVenta.includes(flow.step)) {
-        setFlowVenta(flow as FlowVenta);
-        setFlowProducto(null);
-        setFlowGasto(null);
-        setFlowReporte(null);
-        if (esInicioVenta) setInicioFlujo(Date.now());
-      } else if (pasosDeGasto.includes(flow.step)) {
-        setFlowGasto(flow);
-        setFlowProducto(null);
-        setFlowVenta(null);
-        setFlowReporte(null);
-        if (esInicioGasto) setInicioFlujo(Date.now());
-      } else if (pasosDeReporte.includes(flow.step)) {
-        setFlowReporte(flow as FlowReporte); // ✅
-        setFlowProducto(null);
-        setFlowVenta(null);
-        setFlowGasto(null);
-        if (esInicioReporte) setInicioFlujo(Date.now());
-      } else {
-        setFlowProducto(flow as FlowProducto);
-        setFlowVenta(null);
-        setFlowGasto(null);
-        setFlowReporte(null);
-      }
-    },
-
-    obtenerInicioFlujo: () => inicioFlujo,
-  };
-
-  useEffect(() => () => detenerAzure(), []);
-
-  const resetSilenceTimer = () => {
-    if (silencioTimer.current) clearTimeout(silencioTimer.current);
-    silencioTimer.current = window.setTimeout(handleSilence, 2000);
-  };
-  const handleSilence = async () => {
-    const txt = inputTexto.trim().replace(/[.,!?¡¿]$/g, "");
-    if (txt) {
-      agregarMensaje("usuario", txt);
-      await procesarComando(txt.toLowerCase());
-      setInputTexto("");
-    }
-    detenerAzure();
-  };
-
-  const iniciarAzure = () => {
-    window.speechSynthesis.cancel();
-    const speechConfig = SpeechConfig.fromSubscription(
-      process.env.NEXT_PUBLIC_AZURE_SPEECH_KEY!,
-      process.env.NEXT_PUBLIC_AZURE_SPEECH_REGION!,
-    );
-    speechConfig.speechRecognitionLanguage = "es-ES";
-    const audioConfig = AudioConfig.fromDefaultMicrophoneInput();
-    const recognizer = new SpeechRecognizer(speechConfig, audioConfig);
-    recognizer.recognizing = (_s, e) => {
-      setInputTexto(e.result.text);
-      resetSilenceTimer();
-    };
-    recognizer.recognized = async (_s, e) => {
-      if (e.result.reason === ResultReason.RecognizedSpeech) {
-        const raw = e.result.text.trim();
-        const txt = raw.replace(/[.,!?¡¿]$/g, "");
-        if (txt) {
-          setInputTexto("");
-          agregarMensaje("usuario", txt);
-          await procesarComando(txt.toLowerCase());
-          detenerAzure();
-        }
-      }
-      if (silencioTimer.current) clearTimeout(silencioTimer.current);
-      silencioTimer.current = null;
-    };
-    recognizer.canceled = () => detenerAzure();
-    recognizer.sessionStopped = () => detenerAzure();
-    recognizer.startContinuousRecognitionAsync();
-    reconocimientoRef.current = recognizer;
-    setEscuchando(true);
-  };
-
-  const detenerAzure = () => {
-    if (silencioTimer.current) {
-      clearTimeout(silencioTimer.current);
-      silencioTimer.current = null;
-    }
-    if (reconocimientoRef.current) {
-      reconocimientoRef.current.stopContinuousRecognitionAsync(
-        () => reconocimientoRef.current?.close(),
-        () => {},
-      );
-      reconocimientoRef.current = null;
-    }
-    setEscuchando(false);
-  };
-
-  const toggleGrabacion = () => (escuchando ? detenerAzure() : iniciarAzure());
-
-  const agregarMensaje = (
-    tipo: "usuario" | "asistente",
-    texto: string | React.ReactNode,
-    leer = true,
-    duracionMs?: number,
-  ) => {
-    setMensajes((prev) => [...prev, { tipo, texto, leer, duracionMs }]);
-
-    const debeLeer =
-      tipo === "asistente" &&
-      typeof texto === "string" &&
-      leer &&
-      texto.length < 200 &&
-      !texto.includes("\n");
-
-    if (debeLeer) {
-      const u = new SpeechSynthesisUtterance(texto);
-      u.lang = "es-ES";
-      window.speechSynthesis.speak(u);
-    }
-  };
-
-  const procesarComando = async (texto: string) => {
-    const textoNormalizado = normalize(texto);
-    const inicio = Date.now();
-
-    const manejarFlujoVenta = async (texto: string): Promise<boolean> => {
-      if (!flowVenta) return false;
-      setInputTexto("");
-      const ref = flowVenta;
-      await handleFlowVenta(texto, ref, contexto as any);
-      if (!flowVenta) setPendingSuggestions(null);
-      return true;
-    };
-
-    const manejarFlujoProducto = async (texto: string): Promise<boolean> => {
-      if (!flowProducto) return false;
-      setInputTexto("");
-      const ref = flowProducto;
-      await handleFlowProducto(texto, ref, contexto as any);
-      if (!flowProducto) setPendingSuggestions(null);
-      return true;
-    };
-
-    const manejarFlujoReporte = async (texto: string): Promise<boolean> => {
-      if (!flowReporte) return false;
-      setInputTexto("");
-      const ref = flowReporte;
-      await handleFlowReporte(texto, ref, contexto as any);
-      if (!flowReporte) setPendingSuggestions(null);
-      return true;
-    };
-
-    const handlers: (() => Promise<boolean> | boolean)[] = [
-      () => manejarCancelacion(texto),
-      () => manejarFlujoProducto(texto),
-      () => manejarFlujoVenta(texto),
-      () => manejarFlujoReporte(texto), // ✅ nuevo flujo añadido aquí
-      () => manejarSugerencia(textoNormalizado),
-      () => manejarComando(texto),
-      () => manejarCierreAsistente(texto),
-    ];
-
-    const indexAntes = mensajes.length;
-
-    for (const handler of handlers) {
-      const resultado = await handler();
-      if (resultado) {
-        const fin = Date.now();
-        const duracion = fin - inicio;
-
-        setMensajes((prev) => {
-          const copy = [...prev];
-          for (let i = copy.length - 1; i >= indexAntes; i--) {
-            if (
-              copy[i].tipo === "asistente" &&
-              copy[i].duracionMs === undefined
-            ) {
-              copy[i] = { ...copy[i], duracionMs: duracion };
-              break;
-            }
-          }
-          return copy;
-        });
-
-        return;
-      }
-    }
-
-    const fin = performance.now();
-    const duracion = fin - inicio;
-    agregarMensaje("asistente", "❌ No entendí ese comando.", true, duracion);
-  };
-
-  const manejarCancelacion = (texto: string): boolean => {
-    if (!/cancelar|detener|salir/i.test(texto)) return false;
-
-    agregarMensaje("asistente", "🚫 Flujo cancelado por el usuario.");
-    setFlowProducto(null);
-    setPendingSuggestions(null);
-    return true;
-  };
-
-  const manejarFlujoProducto = async (texto: string): Promise<boolean> => {
-    if (!flowProducto) return false;
-
-    setInputTexto("");
-    const ref = flowProducto;
-    await handleFlowProducto(texto, ref, contexto as any);
-
-    if (!flowProducto) setPendingSuggestions(null);
-    return true;
-  };
-
-  const manejarSugerencia = async (texto: string): Promise<boolean> => {
-    if (!pendingSuggestions) return false;
-
-    const match = pendingSuggestions.find((s) => normalize(s) === texto);
-    if (match) {
-      setPendingSuggestions(null);
-      await procesarComando(`inventario de ${match}`);
-      return true;
-    }
-
-    const encontrado = await manejarComando(texto);
-    if (encontrado) return true;
-
-    agregarMensaje(
-      "asistente",
-      `❌ No reconozco esa opción. Dime uno de: ${pendingSuggestions.join(", ")}`,
-    );
-    return true;
-  };
-
-  const manejarComando = async (texto: string): Promise<boolean> => {
-    for (const cmd of allCommands) {
-      const match = texto.match(cmd.patron);
-      if (match) {
-        await cmd.handler(match, contexto as any);
-        return true;
-      }
-    }
-    return false;
-  };
-
-  const manejarCierreAsistente = (texto: string): boolean => {
-    if (!texto.includes("cerrar asistente")) return false;
-
-    agregarMensaje("asistente", "👋 Hasta luego.");
-    setTimeout(onClose, 2000);
-    return true;
-  };
+  const toggleGrabacion = () => (escuchando ? detener() : iniciar());
 
   const manejarEnvioManual = async () => {
     const txt = inputTexto.trim().replace(/[.,!?¡¿]$/g, "");
@@ -397,20 +169,6 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
     await procesarComando(txt.toLowerCase());
     setInputTexto("");
   };
-  function formatearDuracion(ms: number | undefined) {
-    if (ms === undefined) return "";
-
-    const totalSeconds = Math.floor(ms / 1000);
-    const horas = Math.floor(totalSeconds / 3600);
-    const minutos = Math.floor((totalSeconds % 3600) / 60);
-    const segundos = totalSeconds % 60;
-
-    const hh = horas.toString().padStart(2, "0");
-    const mm = minutos.toString().padStart(2, "0");
-    const ss = segundos.toString().padStart(2, "0");
-
-    return `${hh}:${mm}:${ss}`;
-  }
 
   return (
     <AnimatePresence>
@@ -420,9 +178,8 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.95 }}
           transition={{ duration: 0.25 }}
-          className="flex h-[500px] w-[340px] flex-col overflow-hidden rounded-2xl border border-neutral-300 bg-white shadow-xl dark:border-neutral-800 dark:bg-[#1c1c1e]"
+          className="flex h-[500px] w-[300px] flex-col overflow-hidden rounded-2xl border border-neutral-300 bg-white shadow-xl dark:border-neutral-800 dark:bg-[#1c1c1e]"
         >
-          {/* Header */}
           <div className="relative flex items-center justify-between bg-neutral-100 px-4 py-2 dark:bg-neutral-900">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white dark:bg-[#121212] dark:text-white">
@@ -440,25 +197,27 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
               <X className="h-4 w-4" />
             </Button>
           </div>
-          {/* Mensajes */}
+
           <div className="flex-1 space-y-2 overflow-y-auto p-3">
             {mensajes.map((msg, i) => (
               <div
                 key={i}
-                className={`max-w-[80%] px-3 py-2 text-sm shadow ${
+                className={`max-w-[100%] px-3 py-2 text-sm ${
                   msg.tipo === "usuario"
                     ? "ml-auto self-end rounded-xl bg-pink-500 text-white dark:bg-pink-600"
-                    : "mr-auto self-start rounded-xl bg-neutral-200 text-black dark:border-neutral-800 dark:bg-neutral-800 dark:text-neutral-200"
+                    : ""
                 }`}
               >
-                {msg.texto}
+                {msg.tipo === "asistente" ? (
+                  <MensajeBot>{msg.texto}</MensajeBot>
+                ) : (
+                  msg.texto
+                )}
               </div>
             ))}
-            {/* 👇 Ref de scroll automático */}
             <div ref={finalRef} />
           </div>
 
-          {/* Input + botones */}
           <div className="flex items-center gap-2 border-t border-neutral-200 bg-neutral-100 p-2 dark:border-neutral-800 dark:bg-neutral-900">
             <input
               type="text"

@@ -1,34 +1,8 @@
 import { SERVICIOS_INVENTARIO } from "@/services/inventario.service";
 import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
 import { SERVICIOS_VENTAS } from "@/services/ventas.service";
-export type FlowVenta = {
-  step:
-    | "categoria"
-    | "producto"
-    | "cantidad"
-    | "agregarOtro"
-    | "pago"
-    | "montoEfectivo"
-    | "comprobante"
-    | "confirmacion";
-  data: {
-    categoriaId?: number;
-    categoriaNombre?: string;
-    productoId?: number;
-    productoNombre?: string;
-    cantidad?: number;
-    metodoPago?: "efectivo" | "transferencia";
-    comprobanteNumero?: string;
-    precioUnitario?: number;
-    totalVenta?: number;
-    productos?: {
-      productoId: number;
-      productoNombre: string;
-      cantidad: number;
-      precioUnitario: number;
-    }[];
-  };
-};
+import { FlowVenta } from "../asistente/flujos/flujos";
+import { convertirCantidad } from "@/utils/conversorCantidad";
 
 function formatearDuracion(ms: number): string {
   const totalSeconds = Math.floor(ms / 1000);
@@ -293,31 +267,11 @@ export async function handleFlowVenta(
     }
 
     case "cantidad": {
-      const palabrasANumero: Record<string, number> = {
-        uno: 1,
-        una: 1,
-        dos: 2,
-        tres: 3,
-        cuatro: 4,
-        cinco: 5,
-        seis: 6,
-        siete: 7,
-        ocho: 8,
-        nueve: 9,
-        diez: 10,
-      };
+      const cantidad = convertirCantidad(entrada);
 
-      let cantidad = parseInt(entrada);
-      if (isNaN(cantidad)) {
-        const desdePalabra = palabrasANumero[entrada];
-        if (desdePalabra !== undefined) {
-          cantidad = desdePalabra;
-        }
-      }
-
-      if (isNaN(cantidad) || cantidad <= 0) {
+      if (!cantidad || cantidad <= 0 || !Number.isInteger(cantidad)) {
         ctx.agregarMensajeBot(
-          "❌ Cantidad inválida. Ingresa un número mayor a cero.",
+          "❌ Cantidad inválida. Ingresa un número entero mayor a cero.",
         );
         return;
       }

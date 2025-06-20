@@ -5,22 +5,7 @@ import {
 } from "@/lib/constants";
 import { SERVICIOS_INVENTARIO } from "@/services/inventario.service";
 import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
-
-export type FlowProducto = {
-  step:
-    | "confirmacion"
-    | "tipo"
-    | "categoria"
-    | "unidad"
-    | "sugerenciaInventario";
-  data: {
-    nom_prod: string;
-    cate_prod?: number;
-    tip_prod?: string;
-    und_prod?: string;
-    sugerencias?: string[];
-  };
-};
+import { FlowProducto } from "../asistente/flujos/flujos";
 
 export const comandosDeProductos = [
   {
@@ -36,7 +21,6 @@ export const comandosDeProductos = [
         if (resp.ok && datos.stock != null) {
           ctx.setFlow(null);
 
-          // Elegimos qué mostrar: interpretación o valor numérico
           const stockDisplay = datos.interpretacion_stock
             ? datos.interpretacion_stock
             : `${datos.stock}`;
@@ -62,7 +46,6 @@ export const comandosDeProductos = [
           datos.suggestions.length > 0
         ) {
           ctx.establecerSugerenciasPendientes(datos.suggestions);
-
           const sugerenciasVisual = (
             <div className="space-y-2">
               <p>
@@ -77,9 +60,7 @@ export const comandosDeProductos = [
               <p>Di el nombre correcto para continuar.</p>
             </div>
           );
-
           ctx.agregarMensajeBot(sugerenciasVisual);
-
           ctx.setFlow({
             step: "sugerenciaInventario",
             data: { nom_prod: prod, sugerencias: datos.suggestions },
@@ -92,14 +73,25 @@ export const comandosDeProductos = [
       }
     },
   },
+
   {
     nombre: "agregarProducto",
     patron: /^agregar producto[,:]?\s*(.+)$/i,
     handler: (m: RegExpMatchArray, ctx: any) => {
       const nombre = m[1].trim();
-      ctx.setFlow({ step: "confirmacion", data: { nom_prod: nombre } });
+      ctx.setFlow({ type: "producto", step: "confirmacion", data: { nom_prod: nombre } });
       ctx.agregarMensajeBot(
-        `\u00BFConfirmas que quieres crear el producto "${nombre}"? Di 'cancelar' si deseas salir.`,
+        <div className="space-y-2">
+          <p>
+            🤖 ¿Confirmas que quieres crear el producto{" "}
+            <strong>"{nombre}"</strong>?
+          </p>
+          <p>Haz clic o responde por voz:</p>
+          <div className="flex flex-wrap gap-2">
+            <span className="btn-opciones">sí</span>
+            <span className="btn-opciones">cancelar</span>
+          </div>
+        </div>,
       );
     },
   },

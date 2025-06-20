@@ -1,4 +1,5 @@
 import { SERVICIOS_GASTOS } from "@/services/gastos.service";
+import { convertirCantidad } from "@/utils/conversorCantidad";
 
 export const comandosDeGastos = [
   {
@@ -74,54 +75,8 @@ export const comandosDeGastos = [
     handler: async (m: RegExpMatchArray, ctx: any) => {
       const descripcion = m[2] || "Gasto sin descripción";
 
-      // 🔁 Convertidor de texto a número, con coma/palabras
-      const textoANumero = (texto: string): number | null => {
-        // Si es un número tipo "5,85" o "3.50", convertir directamente
-        const directo = parseFloat(texto.replace(",", "."));
-        if (!isNaN(directo)) return directo;
-
-        const mapa: Record<string, string> = {
-          uno: "1",
-          una: "1",
-          un: "1",
-          dos: "2",
-          tres: "3",
-          cuatro: "4",
-          cinco: "5",
-          seis: "6",
-          siete: "7",
-          ocho: "8",
-          nueve: "9",
-          diez: "10",
-          veinte: "20",
-          treinta: "30",
-          cuarenta: "40",
-          cincuenta: "50",
-          sesenta: "60",
-          setenta: "70",
-          ochenta: "80",
-          noventa: "90",
-          cien: "100",
-          dólar: "",
-          dolares: "",
-          con: ".",
-          punto: ".",
-          y: ".",
-        };
-
-        const tokens = texto
-          .toLowerCase()
-          .replace(/[^\w\s.,]/gi, "") // permite coma y punto
-          .split(/\s+/)
-          .map((t) => mapa[t] ?? t);
-
-        const expresion = tokens.join("").replace(",", ".");
-        const numero = parseFloat(expresion);
-        return isNaN(numero) ? null : numero;
-      };
-
       const montoRaw = m[1];
-      const monto = textoANumero(montoRaw);
+      const monto = convertirCantidad(montoRaw);
 
       if (monto === null || monto <= 0) {
         ctx.agregarMensajeBot(
