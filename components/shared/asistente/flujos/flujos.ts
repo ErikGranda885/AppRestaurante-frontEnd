@@ -1,4 +1,5 @@
 export interface FlowProducto {
+  type: "producto";
   step:
     | "confirmacion"
     | "tipo"
@@ -10,7 +11,7 @@ export interface FlowProducto {
     cate_prod?: number;
     tip_prod?: string;
     und_prod?: string;
-    sugerencias?: string[];
+    sugerencias?: string[]; // está bien que sea opcional
   };
 }
 

@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { X, Mic, MicOff, Send, Bot } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { useChatContext } from "@/hooks/asistente/useChatContext";
 import { useProcesadorComandos } from "@/hooks/asistente/useProcesadorComandos";
 import { useSpeechRecognizer } from "@/hooks/asistente/useSpeechRecognizer";
 import { MensajeBot } from "./mensajeBot";
@@ -25,16 +24,16 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
   const finalRef = useRef<HTMLDivElement | null>(null);
   const [comandosMostrados, setComandosMostrados] = useState(false);
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
-  const [flowProducto, setFlowProducto] = useState<any>(null);
-  const [flowVenta, setFlowVenta] = useState<any>(null);
-  const [flowGasto, setFlowGasto] = useState<any>(null);
-  const [flowReporte, setFlowReporte] = useState<any>(null);
   const [inicioFlujo, setInicioFlujo] = useState<number | null>(null);
   const [pendingSuggestions, setPendingSuggestions] = useState<string[] | null>(
     null,
   );
   const [escuchando, setEscuchando] = useState(false);
   const [inputTexto, setInputTexto] = useState("");
+  const flowRef = useRef<any>(null);
+  const setFlow = (nuevoFlow: any) => {
+    flowRef.current = nuevoFlow;
+  };
 
   const agregarMensaje = (
     tipo: "usuario" | "asistente",
@@ -52,30 +51,26 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
       !texto.includes("\n");
 
     if (debeLeer) {
+      window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(texto);
       u.lang = "es-ES";
       window.speechSynthesis.speak(u);
     }
   };
 
-  const { crearContexto } = useChatContext({
-    setFlowProducto,
-    setFlowVenta,
-    setFlowGasto,
-    setFlowReporte,
+  const contexto = {
+    flow: () => flowRef.current,
+    setFlow,
+    agregarMensajeBot: (t: string | React.ReactNode) =>
+      agregarMensaje("asistente", t),
+    obtenerInicioFlujo: () => inicioFlujo,
     setInicioFlujo,
     setPendingSuggestions,
-  });
-
-  const contexto = crearContexto(
-    (t: string | React.ReactNode) => agregarMensaje("asistente", t),
-    inicioFlujo,
-  );
+    establecerSugerenciasPendientes: setPendingSuggestions,
+    procesarEntradaDirecta: (txt: string) => procesarComando(txt),
+  };
 
   const { procesarComando } = useProcesadorComandos({
-    flowProducto,
-    flowVenta,
-    flowReporte,
     agregarMensaje,
     pendingSuggestions,
     setPendingSuggestions,
@@ -86,8 +81,11 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
 
   const { iniciar, detener } = useSpeechRecognizer({
     procesarTextoReconocido: async (txt: string) => {
+      const limpio = normalizarEntrada(txt);
       agregarMensaje("usuario", txt);
-      await procesarComando(txt.toLowerCase());
+      await procesarComando(limpio);
+      detener();
+      setEscuchando(false);
       setInputTexto("");
     },
     setTextoReconocido: setInputTexto,
@@ -160,13 +158,30 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
     });
   };
 
-  const toggleGrabacion = () => (escuchando ? detener() : iniciar());
+  const toggleGrabacion = () => {
+    if (escuchando) {
+      detener();
+      setEscuchando(false);
+    } else {
+      // ✅ Detener voz del asistente antes de iniciar
+      window.speechSynthesis.cancel();
+      iniciar();
+      setEscuchando(true);
+    }
+  };
+
+  const normalizarEntrada = (txt: string) =>
+    txt
+      .toLowerCase()
+      .replace(/[.,!?¡¿]+$/g, "")
+      .trim();
 
   const manejarEnvioManual = async () => {
-    const txt = inputTexto.trim().replace(/[.,!?¡¿]$/g, "");
+    const txt = inputTexto.trim();
     if (!txt) return;
+    const limpio = normalizarEntrada(txt);
     agregarMensaje("usuario", txt);
-    await procesarComando(txt.toLowerCase());
+    await procesarComando(limpio);
     setInputTexto("");
   };
 
@@ -234,7 +249,9 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
             </button>
             <button
               onClick={toggleGrabacion}
-              className={`rounded-xl p-2 text-white ${escuchando ? "bg-green-600" : "bg-blue-600"} hover:opacity-90`}
+              className={`rounded-xl p-2 text-white ${
+                escuchando ? "bg-green-600" : "bg-blue-600"
+              } hover:opacity-90`}
             >
               {escuchando ? (
                 <MicOff className="h-4 w-4" />

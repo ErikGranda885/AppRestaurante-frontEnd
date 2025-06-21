@@ -1,4 +1,3 @@
-
 import { allCommands } from "@/components/shared/comandos";
 import { handleFlowProducto } from "@/components/shared/comandos/productos";
 import { handleFlowReporte } from "@/components/shared/comandos/reportes";
@@ -6,9 +5,6 @@ import { handleFlowVenta } from "@/components/shared/comandos/ventas";
 import React from "react";
 
 export function useProcesadorComandos({
-  flowProducto,
-  flowVenta,
-  flowReporte,
   agregarMensaje,
   pendingSuggestions,
   setPendingSuggestions,
@@ -16,9 +12,6 @@ export function useProcesadorComandos({
   mensajes,
   setMensajes,
 }: {
-  flowProducto: any;
-  flowVenta: any;
-  flowReporte: any;
   agregarMensaje: (
     tipo: "usuario" | "asistente",
     texto: string | React.ReactNode,
@@ -50,27 +43,68 @@ export function useProcesadorComandos({
       return true;
     };
 
-    const manejarFlujo = async (flow: any, handler: any): Promise<boolean> => {
-      if (!flow) return false;
-      await handler(texto, flow, contexto);
-      if (!flow) setPendingSuggestions(null);
-      return true;
+    const manejarFlujoPorTipo = async (): Promise<boolean> => {
+      const flow = contexto.flow();
+
+      console.log("🎯 manejarFlujoPorTipo: flow=", flow);
+      if (!flow?.type) return false;
+
+      switch (flow.type) {
+        case "producto":
+          await handleFlowProducto(texto, flow, contexto);
+          return true;
+        case "venta":
+          await handleFlowVenta(texto, flow, contexto);
+          return true;
+        case "reporte":
+          await handleFlowReporte(texto, flow, contexto);
+          return true;
+        default:
+          return false;
+      }
     };
 
     const manejarSugerencia = async (): Promise<boolean> => {
+      const flow = contexto.flow?.();
+
+      // Permitir sugerencias solo si hay un paso compatible
+      if (
+        flow &&
+        !["sugerenciaInventario", "categoria", "unidad", "tipo"].includes(
+          flow.step,
+        )
+      ) {
+        return false;
+      }
+
       if (!Array.isArray(pendingSuggestions)) return false;
 
       const match = pendingSuggestions.find(
         (s: string) => normalizar(s) === textoNormalizado,
       );
+
       if (match) {
         setPendingSuggestions(null);
-        await procesarComando(`inventario de ${match}`);
+        contexto.setFlow(null);
+
+        // ⚠️ Si el texto es una sugerencia, ejecutamos el flujo anterior directamente
+        if (flow?.step === "sugerenciaInventario" && flow.data?.nom_prod) {
+          const simuladoMatch = Object.assign(
+            [`inventario de ${match}`, match],
+            {
+              index: 0,
+              input: `inventario de ${match}`,
+              groups: undefined,
+            },
+          ) as RegExpMatchArray;
+
+          allCommands[0].handler(simuladoMatch, contexto);
+          return true;
+        }
+
+        await procesarComando(match);
         return true;
       }
-
-      const encontrado = await manejarComando();
-      if (encontrado) return true;
 
       agregarMensaje(
         "asistente",
@@ -98,9 +132,7 @@ export function useProcesadorComandos({
 
     const handlers = [
       () => manejarCancelacion(texto),
-      () => manejarFlujo(flowProducto, handleFlowProducto),
-      () => manejarFlujo(flowVenta, handleFlowVenta),
-      () => manejarFlujo(flowReporte, handleFlowReporte),
+      () => manejarFlujoPorTipo(),
       () => manejarSugerencia(),
       () => manejarComando(),
       () => manejarCierre(texto),

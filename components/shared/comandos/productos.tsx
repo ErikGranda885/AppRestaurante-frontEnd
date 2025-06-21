@@ -79,7 +79,15 @@ export const comandosDeProductos = [
     patron: /^agregar producto[,:]?\s*(.+)$/i,
     handler: (m: RegExpMatchArray, ctx: any) => {
       const nombre = m[1].trim();
-      ctx.setFlow({ type: "producto", step: "confirmacion", data: { nom_prod: nombre } });
+
+      const nuevoFlujo: FlowProducto = {
+        type: "producto",
+        step: "confirmacion",
+        data: { nom_prod: nombre },
+      };
+      ctx.setFlow(nuevoFlujo);
+      console.log("💾 Flow seteado correctamente:", nuevoFlujo);
+
       ctx.agregarMensajeBot(
         <div className="space-y-2">
           <p>
@@ -99,11 +107,19 @@ export const comandosDeProductos = [
 
 export async function handleFlowProducto(
   texto: string,
-  flow: FlowProducto,
+  flow: FlowProducto & { type: "producto" },
   ctx: any,
 ) {
+  console.log(
+    "🧪 handleFlowProducto:: step=",
+    flow.step,
+    "type=",
+    flow.type,
+    "texto=",
+    texto,
+  );
   const { step, data } = flow;
-
+  console.log("✅ Flow recibido:", flow);
   // Si es un comando de inventario, ejecutarlo directamente
   const match = texto.match(/^inventario de (.+)$/i);
   if (match) {
@@ -121,6 +137,11 @@ export async function handleFlowProducto(
       return;
     }
   }
+  const normalizarEntrada = (txt: string) =>
+    txt
+      .toLowerCase()
+      .replace(/[.,!?¡¿]+$/g, "")
+      .trim();
 
   switch (step) {
     case "sugerenciaInventario": {
@@ -161,11 +182,17 @@ export async function handleFlowProducto(
     }
 
     case "confirmacion": {
-      const resp = texto.toLowerCase();
+      const normalizar = (txt: string) =>
+        txt
+          .toLowerCase()
+          .replace(/[.,!?¡¿]/g, "")
+          .trim();
+      const resp = normalizar(texto);
       if (/(^si$|^sí$|^confirmar$|^correcto$)/.test(resp)) {
         const tipos = TIP_PROD_OPTIONS.map((o: any) => o.value);
         ctx.establecerSugerenciasPendientes(tipos);
-        ctx.setFlow({ step: "tipo", data });
+        ctx.setFlow({ type: "producto", step: "tipo", data });
+
         const tiposVisual = (
           <div className="space-y-2">
             <p>
@@ -221,7 +248,7 @@ export async function handleFlowProducto(
       if (texto.toLowerCase() === "insumo") {
         const unds = UNIT_OPTIONS.map((o: any) => o.value);
         ctx.establecerSugerenciasPendientes(unds);
-        ctx.setFlow({ step: "unidad", data });
+        ctx.setFlow({ type: "producto", step: "unidad", data });
         const unidadesVisual = (
           <div className="space-y-2">
             <p>
@@ -267,7 +294,7 @@ export async function handleFlowProducto(
           );
 
           ctx.establecerSugerenciasPendientes(sugerencias);
-          ctx.setFlow({ step: "categoria", data });
+          ctx.setFlow({ type: "producto", step: "categoria", data });
 
           const categoriasVisual = (
             <div className="space-y-2">
@@ -296,21 +323,47 @@ export async function handleFlowProducto(
     }
 
     case "categoria": {
-      const entrada = texto.trim().toLowerCase();
+      const normalizar = (txt: string) =>
+        txt
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "") // quitar tildes
+          .replace(/[.,!?¡¿]/g, "")
+          .trim();
+
+      const entrada = normalizar(texto);
+      console.log("🔍 Entrada original:", texto);
+      console.log("🔍 Entrada normalizada:", entrada);
+
       try {
         const resCat = await fetch(SERVICIOS_PRODUCTOS.categorias);
         const catData = await resCat.json();
 
-        const match = catData.categorias.find(
-          (c: any) =>
-            c.id_cate.toString() === entrada ||
-            c.nom_cate.toLowerCase() === entrada,
+        console.log(
+          "📦 Categorías cargadas desde backend:",
+          catData.categorias,
         );
 
+        const match = catData.categorias.find((c: any) => {
+          const nombreNormalizado = normalizar(c.nom_cate);
+          const idCoincide = c.id_cate.toString() === entrada;
+          const nombreCoincide = nombreNormalizado === entrada;
+
+          console.log(
+            `🔁 Comparando categoría: id=${c.id_cate}, nombre=${nombreNormalizado} ⇄ entrada=${entrada}`,
+          );
+
+          return idCoincide || nombreCoincide;
+        });
+
         if (!match) {
+          console.log("❌ No se encontró categoría para la entrada:", entrada);
+
           const opciones = catData.categorias.map(
             (c: any) => `${c.id_cate}:${c.nom_cate}`,
           );
+          console.log("📋 Opciones válidas disponibles:", opciones);
+
           const categoriasInvalidasVisual = (
             <div className="space-y-2">
               <p>
@@ -330,16 +383,18 @@ export async function handleFlowProducto(
           );
 
           ctx.agregarMensajeBot(categoriasInvalidasVisual);
-
           ctx.establecerSugerenciasPendientes(opciones);
           return;
         }
+
+        console.log("✅ Categoría encontrada:", match);
 
         data.cate_prod = match.id_cate;
 
         const unds = UNIT_OPTIONS.map((o: any) => o.value);
         ctx.establecerSugerenciasPendientes(unds);
-        ctx.setFlow({ step: "unidad", data });
+        ctx.setFlow({ type: "producto", step: "unidad", data });
+
         const unidadesVisual = (
           <div className="space-y-2">
             <p>
@@ -358,6 +413,7 @@ export async function handleFlowProducto(
 
         ctx.agregarMensajeBot(unidadesVisual);
       } catch (e: any) {
+        console.error("❌ Error al validar categoría:", e);
         ctx.agregarMensajeBot(`❌ Error al validar categoría: ${e.message}`);
         ctx.setFlow(null);
       }
@@ -365,8 +421,7 @@ export async function handleFlowProducto(
     }
 
     case "unidad": {
-      const entrada = texto.trim().toLowerCase();
-
+      const entrada = normalizarEntrada(texto);
       const match = UNIT_OPTIONS.find((o) => {
         const valueMatch = o.value.toLowerCase() === entrada;
         const labelMatch = o.label.toLowerCase() === entrada;
