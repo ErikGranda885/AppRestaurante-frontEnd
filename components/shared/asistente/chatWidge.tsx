@@ -92,24 +92,6 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
   });
 
   useEffect(() => {
-    const listener = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.classList.contains("btn-opciones")) {
-        const texto = target.textContent?.trim().toLowerCase();
-        if (texto) {
-          document.querySelectorAll(".btn-opciones").forEach((el) => {
-            el.classList.add("pointer-events-none", "opacity-50");
-          });
-          agregarMensaje("usuario", texto);
-          procesarComando(texto);
-        }
-      }
-    };
-    document.addEventListener("click", listener);
-    return () => document.removeEventListener("click", listener);
-  }, []);
-
-  useEffect(() => {
     setTimeout(() => {
       finalRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 0);

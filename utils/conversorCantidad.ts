@@ -22,3 +22,12 @@ export function convertirCantidad(valor: string): number | null {
   const num = parseFloat(valor.replace(",", "."));
   return isNaN(num) ? null : num;
 }
+
+export function normalizarEntrada(txt: string): string {
+  return txt
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Quita tildes
+    .replace(/[.,!?¡¿]/g, "") // Quita signos de puntuación
+    .trim();
+}

@@ -11,11 +11,12 @@ export interface FlowProducto {
     cate_prod?: number;
     tip_prod?: string;
     und_prod?: string;
-    sugerencias?: string[]; // está bien que sea opcional
+    sugerencias?: string[];
   };
 }
 
 export interface FlowVenta {
+  type: "venta";
   step:
     | "categoria"
     | "producto"
@@ -34,6 +35,7 @@ export interface FlowVenta {
     metodoPago?: "efectivo" | "transferencia";
     comprobanteNumero?: string;
     precioUnitario?: number;
+    stockDisponible?: number;
     totalVenta?: number;
     productos?: {
       productoId: number;
