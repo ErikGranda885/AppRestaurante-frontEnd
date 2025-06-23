@@ -552,21 +552,6 @@ export async function handleFlowVenta(
                 >
                   efectivo
                 </BotonAccion>
-                <BotonAccion
-                  paso="pago"
-                  pasoActual={ctx.flow()?.step}
-                  onClick={() => {
-                    document.querySelectorAll(".btn-opciones").forEach((el) => {
-                      el.classList.add("pointer-events-none", "opacity-50");
-                    });
-                    setTimeout(
-                      () => ctx.procesarEntradaDirecta?.("transferencia"),
-                      150,
-                    );
-                  }}
-                >
-                  transferencia
-                </BotonAccion>
               </div>
             </div>,
           );
@@ -606,12 +591,14 @@ export async function handleFlowVenta(
       console.log("[VENTA][pago] Entrada recibida:", entrada);
       console.log("[VENTA][pago] Paso actual:", ctx.flow()?.step);
 
-      if (entrada !== "efectivo" && entrada !== "transferencia") {
+      // Solo acepta "efectivo"
+      if (entrada !== "efectivo") {
         console.log("[VENTA][pago] Método NO válido recibido:", entrada);
         ctx.agregarMensajeBot(
           <div className="space-y-2">
             <p>
-              ❌ Método no válido. Elige entre 'efectivo' o 'transferencia'.
+              ❌ Método no válido. Solo se permite pago en{" "}
+              <strong>efectivo</strong>.
             </p>
             <div className="flex gap-2">
               <BotonAccion
@@ -629,28 +616,13 @@ export async function handleFlowVenta(
               >
                 efectivo
               </BotonAccion>
-              <BotonAccion
-                paso="pago"
-                pasoActual={ctx.flow()?.step}
-                onClick={() => {
-                  document.querySelectorAll(".btn-opciones").forEach((el) => {
-                    el.classList.add("pointer-events-none", "opacity-50");
-                  });
-                  setTimeout(
-                    () => ctx.procesarEntradaDirecta?.("transferencia"),
-                    150,
-                  );
-                }}
-              >
-                transferencia
-              </BotonAccion>
             </div>
           </div>,
         );
         return;
       }
 
-      data.metodoPago = entrada as "efectivo" | "transferencia";
+      data.metodoPago = "efectivo";
 
       // Mostrar resumen visual antes de avanzar
       const subtotal =
@@ -690,33 +662,21 @@ export async function handleFlowVenta(
         </div>,
       );
 
-      if (entrada === "transferencia") {
-        ctx.setFlow({ type: "venta", step: "comprobante", data });
-        ctx.estadoInterno = {};
-        setTimeout(() => {
-          ctx.agregarMensajeBot(
-            <div className="space-y-2">
-              <p>🔢 Indica el número del comprobante de transferencia.</p>
-            </div>,
-          );
-        }, 0);
-      } else {
-        ctx.setFlow({ type: "venta", step: "montoEfectivo", data });
-        ctx.estadoInterno = {};
-        setTimeout(() => {
-          ctx.agregarMensajeBot(
-            <div className="space-y-2">
-              <p>💵 El total de la venta es ${totalFinal.toFixed(2)}.</p>
-              <p>¿Con cuánto efectivo pagó el cliente? (ej: 5.00)</p>
-            </div>,
-          );
-        }, 0);
-      }
+      ctx.setFlow({ type: "venta", step: "montoEfectivo", data });
+      ctx.estadoInterno = {};
+      setTimeout(() => {
+        ctx.agregarMensajeBot(
+          <div className="space-y-2">
+            <p>💵 El total de la venta es ${totalFinal.toFixed(2)}.</p>
+            <p>¿Con cuánto efectivo pagó el cliente? (ej: 5.00)</p>
+          </div>,
+        );
+      }, 0);
       break;
     }
 
     case "montoEfectivo": {
-      if (entrada === "efectivo" || entrada === "transferencia") {
+      if (entrada === "efectivo") {
         ctx.agregarMensajeBot(
           "⚠️ Ya indicaste el método de pago. Ahora ingresa el monto recibido. Ejemplo: 5.00",
         );
