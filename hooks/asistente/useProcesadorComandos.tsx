@@ -79,15 +79,38 @@ export function useProcesadorComandos({
 
       if (!Array.isArray(pendingSuggestions)) return false;
 
-      const match = pendingSuggestions.find(
-        (s: string) => normalizar(s) === textoNormalizado,
+      // Normalizador robusto para comparación
+      const normalizar = (txt: string) =>
+        (txt || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[.,!?¡¿]/g, "")
+          .trim();
+
+      // Coincidencia flexible: nombre o id o ambos
+      const esCoincidencia = (s: string, valor: string) => {
+        if (s.includes(":")) {
+          const [id, ...resto] = s.split(":");
+          const nombre = resto.join(":");
+          return (
+            normalizar(s) === valor ||
+            normalizar(id) === valor ||
+            normalizar(nombre) === valor
+          );
+        }
+        return normalizar(s) === valor;
+      };
+
+      const match = pendingSuggestions.find((s: string) =>
+        esCoincidencia(s, textoNormalizado),
       );
 
       if (match) {
         setPendingSuggestions(null);
         contexto.setFlow(null);
 
-        // ⚠️ Si el texto es una sugerencia, ejecutamos el flujo anterior directamente
+        // Si es sugerencia de inventario, procesar como comando
         if (flow?.step === "sugerenciaInventario" && flow.data?.nom_prod) {
           const simuladoMatch = Object.assign(
             [`inventario de ${match}`, match],
@@ -106,9 +129,40 @@ export function useProcesadorComandos({
         return true;
       }
 
+      // Mostrar sugerencias como lista UL LI, clicables y accesibles
       agregarMensaje(
         "asistente",
-        `❌ No reconozco esa opción. Di una de: ${pendingSuggestions.join(", ")}`,
+        <div className="space-y-2">
+          <p>
+            <span style={{ color: "#e53e3e" }}>
+              ❌ No reconozco esa opción.
+            </span>{" "}
+            Elige una de las siguientes:
+          </p>
+          <ul className="list-inside list-disc">
+            {pendingSuggestions.map((s, i) => (
+              <li
+                key={i}
+                style={{ cursor: "pointer" }}
+                onClick={() => {
+                  // Bloquear todas después de hacer click
+                  document.querySelectorAll("li[style]").forEach((el) => {
+                    el.classList.add("pointer-events-none", "opacity-50");
+                  });
+                  setTimeout(() => procesarComando(s), 120);
+                }}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") procesarComando(s);
+                }}
+                className="hover:underline"
+              >
+                {s}
+              </li>
+            ))}
+          </ul>
+          <p>O di el nombre exacto por voz.</p>
+        </div>,
       );
       return true;
     };

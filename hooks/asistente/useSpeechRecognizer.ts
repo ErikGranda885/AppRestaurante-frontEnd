@@ -18,9 +18,9 @@ export function useSpeechRecognizer({
   const iniciar = () => {
     const configuracion = SpeechConfig.fromSubscription(
       process.env.NEXT_PUBLIC_AZURE_SPEECH_KEY!,
-      process.env.NEXT_PUBLIC_AZURE_SPEECH_REGION!
+      process.env.NEXT_PUBLIC_AZURE_SPEECH_REGION!,
     );
-    configuracion.speechRecognitionLanguage = "es-ES";
+    configuracion.speechRecognitionLanguage = "es-EC";
     const audioConfig = AudioConfig.fromDefaultMicrophoneInput();
     const reconocedor = new SpeechRecognizer(configuracion, audioConfig);
 

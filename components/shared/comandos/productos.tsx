@@ -25,7 +25,7 @@ export const comandosDeProductos = [
             ? datos.interpretacion_stock
             : `${datos.stock}`;
 
-          const detalleVisual = (
+          ctx.agregarMensajeBot(
             <div className="space-y-2">
               <p>
                 📦 <strong>Inventario encontrado:</strong>
@@ -38,15 +38,15 @@ export const comandosDeProductos = [
                   Stock disponible: <strong>{stockDisplay}</strong>
                 </li>
               </ul>
-            </div>
+            </div>,
           );
-          ctx.agregarMensajeBot(detalleVisual);
         } else if (
           Array.isArray(datos.suggestions) &&
           datos.suggestions.length > 0
         ) {
           ctx.establecerSugerenciasPendientes(datos.suggestions);
-          const sugerenciasVisual = (
+
+          ctx.agregarMensajeBot(
             <div className="space-y-2">
               <p>
                 ❌ No se encontró <strong>"{prod}"</strong>.
@@ -54,13 +54,30 @@ export const comandosDeProductos = [
               <p>¿Quizás quisiste?:</p>
               <ul className="list-inside list-disc">
                 {datos.suggestions.map((s: any, i: any) => (
-                  <li key={i}>{s}</li>
+                  <li
+                    key={i}
+                    className="cursor-pointer hover:underline"
+                    onClick={() => {
+                      // Bloquea las demás sugerencias al hacer clic
+                      document
+                        .querySelectorAll("li.cursor-pointer")
+                        .forEach((el) => {
+                          el.classList.add("pointer-events-none", "opacity-50");
+                        });
+                      setTimeout(() => ctx.procesarEntradaDirecta?.(s), 120);
+                    }}
+                    tabIndex={0}
+                  >
+                    {s}
+                  </li>
                 ))}
               </ul>
-              <p>Di el nombre correcto para continuar.</p>
-            </div>
+              <p>
+                Di el nombre correcto o haz clic en una sugerencia para
+                continuar.
+              </p>
+            </div>,
           );
-          ctx.agregarMensajeBot(sugerenciasVisual);
           ctx.setFlow({
             step: "sugerenciaInventario",
             data: { nom_prod: prod, sugerencias: datos.suggestions },

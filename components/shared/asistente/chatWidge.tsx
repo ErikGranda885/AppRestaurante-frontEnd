@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useProcesadorComandos } from "@/hooks/asistente/useProcesadorComandos";
 import { useSpeechRecognizer } from "@/hooks/asistente/useSpeechRecognizer";
 import { MensajeBot } from "./mensajeBot";
+import { hablarMensaje } from "@/utils/voz";
 
 interface ChatWidgetProps {
   onClose: () => void;
@@ -51,10 +52,7 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
       !texto.includes("\n");
 
     if (debeLeer) {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(texto);
-      u.lang = "es-ES";
-      window.speechSynthesis.speak(u);
+      hablarMensaje(texto, "es-MX-DaliaNeural"); // Cambia aquí la voz si quieres otra
     }
   };
 
