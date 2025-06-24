@@ -80,13 +80,17 @@ export const comandosDeProductos = [
     handler: (m: RegExpMatchArray, ctx: any) => {
       const nombre = m[1].trim();
 
+      // Bloquear botones previos antes de mostrar nuevos
+      document.querySelectorAll(".btn-opciones").forEach((el) => {
+        el.classList.add("pointer-events-none", "opacity-50");
+      });
+
       const nuevoFlujo: FlowProducto = {
         type: "producto",
         step: "confirmacion",
         data: { nom_prod: nombre },
       };
       ctx.setFlow(nuevoFlujo);
-      console.log("💾 Flow seteado correctamente:", nuevoFlujo);
 
       ctx.agregarMensajeBot(
         <div className="space-y-2">
@@ -96,8 +100,28 @@ export const comandosDeProductos = [
           </p>
           <p>Haz clic o responde por voz:</p>
           <div className="flex flex-wrap gap-2">
-            <span className="btn-opciones">sí</span>
-            <span className="btn-opciones">cancelar</span>
+            <span
+              className="btn-opciones"
+              onClick={() => {
+                document.querySelectorAll(".btn-opciones").forEach((el) => {
+                  el.classList.add("pointer-events-none", "opacity-50");
+                });
+                setTimeout(() => ctx.procesarEntradaDirecta?.("sí"), 120);
+              }}
+            >
+              sí
+            </span>
+            <span
+              className="btn-opciones"
+              onClick={() => {
+                document.querySelectorAll(".btn-opciones").forEach((el) => {
+                  el.classList.add("pointer-events-none", "opacity-50");
+                });
+                setTimeout(() => ctx.procesarEntradaDirecta?.("cancelar"), 120);
+              }}
+            >
+              cancelar
+            </span>
           </div>
         </div>,
       );
@@ -188,7 +212,13 @@ export async function handleFlowProducto(
           .replace(/[.,!?¡¿]/g, "")
           .trim();
       const resp = normalizar(texto);
+
       if (/(^si$|^sí$|^confirmar$|^correcto$)/.test(resp)) {
+        // ⚠️ Bloquea todos los botones previos antes de avanzar
+        document.querySelectorAll(".btn-opciones").forEach((el) => {
+          el.classList.add("pointer-events-none", "opacity-50");
+        });
+
         const tipos = TIP_PROD_OPTIONS.map((o: any) => o.value);
         ctx.establecerSugerenciasPendientes(tipos);
         ctx.setFlow({ type: "producto", step: "tipo", data });
@@ -211,61 +241,140 @@ export async function handleFlowProducto(
 
         ctx.agregarMensajeBot(tiposVisual);
       } else if (/(^no$|^cancelar$|^salir$)/.test(resp)) {
+        // ⚠️ Bloquea todos los botones previos antes de cancelar
+        document.querySelectorAll(".btn-opciones").forEach((el) => {
+          el.classList.add("pointer-events-none", "opacity-50");
+        });
         ctx.agregarMensajeBot(`🚫 Creación de producto cancelada.`);
         ctx.setFlow(null);
       } else {
+        // ⚠️ Bloquea todos los botones previos antes de mostrar nuevos
+        document.querySelectorAll(".btn-opciones").forEach((el) => {
+          el.classList.add("pointer-events-none", "opacity-50");
+        });
+
         ctx.agregarMensajeBot(
-          `❓ No entendí. ¿Deseas crear el producto "${data.nom_prod}"? Di 'sí' para confirmar o 'cancelar' para salir.`,
+          <div className="space-y-2">
+            <p>
+              <span style={{ color: "#e53e3e" }}>❓ No entendí.</span> ¿Deseas
+              crear el producto <strong>"{data.nom_prod}"</strong>?
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <span
+                className="btn-opciones"
+                onClick={() => {
+                  document.querySelectorAll(".btn-opciones").forEach((el) => {
+                    el.classList.add("pointer-events-none", "opacity-50");
+                  });
+                  setTimeout(() => ctx.procesarEntradaDirecta?.("sí"), 120);
+                }}
+              >
+                sí
+              </span>
+              <span
+                className="btn-opciones"
+                onClick={() => {
+                  document.querySelectorAll(".btn-opciones").forEach((el) => {
+                    el.classList.add("pointer-events-none", "opacity-50");
+                  });
+                  setTimeout(
+                    () => ctx.procesarEntradaDirecta?.("cancelar"),
+                    120,
+                  );
+                }}
+              >
+                cancelar
+              </span>
+            </div>
+          </div>,
         );
       }
       break;
     }
 
     case "tipo": {
-      if (
-        !TIP_PROD_OPTIONS.map((o: any) => o.value.toLowerCase()).includes(
-          texto.toLowerCase(),
-        )
-      ) {
+      const entrada = texto.trim().toLowerCase();
+      const opciones = TIP_PROD_OPTIONS.map((o: any) => o.value);
+
+      if (!opciones.map((o) => o.toLowerCase()).includes(entrada)) {
+        // 🔒 Bloquea botones viejos
+        document
+          .querySelectorAll("li[style], li.cursor-pointer")
+          .forEach((el) => {
+            el.classList.add("pointer-events-none", "opacity-50");
+          });
+
         ctx.agregarMensajeBot(
-          `❌ Tipo no válido. Elige uno de: ${TIP_PROD_OPTIONS.map((o: any) => o.value).join(", ")}`,
+          <div className="space-y-2">
+            <p>❌ Tipo no válido. Elige uno de los siguientes:</p>
+            <ul className="list-inside list-disc">
+              {opciones.map((op, i) => (
+                <li
+                  key={i}
+                  className="cursor-pointer hover:underline"
+                  onClick={() => {
+                    document
+                      .querySelectorAll("li.cursor-pointer")
+                      .forEach((el) => {
+                        el.classList.add("pointer-events-none", "opacity-50");
+                      });
+                    setTimeout(() => ctx.procesarEntradaDirecta?.(op), 120);
+                  }}
+                  tabIndex={0}
+                >
+                  {op}
+                </li>
+              ))}
+            </ul>
+            <p>O di el nombre exacto por voz.</p>
+          </div>,
         );
+        ctx.establecerSugerenciasPendientes(opciones);
         return;
       }
+
       const tipoEncontrado = TIP_PROD_OPTIONS.find(
-        (o) => o.value.toLowerCase() === texto.toLowerCase(),
+        (o) => o.value.toLowerCase() === entrada,
       );
+      data.tip_prod = tipoEncontrado!.value;
 
-      if (!tipoEncontrado) {
-        ctx.agregarMensajeBot(
-          `❌ Tipo no válido. Elige uno de: ${TIP_PROD_OPTIONS.map((o: any) => o.value).join(", ")}`,
-        );
-        return;
-      }
-
-      data.tip_prod = tipoEncontrado.value;
-
-      if (texto.toLowerCase() === "insumo") {
+      if (entrada === "insumo") {
         const unds = UNIT_OPTIONS.map((o: any) => o.value);
         ctx.establecerSugerenciasPendientes(unds);
         ctx.setFlow({ type: "producto", step: "unidad", data });
-        const unidadesVisual = (
+
+        ctx.agregarMensajeBot(
           <div className="space-y-2">
             <p>
               📏 <strong>Unidades de medida disponibles:</strong>
             </p>
             <ul className="list-inside list-disc">
               {UNIT_OPTIONS.map((u, i) => (
-                <li key={i}>{u.label}</li>
+                <li
+                  key={i}
+                  className="cursor-pointer hover:underline"
+                  onClick={() => {
+                    document
+                      .querySelectorAll("li.cursor-pointer")
+                      .forEach((el) => {
+                        el.classList.add("pointer-events-none", "opacity-50");
+                      });
+                    setTimeout(
+                      () => ctx.procesarEntradaDirecta?.(u.value),
+                      120,
+                    );
+                  }}
+                  tabIndex={0}
+                >
+                  {u.label}
+                </li>
               ))}
             </ul>
             <p>
               Di el nombre exacto o <strong>'cancelar'</strong> para salir.
             </p>
-          </div>
+          </div>,
         );
-
-        ctx.agregarMensajeBot(unidadesVisual);
       } else {
         try {
           const resCat = await fetch(SERVICIOS_PRODUCTOS.categorias);
@@ -275,16 +384,14 @@ export async function handleFlowProducto(
             !Array.isArray(catData.categorias) ||
             catData.categorias.length === 0
           ) {
-            const sinCategoriasVisual = (
+            ctx.agregarMensajeBot(
               <div className="space-y-2">
                 <p>
                   ❌ <strong>No hay categorías registradas.</strong>
                 </p>
                 <p>Por favor crea al menos una categoría antes de continuar.</p>
-              </div>
+              </div>,
             );
-
-            ctx.agregarMensajeBot(sinCategoriasVisual);
             ctx.setFlow(null);
             return;
           }
@@ -292,28 +399,45 @@ export async function handleFlowProducto(
           const sugerencias = catData.categorias.map(
             (c: any) => `${c.id_cate}:${c.nom_cate}`,
           );
-
           ctx.establecerSugerenciasPendientes(sugerencias);
           ctx.setFlow({ type: "producto", step: "categoria", data });
 
-          const categoriasVisual = (
+          ctx.agregarMensajeBot(
             <div className="space-y-2">
               <p>
                 📦 <strong>Categorías disponibles:</strong>
               </p>
               <ul className="list-inside list-disc">
-                {sugerencias.map((s: any, i: any) => (
-                  <li key={i}>{s}</li>
+                {catData.categorias.map((c: any, i: number) => (
+                  <li
+                    key={i}
+                    className="cursor-pointer hover:underline"
+                    onClick={() => {
+                      document
+                        .querySelectorAll("li.cursor-pointer")
+                        .forEach((el) => {
+                          el.classList.add("pointer-events-none", "opacity-50");
+                        });
+                      setTimeout(
+                        () =>
+                          ctx.procesarEntradaDirecta?.(
+                            `${c.id_cate}:${c.nom_cate}`,
+                          ),
+                        120,
+                      );
+                    }}
+                    tabIndex={0}
+                  >
+                    {c.id_cate}:{c.nom_cate}
+                  </li>
                 ))}
               </ul>
               <p>
-                Elige una diciendo el ID o nombre. Di{" "}
-                <strong>‘cancelar’</strong> si deseas salir.
+                Elige una opción o di el ID/nombre por voz.{" "}
+                <strong>‘cancelar’</strong> para salir.
               </p>
-            </div>
+            </div>,
           );
-
-          ctx.agregarMensajeBot(categoriasVisual);
         } catch (e: any) {
           ctx.agregarMensajeBot(`❌ Error al cargar categorías: ${e.message}`);
           ctx.setFlow(null);
@@ -327,67 +451,70 @@ export async function handleFlowProducto(
         txt
           .toLowerCase()
           .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "") // quitar tildes
+          .replace(/[\u0300-\u036f]/g, "")
           .replace(/[.,!?¡¿]/g, "")
           .trim();
 
       const entrada = normalizar(texto);
-      console.log("🔍 Entrada original:", texto);
-      console.log("🔍 Entrada normalizada:", entrada);
 
       try {
         const resCat = await fetch(SERVICIOS_PRODUCTOS.categorias);
         const catData = await resCat.json();
 
-        console.log(
-          "📦 Categorías cargadas desde backend:",
-          catData.categorias,
-        );
-
+        // Permite comparar tanto ID (como string) como nombre (normalizado)
         const match = catData.categorias.find((c: any) => {
           const nombreNormalizado = normalizar(c.nom_cate);
           const idCoincide = c.id_cate.toString() === entrada;
           const nombreCoincide = nombreNormalizado === entrada;
-
-          console.log(
-            `🔁 Comparando categoría: id=${c.id_cate}, nombre=${nombreNormalizado} ⇄ entrada=${entrada}`,
-          );
-
           return idCoincide || nombreCoincide;
         });
 
         if (!match) {
-          console.log("❌ No se encontró categoría para la entrada:", entrada);
+          // 🔒 Bloquea los botones viejos antes de renderizar los nuevos
+          document.querySelectorAll("li.cursor-pointer").forEach((el) => {
+            el.classList.add("pointer-events-none", "opacity-50");
+          });
 
           const opciones = catData.categorias.map(
             (c: any) => `${c.id_cate}:${c.nom_cate}`,
           );
-          console.log("📋 Opciones válidas disponibles:", opciones);
+          ctx.establecerSugerenciasPendientes(opciones);
 
-          const categoriasInvalidasVisual = (
+          ctx.agregarMensajeBot(
             <div className="space-y-2">
               <p>
                 ❌ <strong>Categoría no reconocida.</strong>
               </p>
-              <p>Opciones válidas:</p>
               <ul className="list-inside list-disc">
-                {opciones.map((s: any, i: any) => (
-                  <li key={i}>{s}</li>
+                {catData.categorias.map((c: any, i: number) => (
+                  <li
+                    key={i}
+                    className="cursor-pointer hover:underline"
+                    onClick={() => {
+                      // Al hacer click, puedes enviar ID o nombre, ambos funcionan por tu lógica de arriba.
+                      document
+                        .querySelectorAll("li.cursor-pointer")
+                        .forEach((el) => {
+                          el.classList.add("pointer-events-none", "opacity-50");
+                        });
+                      // Envía solo el ID (como string)
+                      setTimeout(
+                        () =>
+                          ctx.procesarEntradaDirecta?.(c.id_cate.toString()),
+                        120,
+                      );
+                    }}
+                    tabIndex={0}
+                  >
+                    {c.id_cate}:{c.nom_cate}
+                  </li>
                 ))}
               </ul>
-              <p>
-                Intenta nuevamente con el <strong>ID</strong> o{" "}
-                <strong>nombre</strong>.
-              </p>
-            </div>
+              <p>Opciones válidas arriba. Elige una o di el nombre/ID.</p>
+            </div>,
           );
-
-          ctx.agregarMensajeBot(categoriasInvalidasVisual);
-          ctx.establecerSugerenciasPendientes(opciones);
           return;
         }
-
-        console.log("✅ Categoría encontrada:", match);
 
         data.cate_prod = match.id_cate;
 
@@ -395,25 +522,39 @@ export async function handleFlowProducto(
         ctx.establecerSugerenciasPendientes(unds);
         ctx.setFlow({ type: "producto", step: "unidad", data });
 
-        const unidadesVisual = (
+        ctx.agregarMensajeBot(
           <div className="space-y-2">
             <p>
               📏 <strong>Unidades de medida disponibles:</strong>
             </p>
             <ul className="list-inside list-disc">
               {UNIT_OPTIONS.map((u, i) => (
-                <li key={i}>{u.label}</li>
+                <li
+                  key={i}
+                  className="cursor-pointer hover:underline"
+                  onClick={() => {
+                    document
+                      .querySelectorAll("li.cursor-pointer")
+                      .forEach((el) => {
+                        el.classList.add("pointer-events-none", "opacity-50");
+                      });
+                    setTimeout(
+                      () => ctx.procesarEntradaDirecta?.(u.value),
+                      120,
+                    );
+                  }}
+                  tabIndex={0}
+                >
+                  {u.label}
+                </li>
               ))}
             </ul>
             <p>
               Di el nombre exacto o <strong>'cancelar'</strong> para salir.
             </p>
-          </div>
+          </div>,
         );
-
-        ctx.agregarMensajeBot(unidadesVisual);
       } catch (e: any) {
-        console.error("❌ Error al validar categoría:", e);
         ctx.agregarMensajeBot(`❌ Error al validar categoría: ${e.message}`);
         ctx.setFlow(null);
       }
@@ -430,22 +571,40 @@ export async function handleFlowProducto(
       });
 
       if (!match) {
-        const unidadInvalidaVisual = (
+        document.querySelectorAll("li.cursor-pointer").forEach((el) => {
+          el.classList.add("pointer-events-none", "opacity-50");
+        });
+
+        ctx.agregarMensajeBot(
           <div className="space-y-2">
             <p>
               ❌ <strong>Unidad no válida.</strong>
             </p>
-            <p>Elige una de las siguientes opciones:</p>
             <ul className="list-inside list-disc">
               {UNIT_OPTIONS.map((u, i) => (
-                <li key={i}>{u.label}</li>
+                <li
+                  key={i}
+                  className="cursor-pointer hover:underline"
+                  onClick={() => {
+                    document
+                      .querySelectorAll("li.cursor-pointer")
+                      .forEach((el) => {
+                        el.classList.add("pointer-events-none", "opacity-50");
+                      });
+                    setTimeout(
+                      () => ctx.procesarEntradaDirecta?.(u.value),
+                      120,
+                    );
+                  }}
+                  tabIndex={0}
+                >
+                  {u.label}
+                </li>
               ))}
             </ul>
-          </div>
+            <p>Elige una de las opciones arriba.</p>
+          </div>,
         );
-
-        ctx.agregarMensajeBot(unidadInvalidaVisual);
-
         ctx.establecerSugerenciasPendientes(UNIT_OPTIONS.map((o) => o.label));
         return;
       }
