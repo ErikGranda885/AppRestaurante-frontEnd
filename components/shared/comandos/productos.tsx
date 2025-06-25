@@ -13,7 +13,7 @@ export const comandosDeProductos = [
     patron: /^inventario de (.+)$/i,
     handler: async (m: RegExpMatchArray, ctx: any) => {
       const prod = m[1].trim();
-      ctx.agregarMensajeBot(`⏳ Consultando inventario de ${prod}...`);
+      /* ctx.agregarMensajeBot(`⏳ Consultando inventario de ${prod}...`); */
       try {
         const resp = await fetch(SERVICIOS_INVENTARIO.stockPorNombre(prod));
         const datos = await resp.json();
@@ -28,7 +28,7 @@ export const comandosDeProductos = [
           ctx.agregarMensajeBot(
             <div className="space-y-2">
               <p>
-                📦 <strong>Inventario encontrado:</strong>
+                📦 <strong>Información del producto:</strong>
               </p>
               <ul className="list-inside list-disc">
                 <li>
@@ -49,7 +49,8 @@ export const comandosDeProductos = [
           ctx.agregarMensajeBot(
             <div className="space-y-2">
               <p>
-                ❌ No se encontró <strong>"{prod}"</strong>.
+                ❌ El producto <strong>"{prod}"</strong> no se encuentra
+                registrado.
               </p>
               <p>¿Quizás quisiste?:</p>
               <ul className="list-inside list-disc">
@@ -94,10 +95,41 @@ export const comandosDeProductos = [
   {
     nombre: "agregarProducto",
     patron: /^agregar producto[,:]?\s*(.+)$/i,
-    handler: (m: RegExpMatchArray, ctx: any) => {
+    handler: async (m: RegExpMatchArray, ctx: any) => {
       const nombre = m[1].trim();
 
-      // Bloquear botones previos antes de mostrar nuevos
+      // 🔍 Verifica si ya existe
+      try {
+        const verifResp = await fetch(
+          SERVICIOS_PRODUCTOS.verificarNombre(nombre),
+        );
+        const verifData = await verifResp.json();
+        if (verifData.exists) {
+          ctx.agregarMensajeBot(
+            <div className="space-y-2">
+              <p>
+                ⚠️ <strong>Producto ya existente:</strong>
+              </p>
+              <ul className="list-inside list-disc">
+                <li>
+                  Nombre: <strong>{nombre}</strong>
+                </li>
+              </ul>
+              <p>Por favor intenta con otro nombre.</p>
+            </div>,
+          );
+          ctx.setFlow(null); // ⛔ Detén el flujo
+          return;
+        }
+      } catch (e: any) {
+        ctx.agregarMensajeBot(
+          `❌ Error al verificar nombre del producto: ${e.message}`,
+        );
+        ctx.setFlow(null);
+        return;
+      }
+
+      // Si NO existe, continúa como siempre:
       document.querySelectorAll(".btn-opciones").forEach((el) => {
         el.classList.add("pointer-events-none", "opacity-50");
       });
@@ -112,8 +144,8 @@ export const comandosDeProductos = [
       ctx.agregarMensajeBot(
         <div className="space-y-2">
           <p>
-            🤖 ¿Confirmas que quieres crear el producto{" "}
-            <strong>"{nombre}"</strong>?
+            🤖 ¿Quieres crear el siguiente producto? <strong>"{nombre}"</strong>
+            ?
           </p>
           <p>Haz clic o responde por voz:</p>
           <div className="flex flex-wrap gap-2">
@@ -273,8 +305,8 @@ export async function handleFlowProducto(
         ctx.agregarMensajeBot(
           <div className="space-y-2">
             <p>
-              <span style={{ color: "#e53e3e" }}>❓ No entendí.</span> ¿Deseas
-              crear el producto <strong>"{data.nom_prod}"</strong>?
+              🤖 No te he entendido. ¿Deseas crear el producto{" "}
+              <strong>"{data.nom_prod}"</strong>?
             </p>
             <div className="flex flex-wrap gap-2">
               <span
@@ -323,7 +355,7 @@ export async function handleFlowProducto(
 
         ctx.agregarMensajeBot(
           <div className="space-y-2">
-            <p>❌ Tipo no válido. Elige uno de los siguientes:</p>
+            <p>🤖 No te he entendido. ¿Qué tipo de producto deseas crear?</p>
             <ul className="list-inside list-disc">
               {opciones.map((op, i) => (
                 <li
@@ -500,7 +532,7 @@ export async function handleFlowProducto(
           ctx.agregarMensajeBot(
             <div className="space-y-2">
               <p>
-                ❌ <strong>Categoría no reconocida.</strong>
+                🤖 No te he entendido . Por favor elige una categoría válida:
               </p>
               <ul className="list-inside list-disc">
                 {catData.categorias.map((c: any, i: number) => (
@@ -595,7 +627,8 @@ export async function handleFlowProducto(
         ctx.agregarMensajeBot(
           <div className="space-y-2">
             <p>
-              ❌ <strong>Unidad no válida.</strong>
+              🤖 No te he entendido. Por favor elige una unidad de medida
+              válida:
             </p>
             <ul className="list-inside list-disc">
               {UNIT_OPTIONS.map((u, i) => (
@@ -627,40 +660,6 @@ export async function handleFlowProducto(
       }
 
       data.und_prod = match.value;
-
-      try {
-        const verifResp = await fetch(
-          SERVICIOS_PRODUCTOS.verificarNombre(data.nom_prod),
-        );
-        const verifData = await verifResp.json();
-        if (verifData.exists) {
-          const productoExistenteVisual = (
-            <div className="space-y-2">
-              <p>
-                ⚠️ <strong>Producto ya existente:</strong>
-              </p>
-              <ul className="list-inside list-disc">
-                <li>
-                  Nombre: <strong>{data.nom_prod}</strong>
-                </li>
-              </ul>
-              <p>Por favor intenta con otro nombre.</p>
-            </div>
-          );
-
-          ctx.agregarMensajeBot(productoExistenteVisual);
-
-          ctx.setFlow(null);
-          return;
-        }
-      } catch (e: any) {
-        ctx.agregarMensajeBot(
-          `❌ Error al verificar nombre del producto: ${e.message}`,
-        );
-        ctx.setFlow(null);
-        return;
-      }
-
       const payload = {
         nom_prod: data.nom_prod,
         cate_prod:
@@ -686,7 +685,8 @@ export async function handleFlowProducto(
           resData.producto?.id_prod
         ) {
           ctx.agregarMensajeBot(
-            `✅ Producto "${resData.producto.nom_prod}" creado con ID ${resData.producto.id_prod}.`,
+            `✅ Producto "${resData.producto.nom_prod}" creado exitosamente con ID ${resData.producto.id_prod}.`,
+            true,
           );
         } else {
           ctx.agregarMensajeBot(

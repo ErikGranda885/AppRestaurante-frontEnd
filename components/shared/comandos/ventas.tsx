@@ -27,8 +27,6 @@ export const comandosDeVentas = [
     patron:
       /\b(cu[aá]nt[oó] (se )?vendi[oó]( hoy)?|ventas( de)? hoy|mostrar ventas( del d[ií]a)?)\b/i,
     handler: async (_m: RegExpMatchArray, ctx: any) => {
-      ctx.agregarMensajeBot("⏳ Consultando ventas de hoy...");
-
       try {
         const hoy = new Date();
         const fechaHoy = `${hoy.getFullYear()}-${(hoy.getMonth() + 1)
@@ -45,53 +43,28 @@ export const comandosDeVentas = [
           const fechaFormateada = fechaHoy.split("-").reverse().join("/");
 
           if (Number(totalFormateado) === 0) {
-            const sinVentasVisual = (
-              <div className="space-y-2">
-                <p>
-                  📅 <strong>Ventas de hoy:</strong>
-                </p>
-                <p>❌ No se realizaron ventas el día de hoy.</p>
-              </div>
+            // Visual (con emoji, no leer)
+            ctx.agregarMensajeBot(
+              `🤖 No se han realizado ventas el dia de hoy.`,
+              true,
             );
-            ctx.agregarMensajeBot(sinVentasVisual);
-
-            const u = new SpeechSynthesisUtterance(
-              "No se realizaron ventas el día de hoy.",
-            );
-            u.lang = "es-ES";
-            window.speechSynthesis.speak(u);
           } else {
-            const ventasVisual = (
-              <div className="space-y-2">
-                <p>
-                  📅 <strong>Ventas de hoy:</strong>
-                </p>
-                <ul className="list-inside list-disc">
-                  <li>
-                    Fecha: <strong>{fechaFormateada}</strong>
-                  </li>
-                  <li>
-                    Total vendido: <strong>${totalFormateado}</strong>
-                  </li>
-                </ul>
-              </div>
+            const total = Number(totalFormateado);
+            const esPlural =
+              total === 1 ? "dólar" : total < 1 ? "centavos" : "dólares";
+            ctx.agregarMensajeBot(
+              `🤖 El total vendido hoy es ${totalFormateado} ${esPlural}`,
+              true,
             );
-
-            ctx.agregarMensajeBot(ventasVisual);
-
-            const u = new SpeechSynthesisUtterance(
-              `El total vendido hoy es ${totalFormateado} dólares.`,
-            );
-            u.lang = "es-ES";
-            window.speechSynthesis.speak(u);
           }
         } else {
           ctx.agregarMensajeBot(
-            "❌ No se pudo obtener el total de ventas de hoy.",
+            "No se pudo obtener el total de ventas de hoy.",
+            true,
           );
         }
       } catch (e: any) {
-        ctx.agregarMensajeBot(`❌ Error al consultar ventas: ${e.message}`);
+        ctx.agregarMensajeBot(`Error al consultar ventas: ${e.message}`, true);
       }
     },
   },
@@ -100,7 +73,6 @@ export const comandosDeVentas = [
     nombre: "iniciarVenta",
     patron: /\b(registrar venta|nueva venta|hacer una venta|iniciar venta)\b/i,
     handler: async (_m: any, ctx: any) => {
-      ctx.agregarMensajeBot("🚀 Iniciando el proceso de registro de venta...");
       try {
         const res = await fetch(SERVICIOS_PRODUCTOS.categorias);
         const catData = await res.json();
@@ -181,8 +153,7 @@ export async function handleFlowVenta(
           ctx.agregarMensajeBot(
             <div className="space-y-2">
               <p>
-                ❌ Categoría no válida. Por favor, elige una opción de la lista
-                mostrada.
+                🤖 No te he entendido. Por favor elige una categoría valida:
               </p>
               <ul className="list-inside list-disc">
                 {opciones.map((s: any, i: any) => (
@@ -240,7 +211,10 @@ export async function handleFlowVenta(
         ctx.agregarMensajeBot(
           <div className="space-y-2">
             <p>
-              🍽️ <strong>Productos disponibles:</strong>
+              📦{" "}
+              <strong>
+                Productos disponibles en categoría "{match.nom_cate}":
+              </strong>
             </p>
             <ul className="list-inside list-disc">
               {sugerencias.map((s, i) => (
@@ -279,7 +253,9 @@ export async function handleFlowVenta(
           );
           ctx.agregarMensajeBot(
             <div className="space-y-2">
-              <p>❌ Producto no encontrado.</p>
+              <p>
+                🤖 Producto no encontrado. Por favor, elige uno de la lista:
+              </p>
               <ul className="list-inside list-disc">
                 {sugerencias.map((s: any, i: any) => (
                   <li key={i}>{s}</li>
@@ -319,12 +295,15 @@ export async function handleFlowVenta(
               (c: any) => `${c.id_cate}:${c.nom_cate}`,
             );
 
+            // Mensaje leído por el asistente
+            ctx.agregarMensajeBot(
+              `❌ El producto "${match.nom_prod}" no tiene stock disponible.`,
+              true,
+            );
+
+            // Mensaje visual complementario, no leído
             ctx.agregarMensajeBot(
               <div className="space-y-2">
-                <p>
-                  ❌ El producto <strong>{match.nom_prod}</strong> no tiene
-                  stock disponible.
-                </p>
                 <p>📦 Elige otra categoría:</p>
                 <ul className="list-inside list-disc">
                   {sugerenciasCat.map((s: any, i: any) => (
@@ -333,7 +312,9 @@ export async function handleFlowVenta(
                 </ul>
                 <p>Indica el ID o nombre de la categoría para continuar.</p>
               </div>,
+              false,
             );
+
             ctx.establecerSugerenciasPendientes(sugerenciasCat);
             ctx.setFlow({ type: "venta", step: "categoria", data });
             ctx.estadoInterno = {};
@@ -372,6 +353,11 @@ export async function handleFlowVenta(
     }
 
     case "cantidad": {
+      // 👇 Bloquea todos los botones de opciones al inicio del handler
+      document.querySelectorAll(".btn-opciones").forEach((el) => {
+        el.classList.add("pointer-events-none", "opacity-50");
+      });
+
       console.log("[VENTA][cantidad] Entrada recibida:", entrada);
 
       if (/^(cancelar|salir)$/i.test(entrada)) {
@@ -386,7 +372,8 @@ export async function handleFlowVenta(
       // Validación de cantidad válida
       if (!cantidad || cantidad <= 0 || !Number.isInteger(cantidad)) {
         ctx.agregarMensajeBot(
-          "❌ Cantidad inválida. Ingresa un número entero mayor a cero.",
+          `🤖 No te he entendido . Por favor, ingresa la cantidad del producto a vender.`,
+          false,
         );
         return;
       }
@@ -397,7 +384,8 @@ export async function handleFlowVenta(
         cantidad > data.stockDisponible
       ) {
         ctx.agregarMensajeBot(
-          `❌ No puedes vender más del stock disponible. Stock actual: ${data.stockDisponible}. Ingresa una cantidad válida.`,
+          `🤖 No puedes vender más del stock disponible. Stock actual: ${data.stockDisponible}. Ingresa una cantidad válida.`,
+          false,
         );
         return;
       }
@@ -441,7 +429,6 @@ export async function handleFlowVenta(
               >
                 si
               </BotonAccion>
-
               <BotonAccion
                 paso="agregarOtro"
                 pasoActual={ctx.flow()?.step}
@@ -560,26 +547,37 @@ export async function handleFlowVenta(
         return;
       } else {
         ctx.establecerSugerenciasPendientes(["sí", "no"]);
+        document.querySelectorAll(".btn-opciones").forEach((el) => {
+          el.classList.add("pointer-events-none", "opacity-50");
+        });
         ctx.agregarMensajeBot(
           <div className="space-y-2">
-            <p>❓ ¿Quieres agregar otro producto?</p>
+            <p> 🤖 No te he entendido. ¿Quieres agregar otro producto?</p>
             <div className="flex gap-2">
-              <button
-                className="btn-opciones"
-                onClick={() =>
-                  setTimeout(() => ctx.procesarEntradaDirecta?.("sí"), 100)
-                }
+              <BotonAccion
+                paso="agregarOtro"
+                pasoActual={ctx.flow()?.step}
+                onClick={() => {
+                  document.querySelectorAll(".btn-opciones").forEach((el) => {
+                    el.classList.add("pointer-events-none", "opacity-50");
+                  });
+                  setTimeout(() => ctx.procesarEntradaDirecta?.("sí"), 120);
+                }}
               >
                 sí
-              </button>
-              <button
-                className="btn-opciones"
-                onClick={() =>
-                  setTimeout(() => ctx.procesarEntradaDirecta?.("no"), 100)
-                }
+              </BotonAccion>
+              <BotonAccion
+                paso="agregarOtro"
+                pasoActual={ctx.flow()?.step}
+                onClick={() => {
+                  document.querySelectorAll(".btn-opciones").forEach((el) => {
+                    el.classList.add("pointer-events-none", "opacity-50");
+                  });
+                  setTimeout(() => ctx.procesarEntradaDirecta?.("no"), 120);
+                }}
               >
                 no
-              </button>
+              </BotonAccion>
             </div>
           </div>,
         );
@@ -594,11 +592,13 @@ export async function handleFlowVenta(
       // Solo acepta "efectivo"
       if (entrada !== "efectivo") {
         console.log("[VENTA][pago] Método NO válido recibido:", entrada);
+        document.querySelectorAll(".btn-opciones").forEach((el) => {
+          el.classList.add("pointer-events-none", "opacity-50");
+        });
         ctx.agregarMensajeBot(
           <div className="space-y-2">
             <p>
-              ❌ Método no válido. Solo se permite pago en{" "}
-              <strong>efectivo</strong>.
+              🤖 No te he entendido. Selecciona el método de pago disponible:
             </p>
             <div className="flex gap-2">
               <BotonAccion
@@ -685,7 +685,10 @@ export async function handleFlowVenta(
 
       const monto = parseFloat(entrada.replace(",", "."));
       if (isNaN(monto) || monto <= 0) {
-        ctx.agregarMensajeBot("❌ Monto inválido. Ingresa un número válido.");
+        ctx.agregarMensajeBot(
+          "🤖 No te he entendido. Ingresa el monto recibido:",
+          false,
+        );
         return;
       }
 
@@ -701,9 +704,10 @@ export async function handleFlowVenta(
       // Validar que el monto recibido sea suficiente
       if (monto < totalFinal) {
         ctx.agregarMensajeBot(
-          `❌ El monto recibido ($${monto.toFixed(
+          `🤖 El monto recibido ($${monto.toFixed(
             2,
           )}) no puede ser menor al total de la venta ($${totalFinal.toFixed(2)}). Ingresa un monto válido.`,
+          false,
         );
         return;
       }
@@ -744,6 +748,9 @@ export async function handleFlowVenta(
 
       ctx.setFlow({ type: "venta", step: "confirmacion", data });
       setTimeout(() => {
+        document.querySelectorAll(".btn-opciones").forEach((el) => {
+          el.classList.add("pointer-events-none", "opacity-50");
+        });
         ctx.agregarMensajeBot(
           <div className="space-y-2">
             <p>✅ ¿Confirmas registrar esta venta?</p>
@@ -1034,9 +1041,12 @@ export async function handleFlowVenta(
         ctx.setFlow(null);
         ctx.estadoInterno = {};
       } else {
+        document.querySelectorAll(".btn-opciones").forEach((el) => {
+          el.classList.add("pointer-events-none", "opacity-50");
+        });
         ctx.agregarMensajeBot(
           <div className="space-y-2">
-            <p>❓ Opción no válida. ¿Confirmas registrar esta venta?</p>
+            <p>🤖 No te he entendido. ¿Quieres registrar esta venta?</p>
             <div className="flex gap-2">
               <BotonAccion
                 paso="confirmacion"

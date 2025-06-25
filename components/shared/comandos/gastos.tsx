@@ -8,8 +8,6 @@ export const comandosDeGastos = [
       /\b(gastos( del)? d[ií]a|gastos de hoy|cu[aá]nt[oó] se gast[oó]|cu[aá]nt[oó] gast[ée] hoy)\b/i,
 
     handler: async (_m: RegExpMatchArray, ctx: any) => {
-      ctx.agregarMensajeBot("⏳ Consultando gastos de hoy...");
-
       try {
         const hoy = new Date();
         const dia = hoy.getDate().toString().padStart(2, "0");
@@ -21,7 +19,7 @@ export const comandosDeGastos = [
         const datos = await resp.json();
 
         if (!Array.isArray(datos)) {
-          ctx.agregarMensajeBot("❌ Respuesta inesperada del servidor.");
+          ctx.agregarMensajeBot("❌ Respuesta inesperada del servidor.", true);
           return;
         }
 
@@ -30,14 +28,22 @@ export const comandosDeGastos = [
         );
 
         if (gastosHoy.length === 0) {
-          ctx.agregarMensajeBot("✅ No hay gastos registrados hoy.");
+          ctx.agregarMensajeBot("✅ No hay gastos registrados hoy.", true);
         } else {
           const total = gastosHoy.reduce(
             (sum: number, g: any) => sum + Number(g.mont_gas),
             0,
           );
 
-          const detalleVisual = (
+          // Dólares o centavos automático
+          const unidad = total < 1 ? "centavos" : "dólares";
+          const cantidadFormateada =
+            total < 1
+              ? `${(total * 100).toFixed(0)}` // Solo enteros para centavos
+              : `${total.toFixed(2)}`; // 2 decimales para dólares
+
+          // Luego el mensaje visual (NO se lee)
+          ctx.agregarMensajeBot(
             <div className="space-y-2">
               <p>
                 📅 <strong>Gastos de hoy ({fechaFormateada}):</strong>
@@ -49,23 +55,20 @@ export const comandosDeGastos = [
                   </li>
                 ))}
               </ul>
-              <p>
-                💰 <strong>Total: ${total.toFixed(2)}</strong>
-              </p>
-            </div>
+            </div>,
+            false, // Visual, no lo lee
           );
-
-          ctx.agregarMensajeBot(detalleVisual);
-
-          // Leer solo el total
-          const u = new SpeechSynthesisUtterance(
-            `Total: ${total.toFixed(2)} dólares`,
+          // Primero el mensaje leído
+          ctx.agregarMensajeBot(
+            `💰 El total de gastos hoy es ${cantidadFormateada} ${unidad}.`,
+            true, // Solo lee el texto
           );
-          u.lang = "es-ES";
-          window.speechSynthesis.speak(u);
         }
       } catch (e: any) {
-        ctx.agregarMensajeBot(`❌ Error al consultar gastos: ${e.message}`);
+        ctx.agregarMensajeBot(
+          `❌ Error al consultar gastos: ${e.message}`,
+          true,
+        );
       }
     },
   },
@@ -84,10 +87,6 @@ export const comandosDeGastos = [
         );
         return;
       }
-
-      ctx.agregarMensajeBot(
-        `⏳ Registrando gasto de $${monto.toFixed(2)} por "${descripcion}"...`,
-      );
 
       const inicio = Date.now();
 
@@ -121,7 +120,7 @@ export const comandosDeGastos = [
 
         if (resp.ok) {
           ctx.agregarMensajeBot(
-            `✅ Gasto registrado correctamente con ID ${data.id_gas} en ${duracion} segundos.`,
+            `✅ Gasto registrado exitosamente con ID ${data.id_gas}`,
           );
         } else {
           ctx.agregarMensajeBot(`❌ Error: ${data.message || resp.statusText}`);

@@ -102,7 +102,7 @@ export async function handleFlowReporte(
 
       ctx.agregarMensajeBot(
         <div>
-          <p>❌ Módulo no reconocido. Elige uno de los siguientes:</p>
+          <p>🤖 No te he entendido. Elige uno de los módulos disponibles:</p>
           <ul className="list-inside list-disc pl-2">
             {modulos.map((m, i) => (
               <li
@@ -170,7 +170,10 @@ export async function handleFlowReporte(
 
       ctx.agregarMensajeBot(
         <div>
-          <p>❌ Subreporte no reconocido. Elige uno de los siguientes:</p>
+          <p>
+            🤖 No te he entendido. Elige uno de los siguientes reportes
+            disponibles:{" "}
+          </p>
           <ul className="list-inside list-disc pl-2">
             {posibles.map((s, i) => (
               <li
@@ -235,7 +238,7 @@ export async function handleFlowReporte(
 
       ctx.agregarMensajeBot(
         <div>
-          <p>❌ Formato no reconocido. Elige uno:</p>
+          <p>🤖 No te he entendido. Elige uno de los formatos disponibles: </p>
           <ul className="list-inside list-disc pl-2">
             {["Excel", "PDF"].map((formato, i) => (
               <li
@@ -263,7 +266,6 @@ export async function handleFlowReporte(
       return;
     }
     ctx.setFlow({ ...flow, step: "confirmacion", type: "reporte" });
-    ctx.agregarMensajeBot("✅ Generando reporte...");
     return await generarReporte(flow.data, ctx);
   }
 }
@@ -336,10 +338,11 @@ async function generarReporte(
       ? Math.floor((Date.now() - inicioFlujo) / 1000)
       : null;
 
+    // Un solo mensaje, visual + lectura, incluyendo el subreporte y la duración
     ctx.agregarMensajeBot(
       <div>
         <p>
-          📥 Reporte de <strong>{subreporte}</strong> generado correctamente.
+          📥 Documento de <strong>{subreporte}</strong> generado exitosamente.
         </p>
         {duracion !== null && (
           <p className="text-xs text-muted-foreground">
@@ -347,7 +350,9 @@ async function generarReporte(
           </p>
         )}
       </div>,
+      true,
     );
+
     ctx.setFlow(null);
   } catch (e: any) {
     ctx.agregarMensajeBot(`❌ Error al generar el reporte: ${e.message}`);
@@ -366,7 +371,7 @@ export const comandoGenerarReporte = {
     } satisfies FlowReporte);
     ctx.agregarMensajeBot(
       <div>
-        <p>🧾 ¿De qué módulo deseas el reporte?</p>
+        <p>🧾 ¿De qué módulo deseas generar el reporte?</p>
         <ul className="list-inside list-disc pl-2">
           {["Ventas", "Productos", "Compras", "Gastos", "Cierres"].map(
             (m, i) => (

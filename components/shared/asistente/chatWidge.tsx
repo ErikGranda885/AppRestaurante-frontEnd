@@ -21,6 +21,25 @@ interface Mensaje {
   duracionMs?: number;
 }
 
+// Detección avanzada de emojis y pictogramas
+const contieneEmoji = (texto: string) =>
+  /[\p{Extended_Pictographic}\u2600-\u26FF]/u.test(texto);
+
+// Detecta acciones de proceso
+const esMensajeProceso = (texto: string) =>
+  /consultando|buscando|generando|registrando|cargando|creando|procesando|validando|espera|procesando/i.test(
+    texto,
+  );
+
+// Detecta si el mensaje es solo símbolos o pictogramas (sin letras/números)
+const esSoloSimbolos = (texto: string) =>
+  /^[\p{P}\p{S}\p{Emoji}\s]+$/u.test(texto.trim());
+
+// Elimina emoji o pictograma inicial (más espacios opcionales)
+function limpiarEmojiInicial(texto: string): string {
+  return texto.replace(/^[\p{Extended_Pictographic}\u2600-\u26FF]+(\s*)/u, "");
+}
+
 export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
   const finalRef = useRef<HTMLDivElement | null>(null);
   const [comandosMostrados, setComandosMostrados] = useState(false);
@@ -44,23 +63,30 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
   ) => {
     setMensajes((prev) => [...prev, { tipo, texto, leer, duracionMs }]);
 
-    const debeLeer =
+    // Solo lee si es texto plano y no tiene símbolos/acciones indeseadas
+    if (
       tipo === "asistente" &&
+      leer !== false &&
       typeof texto === "string" &&
-      leer &&
+      texto &&
       texto.length < 200 &&
-      !texto.includes("\n");
-
-    if (debeLeer) {
-      hablarMensaje(texto, "es-MX-DaliaNeural"); // Cambia aquí la voz si quieres otra
+      !texto.includes("\n") &&
+      !esSoloSimbolos(texto) &&
+      !esMensajeProceso(texto)
+    ) {
+      // <-- SOLO ESTE CAMBIO
+      const textoSinEmoji = limpiarEmojiInicial(texto);
+      if (textoSinEmoji) {
+        hablarMensaje(textoSinEmoji, "es-MX-DaliaNeural");
+      }
     }
   };
 
   const contexto = {
     flow: () => flowRef.current,
     setFlow,
-    agregarMensajeBot: (t: string | React.ReactNode) =>
-      agregarMensaje("asistente", t),
+    agregarMensajeBot: (t: string | React.ReactNode, leer = true) =>
+      agregarMensaje("asistente", t,leer),
     obtenerInicioFlujo: () => inicioFlujo,
     setInicioFlujo,
     setPendingSuggestions,

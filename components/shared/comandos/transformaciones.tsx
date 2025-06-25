@@ -20,8 +20,6 @@ export const comandosDeTransformaciones = [
         return;
       }
 
-      ctx.agregarMensajeBot("⏳ Consultando recetas disponibles...");
-
       try {
         const resp = await fetch(SERVICIOS_RECETAS.listar);
         const recetas = await resp.json();
@@ -54,12 +52,10 @@ export const comandosDeTransformaciones = [
 
         if (!recetas || recetas.length === 0) {
           ctx.agregarMensajeBot(
-            <>
-              ❌ No hay recetas registradas en el sistema.
-              <br />
-              Por favor crea al menos una receta para poder transformarla.
-            </>,
+            "⚠️ Actualmente no hay ninguna receta registrada en el aplicativo. Por favor, crea al menos una receta para poder realizar una transformación.",
+            true, // Se lee en voz alta
           );
+
           return;
         }
 
@@ -119,8 +115,6 @@ export const comandosDeTransformaciones = [
       /\b(qué\s+transformaciones\s+(se\s+h(i|a)cieron|hubo)|transformaciones\s+(de\s+)?(hoy|actual))\b/i,
 
     handler: async (_match: RegExpMatchArray, ctx: any) => {
-      ctx.agregarMensajeBot("⏳ Consultando transformaciones del día...");
-
       try {
         const hoy = format(new Date(), "yyyy-MM-dd");
         const res = await fetch(SERVICIOS_TRANSFORMACIONES.porFecha(hoy));
