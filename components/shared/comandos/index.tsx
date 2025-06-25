@@ -17,7 +17,20 @@ export const comandoVerComandos = {
         <p>📂 Comandos disponibles:</p>
         <ul className="list-inside list-disc pl-2">
           {ejemplosGenerados.map((ej, idx) => (
-            <li key={idx}>{ej}</li>
+            <li
+              key={idx}
+              className="comando-opcion cursor-pointer hover:underline"
+              onClick={() => {
+                // Bloquea todos los comandos al hacer clic
+                document.querySelectorAll(".comando-opcion").forEach((el) => {
+                  el.classList.add("pointer-events-none", "opacity-50");
+                });
+                setTimeout(() => ctx.procesarEntradaDirecta?.(ej), 120);
+              }}
+              tabIndex={0}
+            >
+              {ej}
+            </li>
           ))}
         </ul>
         <p>🚀 Estoy listo para ayudarte.</p>

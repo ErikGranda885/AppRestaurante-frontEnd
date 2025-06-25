@@ -47,9 +47,10 @@ export interface FlowVenta {
 }
 
 export interface FlowReporte {
+  type: "reporte";
   step: "modulo" | "subreporte" | "formato" | "confirmacion";
   data: {
-    modulo?: "productos" | "produccion" | "compras" | "ventas" | "gastos";
+    modulo?: "ventas" | "productos" | "compras" | "gastos" | "cierres";
     subreporte?: string;
     formato?: "excel" | "pdf";
     inicioFlujo?: number;
