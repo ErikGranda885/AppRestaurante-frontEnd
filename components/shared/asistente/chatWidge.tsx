@@ -86,7 +86,7 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
     flow: () => flowRef.current,
     setFlow,
     agregarMensajeBot: (t: string | React.ReactNode, leer = true) =>
-      agregarMensaje("asistente", t,leer),
+      agregarMensaje("asistente", t, leer),
     obtenerInicioFlujo: () => inicioFlujo,
     setInicioFlujo,
     setPendingSuggestions,

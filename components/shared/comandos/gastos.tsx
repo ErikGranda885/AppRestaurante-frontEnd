@@ -28,7 +28,7 @@ export const comandosDeGastos = [
         );
 
         if (gastosHoy.length === 0) {
-          ctx.agregarMensajeBot("✅ No hay gastos registrados hoy.", true);
+          ctx.agregarMensajeBot("🤖 No se han registrado gastos el día de hoy", true);
         } else {
           const total = gastosHoy.reduce(
             (sum: number, g: any) => sum + Number(g.mont_gas),

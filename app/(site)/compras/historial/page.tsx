@@ -41,6 +41,7 @@ import { safePrice } from "@/utils/format";
 import { DialogExportarCompras } from "@/components/shared/compras/ui/dialogExportarCompras";
 import { socket } from "@/lib/socket";
 import Preloader from "@/components/shared/varios/preloader";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export default function Page() {
   const { ventasConfig } = useConfiguracionesVentas();
@@ -367,7 +368,10 @@ export default function Page() {
                 >
                   <Plus className="h-4 w-4 font-light" /> Añade una nueva compra
                 </Button>
+              </div>
 
+              {/* DERECHA: Buscar + Exportar */}
+              <div className="flex flex-wrap items-center gap-2">
                 <div className="flex-shrink-0">
                   <DateRangeFilter
                     value={dateRange}
@@ -379,17 +383,31 @@ export default function Page() {
                   />
                 </div>
 
-                <Button
-                  variant="outline"
-                  onClick={() => handleQuickRange("hoy")}
-                  className="flex-shrink-0 whitespace-nowrap text-[12px]"
-                >
-                  Hoy
-                </Button>
-              </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="flex-shrink-0 text-[12px] dark:bg-[#222224]"
+                    >
+                      {labelQuickRange}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="border-border">
+                    <DropdownMenuItem onClick={() => handleQuickRange("hoy")}>
+                      Hoy
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickRange("ayer")}>
+                      Ayer
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickRange("mes")}>
+                      Este mes
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleQuickRange("año")}>
+                      Este año
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-              {/* DERECHA: Buscar + Exportar */}
-              <div className="flex flex-wrap items-center gap-2">
                 <div className="relative min-w-[150px] flex-1">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                     <Search className="h-4 w-4 text-gray-500" />

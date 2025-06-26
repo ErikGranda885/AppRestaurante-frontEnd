@@ -121,7 +121,7 @@ export const comandosDeTransformaciones = [
         const data = await res.json();
 
         if (!Array.isArray(data) || data.length === 0) {
-          ctx.agregarMensajeBot("📭 No se registraron transformaciones hoy.");
+          ctx.agregarMensajeBot("🤖 No se han registrado transformaciones el día de hoy.");
           return;
         }
 

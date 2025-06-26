@@ -231,91 +231,95 @@ export function BulkUploadProveedoresDialog({
           />
 
           {previewData.length > 0 && (
-            <div className="max-h-[20vh] w-[685px] overflow-auto border border-border">
-              <table className="text-sm">
-                <thead>
-                  <tr>
-                    {Object.keys(previewData[0])
-                      .filter((h) => h !== "img_prov")
-                      .map((header) => (
-                        <th
-                          key={header}
-                          className="border border-border px-2 py-1"
-                        >
-                          {header}
-                        </th>
-                      ))}
-                    <th className="border border-border px-2 py-1">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {previewData.map((row, idx) => (
-                    <tr key={idx}>
-                      {Object.keys(row)
-                        .filter((key) => key !== "img_prov")
-                        .map((key) => (
-                          <td
-                            key={key}
-                            className="border border-border px-2 py-1"
+            <div className="max-h-[35vh] overflow-x-auto overflow-y-auto rounded border border-border bg-background">
+              <div className="w-1">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr>
+                      {Object.keys(previewData[0])
+                        .filter((h) => h !== "img_prov")
+                        .map((header) => (
+                          <th
+                            key={header}
+                            className="border border-border bg-muted px-2 py-1"
                           >
-                            {editandoFilaIndex === idx ? (
-                              <input
-                                type="text"
-                                value={editarFila[key]}
-                                onChange={(e) =>
-                                  seteditarFila({
-                                    ...editarFila,
-                                    [key]: e.target.value,
-                                  })
-                                }
-                                className="w-full"
-                              />
-                            ) : (
-                              row[key]
-                            )}
-                          </td>
+                            {header}
+                          </th>
                         ))}
-                      <td className="border border-border px-2 py-1 text-center">
-                        {editandoFilaIndex === idx ? (
-                          <div className="flex justify-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleGuardarFila(idx)}
-                            >
-                              <CheckCircle className="success-text h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setEditandoFilaIndex(null)}
-                            >
-                              <X className="error-text h-4 w-4" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="flex justify-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEditarFila(idx)}
-                            >
-                              <Edit2 className="edt-text h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEliminarFila(idx)}
-                            >
-                              <Trash2 className="error-text h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </td>
+                      <th className="border border-border bg-muted px-2 py-1">
+                        Acciones
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {previewData.map((row, idx) => (
+                      <tr key={idx}>
+                        {Object.keys(row)
+                          .filter((key) => key !== "img_prov")
+                          .map((key) => (
+                            <td
+                              key={key}
+                              className="border border-border px-2 py-1"
+                            >
+                              {editandoFilaIndex === idx ? (
+                                <input
+                                  type="text"
+                                  value={editarFila[key]}
+                                  onChange={(e) =>
+                                    seteditarFila({
+                                      ...editarFila,
+                                      [key]: e.target.value,
+                                    })
+                                  }
+                                  className="w-full"
+                                />
+                              ) : (
+                                row[key]
+                              )}
+                            </td>
+                          ))}
+                        <td className="border border-border px-2 py-1 text-center">
+                          {editandoFilaIndex === idx ? (
+                            <div className="flex justify-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleGuardarFila(idx)}
+                              >
+                                <CheckCircle className="success-text h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setEditandoFilaIndex(null)}
+                              >
+                                <X className="error-text h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex justify-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEditarFila(idx)}
+                              >
+                                <Edit2 className="edt-text h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEliminarFila(idx)}
+                              >
+                                <Trash2 className="error-text h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>
