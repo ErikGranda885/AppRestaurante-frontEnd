@@ -20,24 +20,69 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { CampoTexto } from "../../varios/campoTexto";
 
+function validarRucEcuatoriano(ruc: string): boolean {
+  if (!/^\d{13}$/.test(ruc)) return false;
+
+  const provincia = parseInt(ruc.slice(0, 2), 10);
+  if (provincia < 1 || provincia > 24) return false;
+
+  const tercerDigito = parseInt(ruc[2], 10);
+
+  if (tercerDigito < 6) {
+    return validarCedula(ruc.slice(0, 10));
+  }
+
+  return true; // Se puede expandir para sociedades y públicos
+}
+
+function validarCedula(cedula: string): boolean {
+  const digitos = cedula.split("").map(Number);
+  let total = 0;
+
+  for (let i = 0; i < 9; i++) {
+    let mult = i % 2 === 0 ? 2 : 1;
+    let res = digitos[i] * mult;
+    total += res > 9 ? res - 9 : res;
+  }
+
+  const verificador = (10 - (total % 10)) % 10;
+  return verificador === digitos[9];
+}
+
 const empresaSchema = z.object({
-  nombre_negocio: z.string().min(3, "Debe tener al menos 3 caracteres"),
+  nombre_negocio: z
+    .string()
+    .min(3, "Debe tener al menos 3 caracteres")
+    .max(100, "Debe tener máximo 100 caracteres"), // ✔️ máximo
   ruc_negocio: z
     .string()
-    .length(13, "El RUC debe tener exactamente 13 dígitos")
-    .regex(/^\d+$/, "El RUC debe contener solo números"),
+    .regex(
+      /^\d{13}$/,
+      "El RUC debe tener exactamente 13 dígitos y solo números",
+    ) // ✔️ solo números y 13 caracteres exactos
+    .refine((val) => validarRucEcuatoriano(val), {
+      message: "RUC ecuatoriano inválido",
+    }), // ✔️ validación real
   direccion_negocio: z.string().min(5, "La dirección es requerida"),
   telefono_negocio: z
     .string()
+    .max(10, "Máximo 10 caracteres")
     .min(7, "Teléfono demasiado corto")
-    .regex(/^\d+$/, "Solo números permitidos"),
-  email_negocio: z.string().email("Correo inválido"),
+    .regex(/^\d+$/, "Solo números permitidos"), // ✔️ solo dígitos
+  email_negocio: z
+    .string()
+    .email("Correo inválido")
+    .refine(
+      (val) => /@(hotmail|gmail|yahoo|outlook)\.com$/i.test(val),
+      "Solo se permiten correos de Hotmail, Gmail, Yahoo u Outlook",
+    ),
 });
 
 type EmpresaFormValues = z.infer<typeof empresaSchema>;
 
 export function GeneralesConfiguracion() {
   const { empresa, loading, saveEmpresa } = useEmpresa();
+  const [isSaving, setIsSaving] = useState(false);
   const { logoReportes, setLogoReportes, logoFacturas, setLogoFacturas } =
     useConfiguracionesBranding();
 
@@ -70,6 +115,7 @@ export function GeneralesConfiguracion() {
   }, [empresa, reset]);
 
   const onSubmit = async (values: EmpresaFormValues) => {
+    setIsSaving(true);
     try {
       await saveEmpresa(
         {
@@ -88,6 +134,8 @@ export function GeneralesConfiguracion() {
       setLogoFile(null);
     } catch {
       ToastError({ message: "Error al actualizar la empresa" });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -145,10 +193,11 @@ export function GeneralesConfiguracion() {
                   email_negocio: empresa.corre_emp,
                 })
               }
+              disabled={isSaving}
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={methods.formState.isSubmitting}>
+            <Button type="submit" disabled={isSaving}>
               Guardar cambios
             </Button>
           </div>
@@ -161,8 +210,15 @@ export function GeneralesConfiguracion() {
               control={control}
               name="nombre_negocio"
               label="Nombre del negocio"
+              type="text"
+              maxLength={35}
             />
-            <CampoTexto control={control} name="ruc_negocio" label="RUC" />
+            <CampoTexto
+              control={control}
+              name="ruc_negocio"
+              label="RUC"
+              maxLength={13}
+            />
             <div className="md:col-span-2">
               <Label>Dirección</Label>
               <Textarea {...methods.register("direccion_negocio")} />
@@ -171,8 +227,16 @@ export function GeneralesConfiguracion() {
               control={control}
               name="telefono_negocio"
               label="Teléfono"
+              type="tel"
+              maxLength={10}
             />
-            <CampoTexto control={control} name="email_negocio" label="Email" />
+            <CampoTexto
+              control={control}
+              name="email_negocio"
+              label="Correo electrónico"
+              type="email"
+              placeholder="ejemplo@outlook.com"
+            />
           </div>
         </Card>
 
@@ -215,9 +279,26 @@ export function GeneralesConfiguracion() {
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(e) =>
-                  e.target.files && setLogoFile(e.target.files[0])
-                }
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+
+                  const allowedTypes = [
+                    "image/jpeg",
+                    "image/png",
+                    "image/gif",
+                    "image/svg+xml",
+                  ];
+                  if (!allowedTypes.includes(file.type)) {
+                    ToastError({
+                      message:
+                        "Formato de imagen no permitido. Usa JPG, PNG, GIF o SVG.",
+                    });
+                    return;
+                  }
+
+                  setLogoFile(file);
+                }}
               />
             </label>
           </div>

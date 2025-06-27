@@ -16,7 +16,7 @@ export function useConfiguracionesCierreDiario() {
   const fetchConfiguraciones = async () => {
     try {
       const response = await fetch(SERVICIOS_CONFIGURACIONES.listar, {
-        credentials: "include", // ✅ Usa la cookie HttpOnly
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -53,7 +53,7 @@ export function useConfiguracionesCierreDiario() {
     try {
       await fetch(SERVICIOS_CONFIGURACIONES.actualizarPorClave(clave), {
         method: "PUT",
-        credentials: "include", // ✅ Envia la cookie de sesión automáticamente
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -67,26 +67,18 @@ export function useConfiguracionesCierreDiario() {
     }
   };
 
-  // Setters que actualizan backend + estado
-  const setActivarCierreAutomatico = async (val: boolean) => {
-    await updateConfiguracion("activar_cierre_automatico", val);
+  // Setters locales (sin backend)
+  const setActivarCierreAutomaticoStateOnly = (val: boolean) =>
     setActivarCierreAutomaticoState(val);
-  };
 
-  const setCierreCreacionHora = async (val: string) => {
-    await updateConfiguracion("cierre_creacion_hora", val);
+  const setCierreCreacionHoraStateOnly = (val: string) =>
     setCierreCreacionHoraState(val);
-  };
 
-  const setCierreVerificacionHora = async (val: string) => {
-    await updateConfiguracion("cierre_verificacion_hora", val);
+  const setCierreVerificacionHoraStateOnly = (val: string) =>
     setCierreVerificacionHoraState(val);
-  };
 
-  const setMostrarDiferenciasCierre = async (val: boolean) => {
-    await updateConfiguracion("mostrar_diferencias_cierre", val);
+  const setMostrarDiferenciasCierreStateOnly = (val: boolean) =>
     setMostrarDiferenciasCierreState(val);
-  };
 
   useEffect(() => {
     fetchConfiguraciones();
@@ -94,13 +86,14 @@ export function useConfiguracionesCierreDiario() {
 
   return {
     activarCierreAutomatico,
-    setActivarCierreAutomatico,
+    setActivarCierreAutomaticoStateOnly,
     cierreCreacionHora,
-    setCierreCreacionHora,
+    setCierreCreacionHoraStateOnly,
     cierreVerificacionHora,
-    setCierreVerificacionHora,
+    setCierreVerificacionHoraStateOnly,
     mostrarDiferenciasCierre,
-    setMostrarDiferenciasCierre,
+    setMostrarDiferenciasCierreStateOnly,
+    updateConfiguracion,
     loading,
   };
 }

@@ -1,4 +1,4 @@
-import { Input } from "@/components/ui/input"; // o como se llame tu componente base
+import { Input } from "@/components/ui/input";
 import {
   FormField,
   FormItem,
@@ -12,6 +12,8 @@ interface CampoTextoProps {
   name: string;
   label: string;
   placeholder?: string;
+  type?: "text" | "email" | "tel" | "number" | "password"; // tipos soportados
+  maxLength?: number;
 }
 
 export const CampoTexto: React.FC<CampoTextoProps> = ({
@@ -19,6 +21,8 @@ export const CampoTexto: React.FC<CampoTextoProps> = ({
   name,
   label,
   placeholder,
+  type = "text", // por defecto 'text'
+  maxLength,
 }) => {
   return (
     <FormField
@@ -26,16 +30,26 @@ export const CampoTexto: React.FC<CampoTextoProps> = ({
       name={name}
       render={({ field, fieldState: { error } }) => (
         <FormItem>
-          <FormLabel className="text-black dark:text-white ">{label}</FormLabel>
+          <FormLabel className="text-black dark:text-white">{label}</FormLabel>
           <FormControl>
             <Input
-              type="text"
               {...field}
+              type={type}
               value={field.value ?? ""}
               placeholder={placeholder}
+              maxLength={maxLength}
               className={`${
                 error ? "border-2 border-[#f31260]" : ""
               } w-full rounded-md dark:bg-[#222224]`}
+              onKeyDown={(e) => {
+                // bloquear letras si el tipo es 'tel' o 'number'
+                if (
+                  (type === "tel" || type === "number") &&
+                  !/[0-9]|Backspace|Tab|ArrowLeft|ArrowRight|Delete/.test(e.key)
+                ) {
+                  e.preventDefault();
+                }
+              }}
             />
           </FormControl>
           <FormMessage className="error-text" />
