@@ -8,6 +8,7 @@ import { useProcesadorComandos } from "@/hooks/asistente/useProcesadorComandos";
 import { useSpeechRecognizer } from "@/hooks/asistente/useSpeechRecognizer";
 import { MensajeBot } from "./mensajeBot";
 import { hablarMensaje } from "@/utils/voz";
+import { useUsuarioAutenticado } from "@/hooks/usuarios/useUsuarioAutenticado";
 
 interface ChatWidgetProps {
   onClose: () => void;
@@ -20,10 +21,6 @@ interface Mensaje {
   leer?: boolean;
   duracionMs?: number;
 }
-
-// Detección avanzada de emojis y pictogramas
-const contieneEmoji = (texto: string) =>
-  /[\p{Extended_Pictographic}\u2600-\u26FF]/u.test(texto);
 
 // Detecta acciones de proceso
 const esMensajeProceso = (texto: string) =>
@@ -51,6 +48,7 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
   const [escuchando, setEscuchando] = useState(false);
   const [inputTexto, setInputTexto] = useState("");
   const flowRef = useRef<any>(null);
+  const { rol, isLoading } = useUsuarioAutenticado();
   const setFlow = (nuevoFlow: any) => {
     flowRef.current = nuevoFlow;
   };
@@ -83,6 +81,7 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
   };
 
   const contexto = {
+    rol,
     flow: () => flowRef.current,
     setFlow,
     agregarMensajeBot: (t: string | React.ReactNode, leer = true) =>
@@ -93,6 +92,9 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
     establecerSugerenciasPendientes: setPendingSuggestions,
     procesarEntradaDirecta: (txt: string) => procesarComando(txt),
   };
+
+  console.log("🎯 Rol actual del usuario capturado:", rol);
+  console.log("📦 Contexto enviado a procesador:", contexto);
 
   const { procesarComando } = useProcesadorComandos({
     agregarMensaje,
@@ -122,9 +124,12 @@ export function ChatWidget({ onClose, cerrando }: ChatWidgetProps) {
   }, [mensajes]);
 
   useEffect(() => {
+  if (!isLoading && rol) {
     setTimeout(() => mostrarMensajeBienvenida(), 300);
-    return () => detener();
-  }, [comandosMostrados]);
+  }
+  return () => detener();
+}, [comandosMostrados, isLoading, rol]);
+
 
   const mostrarMensajeBienvenida = () => {
     setMensajes((prev) => {

@@ -4,14 +4,15 @@ import { comandosDeProductos } from "./productos";
 import { comandosDeVentas } from "./ventas";
 import { comandosDeTransformaciones } from "./transformaciones";
 import { comandoGenerarReporte } from "./reportes";
-import ejemplos, { generarEjemplosDeComandos } from "./ejemplos";
+import { generarEjemplosDeComandos } from "./ejemplos";
 
 export const comandoVerComandos = {
   nombre: "verComandos",
   patron: /\b(ver comandos|mostrar comandos|ayuda|qué puedo decir)\b/i,
   handler: async (_m: RegExpMatchArray, ctx: any) => {
-    const ejemplosGenerados = generarEjemplosDeComandos();
-
+    console.log("🧩 Contexto recibido en comandoVerComandos:", ctx);
+    const ejemplosGenerados = generarEjemplosDeComandos(ctx.rol ?? "sin_rol");
+    console.log("📋 Comandos mostrados al usuario:", ejemplosGenerados);
     ctx.agregarMensajeBot(
       <div className="space-y-1">
         <p>📂 Comandos disponibles:</p>
