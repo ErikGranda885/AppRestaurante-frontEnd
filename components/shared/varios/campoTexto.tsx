@@ -14,6 +14,7 @@ interface CampoTextoProps {
   placeholder?: string;
   type?: "text" | "email" | "tel" | "number" | "password"; // tipos soportados
   maxLength?: number;
+  disabled?: boolean;
 }
 
 export const CampoTexto: React.FC<CampoTextoProps> = ({
@@ -23,6 +24,7 @@ export const CampoTexto: React.FC<CampoTextoProps> = ({
   placeholder,
   type = "text", // por defecto 'text'
   maxLength,
+  disabled,
 }) => {
   return (
     <FormField
@@ -38,6 +40,7 @@ export const CampoTexto: React.FC<CampoTextoProps> = ({
               value={field.value ?? ""}
               placeholder={placeholder}
               maxLength={maxLength}
+              disabled={disabled}
               className={`${
                 error ? "border-2 border-[#f31260]" : ""
               } w-full rounded-md dark:bg-[#222224]`}

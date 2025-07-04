@@ -140,6 +140,7 @@ export function GeneralesConfiguracion() {
   };
 
   if (loading) return <div>Cargando información de empresa...</div>;
+  const rucBloqueado = !!empresa?.ruc_emp;
 
   const nombre = watch("nombre_negocio");
   const correo = watch("email_negocio");
@@ -218,7 +219,9 @@ export function GeneralesConfiguracion() {
               name="ruc_negocio"
               label="RUC"
               maxLength={13}
+              disabled={rucBloqueado}
             />
+
             <div className="md:col-span-2">
               <Label>Dirección</Label>
               <Textarea {...methods.register("direccion_negocio")} />

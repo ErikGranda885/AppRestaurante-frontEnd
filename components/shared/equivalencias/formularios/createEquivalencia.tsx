@@ -102,6 +102,7 @@ export function FormEquivalencia({ onSuccess, onClose }: Props) {
           name="cant_equiv"
           label="Cantidad de equivalencia"
           control={methods.control}
+          
         />
 
         <CampoSelectUnidad

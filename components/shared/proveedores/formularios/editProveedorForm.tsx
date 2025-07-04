@@ -19,19 +19,41 @@ import { uploadImage } from "@/firebase/subirImage";
 import { eliminarImagen } from "@/firebase/eliminarImage";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { ToastError } from "@/components/shared/toast/toastError";
-import { DEFAULT_PROVEEDOR_IMAGE_URL } from "@/lib/constants"; // ✅ nuevo import
+import { DEFAULT_PROVEEDOR_IMAGE_URL } from "@/lib/constants";
+import { cn } from "@/lib/utils";
+import { error } from "console";
 
 const initialRucRef = { current: "" };
 
 const editProveedorSchema = z.object({
   nombre: z.string().min(2, "El nombre es obligatorio"),
   contacto: z.string().min(2, "El contacto es obligatorio"),
-  telefono: z.string().min(7, "Teléfono inválido"),
+
+  telefono: z
+    .string()
+    .length(10, "El teléfono debe tener 10 dígitos")
+    .regex(/^\d+$/, "El teléfono solo debe contener números"),
+
   direccion: z.string().min(5, "Dirección obligatoria"),
-  email: z.string().email("Correo inválido"),
+
+  email: z
+    .string()
+    .email("Correo inválido")
+    .refine(
+      (val) =>
+        val.endsWith("@gmail.com") ||
+        val.endsWith("@hotmail.com") ||
+        val.endsWith("@outlook.com") ||
+        val.endsWith("@yahoo.com"),
+      {
+        message: "Solo se permiten correos de Gmail, Hotmail, Outlook o Yahoo",
+      },
+    ),
+
   ruc: z
     .string()
-    .min(10, "RUC inválido")
+    .length(13, "El RUC debe tener 13 dígitos")
+    .regex(/^\d+$/, "El RUC solo debe contener números")
     .refine(
       async (ruc: string) => {
         if (ruc === initialRucRef.current) return true;
@@ -71,14 +93,13 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
   const seleccionarImagen = () => imagenInputRef.current?.click();
 
   const onSubmit = async (values: EditProveedorFormValues) => {
-    const startTime = performance.now(); // ⏱️ Inicio
+    const startTime = performance.now();
 
     let imageUrl =
       imagenPreview || initialData.img_prov || DEFAULT_PROVEEDOR_IMAGE_URL;
 
     try {
       if (imagenArchivo) {
-        // Eliminar anterior si no es la default
         if (
           initialData.img_prov &&
           !initialData.img_prov.includes("proveedor_default")
@@ -118,7 +139,7 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
 
       const data = await res.json();
 
-      const endTime = performance.now(); // ⏱️ Fin
+      const endTime = performance.now();
       const duration = ((endTime - startTime) / 1000).toFixed(2);
 
       onSuccess(data);
@@ -146,7 +167,7 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
               src={
                 imagenPreview ||
                 initialData.img_prov ||
-                DEFAULT_PROVEEDOR_IMAGE_URL // ✅ cambio aquí
+                DEFAULT_PROVEEDOR_IMAGE_URL
               }
               alt="Foto proveedor"
               className="h-full w-full rounded-full object-cover"
@@ -161,6 +182,12 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
+                  if (!file.type.startsWith("image/")) {
+                    ToastError({
+                      message: "Solo se permiten archivos de imagen.",
+                    });
+                    return;
+                  }
                   setImagenArchivo(file);
                   setImagenPreview(URL.createObjectURL(file));
                 }
@@ -170,16 +197,26 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
           </div>
         </div>
 
+        {/* Campos del formulario */}
         <FormField
           control={form.control}
           name="nombre"
-          render={({ field }) => (
+          render={({ field, fieldState: { error } }) => (
             <FormItem>
-              <FormLabel>Nombre</FormLabel>
+              <FormLabel className="text-black dark:text-white">
+                Nombre
+              </FormLabel>
               <FormControl>
-                <Input placeholder="Ej. Supermercado XYZ" {...field} />
+                <Input
+                  placeholder="Ej. Supermercado XYZ"
+                  {...field}
+                  className={cn(
+                    "dark:bg-[#09090b]",
+                    error ? "border-2 border-[var(--error-per)]" : "",
+                  )}
+                />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="error-text" />
             </FormItem>
           )}
         />
@@ -187,13 +224,22 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
         <FormField
           control={form.control}
           name="contacto"
-          render={({ field }) => (
+          render={({ field, fieldState: { error } }) => (
             <FormItem>
-              <FormLabel>Contacto</FormLabel>
+              <FormLabel className="text-black dark:text-white">
+                Contacto
+              </FormLabel>
               <FormControl>
-                <Input placeholder="Ej. Luis Torres" {...field} />
+                <Input
+                  placeholder="Ej. Luis Torres"
+                  {...field}
+                  className={cn(
+                    "dark:bg-[#09090b]",
+                    error ? "border-2 border-[var(--error-per)]" : "",
+                  )}
+                />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="error-text" />
             </FormItem>
           )}
         />
@@ -201,13 +247,43 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
         <FormField
           control={form.control}
           name="telefono"
-          render={({ field }) => (
+          render={({ field, fieldState: { error } }) => (
             <FormItem>
-              <FormLabel>Teléfono</FormLabel>
+              <FormLabel className="text-black dark:text-white">
+                Teléfono
+              </FormLabel>
               <FormControl>
-                <Input placeholder="Ej. 0999999999" {...field} />
+                <Input
+                  inputMode="numeric"
+                  maxLength={10}
+                  placeholder="Ej. 0999999999"
+                  {...field}
+                  value={field.value ?? ""}
+                  onKeyDown={(e) => {
+                    const allowed = [
+                      "Backspace",
+                      "Delete",
+                      "ArrowLeft",
+                      "ArrowRight",
+                      "Tab",
+                    ];
+                    if (!/^\d$/.test(e.key) && !allowed.includes(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
+                  onChange={(e) => {
+                    const onlyNumbers = e.target.value
+                      .replace(/\D/g, "")
+                      .slice(0, 10);
+                    field.onChange(onlyNumbers);
+                  }}
+                  className={cn(
+                    "dark:bg-[#09090b]",
+                    error ? "border-2 border-[var(--error-per)]" : "",
+                  )}
+                />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="error-text" />
             </FormItem>
           )}
         />
@@ -215,13 +291,22 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
         <FormField
           control={form.control}
           name="direccion"
-          render={({ field }) => (
+          render={({ field, fieldState: { error } }) => (
             <FormItem>
-              <FormLabel>Dirección</FormLabel>
+              <FormLabel className="text-black dark:text-white">
+                Dirección
+              </FormLabel>
               <FormControl>
-                <Input placeholder="Ej. Av. La Prensa" {...field} />
+                <Input
+                  placeholder="Ej. Av. La Prensa"
+                  {...field}
+                  className={cn(
+                    "dark:bg-[#09090b]",
+                    error ? "border-2 border-[var(--error-per)]" : "",
+                  )}
+                />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="error-text" />
             </FormItem>
           )}
         />
@@ -229,13 +314,22 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
         <FormField
           control={form.control}
           name="email"
-          render={({ field }) => (
+          render={({ field, fieldState: { error } }) => (
             <FormItem>
-              <FormLabel>Correo</FormLabel>
+              <FormLabel className="text-black dark:text-white">
+                Correo
+              </FormLabel>
               <FormControl>
-                <Input placeholder="proveedor@correo.com" {...field} />
+                <Input
+                  placeholder="proveedor@correo.com"
+                  {...field}
+                  className={cn(
+                    "dark:bg-[#09090b]",
+                    error ? "border-2 border-[var(--error-per)]" : "",
+                  )}
+                />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="error-text" />
             </FormItem>
           )}
         />
@@ -243,13 +337,41 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
         <FormField
           control={form.control}
           name="ruc"
-          render={({ field }) => (
+          render={({ field, fieldState: { error } }) => (
             <FormItem>
-              <FormLabel>RUC</FormLabel>
+              <FormLabel className="text-black dark:text-white">RUC</FormLabel>
               <FormControl>
-                <Input placeholder="Ej. 1790012345001" {...field} />
+                <Input
+                  inputMode="numeric"
+                  maxLength={13}
+                  placeholder="Ej. 1790012345001"
+                  {...field}
+                  value={field.value ?? ""}
+                  onKeyDown={(e) => {
+                    const allowed = [
+                      "Backspace",
+                      "Delete",
+                      "ArrowLeft",
+                      "ArrowRight",
+                      "Tab",
+                    ];
+                    if (!/^\d$/.test(e.key) && !allowed.includes(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
+                  onChange={(e) => {
+                    const onlyNumbers = e.target.value
+                      .replace(/\D/g, "")
+                      .slice(0, 13);
+                    field.onChange(onlyNumbers);
+                  }}
+                  className={cn(
+                    "dark:bg-[#09090b]",
+                    error ? "border-2 border-[var(--error-per)]" : "",
+                  )}
+                />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="error-text" />
             </FormItem>
           )}
         />

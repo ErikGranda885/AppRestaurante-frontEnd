@@ -646,13 +646,13 @@ export default function Page() {
                 <h3 className="text-md mb-2 font-bold dark:text-[#f5f5f5]">
                   Información del cliente
                 </h3>
-                <Button
+                {/* <Button
                   className="border-border text-[12px] font-semibold"
                   variant="ghost"
                   onClick={handleOpenCustomerForm}
                 >
                   <Pencil className="h-4 w-4" />
-                </Button>
+                </Button> */}
               </div>
               <div className="text-sm text-gray-600">
                 <div>

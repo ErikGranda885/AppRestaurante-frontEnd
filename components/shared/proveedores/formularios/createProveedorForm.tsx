@@ -23,11 +23,16 @@ const proveedorSchema = z.object({
   contacto: z.string().min(2, "El contacto es obligatorio"),
   telefono: z
     .string()
-    .min(7, "Número de teléfono muy corto")
-    .max(15, "Número de teléfono muy largo"),
+    .regex(/^\d{10}$/, "El teléfono debe tener exactamente 10 dígitos"),
   direccion: z.string().min(5, "Dirección obligatoria"),
-  email: z.string().email("Correo inválido"),
-  ruc: z.string().min(10, "El RUC debe tener al menos 10 caracteres"),
+  email: z
+    .string()
+    .email("Correo inválido")
+    .regex(
+      /^[\w.-]+@(gmail|hotmail|outlook|yahoo)\.com$/,
+      "Solo se permiten correos de Gmail, Hotmail, Outlook o Yahoo",
+    ),
+  ruc: z.string().regex(/^\d{13}$/, "El RUC debe tener exactamente 13 números"),
 });
 
 type CreateProveedorFormValues = z.infer<typeof proveedorSchema>;
@@ -58,6 +63,14 @@ export function CreateProveedorForm({
     let imageUrl = "";
 
     try {
+      // ✅ Validar tipo MIME del archivo (solo imágenes)
+      if (imagenArchivo && !imagenArchivo.type.startsWith("image/")) {
+        ToastError({
+          message: "Solo se pueden cargar archivos con formato: PNG/JPG",
+        });
+        return;
+      }
+
       if (imagenArchivo) {
         imageUrl = await uploadImage(
           imagenArchivo,
@@ -117,7 +130,9 @@ export function CreateProveedorForm({
             name="nombre"
             render={({ field, fieldState: { error } }) => (
               <FormItem>
-                <FormLabel>Nombre del proveedor</FormLabel>
+                <FormLabel className="text-black dark:text-white">
+                  Nombre del proveedor
+                </FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Ej. Nuva Supermercados"
@@ -125,7 +140,7 @@ export function CreateProveedorForm({
                     className={`pr-10 ${error ? "border-2 border-[var(--error-per)]" : ""}`}
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="error-text" />
               </FormItem>
             )}
           />
@@ -134,7 +149,9 @@ export function CreateProveedorForm({
             name="contacto"
             render={({ field, fieldState: { error } }) => (
               <FormItem>
-                <FormLabel>Nombre del contacto</FormLabel>
+                <FormLabel className="text-black dark:text-white">
+                  Nombre del contacto
+                </FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Ej. María Vargas"
@@ -142,7 +159,7 @@ export function CreateProveedorForm({
                     className={`pr-10 ${error ? "border-2 border-[var(--error-per)]" : ""}`}
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="error-text" />
               </FormItem>
             )}
           />
@@ -151,15 +168,38 @@ export function CreateProveedorForm({
             name="telefono"
             render={({ field, fieldState: { error } }) => (
               <FormItem>
-                <FormLabel>Teléfono</FormLabel>
+                <FormLabel className="text-black dark:text-white">
+                  Teléfono
+                </FormLabel>
                 <FormControl>
                   <Input
+                    inputMode="numeric"
+                    maxLength={10}
                     placeholder="Ej. 0999999999"
                     {...field}
+                    value={field.value ?? ""}
+                    onKeyDown={(e) => {
+                      const allowed = [
+                        "Backspace",
+                        "Delete",
+                        "ArrowLeft",
+                        "ArrowRight",
+                        "Tab",
+                      ];
+                      if (!/^\d$/.test(e.key) && !allowed.includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onChange={(e) => {
+                      const onlyNumbers = e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 10);
+                      field.onChange(onlyNumbers);
+                    }}
                     className={`pr-10 ${error ? "border-2 border-[var(--error-per)]" : ""}`}
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="error-text" />
               </FormItem>
             )}
           />
@@ -172,7 +212,9 @@ export function CreateProveedorForm({
             name="direccion"
             render={({ field, fieldState: { error } }) => (
               <FormItem>
-                <FormLabel>Dirección</FormLabel>
+                <FormLabel className="text-black dark:text-white">
+                  Dirección
+                </FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Ej. Av. Amazonas y Río Coca"
@@ -180,7 +222,7 @@ export function CreateProveedorForm({
                     className={`pr-10 ${error ? "border-2 border-[var(--error-per)]" : ""}`}
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="error-text" />
               </FormItem>
             )}
           />
@@ -189,7 +231,9 @@ export function CreateProveedorForm({
             name="email"
             render={({ field, fieldState: { error } }) => (
               <FormItem>
-                <FormLabel>Correo electrónico</FormLabel>
+                <FormLabel className="text-black dark:text-white">
+                  Correo electrónico
+                </FormLabel>
                 <FormControl>
                   <Input
                     placeholder="proveedor@ejemplo.com"
@@ -197,7 +241,7 @@ export function CreateProveedorForm({
                     className={`pr-10 ${error ? "border-2 border-[var(--error-per)]" : ""}`}
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="error-text" />
               </FormItem>
             )}
           />
@@ -206,15 +250,38 @@ export function CreateProveedorForm({
             name="ruc"
             render={({ field, fieldState: { error } }) => (
               <FormItem>
-                <FormLabel>RUC</FormLabel>
+                <FormLabel className="text-black dark:text-white">
+                  RUC
+                </FormLabel>
                 <FormControl>
                   <Input
+                    inputMode="numeric"
+                    maxLength={13}
                     placeholder="Ej. 1790012345001"
                     {...field}
+                    value={field.value ?? ""}
+                    onKeyDown={(e) => {
+                      const allowed = [
+                        "Backspace",
+                        "Delete",
+                        "ArrowLeft",
+                        "ArrowRight",
+                        "Tab",
+                      ];
+                      if (!/^\d$/.test(e.key) && !allowed.includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onChange={(e) => {
+                      const onlyNumbers = e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 13);
+                      field.onChange(onlyNumbers);
+                    }}
                     className={`pr-10 ${error ? "border-2 border-[var(--error-per)]" : ""}`}
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="error-text" />
               </FormItem>
             )}
           />
@@ -223,7 +290,9 @@ export function CreateProveedorForm({
         {/* Imagen */}
         <div className="col-span-full">
           <FormItem>
-            <FormLabel>Imagen del proveedor</FormLabel>
+            <FormLabel className="text-black dark:text-white">
+              Imagen del proveedor
+            </FormLabel>
             <FormControl>
               <div className="flex items-center gap-4">
                 <Input

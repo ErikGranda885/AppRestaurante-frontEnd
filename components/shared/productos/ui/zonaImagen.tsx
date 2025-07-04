@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import { ToastError } from "../../toast/toastError";
 
 interface ZonaImagenProps {
   imageFile: File | null;
@@ -28,16 +29,21 @@ export const ZonaImagen: React.FC<ZonaImagenProps> = ({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file!.type.startsWith("image/")) {
+      ToastError({
+        message: "Solo se permiten archivos de imagen (JPG, PNG, etc).",
+      });
+      return;
+    }
 
     // Validar el tamaño de la imagen
-    if (file.size > MAX_SIZE) {
+    if (file!.size > MAX_SIZE) {
       alert("La imagen excede el tamaño máximo de 2MB.");
       return;
     }
 
     // Crear una URL para validar las dimensiones
-    const objectUrl = URL.createObjectURL(file);
+    const objectUrl = URL.createObjectURL(file!);
     // Usamos window.Image para evitar conflictos con el componente Image importado
     const img = new window.Image();
     img.src = objectUrl;
@@ -50,7 +56,7 @@ export const ZonaImagen: React.FC<ZonaImagenProps> = ({
         return;
       }
       // Si las validaciones pasan, actualiza el estado
-      setImageFile(file);
+      setImageFile(file!);
       setImagePreview(objectUrl);
     };
     img.onerror = () => {

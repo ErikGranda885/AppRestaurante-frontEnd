@@ -26,6 +26,7 @@ import {
 import { IRol } from "@/lib/types";
 import { useCrearUsuario } from "@/hooks/usuarios/useCrearUsuario";
 import { useCrearRol } from "@/hooks/usuarios/useCrearRol";
+import { ToastError } from "../../toast/toastError";
 
 // Esquema para el formulario principal de crear usuario
 const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ]+( [A-Za-zÁÉÍÓÚáéíóúÑñ]+)?$/;
@@ -40,15 +41,25 @@ const createUserSchema = z.object({
     .string()
     .email({ message: "Ingresa un correo válido." })
     .refine(
-      ((email: string) => {
-        return fetch(
+      (email) =>
+        ["@gmail.com", "@hotmail.com", "@outlook.com", "@yahoo.com"].some((d) =>
+          email.toLowerCase().endsWith(d),
+        ),
+      {
+        message: "Solo se permiten correos de Gmail, Hotmail, Outlook o Yahoo.",
+      },
+    )
+    .refine(
+      async (email) => {
+        const res = await fetch(
           `http://localhost:5000/usuarios/verificar/correo?email=${encodeURIComponent(email)}`,
-        )
-          .then((res) => res.json())
-          .then((data) => !data.exists);
-      }) as (email: string) => Promise<boolean>,
+        );
+        const data = await res.json();
+        return !data.exists;
+      },
       { message: "El correo ya se encuentra registrado", async: true } as any,
     ),
+
   password: z
     .string()
     .min(6, { message: "La contraseña debe tener al menos 6 caracteres." }),
@@ -260,11 +271,26 @@ export function CreateUserForm({
             <div>
               <Input
                 type="file"
-                accept="image/*"
+                accept=".jpg,.jpeg,.png,.webp"
                 ref={imagenInputRef}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
+                  const formatosPermitidos = [
+                    "image/jpeg",
+                    "image/jpg",
+                    "image/png",
+                    "image/webp",
+                  ];
+
                   if (file) {
+                    if (!formatosPermitidos.includes(file.type)) {
+                      ToastError({
+                        message:
+                          "❌ Solo se permiten imágenes JPG, JPEG, PNG o WEBP.",
+                      });
+                      return;
+                    }
+
                     setImagenArchivo(file);
                     setImagenPreview(URL.createObjectURL(file));
                   }

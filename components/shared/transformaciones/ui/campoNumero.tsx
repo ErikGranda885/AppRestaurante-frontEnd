@@ -35,10 +35,27 @@ export const CampoNumero: React.FC<CampoNumeroProps> = ({
           <FormLabel className="text-black dark:text-white">{label}</FormLabel>
           <FormControl>
             <Input
-              type="number"
-              min={min}
+              type="text"
+              inputMode="numeric"
               placeholder={placeholder}
-              {...field}
+              value={field.value ?? ""}
+              onChange={(e) => {
+                const soloNumeros = e.target.value
+                  .replace(/[^0-9.,]/g, "") // elimina letras y signos
+                  .replace(/^0+(?![.,]|$)/, ""); // quita ceros iniciales
+                field.onChange(soloNumeros);
+              }}
+              onBlur={() => {
+                const parsed = parseFloat(field.value);
+                if (!isNaN(parsed)) {
+                  // ✅ Siempre enviar como string
+                  const normalizado =
+                    min !== undefined && parsed < min ? min : parsed;
+                  field.onChange(String(normalizado));
+                } else {
+                  field.onChange("");
+                }
+              }}
               className={cn(
                 "dark:bg-[#09090b]",
                 error ? "border-2 border-[var(--error-per)]" : "",

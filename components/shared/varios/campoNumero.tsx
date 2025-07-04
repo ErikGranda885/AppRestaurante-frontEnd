@@ -46,15 +46,26 @@ export const CampoNumero: React.FC<CampoNumeroProps> = ({
               inputMode={step === "1" ? "numeric" : "decimal"}
               placeholder={placeholder || (step === "1" ? "0" : "0.00")}
               value={field.value ?? ""}
-              onChange={(e) => field.onChange(e.target.value)}
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^0-9.,]/g, ""); // ❌ elimina letras y guiones
+                field.onChange(cleaned);
+              }}
               onBlur={() => {
-                const parsed = parseFn(field.value);
+                let value = String(field.value).trim();
+
+                // ✅ eliminar ceros a la izquierda
+                value = value.replace(/^0+(?![.,\d])/g, "");
+
+                // ✅ si termina en punto o coma, lo limpia
+                value = value.replace(/[.,]$/, "");
+
+                const parsed = parseFn(value);
                 if (!isNaN(parsed)) {
                   const fixed =
                     step === "1" ? parsed : parseFloat(parsed.toFixed(2));
                   field.onChange(fixed);
                 } else {
-                  field.onChange(""); // limpia si no es válido
+                  field.onChange("");
                 }
               }}
               className={`${

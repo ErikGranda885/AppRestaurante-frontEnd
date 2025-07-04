@@ -6,8 +6,19 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useConfiguracionesSeguridad } from "@/hooks/configuraciones/generales/useConfiguracionesSeguridad";
+import { useEffect, useState } from "react";
+import { ToastSuccess } from "../../toast/toastSuccess";
+import { z } from "zod";
 
 export function SeguridadConfiguracion() {
+  const schema = z.object({
+    longitudMinimaPassword: z
+      .number({ invalid_type_error: "Solo números" })
+      .min(6, "Debe ser mayor o igual a 6"),
+    maxIntentosLogin: z
+      .number({ invalid_type_error: "Solo números" })
+      .min(1, "Debe ser mayor o igual a 1"),
+  });
   const {
     activarGoogleLogin,
     setActivarGoogleLogin,
@@ -19,6 +30,72 @@ export function SeguridadConfiguracion() {
     setMaxIntentosLogin,
     loading,
   } = useConfiguracionesSeguridad();
+
+  const [localPasswordLength, setLocalPasswordLength] = useState(
+    longitudMinimaPassword.toString(),
+  );
+  const [localMaxIntentos, setLocalMaxIntentos] = useState(
+    maxIntentosLogin.toString(),
+  );
+  const [localGoogleLogin, setLocalGoogleLogin] = useState(activarGoogleLogin);
+  const [localBloqueoIntentos, setLocalBloqueoIntentos] = useState(
+    bloquearUsuarioPorIntentos,
+  );
+
+  const [errorPasswordLength, setErrorPasswordLength] = useState("");
+  const [errorMaxIntentos, setErrorMaxIntentos] = useState("");
+
+  const hayCambios =
+    localPasswordLength !== longitudMinimaPassword.toString() ||
+    localMaxIntentos !== maxIntentosLogin.toString() ||
+    localGoogleLogin !== activarGoogleLogin ||
+    localBloqueoIntentos !== bloquearUsuarioPorIntentos;
+
+  useEffect(() => {
+    setLocalPasswordLength(longitudMinimaPassword.toString());
+  }, [longitudMinimaPassword]);
+
+  useEffect(() => {
+    setLocalMaxIntentos(maxIntentosLogin.toString());
+  }, [maxIntentosLogin]);
+
+  const handleGuardar = () => {
+    let valido = true;
+
+    const nuevaLongitud = parseInt(localPasswordLength);
+    if (isNaN(nuevaLongitud) || nuevaLongitud < 6) {
+      setErrorPasswordLength("Debe ser mayor o igual a 6");
+      valido = false;
+    }
+
+    const nuevosIntentos = parseInt(localMaxIntentos);
+    if (isNaN(nuevosIntentos) || nuevosIntentos < 1) {
+      setErrorMaxIntentos("Debe ser mayor o igual a 1");
+      valido = false;
+    }
+
+    if (!valido) return;
+
+    // Actualizar los valores
+    setLongitudMinimaPassword(nuevaLongitud);
+    setMaxIntentosLogin(nuevosIntentos);
+    setActivarGoogleLogin(localGoogleLogin);
+    setBloquearUsuarioPorIntentos(localBloqueoIntentos);
+
+    // ✅ Mostrar toast
+    ToastSuccess({
+      message: "Cambias guardados exitosamente",
+    });
+  };
+
+  const handleCancelar = () => {
+    setLocalPasswordLength(longitudMinimaPassword.toString());
+    setLocalMaxIntentos(maxIntentosLogin.toString());
+    setLocalGoogleLogin(activarGoogleLogin);
+    setLocalBloqueoIntentos(bloquearUsuarioPorIntentos);
+    setErrorPasswordLength("");
+    setErrorMaxIntentos("");
+  };
 
   return (
     <div className="space-y-10 pt-4">
@@ -35,24 +112,34 @@ export function SeguridadConfiguracion() {
               <Label>Longitud mínima de contraseña</Label>
               <Input
                 type="number"
-                value={longitudMinimaPassword}
-                onChange={(e) =>
-                  setLongitudMinimaPassword(parseInt(e.target.value) || 0)
-                }
+                value={localPasswordLength}
+                onChange={(e) => {
+                  setLocalPasswordLength(e.target.value);
+                  setErrorPasswordLength("");
+                }}
                 disabled={loading}
               />
+              {errorPasswordLength && (
+                <p className="text-sm text-destructive">
+                  {errorPasswordLength}
+                </p>
+              )}
             </div>
 
             <div>
               <Label>Máximo de intentos de login</Label>
               <Input
                 type="number"
-                value={maxIntentosLogin}
-                onChange={(e) =>
-                  setMaxIntentosLogin(parseInt(e.target.value) || 0)
-                }
+                value={localMaxIntentos}
+                onChange={(e) => {
+                  setLocalMaxIntentos(e.target.value);
+                  setErrorMaxIntentos("");
+                }}
                 disabled={loading}
               />
+              {errorMaxIntentos && (
+                <p className="text-sm text-destructive">{errorMaxIntentos}</p>
+              )}
             </div>
           </div>
 
@@ -67,8 +154,8 @@ export function SeguridadConfiguracion() {
                 </p>
               </div>
               <Switch
-                checked={activarGoogleLogin}
-                onCheckedChange={(checked) => setActivarGoogleLogin(checked)}
+                checked={localGoogleLogin}
+                onCheckedChange={setLocalGoogleLogin}
                 disabled={loading}
               />
             </div>
@@ -84,15 +171,29 @@ export function SeguridadConfiguracion() {
                 </p>
               </div>
               <Switch
-                checked={bloquearUsuarioPorIntentos}
-                onCheckedChange={(checked) =>
-                  setBloquearUsuarioPorIntentos(checked)
-                }
+                checked={localBloqueoIntentos}
+                onCheckedChange={setLocalBloqueoIntentos}
                 disabled={loading}
               />
             </div>
           </div>
         </div>
+
+        {/* Botones si hay cambios */}
+        {hayCambios && (
+          <div className="mt-6 flex gap-4">
+            <Button onClick={handleGuardar} disabled={loading}>
+              Guardar
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={handleCancelar}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+          </div>
+        )}
       </Card>
     </div>
   );
