@@ -16,7 +16,8 @@ export const SERVICIOS_USUARIOS = {
 
   actualizarUsuario: (id: number | string) =>
     `http://localhost:5000/usuarios/${id}`,
-
+  verificarCorreoUsuario: (email: string) =>
+    `http://localhost:5000/usuarios/verificar/correo?email=${encodeURIComponent(email)}`,
   // Exportar usuarios en Excel
   exportarExcel: `http://localhost:5000/usuarios/reporte/excel`,
 

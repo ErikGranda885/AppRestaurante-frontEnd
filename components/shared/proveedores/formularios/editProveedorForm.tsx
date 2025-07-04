@@ -22,6 +22,7 @@ import { ToastError } from "@/components/shared/toast/toastError";
 import { DEFAULT_PROVEEDOR_IMAGE_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { error } from "console";
+import { SERVICIOS_PROVEEDORES } from "@/services/proveedores.service";
 
 const initialRucRef = { current: "" };
 
@@ -58,7 +59,7 @@ const editProveedorSchema = z.object({
       async (ruc: string) => {
         if (ruc === initialRucRef.current) return true;
         const res = await fetch(
-          `http://localhost:5000/proveedores/verificar?ruc=${ruc}`,
+          SERVICIOS_PROVEEDORES.verificarRucProveedor(ruc),
         );
         const data = await res.json();
         return !data.exists;
@@ -127,7 +128,7 @@ export function EditProveedorForm({ initialData, onSuccess }: Props) {
       };
 
       const res = await fetch(
-        `http://localhost:5000/proveedores/${initialData.id}`,
+        SERVICIOS_PROVEEDORES.obtenerProveedorPorId(initialData.id),
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

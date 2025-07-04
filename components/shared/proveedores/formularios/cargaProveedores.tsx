@@ -15,6 +15,7 @@ import { ToastError } from "../../toast/toastError";
 import { ToastSuccess } from "../../toast/toastSuccess";
 import { DropzoneFile } from "../../varios/dropzoneFile";
 import { DEFAULT_PROVEEDOR_IMAGE_URL } from "@/lib/constants";
+import { SERVICIOS_PROVEEDORES } from "@/services/proveedores.service";
 
 interface BulkUploadProveedoresDialogProps {
   onSuccess: (newProveedores: any[]) => void;
@@ -149,7 +150,7 @@ export function BulkUploadProveedoresDialog({
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/proveedores/masivo", {
+      const res = await fetch(SERVICIOS_PROVEEDORES.cargarMasivoProv, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(previewData),
@@ -215,7 +216,7 @@ export function BulkUploadProveedoresDialog({
               className="mt-3 flex items-center gap-2"
               onClick={() =>
                 window.open(
-                  "http://localhost:5000/proveedores/plantilla",
+                  SERVICIOS_PROVEEDORES.generarPlantillaProv,
                   "_blank",
                 )
               }

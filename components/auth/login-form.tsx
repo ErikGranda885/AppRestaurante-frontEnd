@@ -30,7 +30,7 @@ export function LoginForm({
     setPasswordError("");
 
     try {
-      const response = await fetch("http://localhost:5000/auth/login", {
+      const response = await fetch(SERVICIOS_AUTH.login, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // ✅ envía y recibe cookie automáticamente

@@ -1,5 +1,6 @@
 export const SERVICIOS_COMPRAS = {
   compras: "http://localhost:5000/compras",
+  obtenerDetalles: "http://localhost:5000/dets-compras",
 
   // Obtener una compra por su ID
   obtenerCompra: (id: number) => `http://localhost:5000/compras/${id}`,

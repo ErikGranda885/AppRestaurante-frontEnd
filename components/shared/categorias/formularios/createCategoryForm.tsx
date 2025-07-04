@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ToastSuccess } from "../../toast/toastSuccess";
 import { ToastError } from "../../toast/toastError";
+import { SERVICIOS } from "@/services/categorias.service";
 
 // Definición del esquema para crear categorías
 const createCategorySchema = z.object({
@@ -27,7 +28,7 @@ const createCategorySchema = z.object({
     .refine(
       ((nombre: string) => {
         return fetch(
-          `http://localhost:5000/categorias/verificar?nombre=${encodeURIComponent(nombre)}`,
+          SERVICIOS.verificarNombreCategoria(nombre),
         )
           .then((res) => res.json())
           .then((data) => !data.exists);
@@ -64,7 +65,7 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
     };
 
     try {
-      const res = await fetch("http://localhost:5000/categorias", {
+      const res = await fetch(SERVICIOS.categorias, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

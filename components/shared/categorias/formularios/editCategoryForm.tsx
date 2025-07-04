@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ToastSuccess } from "../../toast/toastSuccess";
 import { ToastError } from "../../toast/toastError";
+import { SERVICIOS } from "@/services/categorias.service";
 
 // Declaramos un ref para almacenar el nombre inicial y así evitar la validación si no ha cambiado
 const initialDataCorreoRef = { current: "" };
@@ -30,9 +31,7 @@ const editCategorySchemaBase = z.object({
     .refine(
       async (nombre: string) => {
         if (nombre === initialDataCorreoRef.current) return true;
-        const res = await fetch(
-          `http://localhost:5000/categorias/verificar?nombre=${encodeURIComponent(nombre)}`,
-        );
+        const res = await fetch(SERVICIOS.verificarNombreCategoria(nombre));
         const data = await res.json();
         return !data.exists;
       },
@@ -74,14 +73,11 @@ export function EditCategoryForm({
     };
 
     try {
-      const res = await fetch(
-        `http://localhost:5000/categorias/${initialData.id_cate}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        },
-      );
+      const res = await fetch(SERVICIOS.obtenerCategoria(initialData.id_cate), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
       if (!res.ok) {
         const errorResponse = await res.json();

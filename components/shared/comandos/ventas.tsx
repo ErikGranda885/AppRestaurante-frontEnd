@@ -1002,7 +1002,7 @@ export async function handleFlowVenta(
               sub_tot_dventa: sub,
             };
 
-            const detRes = await fetch("http://localhost:5000/dets-ventas", {
+            const detRes = await fetch(SERVICIOS_VENTAS.listarDetallesVentas, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(detallePayload),

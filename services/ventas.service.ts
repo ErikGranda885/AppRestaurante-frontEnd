@@ -1,7 +1,7 @@
 export const SERVICIOS_VENTAS = {
   // Obtener todas las ventas
   listarVentas: "http://localhost:5000/ventas",
-
+  listarDetallesVentas: "http://localhost:5000/dets-ventas",
   // Obtener una venta por ID
   obtenerVenta: (id: number) => `http://localhost:5000/ventas/${id}`,
 

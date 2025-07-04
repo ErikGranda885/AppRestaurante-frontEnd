@@ -41,7 +41,14 @@ import { safePrice } from "@/utils/format";
 import { DialogExportarCompras } from "@/components/shared/compras/ui/dialogExportarCompras";
 import { socket } from "@/lib/socket";
 import Preloader from "@/components/shared/varios/preloader";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { SERVICIOS } from "@/services/categorias.service";
+import { SERVICIOS_COMPRAS } from "@/services/compras.service";
 
 export default function Page() {
   const { ventasConfig } = useConfiguracionesVentas();
@@ -77,14 +84,14 @@ export default function Page() {
     const fetchData = async () => {
       setLoadingData(true);
       try {
-        const resCompras = await fetch("http://localhost:5000/compras");
+        const resCompras = await fetch(SERVICIOS_COMPRAS.compras);
         const comprasData = await resCompras.json();
         const comprasArray = Array.isArray(comprasData)
           ? comprasData
           : comprasData.data;
         setCompras(comprasArray || []);
 
-        const resDetCompras = await fetch("http://localhost:5000/dets-compras");
+        const resDetCompras = await fetch(SERVICIOS_COMPRAS.obtenerDetalles);
         const detComprasData = await resDetCompras.json();
         const detComprasArray = Array.isArray(detComprasData)
           ? detComprasData

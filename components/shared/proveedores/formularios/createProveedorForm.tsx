@@ -17,6 +17,7 @@ import { uploadImage } from "@/firebase/subirImage";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { DEFAULT_PROVEEDOR_IMAGE_URL } from "@/lib/constants"; // ✅ IMPORTANTE
+import { SERVICIOS_PROVEEDORES } from "@/services/proveedores.service";
 
 const proveedorSchema = z.object({
   nombre: z.string().min(2, "El nombre es obligatorio"),
@@ -92,7 +93,7 @@ export function CreateProveedorForm({
         est_prov: "Activo",
       };
 
-      const res = await fetch("http://localhost:5000/proveedores", {
+      const res = await fetch(SERVICIOS_PROVEEDORES.proveedores, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

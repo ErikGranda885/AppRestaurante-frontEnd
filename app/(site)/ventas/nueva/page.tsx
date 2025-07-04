@@ -24,6 +24,7 @@ import { ICategory, IProduct } from "@/lib/types";
 import { SERVICIOS_AUTH } from "@/services/auth.service";
 import { SERVICIOS_INVENTARIO } from "@/services/inventario.service";
 import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
+import { SERVICIOS_VENTAS } from "@/services/ventas.service";
 import { safePrice } from "@/utils/format";
 import { format } from "date-fns";
 import { Banknote, Pencil, Save, Search, Smartphone } from "lucide-react";
@@ -394,7 +395,7 @@ export default function Page() {
         efe_cambio_vent: metodoPago === "efectivo" ? efectivoCambio : null,
       };
 
-      const saleResponse = await fetch("http://localhost:5000/ventas", {
+      const saleResponse = await fetch(SERVICIOS_VENTAS.listarVentas, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(salePayload),
@@ -424,7 +425,7 @@ export default function Page() {
         };
 
         const detailResponse = await fetch(
-          "http://localhost:5000/dets-ventas",
+          SERVICIOS_VENTAS.listarDetallesVentas,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

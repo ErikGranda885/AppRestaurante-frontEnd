@@ -24,6 +24,7 @@ import FacturaPagadaPDF from "@/components/shared/compras/ui/facturaPagadaPDF";
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { safePrice } from "@/utils/format";
 import { useUsuarioAutenticado } from "@/hooks/usuarios/useUsuarioAutenticado";
+import { SERVICIOS_COMPRAS } from "@/services/compras.service";
 
 export default function DetalleCompraPage() {
   useProtectedRoute();
@@ -47,7 +48,7 @@ export default function DetalleCompraPage() {
       try {
         // Obtén la compra por su ID (ajusta la URL de la API según corresponda)
         const resCompra = await fetch(
-          `http://localhost:5000/compras/${purchaseId}`,
+          SERVICIOS_COMPRAS.obtenerCompra(purchaseId),
         );
         if (!resCompra.ok) {
           throw new Error("Error al obtener los datos de la compra.");
@@ -62,7 +63,7 @@ export default function DetalleCompraPage() {
         // Para los detalles de compra usamos la URL especificada
         console.log("ID de compra:", purchaseId);
         const resDet = await fetch(
-          `http://localhost:5000/dets-compras/${purchaseId}`,
+          SERVICIOS_COMPRAS.obtenerDetalleCompra(purchaseId),
         );
 
         if (!resDet.ok) {

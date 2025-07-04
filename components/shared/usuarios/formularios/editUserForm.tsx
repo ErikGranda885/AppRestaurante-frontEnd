@@ -24,6 +24,7 @@ import { eliminarImagen } from "@/firebase/eliminarImage";
 import { DEFAULT_USER_URL } from "@/lib/constants";
 import { useUsuarioAutenticado } from "@/hooks/usuarios/useUsuarioAutenticado";
 import { useEditarUsuario } from "@/hooks/usuarios/useEditarUsuario";
+import { SERVICIOS_USUARIOS } from "@/services/usuarios.service";
 
 const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ]+( [A-Za-zÁÉÍÓÚáéíóúÑñ]+)?$/;
 
@@ -41,7 +42,7 @@ const editUserSchema = z.object({
       async (email: string) => {
         if (email === initialDataCorreoRef.current) return true;
         const res = await fetch(
-          `http://localhost:5000/usuarios/verificar/correo?email=${encodeURIComponent(email)}`,
+          SERVICIOS_USUARIOS.verificarCorreoUsuario(email),
         );
         const data = await res.json();
         return !data.exists;

@@ -251,7 +251,7 @@ export default function NuevaCompraPage() {
         };
 
         try {
-          const resDetalle = await fetch("http://localhost:5000/dets-compras", {
+          const resDetalle = await fetch(SERVICIOS_COMPRAS.obtenerDetalles, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(detalle),
@@ -264,7 +264,7 @@ export default function NuevaCompraPage() {
             );
           }
         } catch (error: any) {
-          await fetch(`http://localhost:5000/compras/${idCompra}`, {
+          await fetch(SERVICIOS_COMPRAS.obtenerCompra(idCompra), {
             method: "DELETE",
           });
 

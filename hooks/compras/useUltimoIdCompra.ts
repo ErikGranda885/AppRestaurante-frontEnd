@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { ICompra } from "@/lib/types";
+import { SERVICIOS } from "@/services/categorias.service";
+import { SERVICIOS_COMPRAS } from "@/services/compras.service";
 
 export function useUltimoIdCompra() {
   const [ultimoIdCompra, setUltimoIdCompra] = useState<number>(0);
 
   useEffect(() => {
-    fetch("http://localhost:5000/compras")
+    fetch(SERVICIOS_COMPRAS.compras)
       .then((res) => {
         if (!res.ok) throw new Error("Error al cargar compras");
         return res.json();

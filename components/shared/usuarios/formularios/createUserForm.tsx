@@ -27,6 +27,7 @@ import { IRol } from "@/lib/types";
 import { useCrearUsuario } from "@/hooks/usuarios/useCrearUsuario";
 import { useCrearRol } from "@/hooks/usuarios/useCrearRol";
 import { ToastError } from "../../toast/toastError";
+import { SERVICIOS_USUARIOS } from "@/services/usuarios.service";
 
 // Esquema para el formulario principal de crear usuario
 const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ]+( [A-Za-zÁÉÍÓÚáéíóúÑñ]+)?$/;
@@ -52,7 +53,7 @@ const createUserSchema = z.object({
     .refine(
       async (email) => {
         const res = await fetch(
-          `http://localhost:5000/usuarios/verificar/correo?email=${encodeURIComponent(email)}`,
+          SERVICIOS_USUARIOS.verificarCorreoUsuario(email),
         );
         const data = await res.json();
         return !data.exists;

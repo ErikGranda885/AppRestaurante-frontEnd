@@ -15,6 +15,7 @@ import { ICategory } from "@/lib/types";
 import { ToastError } from "../../toast/toastError";
 import { ToastSuccess } from "../../toast/toastSuccess";
 import { DropzoneFile } from "../../varios/dropzoneFile";
+import { SERVICIOS } from "@/services/categorias.service";
 
 interface BulkUploadCategoryDialogProps {
   onSuccess: (newCategories: ICategory[]) => void;
@@ -151,7 +152,7 @@ export function BulkUploadCategoryDialog({
         est_cate: "Activo",
       }));
 
-      const res = await fetch("http://localhost:5000/categorias/masivo", {
+      const res = await fetch(SERVICIOS.cargarMasivo, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(processed),
@@ -198,10 +199,7 @@ export function BulkUploadCategoryDialog({
             <Button
               className="mt-3 flex items-center gap-2"
               onClick={() =>
-                window.open(
-                  "http://localhost:5000/categorias/plantilla",
-                  "_blank",
-                )
+                window.open(SERVICIOS.generarPlantillaCategoria, "_blank")
               }
             >
               <Download className="h-4 w-4" /> Descargar plantilla
