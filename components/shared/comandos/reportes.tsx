@@ -55,23 +55,23 @@ const generadoresPorModulo: Record<
     // Puedes agregar "cierres diarios" aquí si tienes endpoint
   },
   compras: {
-    "reporte de compras": (formato, _desde, _hasta) =>
+    "reporte de compras": (formato) =>
       formato === "excel"
         ? SERVICIOS_COMPRAS.exportarComprasExcel
         : SERVICIOS_COMPRAS.exportarComprasPDF,
-    "proveedores registrados": (formato, _desde, _hasta) =>
+    "proveedores registrados": (formato) =>
       formato === "excel"
         ? SERVICIOS_PROVEEDORES.exportarProveedoresExcel
         : SERVICIOS_PROVEEDORES.exportarProveedoresPDF,
   },
   gastos: {
-    "reporte de gastos": (formato, _desde, _hasta) =>
+    "reporte de gastos": (formato) =>
       formato === "excel"
         ? SERVICIOS_GASTOS.exportarGastosExcel
         : SERVICIOS_GASTOS.exportarGastosPDF,
   },
   cierres: {
-    "reporte de cierres diarios": (formato, _desde, _hasta) =>
+    "reporte de cierres diarios": (formato) =>
       formato === "excel"
         ? SERVICIOS_CIERRES.exportarCierresExcel
         : SERVICIOS_CIERRES.exportarCierresPDF,

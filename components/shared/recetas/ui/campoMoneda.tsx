@@ -10,8 +10,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Control, FieldValues, Path } from "react-hook-form";
-import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
-
 interface CampoMonedaProps<T extends FieldValues> {
   control: Control<T>;
   name: Path<T>;
@@ -26,7 +24,6 @@ export function CampoMoneda<T extends FieldValues>({
   placeholder,
 }: CampoMonedaProps<T>) {
   const [inputValue, setInputValue] = useState("");
-  const { ventasConfig } = useConfiguracionesVentas();
 
   return (
     <FormField

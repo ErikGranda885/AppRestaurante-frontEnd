@@ -35,8 +35,7 @@ import {
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { EditCategoryForm } from "@/components/shared/categorias/formularios/editCategoryForm";
 import { ICategory } from "@/lib/types";
-import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
-import { ToastError } from "@/components/shared/toast/toastError";
+
 import { Input } from "@/components/ui/input";
 import { ModalModEstado } from "@/components/shared/Modales/modalModEstado";
 import { DialogExportarCategorias } from "@/components/shared/categorias/ui/dialogExportarCategorias";
@@ -64,8 +63,6 @@ export default function PaginaCategorias() {
 
   const {
     categorias,
-    isLoading,
-    isError,
     refetch,
     activarCategoria,
     inactivarCategoria,
@@ -292,7 +289,7 @@ export default function PaginaCategorias() {
 
         <div className="h-full w-full rounded-lg bg-[hsl(var(--card))] dark:bg-[#111315]">
           {/* Tarjetas resumen */}
-          <div className="flex flex-col gap-4 px-6  md:flex-row md:justify-between">
+          <div className="flex flex-col gap-4 px-6 md:flex-row md:justify-between">
             {/* Tarjeta: Categorías Totales */}
             <Card
               onClick={() => handleClickTarjeta("")}

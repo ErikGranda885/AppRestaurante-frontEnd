@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { BANCOS_EMPRESA } from "../../configuraciones/infoEmpresa";
 import Image from "next/image";
-import { ICierreDiario, IUsuario } from "@/lib/types";
+import { ICierreDiario } from "@/lib/types";
 import { useMovimientosDelDia } from "@/hooks/cierresDiarios/useMovimientosDelDia";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
@@ -41,12 +41,6 @@ import { safePrice } from "@/utils/format";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useUsuarioAutenticado } from "@/hooks/usuarios/useUsuarioAutenticado";
-
-function formatoMoneda(valor: any): string {
-  return typeof valor === "number"
-    ? valor.toFixed(2)
-    : Number(valor || 0).toFixed(2);
-}
 
 export default function PaginaCierreDia() {
   const { usuario } = useUsuarioAutenticado();
@@ -71,7 +65,6 @@ export default function PaginaCierreDia() {
     return Array.isArray(bancos) && bancos.length > 0 ? bancos[0].id : "";
   });
 
-  const [usuarioActual, setUsuarioActual] = useState<IUsuario | null>(null);
   const [cierreSeleccionado, setCierreSeleccionado] =
     useState<ICierreDiario | null>(null);
 

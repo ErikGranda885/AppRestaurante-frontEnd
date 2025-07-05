@@ -9,7 +9,7 @@ import { ToastSuccess } from "../../toast/toastSuccess";
 import { ToastError } from "../../toast/toastError";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, FormProvider, Controller } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import {
   FormControl,
   FormField,

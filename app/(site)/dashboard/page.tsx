@@ -38,8 +38,7 @@ export default function Dashboard() {
     comprasRealizadas,
     gastosTotales,
     diferenciaCaja,
-    loading,
-    error,
+
     refreshDashboard,
   } = useDashboardMetrics(fechaActual);
 

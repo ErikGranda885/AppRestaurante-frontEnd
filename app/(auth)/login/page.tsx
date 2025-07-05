@@ -5,7 +5,6 @@ import Image from "next/image";
 import { LoginForm } from "@/components/auth/login-form";
 import { DEFAULT_EMPRESA_IMAGE_URL } from "@/lib/constants";
 import { SERVICIOS_EMPRESAS } from "@/services/empresas.service";
-import toast from "react-hot-toast";
 import { ToastError } from "@/components/shared/toast/toastError";
 
 export default function LoginPage() {

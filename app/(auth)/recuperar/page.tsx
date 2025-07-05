@@ -10,7 +10,7 @@ import { SERVICIOS_AUTH } from "@/services/auth.service";
 import { SERVICIOS_EMPRESAS } from "@/services/empresas.service";
 import { DEFAULT_EMPRESA_IMAGE_URL } from "@/lib/constants";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, MoveRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 export default function RecuperarPasswordPage() {
   const [email, setEmail] = useState("");
@@ -53,6 +53,9 @@ export default function RecuperarPasswordPage() {
         localStorage.setItem("empresa_actual", JSON.stringify(empresa));
       } catch (error) {
         setLogo(DEFAULT_EMPRESA_IMAGE_URL);
+        ToastError({
+          message: `No se pudo encontrar la imagen de la empresa: ${error}`,
+        });
       }
     };
 

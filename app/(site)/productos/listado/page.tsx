@@ -22,7 +22,7 @@ import { Paginator } from "@/components/shared/productos/ui/paginator";
 import { Separator } from "@/components/ui/separator";
 
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
-import { ICategory, IProduct, IProductEdit } from "@/lib/types";
+import { IProduct, IProductEdit } from "@/lib/types";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import {
@@ -45,7 +45,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
-import { useExportarReporteProductos } from "@/hooks/productos/useExportarReporteProductos";
+
 import { DialogExportarProductos } from "@/components/shared/productos/ui/dialogExportarProductos";
 import { useProductosConStock } from "@/hooks/productos/useProductosConStock";
 import { useCategorias } from "@/hooks/categorias/useCategorias";
@@ -60,9 +60,6 @@ export type Opcion = {
 type FiltroMetrica = "all" | "critical" | "outOfStock";
 
 const stockCritico = 10;
-const diasCaducidad = 10;
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 // Funciones para filtrar y ordenar productos
 function filtrarProductos(
@@ -134,7 +131,6 @@ export default function PaginaProductos() {
   const [soloInsumos, setSoloInsumos] = useState(false);
   const [showLoader, setShowLoader] = useState(true);
   // Estados y hooks de la aplicación
-  const exportarReporte = useExportarReporteProductos();
   const [paginaActual, setPaginaActual] = useState(1);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("Activo");
@@ -154,11 +150,7 @@ export default function PaginaProductos() {
   } | null>(null);
 
   useProtectedRoute();
-  const {
-    categorias: opcionesCategorias,
-    isLoading: cargandoCategorias,
-    refetch: refetchCategorias,
-  } = useCategorias();
+  const { categorias: opcionesCategorias } = useCategorias();
 
   const { todosLosProductos, cargando, error, refetch } =
     useProductosConStock();
@@ -250,7 +242,7 @@ export default function PaginaProductos() {
 
       ToastSuccess({ message: `${mensaje} en ${duration} segundos.` });
     } catch (error) {
-      ToastError({ message: "Hubo un error al procesar la acción." });
+      ToastError({ message: `Hubo un error al procesar la acción: ${error}` });
     } finally {
       setProductoAccion(null);
     }
@@ -295,7 +287,7 @@ export default function PaginaProductos() {
                 }
               >
                 <FormProducts
-                  onSuccess={(data: any) => {
+                  onSuccess={() => {
                     refetch();
                     setAbrirCrear(false);
                   }}
@@ -523,7 +515,7 @@ export default function PaginaProductos() {
               </div>
               {abrirCargaMasiva && (
                 <BulkUploadProductDialog
-                  onSuccess={(nuevosProductos: IProduct[]) => {
+                  onSuccess={() => {
                     refetch();
                     setAbrirCargaMasiva(false);
                   }}
@@ -644,20 +636,7 @@ export default function PaginaProductos() {
               categoryOptions={opcionesCategorias.filter(
                 (opt: any) => opt.value !== "",
               )}
-              onSuccess={(data) => {
-                const productoActualizado = data.producto;
-                const opcionCategoria = opcionesCategorias.find(
-                  (opt: any) =>
-                    productoActualizado.cate_prod != null &&
-                    opt.value === productoActualizado.cate_prod.toString(),
-                );
-                const productoConCategoria = {
-                  ...productoActualizado,
-                  cate_prod: {
-                    id_cate: Number(productoActualizado.cate_prod),
-                    nom_cate: opcionCategoria ? opcionCategoria.label : "",
-                  },
-                };
+              onSuccess={() => {
                 refetch();
                 setProductoEditar(null);
               }}

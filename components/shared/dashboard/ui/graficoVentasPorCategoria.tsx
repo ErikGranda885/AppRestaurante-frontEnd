@@ -19,8 +19,6 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useVentasPorCategoria } from "@/hooks/dashboard/useVentasPorCategoria";
-import { safePrice } from "@/utils/format";
-import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 
 const colores = [
   "#3eab78",
@@ -35,9 +33,6 @@ const colores = [
 
 export function GraficoVentasPorCategoria() {
   const { datos, loading, error } = useVentasPorCategoria();
-  const { ventasConfig } = useConfiguracionesVentas();
-  const formatearDinero = (valor: number) =>
-    safePrice(valor, ventasConfig.moneda);
 
   const datosFormateados = Array.isArray(datos)
     ? datos.map((item) => ({

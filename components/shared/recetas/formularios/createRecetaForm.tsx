@@ -7,7 +7,6 @@ import { Form } from "@/components/ui/form";
 import { CampoTexto } from "@/components/shared/varios/campoTexto";
 import { CampoProducto } from "@/components/shared/compras/ui/campoProducto";
 import { Button } from "@/components/ui/button";
-import { useProductos } from "@/hooks/compras/useProductos";
 import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { useEffect, useState } from "react";
@@ -21,12 +20,7 @@ import { CampoNumero } from "../../varios/campoNumero";
 import { CampoMoneda } from "../ui/campoMoneda";
 import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
 import { useProductosTransformados } from "@/hooks/recetas/useProductosTransformados";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+
 import { SERVICIOS_EQUIVALENCIAS } from "@/services/equivalencias.service";
 
 const esquemaReceta = z.object({
@@ -70,11 +64,7 @@ export function FormCrearReceta({
     setProductosOptions: setProductosInsumos,
   } = useInsumos();
   const [loading, setLoading] = useState(false);
-  const [dialogData, setDialogData] = useState<{
-    open: boolean;
-    index: number;
-    equivalencia: any;
-  }>({ open: false, index: -1, equivalencia: null });
+
   const [bloquearEnvio, setBloquearEnvio] = useState(false);
 
   const { fields, append, remove } = useFieldArray({

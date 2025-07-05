@@ -29,7 +29,7 @@ export default function TestProductFormPage() {
         </Button>
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="border-border w-[700px] max-w-none">
+        <DialogContent className="w-[700px] max-w-none border-border">
           <DialogHeader>
             <DialogTitle>Test: Crear Producto</DialogTitle>
             <DialogDescription>
@@ -37,7 +37,7 @@ export default function TestProductFormPage() {
             </DialogDescription>
           </DialogHeader>
           <FormProducts
-            onSuccess={(data: any) => {
+            onSuccess={() => {
               setOpen(false);
             }}
           />

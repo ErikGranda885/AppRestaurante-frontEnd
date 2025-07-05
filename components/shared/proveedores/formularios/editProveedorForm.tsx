@@ -21,7 +21,6 @@ import { ToastSuccess } from "@/components/shared/toast/toastSuccess";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { DEFAULT_PROVEEDOR_IMAGE_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { error } from "console";
 import { SERVICIOS_PROVEEDORES } from "@/services/proveedores.service";
 
 const initialRucRef = { current: "" };

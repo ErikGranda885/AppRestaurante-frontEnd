@@ -6,7 +6,7 @@ import { MetricCard } from "@/components/shared/varios/metricCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
-import { ICompra, IDetCompra } from "@/lib/types";
+import { ICompra } from "@/lib/types";
 import {
   AlertTriangle,
   CheckCircle,
@@ -30,12 +30,7 @@ import { useRouter } from "next/navigation";
 import { ToastError } from "@/components/shared/toast/toastError";
 import { DateRangeFilter } from "@/components/shared/ventas/ui/dateRangeFilter";
 import { DateRange } from "react-day-picker";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+
 import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useConfiguracionesVentas";
 import { safePrice } from "@/utils/format";
 import { DialogExportarCompras } from "@/components/shared/compras/ui/dialogExportarCompras";
@@ -47,7 +42,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SERVICIOS } from "@/services/categorias.service";
 import { SERVICIOS_COMPRAS } from "@/services/compras.service";
 
 export default function Page() {
@@ -56,7 +50,6 @@ export default function Page() {
   const [showLoader, setShowLoader] = useState(true);
   const [consultaBusqueda, setConsultaBusqueda] = useState<string>("");
   const [compras, setCompras] = useState<ICompra[]>([]);
-  const [detCompras, setDetCompras] = useState<IDetCompra[]>([]);
   const [loadingData, setLoadingData] = useState<boolean>(false);
   const [dateRange, setDateRange] = useState<DateRange>({
     from: startOfDay(new Date()),
@@ -90,17 +83,9 @@ export default function Page() {
           ? comprasData
           : comprasData.data;
         setCompras(comprasArray || []);
-
-        const resDetCompras = await fetch(SERVICIOS_COMPRAS.obtenerDetalles);
-        const detComprasData = await resDetCompras.json();
-        const detComprasArray = Array.isArray(detComprasData)
-          ? detComprasData
-          : detComprasData.data;
-        setDetCompras(detComprasArray || []);
       } catch (error) {
         ToastError({
-          message:
-            "No se pudieron cargar las compras, comunicate con el administrador.",
+          message: `No se pudieron cargar las compras, comunicate con el administrador: ${error}`,
         });
       } finally {
         setLoadingData(false);
@@ -348,8 +333,6 @@ export default function Page() {
   );
 
   const numeroCompras = compras.length;
-  const promedioItems =
-    numeroCompras > 0 ? (detCompras.length / numeroCompras).toFixed(2) : "0";
   if (showLoader) return <Preloader />;
   return (
     <ModulePageLayout

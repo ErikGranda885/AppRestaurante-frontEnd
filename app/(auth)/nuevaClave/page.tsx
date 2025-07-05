@@ -36,7 +36,7 @@ export default function RestablecerPasswordPage() {
           setLogo(
             empresa.logo_emp && empresa.logo_emp !== "null"
               ? empresa.logo_emp
-              : DEFAULT_EMPRESA_IMAGE_URL
+              : DEFAULT_EMPRESA_IMAGE_URL,
           );
           return;
         }
@@ -59,7 +59,7 @@ export default function RestablecerPasswordPage() {
     if (typeof window !== "undefined") cargarLogoEmpresa();
   }, []);
 
-  const validarRequisitos = (clave:any) => ({
+  const validarRequisitos = (clave: string) => ({
     longitud: clave.length >= 8,
     mayuscula: /[A-Z]/.test(clave),
     minuscula: /[a-z]/.test(clave),
@@ -68,7 +68,9 @@ export default function RestablecerPasswordPage() {
     coinciden: clave === confirmarClave && confirmarClave.length > 0,
   });
 
-  const requisitosCumplidos = Object.values(validarRequisitos(clave)).every(Boolean);
+  const requisitosCumplidos = Object.values(validarRequisitos(clave)).every(
+    Boolean,
+  );
 
   const handleRestablecer = async () => {
     if (!token) return ToastError({ message: "Token inválido o expirado" });
@@ -93,8 +95,12 @@ export default function RestablecerPasswordPage() {
 
       ToastSuccess({ message: "✅ Contraseña actualizada correctamente" });
       router.push("login");
-    } catch (err:any) {
-      ToastError({ message: err.message });
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        ToastError({ message: err.message });
+      } else {
+        ToastError({ message: "Error inesperado al restablecer contraseña" });
+      }
     } finally {
       setLoading(false);
     }
@@ -199,23 +205,29 @@ export default function RestablecerPasswordPage() {
 
               {(clave || confirmarClave) && (
                 <div className="space-y-1 rounded-md bg-muted/40 p-3 text-sm text-muted-foreground">
-                  {Object.entries(validarRequisitos(clave)).map(([claveKey, cumple]) => (
-                    <div key={claveKey} className="flex items-center gap-2">
-                      {cumple ? (
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-red-500" />
-                      )}
-                      <span>
-                        {claveKey === "longitud" && "Al menos 8 caracteres"}
-                        {claveKey === "mayuscula" && "Al menos una letra mayúscula"}
-                        {claveKey === "minuscula" && "Al menos una letra minúscula"}
-                        {claveKey === "numero" && "Al menos un número"}
-                        {claveKey === "especial" && "Al menos un carácter especial"}
-                        {claveKey === "coinciden" && "Las contraseñas coinciden"}
-                      </span>
-                    </div>
-                  ))}
+                  {Object.entries(validarRequisitos(clave)).map(
+                    ([claveKey, cumple]) => (
+                      <div key={claveKey} className="flex items-center gap-2">
+                        {cumple ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-500" />
+                        )}
+                        <span>
+                          {claveKey === "longitud" && "Al menos 8 caracteres"}
+                          {claveKey === "mayuscula" &&
+                            "Al menos una letra mayúscula"}
+                          {claveKey === "minuscula" &&
+                            "Al menos una letra minúscula"}
+                          {claveKey === "numero" && "Al menos un número"}
+                          {claveKey === "especial" &&
+                            "Al menos un carácter especial"}
+                          {claveKey === "coinciden" &&
+                            "Las contraseñas coinciden"}
+                        </span>
+                      </div>
+                    ),
+                  )}
                 </div>
               )}
 
@@ -229,7 +241,8 @@ export default function RestablecerPasswordPage() {
             </div>
 
             <div className="pt-6 text-center text-xs text-muted-foreground">
-              <a href="#">Términos y Condiciones</a> • <a href="#">Política de Privacidad</a>
+              <a href="#">Términos y Condiciones</a> •{" "}
+              <a href="#">Política de Privacidad</a>
             </div>
           </div>
         </div>

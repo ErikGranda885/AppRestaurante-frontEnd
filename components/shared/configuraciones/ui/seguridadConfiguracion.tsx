@@ -8,17 +8,8 @@ import { Card } from "@/components/ui/card";
 import { useConfiguracionesSeguridad } from "@/hooks/configuraciones/generales/useConfiguracionesSeguridad";
 import { useEffect, useState } from "react";
 import { ToastSuccess } from "../../toast/toastSuccess";
-import { z } from "zod";
 
 export function SeguridadConfiguracion() {
-  const schema = z.object({
-    longitudMinimaPassword: z
-      .number({ invalid_type_error: "Solo números" })
-      .min(6, "Debe ser mayor o igual a 6"),
-    maxIntentosLogin: z
-      .number({ invalid_type_error: "Solo números" })
-      .min(1, "Debe ser mayor o igual a 1"),
-  });
   const {
     activarGoogleLogin,
     setActivarGoogleLogin,

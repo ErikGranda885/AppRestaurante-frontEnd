@@ -35,11 +35,9 @@ const previewColumns = [
   "fecha_vencimiento",
 ];
 export function BulkUploadProductDialog({
-  categoryOptions,
   onSuccess,
   onClose,
 }: BulkUploadProductDialogProps) {
-  const [file, setFile] = useState<File | null>(null);
   const [previewData, setPreviewData] = useState<any[]>([]);
   const [editandoFilaIndex, setEditandoFilaIndex] = useState<number | null>(
     null,
@@ -70,7 +68,6 @@ export function BulkUploadProductDialog({
 
   const handleFileSelect = async (selectedFile: File) => {
     if (!selectedFile) return;
-    setFile(selectedFile);
 
     const validateHeaders = (headers: string[]): boolean => {
       const normalized = headers.map(sanitize);

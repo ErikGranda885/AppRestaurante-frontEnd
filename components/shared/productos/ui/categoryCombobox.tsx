@@ -15,7 +15,6 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import { ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export interface Option {
   value: string;

@@ -113,9 +113,7 @@ export function CreateUserForm({
 
   // Formulario para el modal de rol
   const {
-    register: registerRole,
     handleSubmit: handleSubmitRole,
-    formState: { errors: roleErrors },
     reset: resetRoleForm,
     control: roleControl,
   } = useForm<RoleFormValues>({

@@ -21,7 +21,6 @@ import {
   ReceiptText,
   Search,
   TrendingUpIcon,
-  Upload,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
@@ -32,7 +31,6 @@ import {
   endOfDay,
   endOfMonth,
   endOfYear,
-  format,
   parse,
   startOfDay,
   startOfMonth,
@@ -78,14 +76,7 @@ export default function Page() {
   const [inicioGastoTimestamp, setInicioGastoTimestamp] = useState<
     number | null
   >(null);
-  const {
-    gastos,
-    crearGasto,
-    actualizarGasto,
-    eliminarGasto,
-    mutate,
-    loading,
-  } = useGastos();
+  const { gastos, eliminarGasto, mutate } = useGastos();
   useSocket("gastos-actualizadas", () => {
     console.log("🔁 Revalidando gastos desde socket");
     mutate();
@@ -162,7 +153,7 @@ export default function Page() {
       });
       setInicioGastoTimestamp(null);
     } catch (err) {
-      ToastError({ message: "Error al eliminar gasto" });
+      ToastError({ message: `Error al eliminar gasto: ${err}` });
     }
   }
 
@@ -187,25 +178,6 @@ export default function Page() {
       );
   }, [gastos, dateRange, busqueda]);
 
-  const totalGastado = useMemo(() => {
-    return gastosFiltrados
-      .reduce((acc, gasto) => acc + Number(gasto.mont_gas || 0), 0)
-      .toFixed(2);
-  }, [gastosFiltrados]);
-
-  const cantidadGastos = useMemo(() => {
-    return gastosFiltrados.length;
-  }, [gastosFiltrados]);
-  const hoy = new Date();
-  const fechaHoy = format(hoy, "dd/MM/yyyy");
-
-  const gastosHoy = gastos
-    .filter((gasto) => {
-      if (!gasto.fech_gas) return false;
-      const fechaGasto = gasto.fech_gas.split(" ")[0];
-      return fechaGasto === fechaHoy;
-    })
-    .reduce((acc, gasto) => acc + gasto.mont_gas, 0);
 
   // Definimos las columnas
   const columnas: ColumnDef<IGasto>[] = [

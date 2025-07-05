@@ -35,7 +35,6 @@ export default function DetalleCompraPage() {
   const purchaseId = Number(id_comp);
   const [compra, setCompra] = useState<ICompra | null>(null);
   const [detalleCompra, setDetalleCompra] = useState<IDetCompra[]>([]);
-  const [esEditadoObservacion, setEsEditadoObservacion] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
   const [abrirDialogPago, setAbrirDialogPago] = useState(false);

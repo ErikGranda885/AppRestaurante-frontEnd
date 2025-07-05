@@ -4,12 +4,10 @@ import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CheckCircle2 } from "lucide-react";
 import clsx from "clsx";
 
-import { ToastSuccess } from "../../toast/toastSuccess";
 import { useConfiguracionAplicacion } from "@/hooks/configuraciones/generales/useConfiguracionesAplicacion";
 
 export function AplicacionConfiguracion() {
@@ -22,18 +20,6 @@ export function AplicacionConfiguracion() {
     setColorTema,
     loading,
   } = useConfiguracionAplicacion();
-
-  const handleCancel = () => {
-    ToastSuccess({
-      message: "Cambios descartados (no implementado)",
-    });
-  };
-
-  const handleSave = () => {
-    ToastSuccess({
-      message: "Configuraciones guardadas correctamente",
-    });
-  };
 
   return (
     <div className="space-y-10 pt-4">

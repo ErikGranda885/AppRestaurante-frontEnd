@@ -8,19 +8,6 @@ import {
 } from "@/utils/conversorCantidad";
 import { BotonAccion } from "../asistente/botonAccion";
 
-function formatearDuracion(ms: number): string {
-  const totalSeconds = Math.floor(ms / 1000);
-  const horas = Math.floor(totalSeconds / 3600);
-  const minutos = Math.floor((totalSeconds % 3600) / 60);
-  const segundos = totalSeconds % 60;
-
-  const hh = horas.toString().padStart(2, "0");
-  const mm = minutos.toString().padStart(2, "0");
-  const ss = segundos.toString().padStart(2, "0");
-
-  return `${hh}:${mm}:${ss}`;
-}
-
 export const comandosDeVentas = [
   {
     nombre: "ventasHoy",
@@ -40,7 +27,6 @@ export const comandosDeVentas = [
 
         if (resp.ok && typeof datos.total === "number") {
           const totalFormateado = datos.total.toFixed(2);
-          const fechaFormateada = fechaHoy.split("-").reverse().join("/");
 
           if (Number(totalFormateado) === 0) {
             // Visual (con emoji, no leer)

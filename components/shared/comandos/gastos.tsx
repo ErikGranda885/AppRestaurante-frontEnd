@@ -28,7 +28,10 @@ export const comandosDeGastos = [
         );
 
         if (gastosHoy.length === 0) {
-          ctx.agregarMensajeBot("🤖 No se han registrado gastos el día de hoy", true);
+          ctx.agregarMensajeBot(
+            "🤖 No se han registrado gastos el día de hoy",
+            true,
+          );
         } else {
           const total = gastosHoy.reduce(
             (sum: number, g: any) => sum + Number(g.mont_gas),
@@ -88,7 +91,6 @@ export const comandosDeGastos = [
         return;
       }
 
-      const inicio = Date.now();
 
       try {
         const now = new Date();
@@ -114,9 +116,6 @@ export const comandosDeGastos = [
         });
 
         const data = await resp.json();
-
-        const fin = Date.now();
-        const duracion = ((fin - inicio) / 1000).toFixed(2);
 
         if (resp.ok) {
           ctx.agregarMensajeBot(

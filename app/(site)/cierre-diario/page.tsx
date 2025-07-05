@@ -44,13 +44,11 @@ import {
   endOfMonth,
   endOfToday,
   endOfYear,
-  endOfYesterday,
   format,
   startOfDay,
   startOfMonth,
   startOfToday,
   startOfYear,
-  startOfYesterday,
   subDays,
 } from "date-fns";
 import { safePrice } from "@/utils/format";
@@ -176,7 +174,7 @@ export default function Page() {
     fechaActualStr,
     estadoSeleccionado,
   );
-  const { totalDisponible, totalDepositado, diferenciaTotal, numeroCierres } =
+  const { totalDepositado, diferenciaTotal, numeroCierres } =
     useResumenCierres(lista);
 
   const cierresColumnas: ColumnDef<ICierreDiario>[] = [

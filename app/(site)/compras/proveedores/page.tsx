@@ -55,8 +55,7 @@ export default function Dashboard() {
   const [abrirEditar, setAbrirEditar] = React.useState(false);
   const [proveedorEditando, setProveedorEditando] =
     React.useState<IProveedor | null>(null);
-  const [estadoSeleccionado, setEstadoSeleccionado] =
-    React.useState<string>("");
+  const [estadoSeleccionado] = React.useState<string>("");
   const [consultaBusqueda, setConsultaBusqueda] = React.useState<string>("");
   const [accionProveedor, setAccionProveedor] = React.useState<{
     id: string;

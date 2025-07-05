@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { ToastError } from "@/components/shared/toast/toastError"; // Asegúrate de tener esto
 import { ToastSuccess } from "../../toast/toastSuccess";
-import { useRouter } from "next/navigation";
 
 const denominaciones = [
   { label: "0.01", valor: 0.01, tipo: "moneda" },
@@ -37,7 +36,6 @@ export function DialogNumeracionEfectivo({
 }) {
   const [cantidades, setCantidades] = useState<{ [key: string]: number }>({});
   const [total, setTotal] = useState(0);
-  const router = useRouter();
   useEffect(() => {
     let suma = 0;
     for (const d of denominaciones) {

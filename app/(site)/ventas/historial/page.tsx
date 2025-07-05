@@ -34,7 +34,7 @@ import { ComboboxEstado } from "@/components/shared/ventas/ui/comboboxEstado";
 import { TicketPreview } from "@/components/shared/ventas/ui/ticketPreview";
 import { IVentaDetalle } from "@/lib/types";
 import Image from "next/image";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,7 +49,6 @@ import Preloader from "@/components/shared/varios/preloader";
 export default function Page() {
   const { ventasConfig } = useConfiguracionesVentas();
   const [dialogExportarOpen, setDialogExportarOpen] = useState(false);
-  const [abrirCrear, setAbrirCrear] = useState(false);
   const [consultaBusqueda, setConsultaBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("Todos");
   const [dateRange, setDateRange] = useState<DateRange>({
@@ -267,12 +266,12 @@ export default function Page() {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      className="text-[12px] dark:bg-[#222224] "
+                      className="text-[12px] dark:bg-[#222224]"
                     >
                       {labelQuickRange}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="border-border ">
+                  <DropdownMenuContent className="border-border">
                     <DropdownMenuItem onClick={() => handleQuickRange("hoy")}>
                       Hoy
                     </DropdownMenuItem>

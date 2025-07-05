@@ -27,7 +27,7 @@ import { SERVICIOS_PRODUCTOS } from "@/services/productos.service";
 import { SERVICIOS_VENTAS } from "@/services/ventas.service";
 import { safePrice } from "@/utils/format";
 import { format } from "date-fns";
-import { Banknote, Pencil, Save, Search, Smartphone } from "lucide-react";
+import { Banknote, Save, Search, Smartphone } from "lucide-react";
 import Image from "next/image";
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 
@@ -64,7 +64,6 @@ export default function Page() {
   const [mostrarEfectivoModal, setMostarEfectivoModal] = useState(false);
   const [efectivoRecibido, setEfectivoRecibido] = useState<number | null>(null);
   const [efectivoCambio, setEfectivoCambio] = useState<number>(0);
-  const [fotoTomada, setFotoTomada] = useState<string | null>(null);
 
   const [showLoader, setShowLoader] = useState(true);
   const [comprobanteNumero, setComprobanteNumero] = useState("");
@@ -84,12 +83,6 @@ export default function Page() {
     number | null
   >(null);
 
-  // Funciones para editar información del cliente
-  const handleOpenCustomerForm = () => {
-    setTempName(customerName);
-    setTempTable(tableInfo);
-    setShowCustomerForm(true);
-  };
   const handleCloseCustomerForm = () => setShowCustomerForm(false);
   const handleSaveCustomerForm = (e: React.FormEvent) => {
     e.preventDefault();
@@ -360,7 +353,6 @@ export default function Page() {
       return;
     }
 
-    const startTime = performance.now(); // inicio del proceso de guardado
 
     try {
       let urlImg = "";
@@ -483,7 +475,6 @@ export default function Page() {
       setMostarEfectivoModal(false);
       setEfectivoRecibido(null);
       setEfectivoCambio(0);
-      setFotoTomada(null);
       setCustomerName("Erik Granda");
       setTableInfo("Orden para llevar");
     } catch (error: any) {
@@ -1046,7 +1037,6 @@ export default function Page() {
             setShowDialogComprobante(open);
             if (!open) {
               detenerCamaraRef.current?.();
-              setFotoTomada(null);
               setComprobanteImagen(null);
               setComprobanteNumero("");
               setMetodoPago("efectivo");

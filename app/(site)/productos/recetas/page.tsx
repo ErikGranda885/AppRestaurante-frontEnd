@@ -8,14 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
-import {
-  CloudDownload,
-  Pencil,
-  Plus,
-  Search,
-  Trash2,
-  Upload,
-} from "lucide-react";
+import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { GeneralDialog } from "@/components/shared/varios/dialogGen";
 
 import { useRecetas } from "@/hooks/recetas/useRecetas";
@@ -123,7 +116,7 @@ export default function RecetasPage() {
           </div>
         </div>
       </div>
-      <div className="flex flex-col gap-4 px-6 ">
+      <div className="flex flex-col gap-4 px-6">
         {filteredRecetas.length === 0 ? (
           <div className="flex h-[530px] items-center justify-center rounded-md border-border text-sm text-muted-foreground">
             No se encontraron recetas.

@@ -32,7 +32,7 @@ export const CampoFecha: React.FC<CampoFechaProps> = ({
   <FormField
     control={control}
     name={name}
-    render={({ field, fieldState: { error } }) => (
+    render={({ field }) => (
       <FormItem>
         <FormLabel className="text-black dark:text-white">{label}</FormLabel>
         <Popover>
