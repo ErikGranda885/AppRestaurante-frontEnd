@@ -5,6 +5,8 @@ import Image from "next/image";
 import { LoginForm } from "@/components/auth/login-form";
 import { DEFAULT_EMPRESA_IMAGE_URL } from "@/lib/constants";
 import { SERVICIOS_EMPRESAS } from "@/services/empresas.service";
+import toast from "react-hot-toast";
+import { ToastError } from "@/components/shared/toast/toastError";
 
 export default function LoginPage() {
   const [logo, setLogo] = useState(DEFAULT_EMPRESA_IMAGE_URL);
@@ -45,6 +47,9 @@ export default function LoginPage() {
         localStorage.setItem("empresa_actual", JSON.stringify(empresa));
       } catch (error) {
         setLogo(DEFAULT_EMPRESA_IMAGE_URL);
+        ToastError({
+          message: `Error al iniciar sesión: ${error}`,
+        });
       }
     };
 
@@ -90,8 +95,8 @@ export default function LoginPage() {
 
         {/* Footer con copyright */}
         <div className="pb-4 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Desarrollado por ErikDev. Todos los derechos
-          reservados.
+          © {new Date().getFullYear()} Desarrollado por ErikDev. Todos los
+          derechos reservados.
         </div>
       </div>
 
