@@ -1,11 +1,16 @@
 export const SERVICIOS_EQUIVALENCIAS = {
-  listar: "http://localhost:5000/equivalencias",
-  crear: "http://localhost:5000/equivalencias",
-  actualizar: (id: number) => `http://localhost:5000/equivalencias/${id}`,
-  eliminar: (id: number) => `http://localhost:5000/equivalencias/${id}`,
-  obtener: (id: number) => `http://localhost:5000/equivalencias/${id}`,
+  listar:
+    "https://apprestaurante-backend-production.up.railway.app/equivalencias",
+  crear:
+    "https://apprestaurante-backend-production.up.railway.app/equivalencias",
+  actualizar: (id: number) =>
+    `https://apprestaurante-backend-production.up.railway.app/equivalencias/${id}`,
+  eliminar: (id: number) =>
+    `https://apprestaurante-backend-production.up.railway.app/equivalencias/${id}`,
+  obtener: (id: number) =>
+    `https://apprestaurante-backend-production.up.railway.app/equivalencias/${id}`,
   porProducto: (id_prod: number) =>
-    `http://localhost:5000/equivalencias/producto/${id_prod}`,
+    `https://apprestaurante-backend-production.up.railway.app/equivalencias/producto/${id_prod}`,
   activa: (id_prod: number) =>
-    `http://localhost:5000/equivalencias/producto/${id_prod}/activa`,
+    `https://apprestaurante-backend-production.up.railway.app/equivalencias/producto/${id_prod}/activa`,
 };

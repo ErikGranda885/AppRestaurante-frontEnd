@@ -1,31 +1,38 @@
 export const SERVICIOS_PRODUCTOS = {
-  categorias: "http://localhost:5000/categorias",
-  productos: "http://localhost:5000/productos",
-  obtenerPorId: (id: number) => `http://localhost:5000/productos/${id}`,
-  descagarPlantillaProducto: "http://localhost:5000/productos/plantilla",
-  guardarMasivoProductos: "http://localhost:5000/productos/masivo",
+  categorias:
+    "https://apprestaurante-backend-production.up.railway.app/categorias",
+  productos:
+    "https://apprestaurante-backend-production.up.railway.app/productos",
+  obtenerPorId: (id: number) =>
+    `https://apprestaurante-backend-production.up.railway.app/productos/${id}`,
+  descagarPlantillaProducto:
+    "https://apprestaurante-backend-production.up.railway.app/productos/plantilla",
+  guardarMasivoProductos:
+    "https://apprestaurante-backend-production.up.railway.app/productos/masivo",
 
   inactivarProducto: (id: number) =>
-    `http://localhost:5000/productos/inactivar/${id}`,
+    `https://apprestaurante-backend-production.up.railway.app/productos/inactivar/${id}`,
 
   activarProducto: (id: number) =>
-    `http://localhost:5000/productos/activar/${id}`,
+    `https://apprestaurante-backend-production.up.railway.app/productos/activar/${id}`,
 
-  actualizarProducto: (id: number) => `http://localhost:5000/productos/${id}`,
+  actualizarProducto: (id: number) =>
+    `https://apprestaurante-backend-production.up.railway.app/productos/${id}`,
 
   // 🔽 Rutas para exportación general
   exportarProductosJson: (tipo: string) =>
-    `http://localhost:5000/productos/reportes/json?tipo=${tipo}`,
+    `https://apprestaurante-backend-production.up.railway.app/productos/reportes/json?tipo=${tipo}`,
 
   exportarProductosExcel: (tipo: string) =>
-    `http://localhost:5000/productos/reportes/excel?tipo=${tipo}`,
+    `https://apprestaurante-backend-production.up.railway.app/productos/reportes/excel?tipo=${tipo}`,
 
   exportarProductosPDF: (tipo: string) =>
-    `http://localhost:5000/productos/reportes/pdf?tipo=${tipo}`,
+    `https://apprestaurante-backend-production.up.railway.app/productos/reportes/pdf?tipo=${tipo}`,
 
   // 🔽 Reporte específico: Insumos con equivalencias (Excel o PDF)
   exportarReporteInsumos: (desde?: string, hasta?: string) => {
-    let url = "http://localhost:5000/productos/reporte-insumos";
+    let url =
+      "https://apprestaurante-backend-production.up.railway.app/productos/reporte-insumos";
     const params = [];
     if (desde) params.push(`desde=${desde}`);
     if (hasta) params.push(`hasta=${hasta}`);
@@ -33,7 +40,8 @@ export const SERVICIOS_PRODUCTOS = {
   },
 
   exportarReporteInsumosPDF: (desde?: string, hasta?: string) => {
-    let url = "http://localhost:5000/productos/reporte-insumos/pdf";
+    let url =
+      "https://apprestaurante-backend-production.up.railway.app/productos/reporte-insumos/pdf";
     const params = [];
     if (desde) params.push(`desde=${desde}`);
     if (hasta) params.push(`hasta=${hasta}`);
@@ -42,7 +50,8 @@ export const SERVICIOS_PRODUCTOS = {
 
   // 🔽 Reporte de Directos y Transformados (Excel o PDF)
   exportarReporteDirectosTransformados: (desde?: string, hasta?: string) => {
-    let url = "http://localhost:5000/productos/reporte-directos-transformados";
+    let url =
+      "https://apprestaurante-backend-production.up.railway.app/productos/reporte-directos-transformados";
     const params = [];
     if (desde) params.push(`desde=${desde}`);
     if (hasta) params.push(`hasta=${hasta}`);
@@ -51,7 +60,7 @@ export const SERVICIOS_PRODUCTOS = {
 
   exportarReporteDirectosTransformadosPDF: (desde?: string, hasta?: string) => {
     let url =
-      "http://localhost:5000/productos/reporte-directos-transformados/pdf";
+      "https://apprestaurante-backend-production.up.railway.app/productos/reporte-directos-transformados/pdf";
     const params = [];
     if (desde) params.push(`desde=${desde}`);
     if (hasta) params.push(`hasta=${hasta}`);
@@ -59,8 +68,8 @@ export const SERVICIOS_PRODUCTOS = {
   },
   // 🔽 Verificación de nombre de producto
   verificarNombre: (nombre: string) =>
-    `http://localhost:5000/productos/verificar?nombre=${encodeURIComponent(nombre)}`,
+    `https://apprestaurante-backend-production.up.railway.app/productos/verificar?nombre=${encodeURIComponent(nombre)}`,
 
   productosPorCategoria: (id_cate: number) =>
-    `http://localhost:5000/productos/categoria/${id_cate}`,
+    `https://apprestaurante-backend-production.up.railway.app/productos/categoria/${id_cate}`,
 };

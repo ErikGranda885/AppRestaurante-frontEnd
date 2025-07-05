@@ -1,24 +1,29 @@
 export const SERVICIOS_COMPRAS = {
-  compras: "http://localhost:5000/compras",
-  obtenerDetalles: "http://localhost:5000/dets-compras",
+  compras: "https://apprestaurante-backend-production.up.railway.app/compras",
+  obtenerDetalles:
+    "https://apprestaurante-backend-production.up.railway.app/dets-compras",
 
   // Obtener una compra por su ID
-  obtenerCompra: (id: number) => `http://localhost:5000/compras/${id}`,
+  obtenerCompra: (id: number) =>
+    `https://apprestaurante-backend-production.up.railway.app/compras/${id}`,
 
   // Detalles de una compra
   obtenerDetalleCompra: (id: number) =>
-    `http://localhost:5000/dets-compras/${id}`,
+    `https://apprestaurante-backend-production.up.railway.app/dets-compras/${id}`,
 
   // Descargar PDF de la compra
-  descargarFactura: (id: number) => `http://localhost:5000/pdf/factura/${id}`,
+  descargarFactura: (id: number) =>
+    `https://apprestaurante-backend-production.up.railway.app/pdf/factura/${id}`,
 
   // Registrar el pago de una compra
   registrarPago: (id: number) =>
-    `http://localhost:5000/compras/registrar-pago/${id}`,
+    `https://apprestaurante-backend-production.up.railway.app/compras/registrar-pago/${id}`,
 
   // Exportar reporte de compras en Excel
-  exportarComprasExcel: "http://localhost:5000/compras/reporte/excel",
+  exportarComprasExcel:
+    "https://apprestaurante-backend-production.up.railway.app/compras/reporte/excel",
 
   // Exportar reporte de compras en PDF
-  exportarComprasPDF: "http://localhost:5000/compras/reporte/pdf",
+  exportarComprasPDF:
+    "https://apprestaurante-backend-production.up.railway.app/compras/reporte/pdf",
 };

@@ -1,5 +1,6 @@
 export const SERVICIOS_EMPRESAS = {
-  obtener: "http://localhost:5000/empresas",
-  crear: "http://localhost:5000/empresas",
-  actualizar: (id: number) => `http://localhost:5000/empresas/${id}`,
+  obtener: "https://apprestaurante-backend-production.up.railway.app/empresas",
+  crear: "https://apprestaurante-backend-production.up.railway.app/empresas",
+  actualizar: (id: number) =>
+    `https://apprestaurante-backend-production.up.railway.app/empresas/${id}`,
 };

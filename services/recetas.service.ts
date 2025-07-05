@@ -1,6 +1,8 @@
 export const SERVICIOS_RECETAS = {
-  listar: "http://localhost:5000/recetas",
-  crear: "http://localhost:5000/recetas",
-  actualizar: (id: number) => `http://localhost:5000/recetas/${id}`,
-  eliminar: (id: number) => `http://localhost:5000/recetas/${id}`,
+  listar: "https://apprestaurante-backend-production.up.railway.app/recetas",
+  crear: "https://apprestaurante-backend-production.up.railway.app/recetas",
+  actualizar: (id: number) =>
+    `https://apprestaurante-backend-production.up.railway.app/recetas/${id}`,
+  eliminar: (id: number) =>
+    `https://apprestaurante-backend-production.up.railway.app/recetas/${id}`,
 };

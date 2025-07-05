@@ -1,14 +1,18 @@
 export const SERVICIOS_DASHBOARD = {
   metricas: (fecha: string) =>
-    `http://localhost:5000/dashboard/metricas?fecha=${fecha}`,
-  populares: "http://localhost:5000/productos/populares",
-  porCaducar: "http://localhost:5000/inventario/caducar",
-  ventasPorCategoria: "http://localhost:5000/ventas/categoria",
-  ventasPorPeriodo: "http://localhost:5000/ventas/periodo",
+    `https://apprestaurante-backend-production.up.railway.app/dashboard/metricas?fecha=${fecha}`,
+  populares:
+    "https://apprestaurante-backend-production.up.railway.app/productos/populares",
+  porCaducar:
+    "https://apprestaurante-backend-production.up.railway.app/inventario/caducar",
+  ventasPorCategoria:
+    "https://apprestaurante-backend-production.up.railway.app/ventas/categoria",
+  ventasPorPeriodo:
+    "https://apprestaurante-backend-production.up.railway.app/ventas/periodo",
 
   // Servicios específicos de ventas
   ultimasVentasRealizadas: (limit = 5) =>
-    `http://localhost:5000/ventas/ultimas?limit=${limit}`,
+    `https://apprestaurante-backend-production.up.railway.app/ventas/ultimas?limit=${limit}`,
   ventasPorTransferenciaPendientes:
-    "http://localhost:5000/ventas/pagos-pendientes",
+    "https://apprestaurante-backend-production.up.railway.app/ventas/pagos-pendientes",
 };

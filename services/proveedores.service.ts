@@ -1,19 +1,24 @@
 export const SERVICIOS_PROVEEDORES = {
-  proveedores: "http://localhost:5000/proveedores",
+  proveedores:
+    "https://apprestaurante-backend-production.up.railway.app/proveedores",
   obtenerProveedorPorId: (id: number | string) =>
-    `http://localhost:5000/proveedores/${id}`,
+    `https://apprestaurante-backend-production.up.railway.app/proveedores/${id}`,
   obtenerProveedor: (id: number | string) =>
-    `http://localhost:5000/proveedores/${id}`,
+    `https://apprestaurante-backend-production.up.railway.app/proveedores/${id}`,
   actualizarProveedor: (id: number | string) =>
-    `http://localhost:5000/proveedores/${id}`, // PUT actualizar un proveedor
+    `https://apprestaurante-backend-production.up.railway.app/proveedores/${id}`, // PUT actualizar un proveedor
   activarProveedor: (id: number | string) =>
-    `http://localhost:5000/proveedores/activar/${id}`, // PUT activar
+    `https://apprestaurante-backend-production.up.railway.app/proveedores/activar/${id}`, // PUT activar
   inactivarProveedor: (id: number | string) =>
-    `http://localhost:5000/proveedores/inactivar/${id}`, // PUT inactivar
+    `https://apprestaurante-backend-production.up.railway.app/proveedores/inactivar/${id}`, // PUT inactivar
   verificarRucProveedor: (ruc: string) =>
-    `http://localhost:5000/proveedores/verificar?ruc=${encodeURIComponent(ruc)}`,
-  exportarProveedoresExcel: "http://localhost:5000/proveedores/reporte/excel",
-  exportarProveedoresPDF: "http://localhost:5000/proveedores/reporte/pdf",
-  cargarMasivoProv: "http://localhost:5000/proveedores/masivo",
-  generarPlantillaProv: "http://localhost:5000/proveedores/plantilla",
+    `https://apprestaurante-backend-production.up.railway.app/proveedores/verificar?ruc=${encodeURIComponent(ruc)}`,
+  exportarProveedoresExcel:
+    "https://apprestaurante-backend-production.up.railway.app/proveedores/reporte/excel",
+  exportarProveedoresPDF:
+    "https://apprestaurante-backend-production.up.railway.app/proveedores/reporte/pdf",
+  cargarMasivoProv:
+    "https://apprestaurante-backend-production.up.railway.app/proveedores/masivo",
+  generarPlantillaProv:
+    "https://apprestaurante-backend-production.up.railway.app/proveedores/plantilla",
 };

@@ -1,35 +1,41 @@
 export const SERVICIOS_VENTAS = {
   // Obtener todas las ventas
-  listarVentas: "http://localhost:5000/ventas",
-  listarDetallesVentas: "http://localhost:5000/dets-ventas",
+  listarVentas:
+    "https://apprestaurante-backend-production.up.railway.app/ventas",
+  listarDetallesVentas:
+    "https://apprestaurante-backend-production.up.railway.app/dets-ventas",
   // Obtener una venta por ID
-  obtenerVenta: (id: number) => `http://localhost:5000/ventas/${id}`,
+  obtenerVenta: (id: number) =>
+    `https://apprestaurante-backend-production.up.railway.app/ventas/${id}`,
 
   // Crear una nueva venta
-  crearVenta: "http://localhost:5000/ventas",
+  crearVenta: "https://apprestaurante-backend-production.up.railway.app/ventas",
 
   // Actualizar venta
-  actualizarVenta: (id: number) => `http://localhost:5000/ventas/${id}`,
+  actualizarVenta: (id: number) =>
+    `https://apprestaurante-backend-production.up.railway.app/ventas/${id}`,
 
   // Cambiar estado de una venta
-  actualizarEstado: (id: number) => `http://localhost:5000/ventas/${id}/estado`,
+  actualizarEstado: (id: number) =>
+    `https://apprestaurante-backend-production.up.railway.app/ventas/${id}/estado`,
 
   // Filtrar por estado
   filtrarPorEstado: (estado: string) =>
-    `http://localhost:5000/ventas/estado?estado=${estado}`,
+    `https://apprestaurante-backend-production.up.railway.app/ventas/estado?estado=${estado}`,
 
   // Filtrar por fecha
   filtrarPorFecha: (fecha: string) =>
-    `http://localhost:5000/ventas/fecha?fecha=${fecha}`,
+    `https://apprestaurante-backend-production.up.railway.app/ventas/fecha?fecha=${fecha}`,
 
   // Filtrar por usuario
   filtrarPorUsuario: (idUsuario: number) =>
-    `http://localhost:5000/ventas/usuario/${idUsuario}`,
+    `https://apprestaurante-backend-production.up.railway.app/ventas/usuario/${idUsuario}`,
 
   // Obtener ventas con detalles (formato tarjetas como el dashboard)
-  ventasConDetalles: "http://localhost:5000/ventas/listado",
+  ventasConDetalles:
+    "https://apprestaurante-backend-production.up.railway.app/ventas/listado",
 
   // ✅ Nuevo: Total de ventas por fecha
   totalPorFecha: (fecha: string) =>
-    `http://localhost:5000/ventas/total?fecha=${fecha}`,
+    `https://apprestaurante-backend-production.up.railway.app/ventas/total?fecha=${fecha}`,
 };

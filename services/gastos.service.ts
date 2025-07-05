@@ -1,10 +1,14 @@
 export const SERVICIOS_GASTOS = {
-  listar: "http://localhost:5000/gastos",
-  crear: "http://localhost:5000/gastos",
-  actualizar: (id: number) => `http://localhost:5000/gastos/${id}`,
-  eliminar: (id: number) => `http://localhost:5000/gastos/${id}`,
+  listar: "https://apprestaurante-backend-production.up.railway.app/gastos",
+  crear: "https://apprestaurante-backend-production.up.railway.app/gastos",
+  actualizar: (id: number) =>
+    `https://apprestaurante-backend-production.up.railway.app/gastos/${id}`,
+  eliminar: (id: number) =>
+    `https://apprestaurante-backend-production.up.railway.app/gastos/${id}`,
 
   // Exportar reporte de gastos
-  exportarGastosExcel: "http://localhost:5000/gastos/reporte/excel",
-  exportarGastosPDF: "http://localhost:5000/gastos/reporte/pdf",
+  exportarGastosExcel:
+    "https://apprestaurante-backend-production.up.railway.app/gastos/reporte/excel",
+  exportarGastosPDF:
+    "https://apprestaurante-backend-production.up.railway.app/gastos/reporte/pdf",
 };

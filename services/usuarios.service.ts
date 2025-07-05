@@ -1,30 +1,34 @@
 export const SERVICIOS_USUARIOS = {
   // Obtención de usuarios
-  usuarios: "http://localhost:5000/usuarios",
+  usuarios: "https://apprestaurante-backend-production.up.railway.app/usuarios",
   // Obtención de roles
-  roles: "http://localhost:5000/roles",
+  roles: "https://apprestaurante-backend-production.up.railway.app/roles",
 
-  cargarMasivo: "http://localhost:5000/usuarios/masivo",
+  cargarMasivo:
+    "https://apprestaurante-backend-production.up.railway.app/usuarios/masivo",
 
-  plantillaCargaMasiva: "http://localhost:5000/usuarios/plantilla",
+  plantillaCargaMasiva:
+    "https://apprestaurante-backend-production.up.railway.app/usuarios/plantilla",
   // Inactivar usuario (requiere el ID del usuario)
   inactivarUsuario: (id: number | string) =>
-    `http://localhost:5000/usuarios/inactivar/${id}`,
+    `https://apprestaurante-backend-production.up.railway.app/usuarios/inactivar/${id}`,
   // Activar usuario (requiere el ID del usuario)
   activarUsuario: (id: number | string) =>
-    `http://localhost:5000/usuarios/activar/${id}`,
+    `https://apprestaurante-backend-production.up.railway.app/usuarios/activar/${id}`,
 
   actualizarUsuario: (id: number | string) =>
-    `http://localhost:5000/usuarios/${id}`,
+    `https://apprestaurante-backend-production.up.railway.app/usuarios/${id}`,
   verificarCorreoUsuario: (email: string) =>
-    `http://localhost:5000/usuarios/verificar/correo?email=${encodeURIComponent(email)}`,
+    `https://apprestaurante-backend-production.up.railway.app/usuarios/verificar/correo?email=${encodeURIComponent(email)}`,
   // Exportar usuarios en Excel
-  exportarExcel: `http://localhost:5000/usuarios/reporte/excel`,
+  exportarExcel: `https://apprestaurante-backend-production.up.railway.app/usuarios/reporte/excel`,
 
   // Exportar usuarios en PDF
-  exportarPDF: `http://localhost:5000/usuarios/reporte/pdf`,
+  exportarPDF: `https://apprestaurante-backend-production.up.railway.app/usuarios/reporte/pdf`,
 
   // Roles
-  exportarRolesExcel: "http://localhost:5000/usuarios/reporte/rol/excel",
-  exportarRolesPDF: "http://localhost:5000/usuarios/reporte/rol/pdf",
+  exportarRolesExcel:
+    "https://apprestaurante-backend-production.up.railway.app/usuarios/reporte/rol/excel",
+  exportarRolesPDF:
+    "https://apprestaurante-backend-production.up.railway.app/usuarios/reporte/rol/pdf",
 };

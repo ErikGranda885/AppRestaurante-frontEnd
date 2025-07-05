@@ -1,8 +1,10 @@
 export const SERVICIOS_DET_RECETAS = {
   listarPorReceta: (idReceta: number) =>
-    `http://localhost:5000/dets_recetas/por-receta/${idReceta}`,
+    `https://apprestaurante-backend-production.up.railway.app/dets_recetas/por-receta/${idReceta}`,
 
-  crear: "http://localhost:5000/dets_recetas",
+  crear:
+    "https://apprestaurante-backend-production.up.railway.app/dets_recetas",
 
-  eliminar: (id: number) => `http://localhost:5000/dets_recetas/${id}`,
+  eliminar: (id: number) =>
+    `https://apprestaurante-backend-production.up.railway.app/dets_recetas/${id}`,
 };

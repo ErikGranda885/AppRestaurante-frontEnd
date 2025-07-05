@@ -1,5 +1,8 @@
 export const SERVICIOS_CONFIGURACIONES = {
-  listar: "http://localhost:5000/configuraciones",
-  obtenerPorClave: (clave: string) => `http://localhost:5000/configuraciones/${clave}`,
-  actualizarPorClave: (clave: string) => `http://localhost:5000/configuraciones/${clave}`,
+  listar:
+    "https://apprestaurante-backend-production.up.railway.app/configuraciones",
+  obtenerPorClave: (clave: string) =>
+    `https://apprestaurante-backend-production.up.railway.app/configuraciones/${clave}`,
+  actualizarPorClave: (clave: string) =>
+    `https://apprestaurante-backend-production.up.railway.app/configuraciones/${clave}`,
 };
