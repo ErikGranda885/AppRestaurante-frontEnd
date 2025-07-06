@@ -1,34 +1,36 @@
 export const SERVICIOS_USUARIOS = {
   // Obtención de usuarios
-  usuarios: "https://apprestaurante-backend-production.up.railway.app/usuarios",
+  usuarios:
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/usuarios",
   // Obtención de roles
-  roles: "https://apprestaurante-backend-production.up.railway.app/roles",
+  roles:
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/roles",
 
   cargarMasivo:
-    "https://apprestaurante-backend-production.up.railway.app/usuarios/masivo",
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/usuarios/masivo",
 
   plantillaCargaMasiva:
-    "https://apprestaurante-backend-production.up.railway.app/usuarios/plantilla",
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/usuarios/plantilla",
   // Inactivar usuario (requiere el ID del usuario)
   inactivarUsuario: (id: number | string) =>
-    `https://apprestaurante-backend-production.up.railway.app/usuarios/inactivar/${id}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/usuarios/inactivar/${id}`,
   // Activar usuario (requiere el ID del usuario)
   activarUsuario: (id: number | string) =>
-    `https://apprestaurante-backend-production.up.railway.app/usuarios/activar/${id}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/usuarios/activar/${id}`,
 
   actualizarUsuario: (id: number | string) =>
-    `https://apprestaurante-backend-production.up.railway.app/usuarios/${id}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/usuarios/${id}`,
   verificarCorreoUsuario: (email: string) =>
-    `https://apprestaurante-backend-production.up.railway.app/usuarios/verificar/correo?email=${encodeURIComponent(email)}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/usuarios/verificar/correo?email=${encodeURIComponent(email)}`,
   // Exportar usuarios en Excel
-  exportarExcel: `https://apprestaurante-backend-production.up.railway.app/usuarios/reporte/excel`,
+  exportarExcel: `https://app-restaurante-backend-933168389237.us-central1.run.app/usuarios/reporte/excel`,
 
   // Exportar usuarios en PDF
-  exportarPDF: `https://apprestaurante-backend-production.up.railway.app/usuarios/reporte/pdf`,
+  exportarPDF: `https://app-restaurante-backend-933168389237.us-central1.run.app/usuarios/reporte/pdf`,
 
   // Roles
   exportarRolesExcel:
-    "https://apprestaurante-backend-production.up.railway.app/usuarios/reporte/rol/excel",
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/usuarios/reporte/rol/excel",
   exportarRolesPDF:
-    "https://apprestaurante-backend-production.up.railway.app/usuarios/reporte/rol/pdf",
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/usuarios/reporte/rol/pdf",
 };

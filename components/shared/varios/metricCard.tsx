@@ -16,6 +16,7 @@ export interface MetricCardProps {
   iconColor: string;
   badgeColorClass: string;
   customRightContent?: React.ReactNode;
+  customIcon?: React.ReactNode;
   onClick?: () => void;
   className?: string;
 }
@@ -28,6 +29,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   iconColor,
   badgeColorClass,
   customRightContent,
+  customIcon,
   className,
   onClick,
 }) => {

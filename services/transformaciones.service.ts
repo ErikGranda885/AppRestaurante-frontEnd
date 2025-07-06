@@ -1,14 +1,14 @@
 export const SERVICIOS_TRANSFORMACIONES = {
   listar:
-    "https://apprestaurante-backend-production.up.railway.app/transformaciones",
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/transformaciones",
   crear:
-    "https://apprestaurante-backend-production.up.railway.app/transformaciones",
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/transformaciones",
   obtener: (id: number) =>
-    `https://apprestaurante-backend-production.up.railway.app/transformaciones/${id}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/transformaciones/${id}`,
   actualizar: (id: number) =>
-    `https://apprestaurante-backend-production.up.railway.app/transformaciones/${id}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/transformaciones/${id}`,
   eliminar: (id: number) =>
-    `https://apprestaurante-backend-production.up.railway.app/transformaciones/${id}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/transformaciones/${id}`,
   porFecha: (fecha: string) =>
-    `https://apprestaurante-backend-production.up.railway.app/transformaciones/porFecha/${fecha}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/transformaciones/porFecha/${fecha}`,
 };

@@ -5,8 +5,8 @@ import { ThemeProvider } from "@/components/shared/varios/theme-provider";
 import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {
-  title: "Mi App",
-  description: "Descripción de mi app",
+  title: "Shawarma la estación",
+  description: "Aplicativo web de gestión de ventas e inventario",
 };
 
 export default function RootLayout({

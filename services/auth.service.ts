@@ -1,9 +1,13 @@
 export const SERVICIOS_AUTH = {
-  login: "https://apprestaurante-backend-production.up.railway.app/auth/login",
-  google: "https://apprestaurante-backend-production.up.railway.app/auth/google",
-  me: "https://apprestaurante-backend-production.up.railway.app/auth/me",
-  logout: "https://apprestaurante-backend-production.up.railway.app/auth/logout",
+  login:
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/auth/login",
+  google:
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/auth/google",
+  me: "https://app-restaurante-backend-933168389237.us-central1.run.app/auth/me",
+  logout:
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/auth/logout",
   enviarCorreoRecuperacion:
-    "https://apprestaurante-backend-production.up.railway.app/auth/solicitar-restablecimiento",
-  restablecerPassword: "https://apprestaurante-backend-production.up.railway.app/auth/restablecer-password",
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/auth/solicitar-restablecimiento",
+  restablecerPassword:
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/auth/restablecer-password",
 };

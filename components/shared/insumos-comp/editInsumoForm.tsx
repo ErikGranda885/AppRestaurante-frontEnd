@@ -96,7 +96,7 @@ export function EditInsumoForm({
 
     try {
       const res = await fetch(
-        `https://apprestaurante-backend-production.up.railway.app/insumos/${initialData.id_ins}`,
+        `https://app-restaurante-backend-933168389237.us-central1.run.app/insumos/${initialData.id_ins}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

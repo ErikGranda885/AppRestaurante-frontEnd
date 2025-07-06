@@ -280,7 +280,7 @@ export function BulkUploadInsumosDialog({
   const handleDownloadTemplate = async () => {
     try {
       const response = await fetch(
-        "https://apprestaurante-backend-production.up.railway.app/insumos/plantilla",
+        "https://app-restaurante-backend-933168389237.us-central1.run.app/insumos/plantilla",
         {
           method: "GET",
         },
@@ -343,7 +343,7 @@ export function BulkUploadInsumosDialog({
     setLoading(true);
     try {
       const res = await fetch(
-        "https://apprestaurante-backend-production.up.railway.app/insumos/masivo",
+        "https://app-restaurante-backend-933168389237.us-central1.run.app/insumos/masivo",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

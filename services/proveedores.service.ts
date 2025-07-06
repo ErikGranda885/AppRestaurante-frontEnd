@@ -1,24 +1,24 @@
 export const SERVICIOS_PROVEEDORES = {
   proveedores:
-    "https://apprestaurante-backend-production.up.railway.app/proveedores",
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/proveedores",
   obtenerProveedorPorId: (id: number | string) =>
-    `https://apprestaurante-backend-production.up.railway.app/proveedores/${id}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/proveedores/${id}`,
   obtenerProveedor: (id: number | string) =>
-    `https://apprestaurante-backend-production.up.railway.app/proveedores/${id}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/proveedores/${id}`,
   actualizarProveedor: (id: number | string) =>
-    `https://apprestaurante-backend-production.up.railway.app/proveedores/${id}`, // PUT actualizar un proveedor
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/proveedores/${id}`, // PUT actualizar un proveedor
   activarProveedor: (id: number | string) =>
-    `https://apprestaurante-backend-production.up.railway.app/proveedores/activar/${id}`, // PUT activar
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/proveedores/activar/${id}`, // PUT activar
   inactivarProveedor: (id: number | string) =>
-    `https://apprestaurante-backend-production.up.railway.app/proveedores/inactivar/${id}`, // PUT inactivar
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/proveedores/inactivar/${id}`, // PUT inactivar
   verificarRucProveedor: (ruc: string) =>
-    `https://apprestaurante-backend-production.up.railway.app/proveedores/verificar?ruc=${encodeURIComponent(ruc)}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/proveedores/verificar?ruc=${encodeURIComponent(ruc)}`,
   exportarProveedoresExcel:
-    "https://apprestaurante-backend-production.up.railway.app/proveedores/reporte/excel",
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/proveedores/reporte/excel",
   exportarProveedoresPDF:
-    "https://apprestaurante-backend-production.up.railway.app/proveedores/reporte/pdf",
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/proveedores/reporte/pdf",
   cargarMasivoProv:
-    "https://apprestaurante-backend-production.up.railway.app/proveedores/masivo",
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/proveedores/masivo",
   generarPlantillaProv:
-    "https://apprestaurante-backend-production.up.railway.app/proveedores/plantilla",
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/proveedores/plantilla",
 };

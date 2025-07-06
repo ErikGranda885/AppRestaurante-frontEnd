@@ -1,38 +1,38 @@
 export const SERVICIOS_PRODUCTOS = {
   categorias:
-    "https://apprestaurante-backend-production.up.railway.app/categorias",
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/categorias",
   productos:
-    "https://apprestaurante-backend-production.up.railway.app/productos",
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/productos",
   obtenerPorId: (id: number) =>
-    `https://apprestaurante-backend-production.up.railway.app/productos/${id}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/productos/${id}`,
   descagarPlantillaProducto:
-    "https://apprestaurante-backend-production.up.railway.app/productos/plantilla",
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/productos/plantilla",
   guardarMasivoProductos:
-    "https://apprestaurante-backend-production.up.railway.app/productos/masivo",
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/productos/masivo",
 
   inactivarProducto: (id: number) =>
-    `https://apprestaurante-backend-production.up.railway.app/productos/inactivar/${id}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/productos/inactivar/${id}`,
 
   activarProducto: (id: number) =>
-    `https://apprestaurante-backend-production.up.railway.app/productos/activar/${id}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/productos/activar/${id}`,
 
   actualizarProducto: (id: number) =>
-    `https://apprestaurante-backend-production.up.railway.app/productos/${id}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/productos/${id}`,
 
   // 🔽 Rutas para exportación general
   exportarProductosJson: (tipo: string) =>
-    `https://apprestaurante-backend-production.up.railway.app/productos/reportes/json?tipo=${tipo}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/productos/reportes/json?tipo=${tipo}`,
 
   exportarProductosExcel: (tipo: string) =>
-    `https://apprestaurante-backend-production.up.railway.app/productos/reportes/excel?tipo=${tipo}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/productos/reportes/excel?tipo=${tipo}`,
 
   exportarProductosPDF: (tipo: string) =>
-    `https://apprestaurante-backend-production.up.railway.app/productos/reportes/pdf?tipo=${tipo}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/productos/reportes/pdf?tipo=${tipo}`,
 
   // 🔽 Reporte específico: Insumos con equivalencias (Excel o PDF)
   exportarReporteInsumos: (desde?: string, hasta?: string) => {
     let url =
-      "https://apprestaurante-backend-production.up.railway.app/productos/reporte-insumos";
+      "https://app-restaurante-backend-933168389237.us-central1.run.app/productos/reporte-insumos";
     const params = [];
     if (desde) params.push(`desde=${desde}`);
     if (hasta) params.push(`hasta=${hasta}`);
@@ -41,7 +41,7 @@ export const SERVICIOS_PRODUCTOS = {
 
   exportarReporteInsumosPDF: (desde?: string, hasta?: string) => {
     let url =
-      "https://apprestaurante-backend-production.up.railway.app/productos/reporte-insumos/pdf";
+      "https://app-restaurante-backend-933168389237.us-central1.run.app/productos/reporte-insumos/pdf";
     const params = [];
     if (desde) params.push(`desde=${desde}`);
     if (hasta) params.push(`hasta=${hasta}`);
@@ -51,7 +51,7 @@ export const SERVICIOS_PRODUCTOS = {
   // 🔽 Reporte de Directos y Transformados (Excel o PDF)
   exportarReporteDirectosTransformados: (desde?: string, hasta?: string) => {
     let url =
-      "https://apprestaurante-backend-production.up.railway.app/productos/reporte-directos-transformados";
+      "https://app-restaurante-backend-933168389237.us-central1.run.app/productos/reporte-directos-transformados";
     const params = [];
     if (desde) params.push(`desde=${desde}`);
     if (hasta) params.push(`hasta=${hasta}`);
@@ -60,7 +60,7 @@ export const SERVICIOS_PRODUCTOS = {
 
   exportarReporteDirectosTransformadosPDF: (desde?: string, hasta?: string) => {
     let url =
-      "https://apprestaurante-backend-production.up.railway.app/productos/reporte-directos-transformados/pdf";
+      "https://app-restaurante-backend-933168389237.us-central1.run.app/productos/reporte-directos-transformados/pdf";
     const params = [];
     if (desde) params.push(`desde=${desde}`);
     if (hasta) params.push(`hasta=${hasta}`);
@@ -68,8 +68,8 @@ export const SERVICIOS_PRODUCTOS = {
   },
   // 🔽 Verificación de nombre de producto
   verificarNombre: (nombre: string) =>
-    `https://apprestaurante-backend-production.up.railway.app/productos/verificar?nombre=${encodeURIComponent(nombre)}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/productos/verificar?nombre=${encodeURIComponent(nombre)}`,
 
   productosPorCategoria: (id_cate: number) =>
-    `https://apprestaurante-backend-production.up.railway.app/productos/categoria/${id_cate}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/productos/categoria/${id_cate}`,
 };

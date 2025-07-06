@@ -1,6 +1,8 @@
 export const SERVICIOS_EMPRESAS = {
-  obtener: "https://apprestaurante-backend-production.up.railway.app/empresas",
-  crear: "https://apprestaurante-backend-production.up.railway.app/empresas",
+  obtener:
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/empresas",
+  crear:
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/empresas",
   actualizar: (id: number) =>
-    `https://apprestaurante-backend-production.up.railway.app/empresas/${id}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/empresas/${id}`,
 };

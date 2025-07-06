@@ -1,8 +1,10 @@
 export const SERVICIOS_RECETAS = {
-  listar: "https://apprestaurante-backend-production.up.railway.app/recetas",
-  crear: "https://apprestaurante-backend-production.up.railway.app/recetas",
+  listar:
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/recetas",
+  crear:
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/recetas",
   actualizar: (id: number) =>
-    `https://apprestaurante-backend-production.up.railway.app/recetas/${id}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/recetas/${id}`,
   eliminar: (id: number) =>
-    `https://apprestaurante-backend-production.up.railway.app/recetas/${id}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/recetas/${id}`,
 };

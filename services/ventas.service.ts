@@ -1,41 +1,42 @@
 export const SERVICIOS_VENTAS = {
   // Obtener todas las ventas
   listarVentas:
-    "https://apprestaurante-backend-production.up.railway.app/ventas",
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/ventas",
   listarDetallesVentas:
-    "https://apprestaurante-backend-production.up.railway.app/dets-ventas",
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/dets-ventas",
   // Obtener una venta por ID
   obtenerVenta: (id: number) =>
-    `https://apprestaurante-backend-production.up.railway.app/ventas/${id}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/ventas/${id}`,
 
   // Crear una nueva venta
-  crearVenta: "https://apprestaurante-backend-production.up.railway.app/ventas",
+  crearVenta:
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/ventas",
 
   // Actualizar venta
   actualizarVenta: (id: number) =>
-    `https://apprestaurante-backend-production.up.railway.app/ventas/${id}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/ventas/${id}`,
 
   // Cambiar estado de una venta
   actualizarEstado: (id: number) =>
-    `https://apprestaurante-backend-production.up.railway.app/ventas/${id}/estado`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/ventas/${id}/estado`,
 
   // Filtrar por estado
   filtrarPorEstado: (estado: string) =>
-    `https://apprestaurante-backend-production.up.railway.app/ventas/estado?estado=${estado}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/ventas/estado?estado=${estado}`,
 
   // Filtrar por fecha
   filtrarPorFecha: (fecha: string) =>
-    `https://apprestaurante-backend-production.up.railway.app/ventas/fecha?fecha=${fecha}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/ventas/fecha?fecha=${fecha}`,
 
   // Filtrar por usuario
   filtrarPorUsuario: (idUsuario: number) =>
-    `https://apprestaurante-backend-production.up.railway.app/ventas/usuario/${idUsuario}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/ventas/usuario/${idUsuario}`,
 
   // Obtener ventas con detalles (formato tarjetas como el dashboard)
   ventasConDetalles:
-    "https://apprestaurante-backend-production.up.railway.app/ventas/listado",
+    "https://app-restaurante-backend-933168389237.us-central1.run.app/ventas/listado",
 
   // ✅ Nuevo: Total de ventas por fecha
   totalPorFecha: (fecha: string) =>
-    `https://apprestaurante-backend-production.up.railway.app/ventas/total?fecha=${fecha}`,
+    `https://app-restaurante-backend-933168389237.us-central1.run.app/ventas/total?fecha=${fecha}`,
 };
