@@ -279,12 +279,9 @@ export function BulkUploadInsumosDialog({
   // Función para descargar la plantilla (sin columna "und_ins")
   const handleDownloadTemplate = async () => {
     try {
-      const response = await fetch(
-        "https://app-restaurante-backend-933168389237.us-central1.run.app/insumos/plantilla",
-        {
-          method: "GET",
-        },
-      );
+      const response = await fetch("http://localhost:5000/insumos/plantilla", {
+        method: "GET",
+      });
       if (!response.ok) {
         toast.error("Error al descargar la plantilla " + response.statusText);
         return;
@@ -342,14 +339,11 @@ export function BulkUploadInsumosDialog({
     }
     setLoading(true);
     try {
-      const res = await fetch(
-        "https://app-restaurante-backend-933168389237.us-central1.run.app/insumos/masivo",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(previewData),
-        },
-      );
+      const res = await fetch("http://localhost:5000/insumos/masivo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(previewData),
+      });
       const data = await res.json();
       if (!res.ok) {
         const errorMsg =

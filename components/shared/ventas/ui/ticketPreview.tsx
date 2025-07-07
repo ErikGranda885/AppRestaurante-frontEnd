@@ -13,6 +13,9 @@ interface EmpresaLocal {
   dir_emp: string;
   tel_emp: string;
   ruc_emp: string;
+  auth_num?: string; // Número de autorización SRI
+  serie?: string; // Ej.: "001-002"
+  caducidad?: string; // Fecha de caducidad en formato mm/aaaa
 }
 
 export function TicketPreview({ venta }: TicketPreviewProps) {
@@ -23,18 +26,24 @@ export function TicketPreview({ venta }: TicketPreviewProps) {
     dir_emp: "Dirección no configurada",
     tel_emp: "---",
     ruc_emp: "---",
+    auth_num: "0000000000", // Valor predeterminado
+    serie: "001-001",
+    caducidad: "12/2025",
   });
 
   useEffect(() => {
     const empresaLS = localStorage.getItem("empresa_actual");
     if (empresaLS && empresaLS !== "null") {
       try {
-        const empresaData = JSON.parse(empresaLS);
+        const e = JSON.parse(empresaLS);
         setEmpresa({
-          nom_emp: empresaData.nom_emp ?? "Mi Restaurante",
-          dir_emp: empresaData.dir_emp ?? "Dirección no configurada",
-          tel_emp: empresaData.tel_emp ?? "---",
-          ruc_emp: empresaData.ruc_emp ?? "---",
+          nom_emp: e.nom_emp ?? empresa.nom_emp,
+          dir_emp: e.dir_emp ?? empresa.dir_emp,
+          tel_emp: e.tel_emp ?? empresa.tel_emp,
+          ruc_emp: e.ruc_emp ?? empresa.ruc_emp,
+          auth_num: e.auth_num ?? empresa.auth_num,
+          serie: e.serie ?? empresa.serie,
+          caducidad: e.caducidad ?? empresa.caducidad,
         });
       } catch (error) {
         console.error("Error al obtener empresa_actual:", error);
@@ -52,10 +61,15 @@ export function TicketPreview({ venta }: TicketPreviewProps) {
           Tel: {empresa.tel_emp}
         </p>
         <p className="pt-1 text-[10px]">RUC: {empresa.ruc_emp}</p>
+        <p className="text-[10px]">
+          AUT. SRI: {empresa.auth_num} &nbsp; Caduca: {empresa.caducidad}
+        </p>
       </div>
 
-      {/* Info */}
+      {/* Serie y Numeración */}
       <div className="my-2 border-t border-dashed border-black pt-2 leading-4">
+        <div>NOTA DE VENTA</div>
+        <div>Serie/Punto: {empresa.serie}</div>
         <div>Recibo: #{venta.id_venta}</div>
         <div>Fecha: {new Date(venta.fecha).toLocaleDateString()}</div>
         <div>Hora: {new Date(venta.fecha).toLocaleTimeString()}</div>
@@ -63,7 +77,7 @@ export function TicketPreview({ venta }: TicketPreviewProps) {
         <div>Empleado: {venta.cliente.nom_usu}</div>
       </div>
 
-      {/* Tabla */}
+      {/* Tabla de productos */}
       <div className="mt-2 border-y border-black py-2">
         <div className="mb-1 flex justify-between font-semibold">
           <span className="w-8">Cant</span>
@@ -130,13 +144,17 @@ export function TicketPreview({ venta }: TicketPreviewProps) {
         )}
       </div>
 
-      {/* Footer */}
+      {/* Footer con leyendas */}
       <div className="mt-4 border-t border-dashed border-black pt-2 text-center text-[10px]">
-        ¡Gracias por tu compra!
+        Original – Adquirente / Copia – Emisor
       </div>
       <div className="mt-1 text-center text-[8px] leading-[10px]">
-        Este documento es únicamente un recibo de compra, no sustituye a una
+        Este documento es únicamente una nota de venta autorizada por el SRI,
+        válida como comprobante a consumidores finales. No sustituye una
         factura.
+      </div>
+      <div className="mt-1 text-center text-[10px]">
+        ¡Gracias por tu consumo!
       </div>
     </div>
   );

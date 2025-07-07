@@ -50,6 +50,7 @@ import { DialogExportarProductos } from "@/components/shared/productos/ui/dialog
 import { useProductosConStock } from "@/hooks/productos/useProductosConStock";
 import { useCategorias } from "@/hooks/categorias/useCategorias";
 import Preloader from "@/components/shared/varios/preloader";
+import { useUsuarioAutenticado } from "@/hooks/usuarios/useUsuarioAutenticado";
 
 // Tipos y constantes globales
 export type Opcion = {
@@ -130,6 +131,9 @@ export default function PaginaProductos() {
   const [abrirDialogExportar, setAbrirDialogExportar] = useState(false);
   const [soloInsumos, setSoloInsumos] = useState(false);
   const [showLoader, setShowLoader] = useState(true);
+  const { rol } = useUsuarioAutenticado();
+  const esEmpleado = rol === "empleado";
+
   // Estados y hooks de la aplicación
   const [paginaActual, setPaginaActual] = useState(1);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("");
@@ -268,31 +272,33 @@ export default function PaginaProductos() {
           <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             {/* Fila 1 (móvil) */}
             <div className="flex w-full gap-4 sm:flex-row sm:items-center sm:gap-3">
-              <GeneralDialog
-                open={abrirCrear}
-                onOpenChange={setAbrirCrear}
-                title="Crear Nuevo Producto"
-                description="Ingresa la información para crear un nuevo producto."
-                submitText="Crear Producto"
-                contentWidth="700px"
-                contentHeight="auto"
-                triggerText={
-                  <>
-                    <Plus className="h-4 w-4 shrink-0" />
-                    <span className="ml-1 sm:hidden">Nuevo producto</span>
-                    <span className="ml-1 hidden sm:inline">
-                      Añadir nuevo producto
-                    </span>
-                  </>
-                }
-              >
-                <FormProducts
-                  onSuccess={() => {
-                    refetch();
-                    setAbrirCrear(false);
-                  }}
-                />
-              </GeneralDialog>
+              {!esEmpleado && (
+                <GeneralDialog
+                  open={abrirCrear}
+                  onOpenChange={setAbrirCrear}
+                  title="Crear Nuevo Producto"
+                  description="Ingresa la información para crear un nuevo producto."
+                  submitText="Crear Producto"
+                  contentWidth="700px"
+                  contentHeight="auto"
+                  triggerText={
+                    <>
+                      <Plus className="h-4 w-4 shrink-0" />
+                      <span className="ml-1 sm:hidden">Nuevo producto</span>
+                      <span className="ml-1 hidden sm:inline">
+                        Añadir nuevo producto
+                      </span>
+                    </>
+                  }
+                >
+                  <FormProducts
+                    onSuccess={() => {
+                      refetch();
+                      setAbrirCrear(false);
+                    }}
+                  />
+                </GeneralDialog>
+              )}
             </div>
 
             {/* Fila 2 (móvil, o al lado en desktop) */}
@@ -368,23 +374,25 @@ export default function PaginaProductos() {
                 orientation="vertical"
               />
 
-              {/* Importar */}
-              <Button
-                className="w-full border-border text-[12px] font-semibold sm:w-auto"
-                variant="secondary"
-                onClick={() => setAbrirCargaMasiva(true)}
-              >
-                <Upload className="h-4 w-4" /> Importar
-              </Button>
+              {!esEmpleado && (
+                <>
+                  <Button
+                    className="w-full border-border text-[12px] font-semibold sm:w-auto"
+                    variant="secondary"
+                    onClick={() => setAbrirCargaMasiva(true)}
+                  >
+                    <Upload className="h-4 w-4" /> Importar
+                  </Button>
 
-              {/* Exportar */}
-              <Button
-                className="w-full border-border text-[12px] font-semibold sm:w-auto"
-                variant="secondary"
-                onClick={() => setAbrirDialogExportar(true)}
-              >
-                <CloudDownload className="h-4 w-4" /> Exportar
-              </Button>
+                  <Button
+                    className="w-full border-border text-[12px] font-semibold sm:w-auto"
+                    variant="secondary"
+                    onClick={() => setAbrirDialogExportar(true)}
+                  >
+                    <CloudDownload className="h-4 w-4" /> Exportar
+                  </Button>
+                </>
+              )}
             </div>
           </div>
 
@@ -543,30 +551,30 @@ export default function PaginaProductos() {
                     <ProductCard
                       key={producto.id_prod}
                       product={producto}
-                      onEdit={(prod) => {
-                        const productoParaEditar: IProductEdit = {
-                          ...prod,
-                          cate_prod:
-                            typeof prod.cate_prod === "object"
-                              ? (prod.cate_prod?.id_cate ?? 0)
-                              : parseInt(prod.cate_prod, 10),
-                        };
-                        setProductoEditar(productoParaEditar);
-                      }}
-                      onActivate={(prod) =>
-                        setProductoAccion({
-                          id_prod: prod.id_prod,
-                          nom_prod: prod.nom_prod,
-                          tipo: "activar",
-                        })
-                      }
-                      onDeactivate={(prod) =>
-                        setProductoAccion({
-                          id_prod: prod.id_prod,
-                          nom_prod: prod.nom_prod,
-                          tipo: "inactivar",
-                        })
-                      }
+                      {...(!esEmpleado && {
+                        onEdit: (prod) => {
+                          const productoParaEditar: IProductEdit = {
+                            ...prod,
+                            cate_prod:
+                              typeof prod.cate_prod === "object"
+                                ? (prod.cate_prod?.id_cate ?? 0)
+                                : parseInt(prod.cate_prod, 10),
+                          };
+                          setProductoEditar(productoParaEditar);
+                        },
+                        onActivate: (prod) =>
+                          setProductoAccion({
+                            id_prod: prod.id_prod,
+                            nom_prod: prod.nom_prod,
+                            tipo: "activar",
+                          }),
+                        onDeactivate: (prod) =>
+                          setProductoAccion({
+                            id_prod: prod.id_prod,
+                            nom_prod: prod.nom_prod,
+                            tipo: "inactivar",
+                          }),
+                      })}
                     />
                   ))}
                   {Array.from({

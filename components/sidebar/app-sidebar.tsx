@@ -61,7 +61,7 @@ export const data: DataSidebar = {
       url: "/dashboard",
       icon: House,
       submenu: false,
-      roles: ["administrador", "empleado", "sistema"],
+      roles: ["administrador", "sistema"],
     },
     {
       title: "Ventas",

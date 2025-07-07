@@ -56,6 +56,7 @@ import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useC
 import { DialogExportarCierres } from "@/components/shared/cierreDiario/ui/dialogExportarCierres";
 import { es } from "date-fns/locale";
 import Preloader from "@/components/shared/varios/preloader";
+import { useUsuarioAutenticado } from "@/hooks/usuarios/useUsuarioAutenticado";
 
 function hayCierresAnterioresPendientes(
   lista: ICierreDiario[],
@@ -69,6 +70,9 @@ function hayCierresAnterioresPendientes(
 }
 
 export default function Page() {
+  const { rol } = useUsuarioAutenticado();
+  const esEmpleado = rol === "empleado";
+
   const [dateRange, setDateRange] = useState<DateRange>({
     from: startOfToday(),
     to: endOfToday(),
@@ -343,13 +347,15 @@ export default function Page() {
             >
               <Upload className="h-4 w-4" /> Importar
             </Button> */}
-            <Button
-              onClick={() => setAbrirDialogExportar(true)}
-              className="border-border text-[12px] font-semibold"
-              variant="secondary"
-            >
-              <CloudDownload className="h-4 w-4" /> Exportar
-            </Button>
+            {!esEmpleado && (
+              <Button
+                onClick={() => setAbrirDialogExportar(true)}
+                className="border-border text-[12px] font-semibold"
+                variant="secondary"
+              >
+                <CloudDownload className="h-4 w-4" /> Exportar
+              </Button>
+            )}
           </div>
         </div>
       </div>

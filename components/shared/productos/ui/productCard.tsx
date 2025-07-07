@@ -44,9 +44,9 @@ export const mapProduct = (prod: any): IProduct => {
 
 export interface ProductCardProps {
   product: IProduct;
-  onEdit: (product: IProduct) => void;
-  onDeactivate: (product: IProduct) => void;
-  onActivate: (product: IProduct) => void;
+  onEdit?: (product: IProduct) => void;
+  onDeactivate?: (product: IProduct) => void;
+  onActivate?: (product: IProduct) => void;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
@@ -106,60 +106,64 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <Card className="group relative flex h-[110px] max-w-lg overflow-hidden rounded-lg border border-border bg-white p-3 shadow-md transition-colors duration-300 dark:bg-[#262626]">
-      <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-        <div className="flex space-x-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={() => onEdit(product)}
-                  className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-blue-600 shadow transition-colors duration-200 hover:bg-blue-200 dark:bg-gray-800 dark:hover:bg-blue-900"
-                >
-                  <Edit2 />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Editar</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+      {(onEdit || onActivate || onDeactivate) && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <div className="flex space-x-2">
+            {onEdit && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => onEdit(product)}
+                      className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-blue-600 shadow transition-colors duration-200 hover:bg-blue-200 dark:bg-gray-800 dark:hover:bg-blue-900"
+                    >
+                      <Edit2 />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Editar</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
 
-          {product.est_prod === "Activo" ? (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={() => onDeactivate(product)}
-                    variant="destructive"
-                    className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-red-600 shadow transition-colors duration-200 hover:bg-red-100 dark:bg-gray-800 dark:hover:bg-red-900"
-                  >
-                    <XCircle />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Inactivar</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={() => onActivate(product)}
-                    className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-green-600 shadow transition-colors duration-200 hover:bg-green-100 dark:bg-gray-800 dark:hover:bg-green-900"
-                  >
-                    <CheckCircle className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Activar</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+            {product.est_prod === "Activo" && onDeactivate ? (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => onDeactivate(product)}
+                      variant="destructive"
+                      className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-red-600 shadow transition-colors duration-200 hover:bg-red-100 dark:bg-gray-800 dark:hover:bg-red-900"
+                    >
+                      <XCircle />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Inactivar</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : product.est_prod !== "Activo" && onActivate ? (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => onActivate(product)}
+                      className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-green-600 shadow transition-colors duration-200 hover:bg-green-100 dark:bg-gray-800 dark:hover:bg-green-900"
+                    >
+                      <CheckCircle className="h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Activar</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : null}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="relative z-10 flex w-full">
         <div className="relative mr-3 h-20 w-16 flex-shrink-0 overflow-hidden rounded-md">
@@ -202,7 +206,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <div
             className={cn(
               "flex items-center text-xs font-bold",
-              expirationColorClass,
+              expirationColorClass
             )}
           >
             <span className="mr-1 text-xs text-muted-foreground">Caduca: </span>
@@ -235,7 +239,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           "absolute bottom-2 right-2 rounded-md px-2 py-1 text-xs font-semibold",
           product.est_prod === "Activo"
             ? "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300"
-            : "error-text bg-[#fbb8cf] dark:bg-[#49051d]",
+            : "error-text bg-[#fbb8cf] dark:bg-[#49051d]"
         )}
       >
         {product.est_prod}

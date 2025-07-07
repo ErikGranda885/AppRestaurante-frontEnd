@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { loginConGoogle } from "@/firebase/loginConGoogle";
 import { ToastError } from "../shared/toast/toastError";
 import { SERVICIOS_AUTH } from "@/services/auth.service";
+import { useUsuarioAutenticado } from "@/hooks/usuarios/useUsuarioAutenticado";
 
 export function LoginForm({
   className,
@@ -23,6 +24,8 @@ export function LoginForm({
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  const { actualizar } = useUsuarioAutenticado();
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -33,7 +36,7 @@ export function LoginForm({
       const response = await fetch(SERVICIOS_AUTH.login, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // ✅ envía y recibe cookie automáticamente
+        credentials: "include",
         body: JSON.stringify({
           email_usu: email,
           clave_usu: password,
@@ -63,7 +66,15 @@ export function LoginForm({
       }
 
       setLoading(false);
-      router.push("/dashboard");
+      await actualizar();
+
+      const usuarioActual = await fetch(SERVICIOS_AUTH.me, {
+        credentials: "include",
+      });
+      const data = await usuarioActual.json();
+      const rol = data.rol_usu?.nom_rol;
+
+      router.push(rol === "empleado" ? "/ventas/nueva" : "/dashboard");
     } catch {
       ToastError({
         message: "Error de red. Intenta nuevamente.",
@@ -79,7 +90,7 @@ export function LoginForm({
       const response = await fetch(SERVICIOS_AUTH.google, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // ✅ IMPORTANTE para guardar la cookie
+        credentials: "include",
         body: JSON.stringify({
           email: usuario.correo,
           nombre: usuario.nombre,
@@ -102,7 +113,15 @@ export function LoginForm({
         return;
       }
 
-      router.push("/dashboard");
+      await actualizar();
+
+      const usuarioActual = await fetch(SERVICIOS_AUTH.me, {
+        credentials: "include",
+      });
+      const data = await usuarioActual.json();
+      const rol = data.rol_usu?.nom_rol;
+
+      router.push(rol === "empleado" ? "/ventas/nueva" : "/dashboard");
     } catch {
       ToastError({
         message: "Error de red. Intenta nuevamente.",
@@ -126,7 +145,6 @@ export function LoginForm({
       </div>
 
       <div className="grid gap-2">
-        {/* Correo */}
         <div className="grid gap-1">
           <Label htmlFor="email">Correo</Label>
           <Input
@@ -144,19 +162,9 @@ export function LoginForm({
           {emailError && <p className="text-sm text-red-500">{emailError}</p>}
         </div>
 
-        {/* Contraseña */}
         <div className="grid gap-1">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Contraseña</Label>
-
-            {/* <Button
-              type="button"
-              variant={"ghost"}
-              onClick={() => router.push("/recuperar")}
-              className="edt-text text-sm underline-offset-4 hover:underline"
-            >
-              ¿Olvidaste tu contraseña?
-            </Button> */}
           </div>
           <div className="relative">
             <Input
@@ -197,7 +205,6 @@ export function LoginForm({
           </span>
         </div>
 
-        {/* Google */}
         <Button
           variant="outline"
           className="w-full"
@@ -229,13 +236,6 @@ export function LoginForm({
           Iniciar sesión con Google
         </Button>
       </div>
-
-      {/* <div className="text-center text-sm">
-        ¿No tienes una cuenta?{" "}
-        <a href="#" className="underline underline-offset-4">
-          Regístrate
-        </a>
-      </div> */}
     </form>
   );
 }

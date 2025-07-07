@@ -56,6 +56,7 @@ import { safePrice } from "@/utils/format";
 import { DialogExportarGastos } from "@/components/shared/gastos/ui/dialogExportarGastos";
 import { useSocket } from "@/hooks/useSocket";
 import Preloader from "@/components/shared/varios/preloader";
+import { useUsuarioAutenticado } from "@/hooks/usuarios/useUsuarioAutenticado";
 export type TipoAccion = "activar" | "inactivar" | "eliminar";
 
 type AccionGasto = {
@@ -65,6 +66,9 @@ type AccionGasto = {
 };
 
 export default function Page() {
+  const { rol } = useUsuarioAutenticado();
+  const esEmpleado = rol === "empleado";
+
   const [abrirExportarGastos, setAbrirExportarGastos] = useState(false);
   const { ventasConfig } = useConfiguracionesVentas();
   const [showLoader, setShowLoader] = useState(true);
@@ -178,7 +182,6 @@ export default function Page() {
       );
   }, [gastos, dateRange, busqueda]);
 
-
   // Definimos las columnas
   const columnas: ColumnDef<IGasto>[] = [
     {
@@ -232,18 +235,21 @@ export default function Page() {
               </DropdownMenuItem>
 
               {/* Eliminar */}
-              <DropdownMenuItem
-                onClick={() => {
-                  setAccionGasto({
-                    id: gasto.id_gas,
-                    descripcion: gasto.desc_gas,
-                    tipo: "eliminar",
-                  });
-                }}
-                className="error-text focus:hover:error-text cursor-pointer"
-              >
-                Eliminar
-              </DropdownMenuItem>
+              {!esEmpleado && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    setAccionGasto({
+                      id: gasto.id_gas,
+                      descripcion: gasto.desc_gas,
+                      tipo: "eliminar",
+                    });
+                  }}
+                  className="error-text focus:hover:error-text cursor-pointer"
+                >
+                  Eliminar
+                </DropdownMenuItem>
+              )}
+
               <DropdownMenuSeparator />
             </DropdownMenuContent>
           </DropdownMenu>
@@ -343,13 +349,15 @@ export default function Page() {
             >
               <Upload className="h-4 w-4" /> Importar
             </Button> */}
-            <Button
-              onClick={() => setAbrirExportarGastos(true)}
-              className="border-border text-[12px] font-semibold"
-              variant="secondary"
-            >
-              <CloudDownload className="h-4 w-4" /> Exportar
-            </Button>
+            {!esEmpleado && (
+              <Button
+                onClick={() => setAbrirExportarGastos(true)}
+                className="border-border text-[12px] font-semibold"
+                variant="secondary"
+              >
+                <CloudDownload className="h-4 w-4" /> Exportar
+              </Button>
+            )}
           </div>
         </div>
       </div>

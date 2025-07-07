@@ -45,8 +45,11 @@ import { useConfiguracionesVentas } from "@/hooks/configuraciones/generales/useC
 import { safePrice } from "@/utils/format";
 import { DialogExportarVentas } from "@/components/shared/ventas/ui/dialogExportarVentas";
 import Preloader from "@/components/shared/varios/preloader";
+import { useUsuarioAutenticado } from "@/hooks/usuarios/useUsuarioAutenticado";
 
 export default function Page() {
+  const { rol } = useUsuarioAutenticado();
+  const esEmpleado = rol === "empleado";
   const { ventasConfig } = useConfiguracionesVentas();
   const [dialogExportarOpen, setDialogExportarOpen] = useState(false);
   const [consultaBusqueda, setConsultaBusqueda] = useState("");
@@ -342,14 +345,17 @@ export default function Page() {
                 </Button>
 
                 {/* Exportar */}
-                <Button
-                  variant="secondary"
-                  className="w-full text-[12px] font-semibold"
-                  onClick={() => setDialogExportarOpen(true)}
-                >
-                  <CloudDownload className="h-4 w-4" />
-                  Exportar
-                </Button>
+
+                {!esEmpleado && (
+                  <Button
+                    variant="secondary"
+                    className="w-full text-[12px] font-semibold"
+                    onClick={() => setDialogExportarOpen(true)}
+                  >
+                    <CloudDownload className="h-4 w-4" />
+                    Exportar
+                  </Button>
+                )}
               </div>
             </div>
           </div>

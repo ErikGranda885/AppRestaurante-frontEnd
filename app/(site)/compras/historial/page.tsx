@@ -43,6 +43,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SERVICIOS_COMPRAS } from "@/services/compras.service";
+import { useUsuarioAutenticado } from "@/hooks/usuarios/useUsuarioAutenticado";
 
 export default function Page() {
   const { ventasConfig } = useConfiguracionesVentas();
@@ -61,6 +62,8 @@ export default function Page() {
     (c) => c.estado_pag_comp.toLowerCase() === "pendiente",
   );
   const totalPendientesPago = pendientesPago.length;
+  const { rol } = useUsuarioAutenticado();
+  const esEmpleado = rol === "empleado";
 
   useProtectedRoute();
   useEffect(() => {
@@ -411,13 +414,15 @@ export default function Page() {
                   />
                 </div>
 
-                <Button
-                  variant="secondary"
-                  onClick={() => setAbrirExportar(true)}
-                  className="flex-shrink-0 text-[12px] font-semibold"
-                >
-                  <CloudDownload className="h-4 w-4" /> Exportar
-                </Button>
+                {!esEmpleado && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => setAbrirExportar(true)}
+                    className="flex-shrink-0 text-[12px] font-semibold"
+                  >
+                    <CloudDownload className="h-4 w-4" /> Exportar
+                  </Button>
+                )}
               </div>
             </div>
           </div>

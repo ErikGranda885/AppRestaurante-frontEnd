@@ -36,6 +36,7 @@ import { FormProducts } from "@/components/shared/productos/formularios/createPr
 
 import { Control, FieldValues, Path, UseFormSetValue } from "react-hook-form";
 import { Plus } from "lucide-react";
+import { useUsuarioAutenticado } from "@/hooks/usuarios/useUsuarioAutenticado"; // ✅
 
 export interface ProductoOption {
   value: string;
@@ -68,6 +69,8 @@ export function CampoProductoCompra<T extends FieldValues>({
   const [crearModalAbierto, setCrearModalAbierto] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const crearBtnRef = useRef<HTMLButtonElement>(null);
+  const { rol } = useUsuarioAutenticado(); // ✅
+  const esEmpleado = rol === "empleado";
 
   useEffect(() => {
     if (open && options.length === 0) {
@@ -148,15 +151,18 @@ export function CampoProductoCompra<T extends FieldValues>({
                               </CommandItem>
                             ))}
                           </CommandGroup>
-                          <CommandItem
-                            className="cursor-pointer border border-border py-2"
-                            onSelect={() => {
-                              setCrearModalAbierto(true);
-                              setOpen(false);
-                            }}
-                          >
-                            <Plus className="h-4 w-4" /> Crear nuevo producto
-                          </CommandItem>
+
+                          {!esEmpleado && (
+                            <CommandItem
+                              className="cursor-pointer border border-border py-2"
+                              onSelect={() => {
+                                setCrearModalAbierto(true);
+                                setOpen(false);
+                              }}
+                            >
+                              <Plus className="h-4 w-4" /> Crear nuevo producto
+                            </CommandItem>
+                          )}
                         </>
                       ) : null}
 
@@ -164,17 +170,19 @@ export function CampoProductoCompra<T extends FieldValues>({
                         <p className="text-sm text-muted-foreground">
                           No se encontró producto.
                         </p>
-                        <Button
-                          ref={crearBtnRef}
-                          variant="outline"
-                          className="mt-1 w-full text-sm"
-                          onClick={() => {
-                            setCrearModalAbierto(true);
-                            setOpen(false);
-                          }}
-                        >
-                          <Plus className="h-4 w-4" /> Crear nuevo producto
-                        </Button>
+                        {!esEmpleado && (
+                          <Button
+                            ref={crearBtnRef}
+                            variant="outline"
+                            className="mt-1 w-full text-sm"
+                            onClick={() => {
+                              setCrearModalAbierto(true);
+                              setOpen(false);
+                            }}
+                          >
+                            <Plus className="h-4 w-4" /> Crear nuevo producto
+                          </Button>
+                        )}
                       </CommandEmpty>
                     </CommandList>
                   </Command>
@@ -186,45 +194,48 @@ export function CampoProductoCompra<T extends FieldValues>({
         )}
       />
 
-      <Dialog open={crearModalAbierto} onOpenChange={setCrearModalAbierto}>
-        <DialogContent className="w-[700px] max-w-full border-border">
-          <DialogHeader>
-            <DialogTitle>Crear nuevo producto</DialogTitle>
-            <DialogDescription>
-              Ingresa los datos del producto. Se agregará automáticamente al
-              listado.
-            </DialogDescription>
-          </DialogHeader>
+      {/* ✅ Diálogo de creación bloqueado para empleados */}
+      {!esEmpleado && (
+        <Dialog open={crearModalAbierto} onOpenChange={setCrearModalAbierto}>
+          <DialogContent className="w-[700px] max-w-full border-border">
+            <DialogHeader>
+              <DialogTitle>Crear nuevo producto</DialogTitle>
+              <DialogDescription>
+                Ingresa los datos del producto. Se agregará automáticamente al
+                listado.
+              </DialogDescription>
+            </DialogHeader>
 
-          <FormProducts
-            onSuccess={(data: any) => {
-              const nuevo: ProductoOption = {
-                value: data.producto.id_prod.toString(),
-                nombre: data.producto.nom_prod,
-                cod_prod: data.producto.id_prod,
-                img_prod: data.producto.img_prod,
-                tipo: data.producto.tip_prod,
-              };
+            <FormProducts
+              onSuccess={(data: any) => {
+                const nuevo: ProductoOption = {
+                  value: data.producto.id_prod.toString(),
+                  nombre: data.producto.nom_prod,
+                  cod_prod: data.producto.id_prod,
+                  img_prod: data.producto.img_prod,
+                  tipo: data.producto.tip_prod,
+                };
 
-              if (setOptions) {
-                setOptions((prev) => [...prev, nuevo]);
-              }
+                if (setOptions) {
+                  setOptions((prev) => [...prev, nuevo]);
+                }
 
-              setValue(name, nuevo.value as any);
-              setCrearModalAbierto(false);
+                setValue(name, nuevo.value as any);
+                setCrearModalAbierto(false);
 
-              if (onValidarEquivalencia) {
-                onValidarEquivalencia(nuevo);
-              }
+                if (onValidarEquivalencia) {
+                  onValidarEquivalencia(nuevo);
+                }
 
-              setTimeout(() => {
-                triggerRef.current?.focus();
-                setOpen(false);
-              }, 100);
-            }}
-          />
-        </DialogContent>
-      </Dialog>
+                setTimeout(() => {
+                  triggerRef.current?.focus();
+                  setOpen(false);
+                }, 100);
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 }
